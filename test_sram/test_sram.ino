@@ -1,11 +1,29 @@
-const int pinChipEnableN = 48;
+/*
+ * Memory Test Program for Lyontek LY62256 SRAM chips
+ * - 32K * 8bit low power CMOS SRAM
+ * 
+ */
+
+const int pinChipEnableN = 48;        // duplicate for two chips?
 const int pinWriteEnableN = 52;
 const int pinOutputEnableN = 50;
 
 const int kNumPinsA = 15;
 const int kNumPinsD = 8;
 
-const int kDelayMilliseconds = 2;
+const int kDelayMillisecondsSRAM = 1;
+
+const int kRamSize = 32768;
+const int kBlockSize = 256;
+const int kNumBlocks = kRamSize / kBlockSize;
+
+enum DataPinsState {
+  NONE,
+  IN,
+  OUT,
+};
+
+DataPinsState dataPinsState = NONE;
 
 #include <assert.h>
 
@@ -62,42 +80,43 @@ void setAddress(int address) {
   }
 }
 
-void sramWrite(int address, int value) {
-#if 0
-  Serial.print("Writing ");
-  Serial.print(value);
-  Serial.print(" to address ");
-  Serial.println(address);
-#endif
-  
+void sramWrite(int address, int value) {  
   setAddress(address);
+
+  if (dataPinsState != OUT) {
+    for (int i=0; i<kNumPinsD; i++) {
+     int pin = pinD(i);
+     pinMode(pin, OUTPUT);
+    }
+    
+    dataPinsState = OUT;
+  }
   
   for (int i=0; i<kNumPinsD; i++) {
      int pin = pinD(i);
      int pinValue = bitRead(value, i);
-     pinMode(pin, OUTPUT);
      digitalWrite(pin, pinValue);
-
-#if 0
-     Serial.print("setting D ");
-     Serial.print(i);
-     Serial.print(" on pin ");
-     Serial.print(pin);
-     Serial.print(" to value ");
-     Serial.println(pinValue );
-#endif
   }
 
   digitalWrite(pinWriteEnableN, LOW);
   digitalWrite(pinChipEnableN, LOW);
 
-  delay(kDelayMilliseconds);
+  delay(kDelayMillisecondsSRAM);
 
   digitalWrite(pinChipEnableN, HIGH);
   digitalWrite(pinWriteEnableN, HIGH);
 }
 
 int sramRead(int address) {
+  if (dataPinsState != IN) {
+    for (int i=0; i<kNumPinsD; i++) {
+     int pin = pinD(i);
+     pinMode(pin, INPUT);
+    }
+    
+    dataPinsState = IN;
+  }
+  
   int readValue = 0;
   
   setAddress(address);
@@ -107,30 +126,80 @@ int sramRead(int address) {
      pinMode(pin, INPUT);
   }
 
-  digitalWrite(pinOutputEnableN, LOW);
   digitalWrite(pinChipEnableN, LOW);
+  digitalWrite(pinOutputEnableN, LOW);
 
-  delay(kDelayMilliseconds);
+  delay(kDelayMillisecondsSRAM);
 
   for (int i=0; i<kNumPinsD; i++) {
      int pin = pinD(i);
      int value = digitalRead(pin);
      bitWrite(readValue, i, value);
-
-#if 0
-     Serial.print("reading D ");
-     Serial.print(i);
-     Serial.print(" on pin ");
-     Serial.print(pin);
-     Serial.print(" as value ");
-     Serial.println(value );
-#endif
   }
 
-  digitalWrite(pinChipEnableN, HIGH);
   digitalWrite(pinOutputEnableN, HIGH);
+  digitalWrite(pinChipEnableN, HIGH);
 
   return readValue;
+}
+
+void sramClear(int address, int num) {
+  for (int i=0; i<num; i++) {
+      sramWrite( address + i, 0 );
+
+      if ((i % kBlockSize) == 0) {
+        if ((i % (kBlockSize << 5)) == 0) {
+          Serial.println(""); 
+        }
+        
+        Serial.print(".");
+      }
+  }
+}
+
+void sramWriteTestPattern(int address, int num) {
+  for (int i=0; i<num; i++) {
+      sramWrite( address + i, i % kBlockSize );
+  }
+}
+
+bool sramValidateTestPattern(int address, int num) {
+  for (int i=0; i<num; i++) {
+      int value = sramRead( address + i );
+      int expected = i % 256;
+      if (value != expected) {
+        return false;
+      }
+  }
+
+  return true;
+}
+
+bool sramValidateClear(int address, int num) {
+  for (int i=0; i<num; i++) {
+      int value = sramRead( address + i );
+      if (value != 0) {
+        return false;
+      }
+  }
+
+  return true;
+}
+
+void sramPrint(int address, int num) {
+  Serial.print("address ");
+  Serial.print(address);
+  Serial.print(" num ");
+  Serial.println(num);
+
+  for (int i=0; i<num; i++) {
+      if (0 == (i % 32)) {
+        Serial.println("");
+      }
+      int value = sramRead( address + i );
+      Serial.print(value, HEX);
+      Serial.print(", ");
+  }
 }
 
 void setup() {  
@@ -138,24 +207,52 @@ void setup() {
   initPins();
   checkPins();
 
-  /// TODO: size of SRAM chip
-  const int kRamSize = 512;
+  // clear the entire RAM
+  sramClear(0, kNumBlocks * kBlockSize);
 
-  Serial.println("Writing...");
-  for (int i=0; i<kRamSize; i++) {
-      sramWrite( i, i % 256 );
-  }
-  
-  Serial.println("Reading...");
-  for (int i=0; i<kRamSize; i++) {
-      if (0 == (i % 16)) {
+  // step through each block of memory, writing and reading
+  for (int testPatternBlockIndex=0; testPatternBlockIndex<kNumBlocks; testPatternBlockIndex++) {
+    Serial.print("Writing Test Pattern to Block index");
+    Serial.print(testPatternBlockIndex);
+    Serial.print(" of ");
+    Serial.println(kNumBlocks);
+    
+    const int testPatternBlockOffset = testPatternBlockIndex * kBlockSize;
+
+    sramWriteTestPattern(testPatternBlockOffset, kBlockSize);
+    Serial.println(" -> Validating block ");
+
+    for (int i=0; i<kNumBlocks; i++) {
+      const int testBlockOffset = i * kBlockSize;
+
+      Serial.print(i);
+      Serial.print(", ");
+      if (0 == (i % 32)) {
         Serial.println("");
       }
-      int value = sramRead(i);
-      Serial.print(value, HEX);
-      Serial.print(" ");
 
+      bool testPassed = false;
+      
+      if (testBlockOffset == testPatternBlockOffset) {
+        testPassed = sramValidateTestPattern(testBlockOffset, kBlockSize);
+      } else {
+        testPassed = sramValidateClear(testBlockOffset, kBlockSize);
+      }
+
+      if (!testPassed) {
+        Serial.print("failure in block index ");
+        Serial.println(i);
+
+        sramPrint(testBlockOffset, kBlockSize);
+
+        assert(!"failed test");
+      }
+    }
+
+    sramClear(testPatternBlockOffset, kBlockSize);
   }
+
+  Serial.println("PASSED");
 }
 
 void loop() {
