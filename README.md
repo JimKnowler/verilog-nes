@@ -2,9 +2,9 @@
 
 **< WORK IN PROGRESS >**
 
-Building a Nintendo Entertainment System in Verilog
+Building a [Nintendo Entertainment System](https://en.wikipedia.org/wiki/Nintendo_Entertainment_System) in Verilog.
 
-
+Aim: to play the original NES [Super Mario Bros](https://en.wikipedia.org/wiki/Super_Mario_Bros.) ROM.
 
 # Progress so far
 
@@ -21,3 +21,5 @@ Building a Nintendo Entertainment System in Verilog
 - Build VGA output
 - Build HDMI output (perhaps?)
 - Run + pass 6502 + NES tests, in simulation + on FPGA
+- Add NES joypad interface
+- Play Super Mario
