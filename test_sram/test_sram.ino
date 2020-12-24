@@ -11,7 +11,7 @@ const int pinOutputEnableN = 50;
 const int kNumPinsA = 15;
 const int kNumPinsD = 8;
 
-const int kDelayMillisecondsSRAM = 1;
+const int kDelayMicrosecondsSRAM = 1;
 
 const int kRamSize = 32768;
 const int kBlockSize = 256;
@@ -101,7 +101,7 @@ void sramWrite(int address, int value) {
   digitalWrite(pinWriteEnableN, LOW);
   digitalWrite(pinChipEnableN, LOW);
 
-  delay(kDelayMillisecondsSRAM);
+  delayMicroseconds(kDelayMicrosecondsSRAM);
 
   digitalWrite(pinChipEnableN, HIGH);
   digitalWrite(pinWriteEnableN, HIGH);
@@ -129,7 +129,7 @@ int sramRead(int address) {
   digitalWrite(pinChipEnableN, LOW);
   digitalWrite(pinOutputEnableN, LOW);
 
-  delay(kDelayMillisecondsSRAM);
+  delayMicroseconds(kDelayMicrosecondsSRAM);
 
   for (int i=0; i<kNumPinsD; i++) {
      int pin = pinD(i);
@@ -212,7 +212,7 @@ void setup() {
 
   // step through each block of memory, writing and reading
   for (int testPatternBlockIndex=0; testPatternBlockIndex<kNumBlocks; testPatternBlockIndex++) {
-    Serial.print("Writing Test Pattern to Block index");
+    Serial.print("Writing Test Pattern to block index ");
     Serial.print(testPatternBlockIndex);
     Serial.print(" of ");
     Serial.println(kNumBlocks);
@@ -220,17 +220,18 @@ void setup() {
     const int testPatternBlockOffset = testPatternBlockIndex * kBlockSize;
 
     sramWriteTestPattern(testPatternBlockOffset, kBlockSize);
-    Serial.println(" -> Validating block ");
+    Serial.println("Validating block ");
 
     for (int i=0; i<kNumBlocks; i++) {
       const int testBlockOffset = i * kBlockSize;
 
-      Serial.print(i);
-      Serial.print(", ");
       if (0 == (i % 32)) {
         Serial.println("");
       }
-
+      
+      Serial.print(i, HEX);
+      Serial.print(", ");
+      
       bool testPassed = false;
       
       if (testBlockOffset == testPatternBlockOffset) {
