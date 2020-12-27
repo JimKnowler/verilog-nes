@@ -31,3 +31,6 @@ TEST_F(MasterClock, ShouldReset) {
     ASSERT_EQ(testBench.core().o_clk_vga, 0);
     ASSERT_EQ(testBench.core().o_clk_mcu, 0);
 }
+
+// todo: test clocks hi/lo during 1000ns
+// todo: test that clock is continually cycling over longer periods.

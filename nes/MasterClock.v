@@ -20,9 +20,12 @@ begin
         r_clk_ppu <= 0;
         r_clk_vga <= 0;
         r_clk_mcu <= 0;
+
+        // todo: reset internal counters
     end
     else
     begin
+        // todo: increment internal counters
     end
 end
 

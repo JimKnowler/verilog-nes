@@ -11,6 +11,16 @@ gtest_verilog_testbench(
     deps = [":MasterClock"]
 )
 
+verilator_cc_library(
+    name = "MemoryController",
+    srcs = ["MemoryController.v"],
+)
+
+gtest_verilog_testbench(
+    name = "MemoryControllerTestBench",
+    deps = [":MemoryController"]
+)
+
 cc_test(
     name = "test",
     srcs = glob(
@@ -19,11 +29,13 @@ cc_test(
             "**/*.h"
         ]
     ) + [
-        ":MasterClockTestBench"
+        ":MasterClockTestBench",
+        ":MemoryControllerTestBench"
     ],
     deps = [
         "@com_google_googletest//:gtest",
         "@gtestverilog//gtestverilog:lib",
-        ":MasterClock"
+        ":MasterClock",
+        ":MemoryController"
     ],
 )
