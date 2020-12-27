@@ -1,0 +1,7 @@
+# Compile cpp with c++20 standard
+build --cxxopt='-std=c++2a'
+
+# "bazel build --config debug"
+build:debug -c dbg
+build:debug --cxxopt="-g"
+build:debug --strip="never"
