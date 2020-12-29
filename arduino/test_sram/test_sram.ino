@@ -143,9 +143,9 @@ int sramRead(int address) {
   return readValue;
 }
 
-void sramClear(int address, int num) {
+void sramSet(int address, int num, int value) {
   for (int i=0; i<num; i++) {
-      sramWrite( address + i, 0 );
+      sramWrite( address + i, value );
 
       if ((i % kBlockSize) == 0) {
         if ((i % (kBlockSize << 5)) == 0) {
@@ -155,6 +155,10 @@ void sramClear(int address, int num) {
         Serial.print(".");
       }
   }
+}
+
+void sramClear(int address, int num) {
+  sramSet(address, num, 0);
 }
 
 void sramWriteTestPattern(int address, int num) {
@@ -175,15 +179,19 @@ bool sramValidateTestPattern(int address, int num) {
   return true;
 }
 
-bool sramValidateClear(int address, int num) {
+bool sramValidateSet(int address, int num, int expectedValue) {
   for (int i=0; i<num; i++) {
-      int value = sramRead( address + i );
-      if (value != 0) {
+      int actualValue = sramRead( address + i );
+      if (actualValue != expectedValue) {
         return false;
       }
   }
 
   return true;
+}
+
+bool sramValidateClear(int address, int num) {
+  return sramValidateSet(address, num, 0);
 }
 
 void sramPrint(int address, int num) {
@@ -202,11 +210,54 @@ void sramPrint(int address, int num) {
   }
 }
 
-void setup() {  
-  initSerial();
-  initPins();
-  checkPins();
+void memoryTest1() {
+  Serial.println("");
+  Serial.println("Memory Test 1");
 
+  // Memory Test 1
+  // - Divide memory into blocks - where each block is 256 bytes
+  // - iterate through each block in turn
+  //   - Fill block with the block's index
+  //     (i.e. block 5 with be filled with 256 x 0x5)
+  // - iterate through each block in turn
+  //   - test that block is filled with its' index
+
+  for (int blockIndex=0; blockIndex<kNumBlocks; blockIndex++) {
+    int blockAddress = blockIndex * kBlockSize;
+    sramSet(blockAddress, kBlockSize, blockIndex);
+  }
+
+  for (int blockIndex=0; blockIndex<kNumBlocks; blockIndex++) {
+    int blockAddress = blockIndex * kBlockSize;
+
+    bool testPassed = sramValidateSet(blockAddress, kBlockSize, blockIndex);
+
+    if (!testPassed) {
+        Serial.print("failure in block index ");
+        Serial.println(blockIndex);
+
+        sramPrint(blockAddress, kBlockSize);
+
+        assert(!"failed test");
+      }
+  }
+  
+  Serial.println("Memory Test 1: PASSED");
+}
+
+void memoryTest2() {
+  Serial.println("");
+  Serial.println("Memory Test 2");
+
+  // Memory Test 2
+  // - Write 0s to all memory
+  // - Divide memory into blocks - where each block is 256 bytes
+  // - iterate through each block in turn
+  //   - Write 0..255 to the chosen block
+  //   - test that chosen block has 0..255
+  //   - test that all other blocks are 0
+  //   - write 0s to chosen block
+  
   // clear the entire RAM
   sramClear(0, kNumBlocks * kBlockSize);
 
@@ -253,8 +304,19 @@ void setup() {
     sramClear(testPatternBlockOffset, kBlockSize);
   }
 
-  Serial.println("PASSED");
+  Serial.println("");
+  Serial.println("Memory Test 2: PASSED");
 }
+
+void setup() {  
+  initSerial();
+  initPins();
+  checkPins();
+
+  memoryTest1();
+  memoryTest2();
+}
+
 
 void loop() {
   // put your main code here, to run repeatedly:
