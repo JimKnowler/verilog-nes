@@ -2,11 +2,11 @@ module Cpu6502(
     input i_clk,
     input i_reset_n,
 
-    /* verilator lint_off UNDRIVEN */
-    /* verilator lint_off UNUSED */
     output o_rw,            // Read / Write - where 1 = READ, 0 = WRITE
     output [15:0] o_address,
     input [7:0] i_data,
+    /* verilator lint_off UNDRIVEN */
+    /* verilator lint_off UNUSED */
     output [7:0] o_data,
     /* verilator lint_on UNDRIVEN */
     /* verilator lint_on UNUSED */
@@ -26,12 +26,12 @@ localparam RW_READ = 1;
 localparam RW_WRITE = 0;
 
 reg [7:0] r_state;
-reg [7:0] r_tcu;
-reg [15:0] r_pc;
-reg r_rw;
-reg [15:0] r_address_vector;
+reg [7:0] r_tcu;                                    // Timing Control Unit - track current stage of current opcode
+reg [15:0] r_pc;                                    // Program Counter
+reg r_rw;                                           // Read / Write
+reg [15:0] r_address_vector;                        // Register that drives address for reset / irq / nmi vectors
 
-always @(posedge i_clk or negedge i_clk or negedge i_reset_n)
+always @(negedge i_clk or negedge i_reset_n)
 begin
     if (!i_reset_n)
     begin
@@ -42,30 +42,22 @@ begin
     end
     else
     begin
-        if (i_clk)
+        r_tcu <= r_tcu + 1;
+        
+        // falling edge
+        if (r_tcu == 0)
         begin
-            // rising edge
-            
+            r_address_vector <= ADDRESS_RESET_VECTOR;
         end
-        else 
+        if (r_tcu == 1)
         begin
-            r_tcu <= r_tcu + 1;
-            
-            // falling edge
-            if (r_tcu == 0)
-            begin
-                r_address_vector <= ADDRESS_RESET_VECTOR;
-            end
-            if (r_tcu == 1)
-            begin
-                r_pc[7:0] <= i_data;
-                r_address_vector <= r_address_vector + 1;
-            end
-            else if (r_tcu == 2)
-            begin
-                r_pc[15:8] <= i_data;
-                r_state <= STATE_IDLE;
-            end
+            r_pc[7:0] <= i_data;
+            r_address_vector <= r_address_vector + 1;
+        end
+        else if (r_tcu == 2)
+        begin
+            r_pc[15:8] <= i_data;
+            r_state <= STATE_IDLE;
         end
     end
 end
