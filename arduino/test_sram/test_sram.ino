@@ -49,7 +49,7 @@ void initPins() {
   pinMode(pinWriteEnableN, OUTPUT);
   pinMode(pinOutputEnableN, OUTPUT);
 
-  digitalWrite(pinChipEnableN, HIGH);
+  digitalWrite(pinChipEnableN, LOW);
   digitalWrite(pinWriteEnableN, HIGH);
   digitalWrite(pinOutputEnableN, HIGH);
 
@@ -97,9 +97,6 @@ void sramWrite(int address, int value) {
   }
 
   digitalWrite(pinWriteEnableN, LOW);
-  digitalWrite(pinChipEnableN, LOW);
-
-  digitalWrite(pinChipEnableN, HIGH);
   digitalWrite(pinWriteEnableN, HIGH);
 }
 
@@ -122,7 +119,6 @@ int sramRead(int address) {
      pinMode(pin, INPUT);
   }
 
-  digitalWrite(pinChipEnableN, LOW);
   digitalWrite(pinOutputEnableN, LOW);
 
   for (int i=0; i<kNumPinsD; i++) {
@@ -132,7 +128,6 @@ int sramRead(int address) {
   }
 
   digitalWrite(pinOutputEnableN, HIGH);
-  digitalWrite(pinChipEnableN, HIGH);
 
   return readValue;
 }
