@@ -11,8 +11,6 @@ const int pinOutputEnableN = 50;
 const int kNumPinsA = 15;
 const int kNumPinsD = 8;
 
-const int kDelayMicrosecondsSRAM = 1;
-
 const int kRamSize = 32768;
 const int kBlockSize = 256;
 const int kNumBlocks = kRamSize / kBlockSize;
@@ -101,8 +99,6 @@ void sramWrite(int address, int value) {
   digitalWrite(pinWriteEnableN, LOW);
   digitalWrite(pinChipEnableN, LOW);
 
-  delayMicroseconds(kDelayMicrosecondsSRAM);
-
   digitalWrite(pinChipEnableN, HIGH);
   digitalWrite(pinWriteEnableN, HIGH);
 }
@@ -128,8 +124,6 @@ int sramRead(int address) {
 
   digitalWrite(pinChipEnableN, LOW);
   digitalWrite(pinOutputEnableN, LOW);
-
-  delayMicroseconds(kDelayMicrosecondsSRAM);
 
   for (int i=0; i<kNumPinsD; i++) {
      int pin = pinD(i);
