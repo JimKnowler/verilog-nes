@@ -1,17 +1,23 @@
 /*
  * Memory Test Program for Lyontek LY62256 SRAM chips
- * - 32K * 8bit low power CMOS SRAM
- * 
+ * - 32K * 8bit low power CMOS SRAM chips
+ * - 2 x SRAM chips = 64KB
  */
 
-const int pinChipEnableN = 48;        // duplicate for two chips?
-const int pinWriteEnableN = 52;
+#include <assert.h>
+
+// Unique CE pin for each SRAM chip
+// Common bus across both SRAM chips for Address, Data, WE & OE pins
+
+const int pinChipEnableN[2] = {46, 48};
+const int pinWriteEnableN = 52;         
 const int pinOutputEnableN = 50;
 
 const int kNumPinsA = 15;
 const int kNumPinsD = 8;
 
-const int kRamSize = 32768;
+const int kBankSize = 32 * 1024;
+const int kRamSize = 2 * kBankSize;
 const int kBlockSize = 256;
 const int kNumBlocks = kRamSize / kBlockSize;
 
@@ -23,7 +29,8 @@ enum DataPinsState {
 
 DataPinsState dataPinsState = NONE;
 
-#include <assert.h>
+int bankSelected = -1;        // which SRAM chip (bank) is currently selected
+                              // -1 = neither, 0 or 1
 
 int pinA(int index) {
   assert(index >= 0);
@@ -45,11 +52,13 @@ void initSerial() {
 }
 
 void initPins() {
-  pinMode(pinChipEnableN, OUTPUT);
+  pinMode(pinChipEnableN[0], OUTPUT);
+  pinMode(pinChipEnableN[1], OUTPUT);
   pinMode(pinWriteEnableN, OUTPUT);
   pinMode(pinOutputEnableN, OUTPUT);
 
-  digitalWrite(pinChipEnableN, LOW);
+  digitalWrite(pinChipEnableN[0], HIGH);
+  digitalWrite(pinChipEnableN[1], HIGH);
   digitalWrite(pinWriteEnableN, HIGH);
   digitalWrite(pinOutputEnableN, HIGH);
 
@@ -71,7 +80,21 @@ void checkPins() {
   assert(pinD(7) == 22);
 }
 
+void selectBank(int bank) {  
+  if (bankSelected != bank) { 
+    if (bankSelected >= 0) {
+      digitalWrite(pinChipEnableN[bankSelected], HIGH);
+    }
+
+    bankSelected = bank;
+
+    digitalWrite(pinChipEnableN[bankSelected], LOW);
+  }
+}
+
 void setAddress(int address) {
+  selectBank((address >> kNumPinsA) & 0x0001);
+  
   for (int i=0; i<kNumPinsA; i++) {
     int pinValue = bitRead(address, i);
     digitalWrite(pinA(i), pinValue);
@@ -97,6 +120,9 @@ void sramWrite(int address, int value) {
   }
 
   digitalWrite(pinWriteEnableN, LOW);
+
+  //delayMicroseconds(1);
+  
   digitalWrite(pinWriteEnableN, HIGH);
 }
 
@@ -126,7 +152,7 @@ int sramRead(int address) {
      int value = digitalRead(pin);
      bitWrite(readValue, i, value);
   }
-
+  
   digitalWrite(pinOutputEnableN, HIGH);
 
   return readValue;
