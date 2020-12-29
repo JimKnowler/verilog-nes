@@ -23,6 +23,9 @@ namespace {
         void SetUp() override {
             testBench.setClockPolarity(1);
             sram.clear(0);
+
+            testBench.reset();
+            testBench.trace.clear();
         }
         
         void TearDown() override {
@@ -38,22 +41,21 @@ namespace {
 
                     if (cpu.i_clk == 1) {
                         // simulating that all memory access will occur in second half-cycle (step)
-                        // of each clock tick, while i_clk is high
+                        // of each clock tick, when address is valid while i_clk is high
+                        
+                        // note: actual READ/WRITE will be registered on next falling edge of the clock
 
                         if (cpu.o_rw == 0) {
                             // write
                             sram.write(cpu.o_address, cpu.o_data);
-
                         } else {
                             // read
                             cpu.i_data = sram.read(cpu.o_address);
                         }
-                        
                     }
                 }
             }
         }
-
 
         Cpu6502TestBench testBench;
         SRAM sram;
@@ -66,5 +68,20 @@ TEST_F(Cpu6502, ShouldConstruct) {
 TEST_F(Cpu6502, ShouldReset) {
     testBench.reset();
 
-    // todo: assert state of output ports
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+        .port(o_address).signal({0,0})
+        .port(o_data).signal({0,0});
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldUseResetVector) {
+    tick(2);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-").repeat(2)
+        .port(o_address).signal({0xFFFC,0xFFFD}).repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
