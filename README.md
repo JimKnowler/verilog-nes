@@ -6,6 +6,12 @@ Building a [Nintendo Entertainment System](https://en.wikipedia.org/wiki/Nintend
 
 Aim: to play the original NES [Super Mario Bros](https://en.wikipedia.org/wiki/Super_Mario_Bros.) ROM.
 
+# Building
+
+> bazel build //nes:test
+
+> ./bazel-bin/nes/test
+
 # Components
 
 - FPGA
