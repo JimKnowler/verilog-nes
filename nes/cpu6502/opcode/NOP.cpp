@@ -1,9 +1,7 @@
-#include "Assembler.h"
+#include "Opcodes.h"
 
 OPCODE_IMPL(NOP, {
-    std::initializer_list<uint8_t> bytes;
-
-    bytes = {0xEA};
+    std::vector<uint8_t> bytes = {0xEA};
 
     return bytes;
 });

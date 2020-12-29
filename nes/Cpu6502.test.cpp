@@ -7,7 +7,7 @@ using namespace gtestverilog;
 #include "nes/Cpu6502TestBench.h"
 using namespace cpu6502testbench;
 
-#include "cpu6502/opcode/Assembler.h"
+#include "cpu6502/opcode/Opcodes.h"
 using namespace cpu6502::opcode;
 
 #include "memory/SRAM.h"
@@ -95,6 +95,9 @@ TEST_F(Cpu6502, ShouldUseResetVector) {
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
+/// @note this test case is based on Ben Eater's video 
+///       "'hello world' from scratch on a 6502 - Part 1"
+///       https://www.youtube.com/watch?v=LnzuMJLZRdU
 TEST_F(Cpu6502, ShouldExecuteNOP) {
     const uint8_t NOP = 0xEA;
     sram.clear(NOP);
@@ -113,3 +116,40 @@ TEST_F(Cpu6502, ShouldExecuteNOP) {
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
+
+/// @note this test case is based on Ben Eater's video
+///       "'hello world' from scratch on a 6502 - Part 2"
+///       https://www.youtube.com/watch?v=yl8vPW5hydQ
+TEST_F(Cpu6502, ShouldExecuteLDAandSTA) {
+    sram.clear(0);
+    
+    // todo: simplify assembling this program
+    //       Assembler, that is constructed with
+    //       initializer_list<Opcode> ?
+    std::vector<uint8_t> prog;
+    auto lda = LDA().immediate(0x42).serialise();
+    prog.insert(prog.end(), lda.begin(), lda.end());
+    auto sta = STA().absolute(0x1234).serialise();
+    prog.insert(prog.end(), sta.begin(), sta.end());
+    
+    sram.write(0, prog);
+
+    // skip past the reset vector
+    tick(2);
+    testBench.trace.clear();
+
+    // test executing program
+    tick(3);
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-").repeat(3)
+        .port(o_rw).signal("11").repeat(3)
+        .port(o_address).signal({0x0000, 0x0000, 0x0001}).repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+
+// TODO: should tests compare the inner (debug) state of CPU?
+//       ... useful for testing each instruction in isolation
+//           -> look at data registers, TCU, fetching opcode for next instruction, etc
+//       ... or should all tests only look at external behaviour?

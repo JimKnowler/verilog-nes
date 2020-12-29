@@ -1,9 +1,17 @@
-#include "Assembler.h"
+#include "Opcodes.h"
+
+#include <cassert>
+
+namespace {
+    const uint8_t OPCODE_IMMEDIATE = 0xA9;
+}
 
 OPCODE_IMPL(LDA, {
-    std::initializer_list<uint8_t> bytes;
+    assert(m_hasImmediate);
 
-    // todo: generate correct sequence of bytes
+    std::vector<uint8_t> bytes;
+    bytes.push_back(OPCODE_IMMEDIATE);
+    bytes.push_back(m_immediate);
 
     return bytes;
 });

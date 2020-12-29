@@ -20,6 +20,11 @@ namespace memory {
         /// @param value the value to set at specified address
         void write(size_t address, uint8_t value);
 
+        /// @brief Write a sequence of bytes to memory
+        /// @param address byte offset from start of memory to start writing
+        /// @param program the assembled byte code of program to write
+        void write(size_t address, const std::vector<uint8_t>& program);
+
         /// @brief retrieve a byte of memory at the specified address
         /// @param address byte offset from start of memory
         uint8_t read(size_t address) const;

@@ -18,7 +18,9 @@ module Cpu6502(
     output [15:0] o_debug_pc,               // Program Counter
     output [7:0] o_debug_ir,                // Instruction Register
     output [7:0] o_debug_state,             // State
-    output [15:0] o_debug_address_vector    // address for reset/irq/nmi vectors
+    output [15:0] o_debug_address_vector,   // address for reset/irq/nmi vectors
+    output [7:0] o_debug_a                  // value in A register
+    // todo: registers a,x,y,alu
 );
 
 localparam STATE_RESET_VECTOR = 0;          // read two bytes from the reset vector
@@ -40,6 +42,7 @@ reg [15:0] r_address_vector;                // Register that drives address for 
 /* verilator lint_off UNDRIVEN */
 /* verilator lint_off UNUSED */
 reg [7:0] r_ir;                             // Instruction Register
+reg [7:0] r_a;                              // 'A' data register
 /* verilator lint_on UNDRIVEN */
 /* verilator lint_on UNUSED */
 
@@ -99,6 +102,7 @@ assign o_debug_tcu = r_tcu;
 assign o_debug_pc = r_pc;
 assign o_debug_ir = r_ir;
 assign o_debug_state = r_state;
+assign o_debug_a = r_a;
 
 assign o_address = (r_state == STATE_RESET_VECTOR) ? r_address_vector : r_pc;
 assign o_rw = r_rw;

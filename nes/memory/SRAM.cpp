@@ -19,6 +19,12 @@ namespace memory {
         memory[address] = value;
     }
 
+    void SRAM::write(size_t address, const std::vector<uint8_t>& program) {
+        for (size_t i=0; i<program.size(); i++) {
+            write(i, program[i]);
+        }
+    }
+
     uint8_t SRAM::read(size_t address) const {
         return memory[address];
     }
