@@ -14,11 +14,14 @@ module Cpu6502(
     // debug output
     output [7:0] o_debug_tcu,
     output [15:0] o_debug_pc,
-    output [7:0] o_debug_state
+    output [7:0] o_debug_state,
+    output [15:0] o_debug_address_vector
 );
 
-localparam STATE_IDLE = 0;
-localparam STATE_RESET_VECTOR = 1;                  // read two bytes from the reset vector
+localparam STATE_RESET_VECTOR = 0;                  // read two bytes from the reset vector
+                                                    //    and load as address into PC
+localparam STATE_EXECUTE_OPCODES = 1;               // load opcodes from address in PC & execute
+
 
 localparam ADDRESS_RESET_VECTOR = 16'hFFFC;
 
@@ -44,25 +47,45 @@ begin
     begin
         r_tcu <= r_tcu + 1;
         
-        // falling edge
-        if (r_tcu == 0)
+        if (r_state == STATE_RESET_VECTOR)
         begin
-            r_address_vector <= ADDRESS_RESET_VECTOR;
+            // falling edge
+            if (r_tcu == 0)
+            begin
+                r_address_vector <= ADDRESS_RESET_VECTOR;
+            end
+            if (r_tcu == 1)
+            begin
+                r_pc[7:0] <= i_data;
+                r_address_vector <= r_address_vector + 1;
+            end
+            else if (r_tcu == 2)
+            begin
+                r_pc[15:8] <= i_data;
+                r_state <= STATE_EXECUTE_OPCODES;
+
+                // todo: load IR with opcode so that we can skip tcu of first opcode
+                r_tcu <= 1;
+            end
         end
-        if (r_tcu == 1)
+
+        if (r_state == STATE_EXECUTE_OPCODES)
         begin
-            r_pc[7:0] <= i_data;
-            r_address_vector <= r_address_vector + 1;
-        end
-        else if (r_tcu == 2)
-        begin
-            r_pc[15:8] <= i_data;
-            r_state <= STATE_IDLE;
+            if (r_tcu == 0)
+            begin
+                
+            end
+            else if (r_tcu == 1)
+            begin
+                r_pc <= r_pc + 1;
+                r_tcu <= 0;
+            end
         end
     end
 end
 
 
+assign o_debug_address_vector = r_address_vector;
 assign o_debug_tcu = r_tcu;
 assign o_debug_pc = r_pc;
 assign o_debug_state = r_state;

@@ -78,16 +78,36 @@ TEST_F(Cpu6502, ShouldReset) {
 
 TEST_F(Cpu6502, ShouldUseResetVector) {
     const uint8_t NOP = 0xEA;
-
     sram.clear(NOP);
+
+    // write contents of the reset vector
+    sram.write(0xFFFC, 0x02);               // low byte of 16bit address
+    sram.write(0xFFFD, 0x80);               // high byte of 16bit address
 
     tick(3);
 
     Trace expected = TraceBuilder()
         .port(i_clk).signal("_-").repeat(3)
         .port(o_rw).signal("11").repeat(3)
-        .port(o_address).signal({0xFFFC,0xFFFD, 0xEAEA}).repeatEachStep(2)
-        .port(i_data).signal({0,0xEA, 0xEA}).repeatEachStep(2);
+        .port(o_address).signal({0xFFFC, 0xFFFD, 0x8002}).repeatEachStep(2)
+        .port(i_data).signal({0, 0x02, 0x80}).repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldExecuteNOP) {
+    const uint8_t NOP = 0xEA;
+    sram.clear(NOP);
+
+    // skip past the reset vector
+    tick(2);
+    testBench.trace.clear();
+
+    tick(5);
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-").repeat(5)
+        .port(o_rw).signal("11").repeat(5)
+        .port(o_address).signal({0xEAEA, 0xEAEB, 0xEAEB, 0xEAEC, 0xEAEC}).repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
