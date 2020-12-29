@@ -81,8 +81,14 @@ void checkPins() {
 }
 
 void selectBank(int bank) {  
-  if (bankSelected != bank) { 
+  if (bankSelected != bank) {
+    //Serial.print("selecting bank ");
+    //Serial.println(bank);
+    
     if (bankSelected >= 0) {
+      //Serial.print(".... first unselecting bank ");
+      //Serial.println(bankSelected);
+      
       digitalWrite(pinChipEnableN[bankSelected], HIGH);
     }
 
@@ -120,9 +126,6 @@ void sramWrite(int address, int value) {
   }
 
   digitalWrite(pinWriteEnableN, LOW);
-
-  //delayMicroseconds(1);
-  
   digitalWrite(pinWriteEnableN, HIGH);
 }
 
