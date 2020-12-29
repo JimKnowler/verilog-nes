@@ -30,6 +30,11 @@ Aim: to play the original NES [Super Mario Bros](https://en.wikipedia.org/wiki/S
 
 # Work Remaining
 
+- Draw circuit diagrams
+  - Memory Controller
+  - Devkit
+  - CPU/PPU cores
+  - VGA output
 - Build devkit
     - Arduino Due (3.3v) with LED screen
     - Arduino acting as SPI controller, FPGA as SPI peripheral
