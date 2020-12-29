@@ -21,6 +21,16 @@ gtest_verilog_testbench(
     deps = [":MemoryController"]
 )
 
+verilator_cc_library(
+    name = "Cpu6502",
+    srcs = ["Cpu6502.v"],
+)
+
+gtest_verilog_testbench(
+    name = "Cpu6502TestBench",
+    deps = [":Cpu6502"]
+)
+
 cc_test(
     name = "test",
     srcs = glob(
@@ -30,12 +40,14 @@ cc_test(
         ]
     ) + [
         ":MasterClockTestBench",
-        ":MemoryControllerTestBench"
+        ":MemoryControllerTestBench",
+        ":Cpu6502TestBench"
     ],
     deps = [
         "@com_google_googletest//:gtest",
         "@gtestverilog//gtestverilog:lib",
         ":MasterClock",
-        ":MemoryController"
+        ":MemoryController",
+        ":Cpu6502"
     ],
 )
