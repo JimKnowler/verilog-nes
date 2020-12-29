@@ -2,25 +2,28 @@ module Cpu6502(
     input i_clk,
     input i_reset_n,
 
-    output o_rw,            // Read / Write - where 1 = READ, 0 = WRITE
+    output o_rw,                            // Read / Write - where 1 = READ, 0 = WRITE
     output [15:0] o_address,
-    input [7:0] i_data,
+    input [7:0] i_data,                     // 8 bit data - used for READ
     /* verilator lint_off UNDRIVEN */
     /* verilator lint_off UNUSED */
-    output [7:0] o_data,
+    output [7:0] o_data,                    // 8 bit data - used for WRITE
     /* verilator lint_on UNDRIVEN */
     /* verilator lint_on UNUSED */
 
+    ///////////////////////////////////
     // debug output
-    output [7:0] o_debug_tcu,
-    output [15:0] o_debug_pc,
-    output [7:0] o_debug_state,
-    output [15:0] o_debug_address_vector
+    
+    output [7:0] o_debug_tcu,               // Timing Control Unit
+    output [15:0] o_debug_pc,               // Program Counter
+    output [7:0] o_debug_ir,                // Instruction Register
+    output [7:0] o_debug_state,             // State
+    output [15:0] o_debug_address_vector    // address for reset/irq/nmi vectors
 );
 
-localparam STATE_RESET_VECTOR = 0;                  // read two bytes from the reset vector
-                                                    //    and load as address into PC
-localparam STATE_EXECUTE_OPCODES = 1;               // load opcodes from address in PC & execute
+localparam STATE_RESET_VECTOR = 0;          // read two bytes from the reset vector
+                                            //    and load as address into PC
+localparam STATE_EXECUTE_OPCODES = 1;       // load opcodes from address in PC & execute
 
 
 localparam ADDRESS_RESET_VECTOR = 16'hFFFC;
@@ -29,10 +32,16 @@ localparam RW_READ = 1;
 localparam RW_WRITE = 0;
 
 reg [7:0] r_state;
-reg [7:0] r_tcu;                                    // Timing Control Unit - track current stage of current opcode
-reg [15:0] r_pc;                                    // Program Counter
-reg r_rw;                                           // Read / Write
-reg [15:0] r_address_vector;                        // Register that drives address for reset / irq / nmi vectors
+reg [7:0] r_tcu;                            // Timing Control Unit - track current stage of current opcode
+reg [15:0] r_pc;                            // Program Counter
+reg r_rw;                                   // Read / Write
+reg [15:0] r_address_vector;                // Register that drives address for reset / irq / nmi vectors
+
+/* verilator lint_off UNDRIVEN */
+/* verilator lint_off UNUSED */
+reg [7:0] r_ir;                             // Instruction Register
+/* verilator lint_on UNDRIVEN */
+/* verilator lint_on UNUSED */
 
 always @(negedge i_clk or negedge i_reset_n)
 begin
@@ -88,6 +97,7 @@ end
 assign o_debug_address_vector = r_address_vector;
 assign o_debug_tcu = r_tcu;
 assign o_debug_pc = r_pc;
+assign o_debug_ir = r_ir;
 assign o_debug_state = r_state;
 
 assign o_address = (r_state == STATE_RESET_VECTOR) ? r_address_vector : r_pc;

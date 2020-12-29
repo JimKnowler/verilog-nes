@@ -103,6 +103,8 @@ TEST_F(Cpu6502, ShouldExecuteNOP) {
     tick(2);
     testBench.trace.clear();
 
+    // test executing NOP opcodes
+    // NOTE: NOP should execute for 2 clock ticks
     tick(5);
     Trace expected = TraceBuilder()
         .port(i_clk).signal("_-").repeat(5)
