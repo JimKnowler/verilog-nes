@@ -77,11 +77,17 @@ TEST_F(Cpu6502, ShouldReset) {
 }
 
 TEST_F(Cpu6502, ShouldUseResetVector) {
-    tick(2);
+    const uint8_t NOP = 0xEA;
+
+    sram.clear(NOP);
+
+    tick(3);
 
     Trace expected = TraceBuilder()
-        .port(i_clk).signal("_-").repeat(2)
-        .port(o_address).signal({0xFFFC,0xFFFD}).repeatEachStep(2);
+        .port(i_clk).signal("_-").repeat(3)
+        .port(o_rw).signal("11").repeat(3)
+        .port(o_address).signal({0xFFFC,0xFFFD, 0xEAEA}).repeatEachStep(2)
+        .port(i_data).signal({0,0xEA, 0xEA}).repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
