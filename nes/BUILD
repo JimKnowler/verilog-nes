@@ -26,7 +26,8 @@ verilator_cc_library(
     srcs = [
         "Cpu6502.v", 
         "cpu6502/Decoder.v",
-        "cpu6502/ProgramCounterLow.v"
+        "cpu6502/ProgramCounterLow.v",
+        "cpu6502/ProgramCounterHigh.v"
     ],
 )
 
