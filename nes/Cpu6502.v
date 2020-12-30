@@ -26,9 +26,6 @@ localparam STATE_EXECUTE_OPCODES = 1;       // load opcodes from address in PC &
 
 localparam ADDRESS_RESET_VECTOR = 16'hFFFC;
 
-localparam RW_READ = 1;
-localparam RW_WRITE = 0;
-
 localparam OPCODE_NOP = 8'hEA;
 localparam OPCODE_LDAi = 8'hA9;
 localparam OPCODE_STAa = 8'h8D;
@@ -40,31 +37,39 @@ localparam ADDRESS_MODE_ALT = 1'b1;         // use r_address_alt to drive o_addr
 reg [7:0] r_state;
 reg [2:0] r_tcu;                            // Timing Control Unit - track current stage of current opcode
 reg [15:0] r_pc;                            // Program Counter
-reg r_rw;                                   // Read / Write
-reg [15:0] r_address_alt;                       // Register that drives address for data write & 
+reg [15:0] r_address_alt;                   // Register that drives address for data write & 
                                             //   reset / irq / nmi vectors, 
 reg r_address_mode;                         // Whether to use r_address_alt or r_pc for o_address
 reg [7:0] r_ir;                             // Instruction Register
 reg [7:0] r_a;                              // 'A' data register
 reg [7:0] r_data;                           // Data writen to o_data
 
+wire [2:0] w_tcu_next;
+
+Decoder decoder(
+    .i_ir(r_ir),
+    .i_tcu(r_tcu),
+    .o_tcu_next(w_tcu_next),
+    .o_rw(o_rw)
+);
+
 always @(negedge i_clk or negedge i_reset_n)
 begin
     if (!i_reset_n)
     begin
         r_tcu <= 0;
-        r_rw <= RW_READ;
         r_state <= STATE_RESET_VECTOR;
         r_address_alt <= 0;
         r_address_mode <= ADDRESS_MODE_ALT;
     end
     else
     begin
-        r_tcu <= r_tcu + 1;
+        // falling edge i_clk
+
+        r_tcu <= w_tcu_next;
         
         if (r_state == STATE_RESET_VECTOR)
         begin
-            // falling edge
             if (r_tcu == 0)
             begin
                 r_address_alt <= ADDRESS_RESET_VECTOR;
@@ -123,7 +128,6 @@ begin
                     r_address_alt[15:8] <= i_data;
                     r_address_mode <= ADDRESS_MODE_ALT;
                     r_data <= r_a;
-                    r_rw <= 0;
                 end
 
                 if (r_ir == OPCODE_LDAa)
@@ -139,7 +143,6 @@ begin
                     r_address_mode <= ADDRESS_MODE_PC;
                     r_pc <= r_pc + 1;
                     r_tcu <= 1;
-                    r_rw <= 1;
                     r_data <= 0;
                 end
 
@@ -163,7 +166,6 @@ assign o_debug_a = r_a;
 assign o_debug_address_alt = r_address_alt;
 
 assign o_address = (r_address_mode == ADDRESS_MODE_PC) ? r_pc : r_address_alt;
-assign o_rw = r_rw;
 assign o_data = r_data;
 
 endmodule

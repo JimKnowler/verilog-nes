@@ -23,7 +23,7 @@ gtest_verilog_testbench(
 
 verilator_cc_library(
     name = "Cpu6502",
-    srcs = ["Cpu6502.v"],
+    srcs = ["Cpu6502.v", "cpu6502/Decoder.v"],
 )
 
 gtest_verilog_testbench(
