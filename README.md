@@ -76,6 +76,7 @@ Aim: to play the original NES [Super Mario Bros](https://en.wikipedia.org/wiki/S
     - Vivado clock generator? - need to use vivado wizard but it handles timings for us
 - Build 6502 soft core
   - cycle timings are documented in [Synertek hardware manual](http://archive.6502.org/datasheets/synertek_hardware_manual.pdf) in appendix A
+  - [6502 opcode reference](http://www.obelisk.me.uk/6502/reference.html)
 - Build PPU soft core
 - Build VGA output
 - Build HDMI output (perhaps?)
