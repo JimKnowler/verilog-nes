@@ -131,20 +131,21 @@ TEST_F(Cpu6502, ShouldLDAi) {
     
     Assembler()
         .LDA().immediate(0x53)
+        .NOP()
         .compileTo(sram);
 
     helperSkipResetVector();
 
-    tick(3);
+    tick(5);
 
     Trace expected = TraceBuilder()
         .port(i_clk).signal("_-")
-                    .repeat(3)
+                    .repeat(5)
         .port(o_rw).signal("11")
-                    .repeat(3)
-        .port(o_address).signal({0, 1, 2})
+                    .repeat(5)
+        .port(o_address).signal({0, 1, 2, 3, 3})
                         .repeatEachStep(2)
-        .port(o_debug_a).signal({0x00, 0x00, 0x53})
+        .port(o_debug_a).signal({0x00, 0x00, 0x53, 0x53, 0x53})
                         .repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
@@ -159,25 +160,26 @@ TEST_F(Cpu6502, ShouldLDAiSTAa) {
     Assembler()
         .LDA().immediate(0x42)
         .STA().a(0x1234)
+        .NOP()
         .compileTo(sram);
 
     helperSkipResetVector();
 
-    tick(7);
+    tick(9);
 
     Trace expected = TraceBuilder()
         .port(i_clk).signal("_-")
-                    .repeat(7)
+                    .repeat(9)
         .port(o_rw).signal("11").repeat(5)      // READ
                     .signal("00")               // WRITE
-                    .signal("11")               // READ
+                    .signal("11").repeat(3)     // READ
         .port(o_data).signal({0, 0}).repeat(5)
                     .signal({0x42}).repeat(2)
-                    .signal({0, 0})
-        .port(o_address).signal({0, 1, 2, 3, 4, 0x1234, 5 })
+                    .signal({0, 0}).repeat(3)
+        .port(o_address).signal({0, 1, 2, 3, 4, 0x1234, 5, 6, 6 })
                         .repeatEachStep(2)
         .port(o_debug_a).signal({0x00}).repeat(2)
-                        .signal({0x42}).repeat(5)
+                        .signal({0x42}).repeat(7)
                         .concat().repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
