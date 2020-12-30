@@ -18,7 +18,6 @@ module Cpu6502(
     output [15:0] o_debug_pc,               // Program Counter
     output [7:0] o_debug_ir,                // Instruction Register
     output [7:0] o_debug_state,             // State
-    output [15:0] o_debug_address,          // address for reset/irq/nmi vectors
     output [7:0] o_debug_a                  // value in A register
     // todo: registers a,x,y,alu
 );
@@ -100,8 +99,6 @@ begin
     end
 end
 
-
-assign o_debug_address = r_address;
 assign o_debug_tcu = r_tcu;
 assign o_debug_pc = r_pc;
 assign o_debug_ir = r_ir;
