@@ -10,7 +10,7 @@ module Cpu6502(
     ///////////////////////////////////
     // debug output
     
-    output [7:0] o_debug_tcu,               // Timing Control Unit
+    output [2:0] o_debug_tcu,               // Timing Control Unit
     output [15:0] o_debug_pc,               // Program Counter
     output [7:0] o_debug_ir,                // Instruction Register
     output [7:0] o_debug_state,             // State
@@ -36,7 +36,7 @@ localparam ADDRESS_MODE_PC = 1'b0;          // use r_pc to drive o_address
 localparam ADDRESS_MODE_ALT = 1'b1;         // use r_address to drive o_address
 
 reg [7:0] r_state;
-reg [7:0] r_tcu;                            // Timing Control Unit - track current stage of current opcode
+reg [2:0] r_tcu;                            // Timing Control Unit - track current stage of current opcode
 reg [15:0] r_pc;                            // Program Counter
 reg r_rw;                                   // Read / Write
 reg [15:0] r_address;                       // Register that drives address for data write & 
