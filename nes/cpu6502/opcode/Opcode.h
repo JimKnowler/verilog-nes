@@ -23,8 +23,10 @@ namespace cpu6502 {
         public:
             Opcode();
 
+            Opcode& i(uint8_t value);
             Opcode& immediate(uint8_t value);  
 
+            Opcode& a(uint16_t value);
             Opcode& absolute(uint16_t value);      
 
             /// @brief Serialise the opcode to a byte stream

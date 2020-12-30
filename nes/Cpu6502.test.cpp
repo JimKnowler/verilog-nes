@@ -127,9 +127,9 @@ TEST_F(Cpu6502, ShouldExecuteLDAandSTA) {
     //       Assembler, that is constructed with
     //       initializer_list<Opcode> ?
     std::vector<uint8_t> prog;
-    auto lda = LDA().immediate(0x42).serialise();
+    auto lda = LDA().i(0x42).serialise();
     prog.insert(prog.end(), lda.begin(), lda.end());
-    auto sta = STA().absolute(0x1234).serialise();
+    auto sta = STA().a(0x1234).serialise();
     prog.insert(prog.end(), sta.begin(), sta.end());
     
     sram.write(0, prog);
