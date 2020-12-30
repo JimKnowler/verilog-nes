@@ -18,7 +18,7 @@ module Cpu6502(
     output [15:0] o_debug_pc,               // Program Counter
     output [7:0] o_debug_ir,                // Instruction Register
     output [7:0] o_debug_state,             // State
-    output [15:0] o_debug_address_vector,   // address for reset/irq/nmi vectors
+    output [15:0] o_debug_address,          // address for reset/irq/nmi vectors
     output [7:0] o_debug_a                  // value in A register
     // todo: registers a,x,y,alu
 );
@@ -37,7 +37,7 @@ reg [7:0] r_state;
 reg [7:0] r_tcu;                            // Timing Control Unit - track current stage of current opcode
 reg [15:0] r_pc;                            // Program Counter
 reg r_rw;                                   // Read / Write
-reg [15:0] r_address_vector;                // Register that drives address for reset / irq / nmi vectors
+reg [15:0] r_address;                       // Register that drives address for reset / irq / nmi vectors
 
 /* verilator lint_off UNDRIVEN */
 /* verilator lint_off UNUSED */
@@ -53,7 +53,7 @@ begin
         r_tcu <= 0;
         r_rw <= RW_READ;
         r_state <= STATE_RESET_VECTOR;
-        r_address_vector <= 0;
+        r_address <= 0;
     end
     else
     begin
@@ -64,12 +64,12 @@ begin
             // falling edge
             if (r_tcu == 0)
             begin
-                r_address_vector <= ADDRESS_RESET_VECTOR;
+                r_address <= ADDRESS_RESET_VECTOR;
             end
             if (r_tcu == 1)
             begin
                 r_pc[7:0] <= i_data;
-                r_address_vector <= r_address_vector + 1;
+                r_address <= r_address + 1;
             end
             else if (r_tcu == 2)
             begin
@@ -97,14 +97,14 @@ begin
 end
 
 
-assign o_debug_address_vector = r_address_vector;
+assign o_debug_address = r_address;
 assign o_debug_tcu = r_tcu;
 assign o_debug_pc = r_pc;
 assign o_debug_ir = r_ir;
 assign o_debug_state = r_state;
 assign o_debug_a = r_a;
 
-assign o_address = (r_state == STATE_RESET_VECTOR) ? r_address_vector : r_pc;
+assign o_address = (r_state == STATE_RESET_VECTOR) ? r_address : r_pc;
 assign o_rw = r_rw;
 
 endmodule
