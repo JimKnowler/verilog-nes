@@ -1,10 +1,8 @@
 module Decoder(
-    /* verilator lint_off UNUSED */
     input [7:0] i_ir,
     input [2:0] i_tcu,
     output reg [2:0] o_tcu_next,
     output reg o_rw
-    /* verilator lint_on UNUSED */
 );
 
 ////////////////////////////////////////////
