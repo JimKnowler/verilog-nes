@@ -75,8 +75,6 @@ begin
             begin
                 r_pc[15:8] <= i_data;
                 r_state <= STATE_EXECUTE_OPCODES;
-
-                // todo: load IR with opcode so that we can skip tcu of first opcode
                 r_tcu <= 1;
             end
         end
@@ -89,8 +87,14 @@ begin
             end
             else if (r_tcu == 1)
             begin
+                r_ir <= i_data;
                 r_pc <= r_pc + 1;
                 r_tcu <= 0;
+            end
+            else if (r_tcu == 2)
+            begin
+                r_pc <= r_pc + 1;
+                r_tcu <= 1;
             end
         end
     end

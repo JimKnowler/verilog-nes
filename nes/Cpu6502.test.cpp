@@ -13,6 +13,9 @@ using namespace cpu6502::opcode;
 #include "memory/SRAM.h"
 using namespace memory;
 
+#include "cpu6502/Assembler.h"
+using namespace cpu6502;
+
 namespace {
     class Cpu6502 : public ::testing::Test {
     public:
@@ -31,7 +34,7 @@ namespace {
         void TearDown() override {
         }
 
-         /// @brief simulate memory access using address, data + RW lines
+        /// @brief simulate memory access using address, data + RW lines
         void tick(uint32_t numTicks) {
             for (uint32_t i=0; i<numTicks; i++) {
                 auto& cpu = testBench.core();
@@ -55,6 +58,11 @@ namespace {
                     }
                 }
             }
+        }
+
+        void helperSkipResetVector() {
+            tick(2);
+            testBench.trace.clear();
         }
 
         Cpu6502TestBench testBench;
@@ -102,9 +110,7 @@ TEST_F(Cpu6502, ShouldExecuteNOP) {
     const uint8_t NOP = 0xEA;
     sram.clear(NOP);
 
-    // skip past the reset vector
-    tick(2);
-    testBench.trace.clear();
+    helperSkipResetVector();
 
     // test executing NOP opcodes
     // NOTE: NOP should execute for 2 clock ticks
@@ -123,27 +129,22 @@ TEST_F(Cpu6502, ShouldExecuteNOP) {
 TEST_F(Cpu6502, ShouldExecuteLDAandSTA) {
     sram.clear(0);
     
-    // todo: simplify assembling this program
-    //       Assembler, that is constructed with
-    //       initializer_list<Opcode> ?
-    std::vector<uint8_t> prog;
-    auto lda = LDA().i(0x42).serialise();
-    prog.insert(prog.end(), lda.begin(), lda.end());
-    auto sta = STA().a(0x1234).serialise();
-    prog.insert(prog.end(), sta.begin(), sta.end());
-    
-    sram.write(0, prog);
+    Assembler()
+        .LDA().immediate(0x42)
+        .STA().a(0x1234)
+        .compileTo(sram);
 
-    // skip past the reset vector
-    tick(2);
-    testBench.trace.clear();
+    helperSkipResetVector();
 
     // test executing program
-    tick(3);
+    tick(8);
     Trace expected = TraceBuilder()
-        .port(i_clk).signal("_-").repeat(3)
-        .port(o_rw).signal("11").repeat(3)
-        .port(o_address).signal({0x0000, 0x0000, 0x0001}).repeatEachStep(2);
+        .port(i_clk).signal("_-")
+                    .repeat(8)
+        .port(o_rw).signal("11")        // todo: add W for STA
+                    .repeat(8)
+        .port(o_address).signal({0, 1, 2, 3, 4, 5, 6, 7 })
+                        .repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
