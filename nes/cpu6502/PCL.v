@@ -9,16 +9,16 @@ module PCL(
     input i_clk,
 
     /* verilator lint_off UNUSED */
-    input i_reset_n,    // required for gtestverilog
+    input i_reset_n,        // required for gtestverilog
     /* verilator lint_on UNUSED */
 
     // program counter low select register
-    input i_pcl_pcl,    // Control Signal - input from PCL
-    input i_adl_pcl,    // Control Signal - input from ADL
-    input [7:0] i_adl,  // ADL bus
+    input i_pcl_pcl,        // Control Signal - input from PCL
+    input i_adl_pcl,        // Control Signal - input from ADL
+    input [7:0] i_adl,      // ADL bus
 
     // increment logic
-    input i_i_pc,       // increment
+    input i_i_pc,           // increment
     output reg o_pclc,      // carry out
 
     // program counter low register
@@ -29,8 +29,8 @@ module PCL(
     // input o_pcl_adl     // Control Signal - output to ADL
 );
 
-reg [8:0] r_pcls;      // output of PCLS
-reg [8:0] r_pcls_inc;  // output of increment logic
+reg [8:0] r_pcls;       // output of PCLS
+reg [8:0] r_pcls_inc;   // output of increment logic
                         // NOTE: 8th bit => carry out
 reg [7:0] r_pcl;        // output of PCL
 
@@ -50,7 +50,7 @@ end
 // Increment Logic
 always @(r_pcls or i_i_pc)
 begin
-    r_pcls_inc = r_pcls + { 7'b0, i_i_pc };
+    r_pcls_inc = r_pcls + { 8'b0, i_i_pc };
 end
 
 // Carry Out
