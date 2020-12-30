@@ -1,6 +1,6 @@
 // ProgramCounterLow
 //
-// combination of components for Program Counter low
+// combination of components for Program Counter low byte
 // - Program Counter Low Select (PCLS)
 // - Increment logic
 // - Program Counter Low Register (PCL)
@@ -26,21 +26,22 @@ module ProgramCounterLow(
     // input o_pcl_adl     // Control Signal - output to ADL
 );
 
-wire [7:0] w_pcls;      // output of PCLS
+wire [8:0] w_pcls;      // output of PCLS
 wire [8:0] w_pcls_inc;  // output of increment logic
                         // NOTE: 8th bit => carry out
 reg [7:0] r_pcl;        // output of PCL
 
+assign w_pcls[8] = 0;
 
 // PCLS
-always @(i_pcl_pcl or i_adl_pcl)
+always @(i_pcl_pcl or i_adl_pcl or i_adl or r_pcl)
 begin
     if (i_pcl_pcl)
-        w_pcls = r_pcl;
+        w_pcls[7:0] = r_pcl;
     else if (i_adl_pcl)
-        w_pcls = i_adl;
+        w_pcls[7:0] = i_adl;
     else
-        w_pcls = 8'h0;
+        w_pcls[7:0] = 8'h0;
 end
 
 // Increment Logic
@@ -65,7 +66,7 @@ end
 // Program Counter Low Register
 always @(posedge i_clk)
 begin
-    r_pcl = w_pcls_inc[7:0];
+    r_pcl <= w_pcls_inc[7:0];
 end
 
 assign o_pcl = r_pcl;
