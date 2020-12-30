@@ -1,13 +1,16 @@
-// ProgramCounterLow
+// Program Counter Low
 //
 // combination of components for Program Counter low byte
 // - Program Counter Low Select (PCLS)
 // - Increment logic
 // - Program Counter Low Register (PCL)
 
-module ProgramCounterLow(
+module PCL(
     input i_clk,
+
+    /* verilator lint_off UNUSED */
     input i_reset_n,    // required for gtestverilog
+    /* verilator lint_on UNUSED */
 
     // program counter low select register
     input i_pcl_pcl,    // Control Signal - input from PCL
@@ -19,54 +22,47 @@ module ProgramCounterLow(
     output reg o_pclc,      // carry out
 
     // program counter low register
-    output o_pcl
+    output [7:0] o_pcl
     
     // todo: externally in bus routing
     // input i_pcl_db,     // Control Signal - output to DB
     // input o_pcl_adl     // Control Signal - output to ADL
 );
 
-wire [8:0] w_pcls;      // output of PCLS
-wire [8:0] w_pcls_inc;  // output of increment logic
+reg [8:0] r_pcls;      // output of PCLS
+reg [8:0] r_pcls_inc;  // output of increment logic
                         // NOTE: 8th bit => carry out
 reg [7:0] r_pcl;        // output of PCL
-
-assign w_pcls[8] = 0;
 
 // PCLS
 always @(i_pcl_pcl or i_adl_pcl or i_adl or r_pcl)
 begin
+    r_pcls[8] = 0;
+
     if (i_pcl_pcl)
-        w_pcls[7:0] = r_pcl;
+        r_pcls[7:0] = r_pcl;
     else if (i_adl_pcl)
-        w_pcls[7:0] = i_adl;
+        r_pcls[7:0] = i_adl;
     else
-        w_pcls[7:0] = 8'h0;
+        r_pcls[7:0] = 8'h0;
 end
 
 // Increment Logic
-always @(w_pcls)
+always @(r_pcls or i_i_pc)
 begin
-    if (i_i_pc)
-    begin
-        w_pcls_inc = w_pcls + 1;
-    end
-    else
-    begin
-        w_pcls_inc = w_pcls;
-    end
+    r_pcls_inc = r_pcls + { 7'b0, i_i_pc };
 end
 
 // Carry Out
-always @(w_pcls_inc)
+always @(r_pcls_inc)
 begin
-    o_pclc = w_pcls_inc[8];
+    o_pclc = r_pcls_inc[8];
 end
 
 // Program Counter Low Register
 always @(posedge i_clk)
 begin
-    r_pcl <= w_pcls_inc[7:0];
+    r_pcl <= r_pcls_inc[7:0];
 end
 
 assign o_pcl = r_pcl;

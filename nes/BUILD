@@ -26,14 +26,34 @@ verilator_cc_library(
     srcs = [
         "Cpu6502.v", 
         "cpu6502/Decoder.v",
-        "cpu6502/ProgramCounterLow.v",
-        "cpu6502/ProgramCounterHigh.v"
+        "cpu6502/PCL.v",
+        "cpu6502/PCH.v"
     ],
 )
 
 gtest_verilog_testbench(
     name = "Cpu6502TestBench",
     deps = [":Cpu6502"]
+)
+
+verilator_cc_library(
+    name = "PCH",
+    srcs = ["cpu6502/PCH.v"]
+)
+
+gtest_verilog_testbench(
+    name = "PCHTestBench",
+    deps = [":PCH"]
+)
+
+verilator_cc_library(
+    name = "PCL",
+    srcs = ["cpu6502/PCL.v"]
+)
+
+gtest_verilog_testbench(
+    name = "PCLTestBench",
+    deps = [":PCL"]
 )
 
 cc_test(
@@ -46,13 +66,17 @@ cc_test(
     ) + [
         ":MasterClockTestBench",
         ":MemoryControllerTestBench",
-        ":Cpu6502TestBench"
+        ":Cpu6502TestBench",
+        ":PCHTestBench",
+        ":PCLTestBench"
     ],
     deps = [
         "@com_google_googletest//:gtest",
         "@gtestverilog//gtestverilog:lib",
         ":MasterClock",
         ":MemoryController",
-        ":Cpu6502"
+        ":Cpu6502",
+        ":PCH",
+        ":PCL"
     ],
 )
