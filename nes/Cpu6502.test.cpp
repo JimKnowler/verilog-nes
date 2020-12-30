@@ -123,9 +123,6 @@ TEST_F(Cpu6502, ShouldExecuteNOP) {
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
-/// @note this test case is based on Ben Eater's video
-///       "'hello world' from scratch on a 6502 - Part 2"
-///       https://www.youtube.com/watch?v=yl8vPW5hydQ
 TEST_F(Cpu6502, ShouldLDAi) {
     sram.clear(0);
     
@@ -147,6 +144,34 @@ TEST_F(Cpu6502, ShouldLDAi) {
                         .repeatEachStep(2)
         .port(o_debug_a).signal({0x00, 0x00, 0x53, 0x53, 0x53})
                         .repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldLDAa) {
+    sram.clear(0);
+    
+    Assembler()
+        .LDA().a(0x5678)
+        .NOP()
+        .compileTo(sram);
+
+    sram.write(0x5678, 0x42);
+
+    helperSkipResetVector();
+
+    tick(7);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(7)
+        .port(o_rw).signal("11")
+                    .repeat(7)
+        .port(o_address).signal({0, 1, 2, 0x5678, 3, 4, 4})
+                        .repeatEachStep(2)
+        .port(o_debug_a).signal({0x00}).repeat(4)
+                        .signal({0x42}).repeat(3)
+                        .concat().repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
