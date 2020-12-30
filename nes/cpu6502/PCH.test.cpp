@@ -26,3 +26,61 @@ TEST_F(PCH, ShouldConstruct) {
 TEST_F(PCH, ShouldReset) {
     testBench.reset();
 }
+
+TEST_F(PCH, ShouldReadFromADH) {
+    auto& core = testBench.core();
+
+    core.i_adh = 0xAB;
+    core.i_adh_pch = 1;
+    core.eval();
+    EXPECT_EQ(0, core.o_pch);
+
+    testBench.tick();
+    EXPECT_EQ(0xAB, core.o_pch);
+}
+
+TEST_F(PCH, ShouldReadFromADHAndIncrement) {
+    auto& core = testBench.core();
+
+    core.i_adh = 0xEA;
+    core.i_adh_pch = 1;
+    core.i_pclc = 1;
+    core.eval();
+    EXPECT_EQ(0, core.o_pch);
+
+    testBench.tick();
+    EXPECT_EQ(0xEB, core.o_pch);
+}
+
+TEST_F(PCH, ShouldReusePCH) {
+    auto& core = testBench.core();
+
+    // load value into PCH
+    core.i_adh = 0xEA;
+    core.i_adh_pch = 1;
+    testBench.tick();
+    
+    // now reuse the existing value
+    core.i_adh = 0x00;
+    core.i_adh_pch = 0;
+    core.i_pch_pch = 1;
+    testBench.tick();
+    EXPECT_EQ(0xEA, core.o_pch);
+}
+
+TEST_F(PCH, ShouldIncrementPCH) {
+    auto& core = testBench.core();
+
+    // load value into PCH
+    core.i_adh = 0xEA;
+    core.i_adh_pch = 1;
+    testBench.tick();
+    
+    // now increment the existing value
+    core.i_adh = 0x00;
+    core.i_adh_pch = 0;
+    core.i_pch_pch = 1;
+    core.i_pclc = 1;
+    testBench.tick();
+    EXPECT_EQ(0xEB, core.o_pch);
+}

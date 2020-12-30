@@ -46,7 +46,7 @@ end
 // Increment Logic
 always @(r_pchs or i_pclc)
 begin
-    r_pchs_inc = r_pchs + 1 + { 7'b0, i_pclc };
+    r_pchs_inc = r_pchs + { 7'b0, i_pclc };
 end
 
 // Program counter High Register
