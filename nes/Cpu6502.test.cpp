@@ -126,7 +126,34 @@ TEST_F(Cpu6502, ShouldExecuteNOP) {
 /// @note this test case is based on Ben Eater's video
 ///       "'hello world' from scratch on a 6502 - Part 2"
 ///       https://www.youtube.com/watch?v=yl8vPW5hydQ
-TEST_F(Cpu6502, ShouldExecuteLDAandSTA) {
+TEST_F(Cpu6502, ShouldLDAi) {
+    sram.clear(0);
+    
+    Assembler()
+        .LDA().immediate(0x53)
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    tick(3);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(3)
+        .port(o_rw).signal("11")
+                    .repeat(3)
+        .port(o_address).signal({0, 1, 2})
+                        .repeatEachStep(2)
+        .port(o_debug_a).signal({0x00, 0x00, 0x53})
+                        .repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+/// @note this test case is based on Ben Eater's video
+///       "'hello world' from scratch on a 6502 - Part 2"
+///       https://www.youtube.com/watch?v=yl8vPW5hydQ
+TEST_F(Cpu6502, ShouldLDAiSTAa) {
     sram.clear(0);
     
     Assembler()
@@ -136,21 +163,22 @@ TEST_F(Cpu6502, ShouldExecuteLDAandSTA) {
 
     helperSkipResetVector();
 
-    // test executing program
-    tick(8);
+    tick(7);
+
     Trace expected = TraceBuilder()
         .port(i_clk).signal("_-")
-                    .repeat(8)
-        .port(o_rw).signal("11")        // todo: add W for STA
-                    .repeat(8)
-        .port(o_address).signal({0, 1, 2, 3, 4, 5, 6, 7 })
-                        .repeatEachStep(2);
+                    .repeat(7)
+        .port(o_rw).signal("11").repeat(5)      // READ
+                    .signal("00")               // WRITE
+                    .signal("11")               // READ
+        .port(o_data).signal({0, 0}).repeat(5)
+                    .signal({0x42}).repeat(2)
+                    .signal({0, 0})
+        .port(o_address).signal({0, 1, 2, 3, 4, 0x1234, 5 })
+                        .repeatEachStep(2)
+        .port(o_debug_a).signal({0x00}).repeat(2)
+                        .signal({0x42}).repeat(5)
+                        .concat().repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
-
-
-// TODO: should tests compare the inner (debug) state of CPU?
-//       ... useful for testing each instruction in isolation
-//           -> look at data registers, TCU, fetching opcode for next instruction, etc
-//       ... or should all tests only look at external behaviour?
