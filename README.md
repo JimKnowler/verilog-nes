@@ -75,6 +75,7 @@ Aim: to play the original NES [Super Mario Bros](https://en.wikipedia.org/wiki/S
     - clock divider? - easy to write, but issues with timings? need to edit XDC manually
     - Vivado clock generator? - need to use vivado wizard but it handles timings for us
 - Build 6502 soft core
+  - cycle timings are documented in [Synertek hardware manual](http://archive.6502.org/datasheets/synertek_hardware_manual.pdf) in appendix A
 - Build PPU soft core
 - Build VGA output
 - Build HDMI output (perhaps?)
