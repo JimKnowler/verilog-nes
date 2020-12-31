@@ -300,6 +300,18 @@ TEST_F(Routing, ShouldRouteAddToAdl) {
     EXPECT_EQ(0xFF, core.o_bus_sb); 
 }
 
-// TODO: Status(P) - p/db
+TEST_F(Routing, ShouldRoutePtoDb) {
+    auto& core = testBench.core();
+
+    core.i_p = 0x9C;
+    core.i_p_db = 1;
+    core.eval();
+
+    EXPECT_EQ(0xFF, core.o_bus_adh);
+    EXPECT_EQ(0xFF, core.o_bus_adl);
+    EXPECT_EQ(0x9C, core.o_bus_db);
+    EXPECT_EQ(0xFF, core.o_bus_sb); 
+}
+
 // TODO: Pass Mosfets - sb to adh
 // TODO: Pass Mosfest - sb to db

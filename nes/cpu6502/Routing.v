@@ -45,6 +45,10 @@ module Routing(
     input i_add_sb_0_6,
     input i_add_adl,
 
+    // Processor Status Register (P)
+    input [7:0] i_p,
+    input i_p_db,
+
     // Open Drain Mosfets
     input i_0_adl0,
     input i_0_adl1,
@@ -77,6 +81,8 @@ begin
         r_bus_db = i_pch;
     if (i_ac_db)
         r_bus_db = i_ac;
+    if (i_p_db)
+        r_bus_db = i_p;
 end
 
 // Drive SB bus
