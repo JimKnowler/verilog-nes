@@ -183,9 +183,33 @@ TEST_F(Routing, ShouldPullDownAdh1_7) {
     EXPECT_EQ(0xFF, core.o_bus_sb);
 }
 
+TEST_F(Routing, ShouldRouteXtoSb) {
+    auto& core = testBench.core();
+
+    core.i_x = 0x4C;
+    core.i_x_sb = 1;
+    core.eval();
+
+    EXPECT_EQ(0xFF, core.o_bus_adh);
+    EXPECT_EQ(0xFF, core.o_bus_adl);
+    EXPECT_EQ(0xFF, core.o_bus_db);
+    EXPECT_EQ(0x4C, core.o_bus_sb);    
+}
+
+TEST_F(Routing, ShouldRouteYtoSb) {
+    auto& core = testBench.core();
+
+    core.i_y = 0x5D;
+    core.i_y_sb = 1;
+    core.eval();
+
+    EXPECT_EQ(0xFF, core.o_bus_adh);
+    EXPECT_EQ(0xFF, core.o_bus_adl);
+    EXPECT_EQ(0xFF, core.o_bus_db);
+    EXPECT_EQ(0x5D, core.o_bus_sb);   
+}
+
 // TODO: Accumulator - ac/db, ac/sb
-// TODO: X - x/sb
-// TODO: Y - y/sb
 // TODO: ADD - add/sb(7), add/sb(0-6), add/adl, 
 // TODO: Stack Pointer s/sb, s/adl, 
 // TODO: Status(P) - p/db

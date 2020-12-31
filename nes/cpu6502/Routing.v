@@ -21,13 +21,20 @@ module Routing(
     input i_pch_adh,
     input i_pch_db,
 
+    // X register
+    input [7:0] i_x,
+    input i_x_sb,
+
+    // Y register
+    input [7:0] i_y,
+    input i_y_sb,
+
     // Open Drain Mosfets
     input i_0_adl0,
     input i_0_adl1,
     input i_0_adl2,
     input i_0_adh0,
     input i_0_adh1_7,
-
 
     // output bus values
     output [7:0] o_bus_db,
@@ -58,6 +65,11 @@ end
 always @(*)
 begin
     r_bus_sb = 8'hFF;
+
+    if (i_x_sb)
+        r_bus_sb = i_x;
+    if (i_y_sb)
+        r_bus_sb = i_y;
 end
 
 // Drive ADL bus
