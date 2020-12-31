@@ -22,10 +22,6 @@ module PCH(
 
     // program counter high register
     output [7:0] o_pch
-
-    // todo: externally in bus routing
-    // input i_pch_adh      // control signal - output to ADH
-    // input i_pch_db       // control signal - output to DB
 );
 
 reg [7:0] r_pchs;           // output of PCHS

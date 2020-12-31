@@ -23,10 +23,6 @@ module PCL(
 
     // program counter low register
     output [7:0] o_pcl
-    
-    // todo: externally in bus routing
-    // input i_pcl_db,     // Control Signal - output to DB
-    // input o_pcl_adl     // Control Signal - output to ADL
 );
 
 reg [8:0] r_pcls;       // output of PCLS
