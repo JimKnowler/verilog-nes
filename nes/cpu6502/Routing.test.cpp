@@ -97,6 +97,32 @@ TEST_F(Routing, ShouldRoutePclToDB) {
     EXPECT_EQ(0xFF, core.o_bus_sb);
 }
 
+TEST_F(Routing, ShouldRoutePchToAdh) {
+    auto& core = testBench.core();
+
+    core.i_pch = 0xC5;
+    core.i_pch_adh = 1;
+    core.eval();
+
+    EXPECT_EQ(0xC5, core.o_bus_adh);
+    EXPECT_EQ(0xFF, core.o_bus_adl);
+    EXPECT_EQ(0xFF, core.o_bus_db);
+    EXPECT_EQ(0xFF, core.o_bus_sb);
+}
+
+TEST_F(Routing, ShouldRoutePchToDb) {
+    auto& core = testBench.core();
+
+    core.i_pch = 0xE2;
+    core.i_pch_db = 1;
+    core.eval();
+
+    EXPECT_EQ(0xFF, core.o_bus_adh);
+    EXPECT_EQ(0xFF, core.o_bus_adl);
+    EXPECT_EQ(0xE2, core.o_bus_db);
+    EXPECT_EQ(0xFF, core.o_bus_sb);
+}
+
 TEST_F(Routing, ShouldPullDownAdl0) {
     auto& core = testBench.core();
 
@@ -157,9 +183,11 @@ TEST_F(Routing, ShouldPullDownAdh1_7) {
     EXPECT_EQ(0xFF, core.o_bus_sb);
 }
 
-
-// TODO: PCH
 // TODO: Accumulator - ac/db, ac/sb
+// TODO: X - x/sb
+// TODO: Y - y/sb
+// TODO: ADD - add/sb(7), add/sb(0-6), add/adl, 
 // TODO: Stack Pointer s/sb, s/adl, 
+// TODO: Status(P) - p/db
 // TODO: Pass Mosfets - sb to adh
 // TODO: Pass Mosfest - sb to db

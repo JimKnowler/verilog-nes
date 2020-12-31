@@ -17,7 +17,9 @@ module Routing(
     input i_pcl_db,
 
     // Program Counter High (PCH)
-    // todo:
+    input [7:0] i_pch,
+    input i_pch_adh,
+    input i_pch_db,
 
     // Open Drain Mosfets
     input i_0_adl0,
@@ -48,6 +50,8 @@ begin
         r_bus_db = i_dl;
     if (i_pcl_db) 
         r_bus_db = i_pcl;
+    if (i_pch_db)
+        r_bus_db = i_pch;
 end
 
 // Drive SB bus
@@ -65,6 +69,8 @@ begin
         r_bus_adl = i_dl;
     if (i_pcl_adl)
         r_bus_adl = i_pcl;
+
+    // open drain mosfets
     if (i_0_adl0)
         r_bus_adl[0] = 0;
     if (i_0_adl1)
@@ -80,6 +86,10 @@ begin
 
     if (i_dl_adh)
         r_bus_adh = i_dl;
+    if (i_pch_adh)
+        r_bus_adh = i_pch;
+
+    // open drain mosfets
     if (i_0_adh0)
         r_bus_adh[0] = 0;
     if (i_0_adh1_7)
