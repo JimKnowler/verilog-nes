@@ -96,6 +96,16 @@ gtest_verilog_testbench(
     deps = [":Register"]
 )
 
+verilator_cc_library(
+    name = "DOR",
+    srcs = ["cpu6502/DOR.v"]
+)
+
+gtest_verilog_testbench(
+    name = "DORTestBench",
+    deps = [":DOR"]
+)
+
 cc_test(
     name = "test",
     srcs = glob(
@@ -112,7 +122,8 @@ cc_test(
         ":AddressBusRegisterTestBench",
         ":DLTestBench",
         ":RoutingTestBench",
-        ":RegisterTestBench"
+        ":RegisterTestBench",
+        ":DORTestBench"
     ],
     deps = [
         "@com_google_googletest//:gtest",
@@ -125,6 +136,7 @@ cc_test(
         ":AddressBusRegister",
         ":DL",
         ":Routing",
-        ":Register"
+        ":Register",
+        ":DOR"
     ],
 )
