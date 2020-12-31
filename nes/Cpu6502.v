@@ -55,6 +55,8 @@ wire w_adl_abl;
 wire w_adh_abh;
 /* verilator lint_on UNDRIVEN */
 
+/// @todo Use Decoder to drive all signals
+
 // Input Data Latch
 wire [7:0] w_dl;
 DL dl(
@@ -139,14 +141,12 @@ Register s(
     .o_data(w_s)
 );
 
-// Adder Hold Register (add)
-// -> todo: note - loads on posedge
-
+/// @todo Adder Hold Register (add)
+//        note - loads on posedge
 wire [7:0] w_add;
 assign w_add = 8'h0;
 
-// Processor Status Register (p)
-// -> todo
+/// @todo Processor Status Register (p)
 wire [7:0] w_p;
 assign w_p = 8'h0;
 
