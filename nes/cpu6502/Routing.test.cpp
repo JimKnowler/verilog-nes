@@ -235,8 +235,33 @@ TEST_F(Routing, ShouldRouteAcToDb) {
     EXPECT_EQ(0xFF, core.o_bus_sb);   
 }
 
+TEST_F(Routing, ShouldRouteStackPointerToSb) {
+    auto& core = testBench.core();
+
+    core.i_s = 0x3D;
+    core.i_s_sb = 1;
+    core.eval();
+
+    EXPECT_EQ(0xFF, core.o_bus_adh);
+    EXPECT_EQ(0xFF, core.o_bus_adl);
+    EXPECT_EQ(0xFF, core.o_bus_db);
+    EXPECT_EQ(0x3D, core.o_bus_sb);   
+}
+
+TEST_F(Routing, ShouldRouteStackPointerToAdl) {
+    auto& core = testBench.core();
+
+    core.i_s = 0x2E;
+    core.i_s_adl = 1;
+    core.eval();
+
+    EXPECT_EQ(0xFF, core.o_bus_adh);
+    EXPECT_EQ(0x2E, core.o_bus_adl);
+    EXPECT_EQ(0xFF, core.o_bus_db);
+    EXPECT_EQ(0xFF, core.o_bus_sb); 
+}
+
 // TODO: ADD - add/sb(7), add/sb(0-6), add/adl, 
-// TODO: Stack Pointer s/sb, s/adl, 
 // TODO: Status(P) - p/db
 // TODO: Pass Mosfets - sb to adh
 // TODO: Pass Mosfest - sb to db

@@ -34,6 +34,11 @@ module Routing(
     input i_ac_sb,
     input i_ac_db,
 
+    // Stack Pointer (S)
+    input [7:0] i_s,
+    input i_s_sb,
+    input i_s_adl,
+
     // Open Drain Mosfets
     input i_0_adl0,
     input i_0_adl1,
@@ -79,6 +84,8 @@ begin
         r_bus_sb = i_y;
     if (i_ac_sb)
         r_bus_sb = i_ac;
+    if (i_s_sb)
+        r_bus_sb = i_s;
 end
 
 // Drive ADL bus
@@ -90,6 +97,8 @@ begin
         r_bus_adl = i_dl;
     if (i_pcl_adl)
         r_bus_adl = i_pcl;
+    if (i_s_adl)
+        r_bus_adl = i_s;
 
     // open drain mosfets
     if (i_0_adl0)
