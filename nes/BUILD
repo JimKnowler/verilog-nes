@@ -56,6 +56,16 @@ gtest_verilog_testbench(
     deps = [":PCL"]
 )
 
+verilator_cc_library(
+    name = "AddressBusRegister",
+    srcs = ["cpu6502/AddressBusRegister.v"]
+)
+
+gtest_verilog_testbench(
+    name = "AddressBusRegisterTestBench",
+    deps = [":AddressBusRegister"]
+)
+
 cc_test(
     name = "test",
     srcs = glob(
@@ -68,7 +78,8 @@ cc_test(
         ":MemoryControllerTestBench",
         ":Cpu6502TestBench",
         ":PCHTestBench",
-        ":PCLTestBench"
+        ":PCLTestBench",
+        ":AddressBusRegisterTestBench"
     ],
     deps = [
         "@com_google_googletest//:gtest",
@@ -77,6 +88,7 @@ cc_test(
         ":MemoryController",
         ":Cpu6502",
         ":PCH",
-        ":PCL"
+        ":PCL",
+        ":AddressBusRegister"
     ],
 )
