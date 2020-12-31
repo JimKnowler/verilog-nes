@@ -27,7 +27,12 @@ verilator_cc_library(
         "Cpu6502.v", 
         "cpu6502/Decoder.v",
         "cpu6502/PCL.v",
-        "cpu6502/PCH.v"
+        "cpu6502/PCH.v",
+        "cpu6502/DL.v",
+        "cpu6502/Register.v",
+        "cpu6502/AddressBusRegister.v",
+        "cpu6502/DOR.v",
+        "cpu6502/Routing.v",
     ],
 )
 

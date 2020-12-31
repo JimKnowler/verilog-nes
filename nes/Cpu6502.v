@@ -5,167 +5,216 @@ module Cpu6502(
     output o_rw,                            // Read / Write - where 1 = READ, 0 = WRITE
     output [15:0] o_address,
     input [7:0] i_data,                     // 8 bit data - used for READ
-    output [7:0] o_data,                    // 8 bit data - used for WRITE
-
-    ///////////////////////////////////
-    // debug output
-    
-    output [2:0] o_debug_tcu,               // Timing Control Unit
-    output [15:0] o_debug_pc,               // Program Counter
-    output [7:0] o_debug_ir,                // Instruction Register
-    output [7:0] o_debug_state,             // State
-    output [7:0] o_debug_a,                 // value in A register
-    output [15:0] o_debug_address_alt       // alternate address
-    // todo: registers a,x,y,alu
+    output [7:0] o_data                     // 8 bit data - used for WRITE
 );
 
-localparam STATE_RESET_VECTOR = 0;          // read two bytes from the reset vector
-                                            //    and load as address into PC
-localparam STATE_EXECUTE_OPCODES = 1;       // load opcodes from address in PC & execute
+// internal busses
+wire [7:0] w_bus_db;
+wire [7:0] w_bus_adl;
+wire [7:0] w_bus_adh;
+wire [7:0] w_bus_sb;
 
+// control signals from Decoder
+/* verilator lint_off UNDRIVEN */
+wire w_rw;
+wire w_dl_db;
+wire w_dl_adl;
+wire w_dl_adh;
+wire w_pcl_pcl;
+wire w_adl_pcl;
+wire w_i_pc;
+wire w_pclc;
+wire w_pcl_adl;
+wire w_pcl_db;
+wire w_pch_pch;
+wire w_adh_pch;
+wire w_pch_adh;
+wire w_pch_db;
+wire w_x_sb;
+wire w_y_sb;
+wire w_ac_sb;
+wire w_ac_db;
+wire w_s_sb;
+wire w_s_adl;
+wire w_add_sb_7;
+wire w_add_sb_0_6;
+wire w_add_adl;
+wire w_p_db;
+wire w_0_adl0;
+wire w_0_adl1;
+wire w_0_adl2;
+wire w_0_adh0;
+wire w_0_adh1_7;
+wire w_sb_adh;
+wire w_sb_db;
+wire w_sb_x;
+wire w_sb_y;
+wire w_sb_ac;
+wire w_sb_s;
+wire w_adl_abl;
+wire w_adh_abh;
+/* verilator lint_on UNDRIVEN */
 
-localparam ADDRESS_RESET_VECTOR = 16'hFFFC;
-
-localparam OPCODE_NOP = 8'hEA;
-localparam OPCODE_LDAi = 8'hA9;
-localparam OPCODE_STAa = 8'h8D;
-localparam OPCODE_LDAa = 8'hAD;
-
-localparam ADDRESS_MODE_PC = 1'b0;          // use r_pc to drive o_address
-localparam ADDRESS_MODE_ALT = 1'b1;         // use r_address_alt to drive o_address
-
-reg [7:0] r_state;
-reg [2:0] r_tcu;                            // Timing Control Unit - track current stage of current opcode
-reg [15:0] r_pc;                            // Program Counter
-reg [15:0] r_address_alt;                   // Register that drives address for data write & 
-                                            //   reset / irq / nmi vectors, 
-reg r_address_mode;                         // Whether to use r_address_alt or r_pc for o_address
-reg [7:0] r_ir;                             // Instruction Register
-reg [7:0] r_a;                              // 'A' data register
-reg [7:0] r_data;                           // Data writen to o_data
-
-wire [2:0] w_tcu_next;
-
-Decoder decoder(
-    .i_ir(r_ir),
-    .i_tcu(r_tcu),
-    .o_tcu_next(w_tcu_next),
-    .o_rw(o_rw)
+// Input Data Latch
+wire [7:0] w_dl;
+DL dl(
+    .i_clk(i_clk),
+    .i_reset_n(i_reset_n),
+    .i_data(i_data),
+    .o_data(w_dl)
 );
 
-always @(negedge i_clk or negedge i_reset_n)
-begin
-    if (!i_reset_n)
-    begin
-        r_tcu <= 0;
-        r_state <= STATE_RESET_VECTOR;
-        r_address_alt <= 0;
-        r_address_mode <= ADDRESS_MODE_ALT;
-    end
-    else
-    begin
-        // falling edge i_clk
+// Data Output Register 
+// (including data bus tristate buffers)
+DOR dor(
+    .i_clk(i_clk),
+    .i_reset_n(i_reset_n),
+    .i_rw(w_rw),
+    .i_data(w_bus_db),
+    .o_data(o_data)
+);
 
-        r_tcu <= w_tcu_next;
-        
-        if (r_state == STATE_RESET_VECTOR)
-        begin
-            if (r_tcu == 0)
-            begin
-                r_address_alt <= ADDRESS_RESET_VECTOR;
-            end
-            if (r_tcu == 1)
-            begin
-                r_pc[7:0] <= i_data;
-                r_address_alt <= r_address_alt + 1;
-            end
-            else if (r_tcu == 2)
-            begin
-                r_pc[15:8] <= i_data;
-                r_state <= STATE_EXECUTE_OPCODES;
-                r_address_mode <= ADDRESS_MODE_PC;
-                r_tcu <= 1;
-            end
-        end
+// Program Counter Low
+wire [7:0] w_pcl;
+PCL pcl(
+    .i_clk(i_clk),
+    .i_reset_n(i_reset_n),
+    .i_pcl_pcl(w_pcl_pcl),
+    .i_adl_pcl(w_adl_pcl),
+    .i_adl(w_bus_adl),
+    .i_i_pc(w_i_pc),
+    .o_pclc(w_pclc),
+    .o_pcl(w_pcl)
+);
 
-        if (r_state == STATE_EXECUTE_OPCODES)
-        begin
-            if (r_tcu == 0)
-            begin
-                // fetching opcode
-            end
-            else if (r_tcu == 1)
-            begin
-                r_ir <= i_data;
-                r_pc <= r_pc + 1;
-            end
-            else if (r_tcu == 2)
-            begin
-                if (r_ir != OPCODE_NOP)
-                begin
-                    r_pc <= r_pc + 1;
-                end
+// Program Counter High
+wire [7:0] w_pch;
+PCH pch(
+    .i_clk(i_clk),
+    .i_reset_n(i_reset_n),
+    .i_pch_pch(w_pch_pch),
+    .i_adh_pch(w_adh_pch),
+    .i_adh(w_bus_adh),
+    .i_pclc(w_pclc),
+    .o_pch(w_pch)
+);
 
-                if (r_ir == OPCODE_LDAi)
-                begin
-                    r_a <= i_data;
-                end
+// X Register
+wire [7:0] w_x;
+Register x(
+    .i_clk(i_clk),
+    .i_reset_n(i_reset_n),
+    .i_data(w_bus_sb),
+    .i_load(w_sb_x),
+    .o_data(w_x)
+);
 
-                if ((r_ir == OPCODE_STAa) || (r_ir == OPCODE_LDAa))
-                begin
-                    r_address_alt[7:0] <= i_data;
-                end
+// Y Register
+wire [7:0] w_y;
+Register y(
+    .i_clk(i_clk),
+    .i_reset_n(i_reset_n),
+    .i_data(w_bus_sb),
+    .i_load(w_sb_y),
+    .o_data(w_y)
+);
 
-                if ((r_ir == OPCODE_NOP) || (r_ir == OPCODE_LDAi))
-                begin
-                    r_tcu <= 1;
-                end
-            end
-            else if (r_tcu == 3)
-            begin
-                if (r_ir == OPCODE_STAa)
-                begin
-                    r_address_alt[15:8] <= i_data;
-                    r_address_mode <= ADDRESS_MODE_ALT;
-                    r_data <= r_a;
-                end
+// Accumulator Register (ac)
+wire [7:0] w_ac;
+Register ac(
+    .i_clk(i_clk),
+    .i_reset_n(i_reset_n),
+    .i_data(w_bus_sb),
+    .i_load(w_sb_ac),
+    .o_data(w_ac)
+);
 
-                if (r_ir == OPCODE_LDAa)
-                begin
-                    r_address_alt[15:8] <= i_data;
-                    r_address_mode <= ADDRESS_MODE_ALT;
-                end
-            end
-            else if (r_tcu == 4)
-            begin
-                if (r_ir == OPCODE_STAa)
-                begin
-                    r_address_mode <= ADDRESS_MODE_PC;
-                    r_pc <= r_pc + 1;
-                    r_tcu <= 1;
-                    r_data <= 0;
-                end
+// Stack Register (s)
+wire [7:0] w_s;
+Register s(
+    .i_clk(i_clk),
+    .i_reset_n(i_reset_n),
+    .i_data(w_bus_sb),
+    .i_load(w_sb_s),
+    .o_data(w_s)
+);
 
-                if (r_ir == OPCODE_LDAa)
-                begin
-                    r_address_mode <= ADDRESS_MODE_PC;
-                    r_pc <= r_pc + 1;
-                    r_tcu <= 1;
-                    r_a <= i_data;
-                end
-            end
-        end
-    end
-end
+// Adder Hold Register (add)
+// -> todo: note - loads on posedge
 
-assign o_debug_tcu = r_tcu;
-assign o_debug_pc = r_pc;
-assign o_debug_ir = r_ir;
-assign o_debug_state = r_state;
-assign o_debug_a = r_a;
-assign o_debug_address_alt = r_address_alt;
+wire [7:0] w_add;
+assign w_add = 8'h0;
 
-assign o_address = (r_address_mode == ADDRESS_MODE_PC) ? r_pc : r_address_alt;
-assign o_data = r_data;
+// Processor Status Register (p)
+// -> todo
+wire [7:0] w_p;
+assign w_p = 8'h0;
+
+// Address bus register - High
+wire [7:0] w_abh;
+AddressBusRegister abh(
+    .i_clk(i_clk),
+    .i_reset_n(i_reset_n),
+    .i_address(w_bus_adh),
+    .i_load(w_adh_abh),
+    .o_address(w_abh)
+);
+
+// Address bus register - Low
+wire [7:0] w_abl;
+AddressBusRegister abl(
+    .i_clk(i_clk),
+    .i_reset_n(i_reset_n),
+    .i_address(w_bus_adl),
+    .i_load(w_adl_abl),
+    .o_address(w_abl)
+);
+
+// Routing internal data buses
+Routing routing(
+    .i_clk(i_clk),
+    .i_reset_n(i_reset_n),
+    .i_dl(w_dl),
+    .i_dl_db(w_dl_db),
+    .i_dl_adl(w_dl_adl),
+    .i_dl_adh(w_dl_adh),
+    .i_pcl(w_pcl),
+    .i_pcl_adl(w_pcl_adl),
+    .i_pcl_db(w_pcl_db),
+    .i_pch(w_pch),
+    .i_pch_adh(w_pch_adh),
+    .i_pch_db(w_pch_db),
+    .i_x(w_x),
+    .i_x_sb(w_x_sb),
+    .i_y(w_y),
+    .i_y_sb(w_y_sb),
+    .i_ac(w_ac),
+    .i_ac_sb(w_ac_sb),
+    .i_ac_db(w_ac_db),
+    .i_s(w_s),
+    .i_s_sb(w_s_sb),
+    .i_s_adl(w_s_adl),
+    .i_add(w_add),
+    .i_add_sb_7(w_add_sb_7),
+    .i_add_sb_0_6(w_add_sb_0_6),
+    .i_add_adl(w_add_adl),
+    .i_p(w_p),
+    .i_p_db(w_p_db),
+    .i_0_adl0(w_0_adl0),
+    .i_0_adl1(w_0_adl1),
+    .i_0_adl2(w_0_adl2),
+    .i_0_adh0(w_0_adh0),
+    .i_0_adh1_7(w_0_adh1_7),
+    .i_sb_adh(w_sb_adh),
+    .i_sb_db(w_sb_db),
+    .o_bus_db(w_bus_db),
+    .o_bus_sb(w_bus_sb),
+    .o_bus_adl(w_bus_adl),
+    .o_bus_adh(w_bus_adh)
+);
+
+assign o_address[7:0] = w_abl;
+assign o_address[15:8] = w_abh;
+assign o_rw = w_rw;
 
 endmodule
