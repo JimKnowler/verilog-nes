@@ -11,7 +11,10 @@ module Register(
     output [7:0] o_data         // value stored in register
 );
 
-/// assumption: that value is loaded on falling edge of clk
+/// assumption: not clear from 6502 diagram when
+///      register is loaded, so assuming that value 
+///      is loaded on falling edge of clk while i_load
+//       is high
 
 reg [7:0] r_data;
 
