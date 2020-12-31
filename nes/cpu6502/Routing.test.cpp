@@ -313,5 +313,30 @@ TEST_F(Routing, ShouldRoutePtoDb) {
     EXPECT_EQ(0xFF, core.o_bus_sb); 
 }
 
-// TODO: Pass Mosfets - sb to adh
-// TODO: Pass Mosfest - sb to db
+TEST_F(Routing, ShouldRouteSbToAdh) {
+    auto& core = testBench.core();
+
+    core.i_s = 0x1F;
+    core.i_s_sb = 1;
+    core.i_sb_adh = 1;
+    core.eval();
+
+    EXPECT_EQ(0x1F, core.o_bus_adh);
+    EXPECT_EQ(0xFF, core.o_bus_adl);
+    EXPECT_EQ(0xFF, core.o_bus_db);
+    EXPECT_EQ(0x1F, core.o_bus_sb); 
+}
+
+TEST_F(Routing, ShouldRouteSbToDb) {
+    auto& core = testBench.core();
+
+    core.i_s = 0x2C;
+    core.i_s_sb = 1;
+    core.i_sb_db = 1;
+    core.eval();
+
+    EXPECT_EQ(0xFF, core.o_bus_adh);
+    EXPECT_EQ(0xFF, core.o_bus_adl);
+    EXPECT_EQ(0x2C, core.o_bus_db);
+    EXPECT_EQ(0x2C, core.o_bus_sb); 
+}

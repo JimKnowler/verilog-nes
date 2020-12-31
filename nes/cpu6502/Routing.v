@@ -56,6 +56,10 @@ module Routing(
     input i_0_adh0,
     input i_0_adh1_7,
 
+    // Pass Mosfets
+    input i_sb_adh,
+    input i_sb_db,
+
     // output bus values
     output [7:0] o_bus_db,
     output [7:0] o_bus_sb,
@@ -83,6 +87,8 @@ begin
         r_bus_db = i_ac;
     if (i_p_db)
         r_bus_db = i_p;
+    if (i_sb_db)
+        r_bus_db = r_bus_sb;
 end
 
 // Drive SB bus
@@ -136,6 +142,8 @@ begin
         r_bus_adh = i_dl;
     if (i_pch_adh)
         r_bus_adh = i_pch;
+    if (i_sb_adh)
+        r_bus_adh = r_bus_sb;
 
     // open drain mosfets
     if (i_0_adh0)
