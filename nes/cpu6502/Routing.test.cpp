@@ -209,7 +209,32 @@ TEST_F(Routing, ShouldRouteYtoSb) {
     EXPECT_EQ(0x5D, core.o_bus_sb);   
 }
 
-// TODO: Accumulator - ac/db, ac/sb
+TEST_F(Routing, ShouldRouteAcToSb) {
+    auto& core = testBench.core();
+
+    core.i_ac = 0x1E;
+    core.i_ac_sb = 1;
+    core.eval();
+
+    EXPECT_EQ(0xFF, core.o_bus_adh);
+    EXPECT_EQ(0xFF, core.o_bus_adl);
+    EXPECT_EQ(0xFF, core.o_bus_db);
+    EXPECT_EQ(0x1E, core.o_bus_sb);   
+}
+
+TEST_F(Routing, ShouldRouteAcToDb) {
+    auto& core = testBench.core();
+
+    core.i_ac = 0xB8;
+    core.i_ac_db = 1;
+    core.eval();
+
+    EXPECT_EQ(0xFF, core.o_bus_adh);
+    EXPECT_EQ(0xFF, core.o_bus_adl);
+    EXPECT_EQ(0xB8, core.o_bus_db);
+    EXPECT_EQ(0xFF, core.o_bus_sb);   
+}
+
 // TODO: ADD - add/sb(7), add/sb(0-6), add/adl, 
 // TODO: Stack Pointer s/sb, s/adl, 
 // TODO: Status(P) - p/db

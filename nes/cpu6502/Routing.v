@@ -29,6 +29,11 @@ module Routing(
     input [7:0] i_y,
     input i_y_sb,
 
+    // Accumulator (AC)
+    input [7:0] i_ac,
+    input i_ac_sb,
+    input i_ac_db,
+
     // Open Drain Mosfets
     input i_0_adl0,
     input i_0_adl1,
@@ -59,6 +64,8 @@ begin
         r_bus_db = i_pcl;
     if (i_pch_db)
         r_bus_db = i_pch;
+    if (i_ac_db)
+        r_bus_db = i_ac;
 end
 
 // Drive SB bus
@@ -70,6 +77,8 @@ begin
         r_bus_sb = i_x;
     if (i_y_sb)
         r_bus_sb = i_y;
+    if (i_ac_sb)
+        r_bus_sb = i_ac;
 end
 
 // Drive ADL bus
