@@ -39,6 +39,12 @@ module Routing(
     input i_s_sb,
     input i_s_adl,
 
+    // Adder Hold Register (ADD)
+    input [7:0] i_add,
+    input i_add_sb_7,
+    input i_add_sb_0_6,
+    input i_add_adl,
+
     // Open Drain Mosfets
     input i_0_adl0,
     input i_0_adl1,
@@ -86,6 +92,10 @@ begin
         r_bus_sb = i_ac;
     if (i_s_sb)
         r_bus_sb = i_s;
+    if (i_add_sb_7)
+        r_bus_sb[7] = i_add[7];
+    if (i_add_sb_0_6)
+        r_bus_sb[6:0] = i_add[6:0];
 end
 
 // Drive ADL bus
@@ -99,6 +109,8 @@ begin
         r_bus_adl = i_pcl;
     if (i_s_adl)
         r_bus_adl = i_s;
+    if (i_add_adl)
+        r_bus_adl = i_add;
 
     // open drain mosfets
     if (i_0_adl0)

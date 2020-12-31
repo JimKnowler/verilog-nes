@@ -261,7 +261,45 @@ TEST_F(Routing, ShouldRouteStackPointerToAdl) {
     EXPECT_EQ(0xFF, core.o_bus_sb); 
 }
 
-// TODO: ADD - add/sb(7), add/sb(0-6), add/adl, 
+TEST_F(Routing, ShouldRouteAddToSb_7) {
+    auto& core = testBench.core();
+
+    core.i_add = 0;
+    core.i_add_sb_7 = 1;
+    core.eval();
+
+    EXPECT_EQ(0xFF, core.o_bus_adh);
+    EXPECT_EQ(0xFF, core.o_bus_adl);
+    EXPECT_EQ(0xFF, core.o_bus_db);
+    EXPECT_EQ(0x7F, core.o_bus_sb); 
+}
+
+TEST_F(Routing, ShouldRouteAddToSb_0_6) {
+    auto& core = testBench.core();
+
+    core.i_add = 0;
+    core.i_add_sb_0_6 = 1;
+    core.eval();
+
+    EXPECT_EQ(0xFF, core.o_bus_adh);
+    EXPECT_EQ(0xFF, core.o_bus_adl);
+    EXPECT_EQ(0xFF, core.o_bus_db);
+    EXPECT_EQ(0x80, core.o_bus_sb); 
+}
+
+TEST_F(Routing, ShouldRouteAddToAdl) {
+    auto& core = testBench.core();
+
+    core.i_add = 0xB9;
+    core.i_add_adl = 1;
+    core.eval();
+
+    EXPECT_EQ(0xFF, core.o_bus_adh);
+    EXPECT_EQ(0xB9, core.o_bus_adl);
+    EXPECT_EQ(0xFF, core.o_bus_db);
+    EXPECT_EQ(0xFF, core.o_bus_sb); 
+}
+
 // TODO: Status(P) - p/db
 // TODO: Pass Mosfets - sb to adh
 // TODO: Pass Mosfest - sb to db
