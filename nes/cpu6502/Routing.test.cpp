@@ -97,9 +97,68 @@ TEST_F(Routing, ShouldRoutePclToDB) {
     EXPECT_EQ(0xFF, core.o_bus_sb);
 }
 
-// TODO: Open Drain Mosfets - 0/adl0, 0/adl1, 0/adl2, 0/adh0, 0/adh(1-7)
-//       - pull address lines to 0, independently of whatever else is on them?
-// 
+TEST_F(Routing, ShouldPullDownAdl0) {
+    auto& core = testBench.core();
+
+    core.i_0_adl0 = 1;
+    core.eval();
+
+    EXPECT_EQ(0xFF, core.o_bus_adh);
+    EXPECT_EQ(0xFE, core.o_bus_adl);
+    EXPECT_EQ(0xFF, core.o_bus_db);
+    EXPECT_EQ(0xFF, core.o_bus_sb);
+}
+
+TEST_F(Routing, ShouldPullDownAdl1) {
+    auto& core = testBench.core();
+
+    core.i_0_adl1 = 1;
+    core.eval();
+
+    EXPECT_EQ(0xFF, core.o_bus_adh);
+    EXPECT_EQ(0xFD, core.o_bus_adl);
+    EXPECT_EQ(0xFF, core.o_bus_db);
+    EXPECT_EQ(0xFF, core.o_bus_sb);
+}
+
+TEST_F(Routing, ShouldPullDownAdl2) {
+    auto& core = testBench.core();
+
+    core.i_0_adl2 = 1;
+    core.eval();
+
+    EXPECT_EQ(0xFF, core.o_bus_adh);
+    EXPECT_EQ(0xFB, core.o_bus_adl);
+    EXPECT_EQ(0xFF, core.o_bus_db);
+    EXPECT_EQ(0xFF, core.o_bus_sb);
+}
+
+TEST_F(Routing, ShouldPullDownAdh0) {
+    auto& core = testBench.core();
+
+    core.i_0_adh0 = 1;
+    core.eval();
+
+    EXPECT_EQ(0xFE, core.o_bus_adh);
+    EXPECT_EQ(0xFF, core.o_bus_adl);
+    EXPECT_EQ(0xFF, core.o_bus_db);
+    EXPECT_EQ(0xFF, core.o_bus_sb);
+}
+
+TEST_F(Routing, ShouldPullDownAdh1_7) {
+    auto& core = testBench.core();
+
+    core.i_0_adh1_7 = 1;
+    core.eval();
+
+    EXPECT_EQ(0x01, core.o_bus_adh);
+    EXPECT_EQ(0xFF, core.o_bus_adl);
+    EXPECT_EQ(0xFF, core.o_bus_db);
+    EXPECT_EQ(0xFF, core.o_bus_sb);
+}
+
+
+// TODO: PCH
 // TODO: Accumulator - ac/db, ac/sb
 // TODO: Stack Pointer s/sb, s/adl, 
 // TODO: Pass Mosfets - sb to adh
