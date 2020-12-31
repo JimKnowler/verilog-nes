@@ -86,6 +86,16 @@ gtest_verilog_testbench(
     deps = [":Routing"]
 )
 
+verilator_cc_library(
+    name = "Register",
+    srcs = ["cpu6502/Register.v"]
+)
+
+gtest_verilog_testbench(
+    name = "RegisterTestBench",
+    deps = [":Register"]
+)
+
 cc_test(
     name = "test",
     srcs = glob(
@@ -101,7 +111,8 @@ cc_test(
         ":PCLTestBench",
         ":AddressBusRegisterTestBench",
         ":DLTestBench",
-        ":RoutingTestBench"
+        ":RoutingTestBench",
+        ":RegisterTestBench"
     ],
     deps = [
         "@com_google_googletest//:gtest",
@@ -113,6 +124,7 @@ cc_test(
         ":PCL",
         ":AddressBusRegister",
         ":DL",
-        ":Routing"
+        ":Routing",
+        ":Register"
     ],
 )
