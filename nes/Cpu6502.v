@@ -29,8 +29,13 @@ assign w_ir = 8'h00;
 
 // Timing Control Unit
 wire [2:0] w_tcu;
-/// @todo implement TCU
-assign w_tcu = 3'b000;
+wire [2:0] w_tcu_next;
+TCU tcu(
+    .i_clk(i_clk),
+    .i_reset_n(i_reset_n),
+    .i_tcu_next(w_tcu_next),
+    .o_tcu(w_tcu)
+);
 
 // drive debug signals
 assign o_debug_bus_db = w_bus_db;
@@ -84,6 +89,7 @@ wire w_adh_abh;
 Decoder decoder(
     .i_ir(w_ir),
     .i_tcu(w_tcu),
+    .o_tcu(w_tcu_next),
     .o_rw(w_rw),
     .o_dl_db(w_dl_db),
     .o_dl_adl(w_dl_adl),

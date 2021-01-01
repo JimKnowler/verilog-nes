@@ -1,5 +1,5 @@
 // Model the Decode Rom in 6502
-// -> mapping (IR, TCU) => control lines
+// -> combinatorial logic mapping (IR, TCU) => control lines
 //
 // IDEA: o_tcu_next, as a way to control when instructions
 //       have finished and should return to T0/T1
@@ -9,6 +9,8 @@ module Decoder(
     input [7:0] i_ir,
     input [2:0] i_tcu,
     /* verilator lint_on UNUSED */
+
+    output reg [2:0] o_tcu,       // next value for tcu
 
     /* verilator lint_off UNDRIVEN */
     output reg o_rw,
@@ -52,6 +54,9 @@ module Decoder(
     /* verilator lint_on UNDRIVEN */
 );
 
-
+always @(*)
+begin
+    o_tcu = i_tcu + 1;
+end
 
 endmodule

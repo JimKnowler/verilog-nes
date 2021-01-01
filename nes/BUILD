@@ -33,6 +33,7 @@ verilator_cc_library(
         "cpu6502/AddressBusRegister.v",
         "cpu6502/DOR.v",
         "cpu6502/Routing.v",
+        "cpu6502/TCU.v",
     ],
 )
 
