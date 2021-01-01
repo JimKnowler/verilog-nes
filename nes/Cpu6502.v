@@ -5,7 +5,15 @@ module Cpu6502(
     output o_rw,                            // Read / Write - where 1 = READ, 0 = WRITE
     output [15:0] o_address,
     input [7:0] i_data,                     // 8 bit data - used for READ
-    output [7:0] o_data                     // 8 bit data - used for WRITE
+    output [7:0] o_data,                    // 8 bit data - used for WRITE
+
+    // debug ports
+    output [7:0] o_debug_bus_db,
+    output [7:0] o_debug_bus_adl,
+    output [7:0] o_debug_bus_adh,
+    output [7:0] o_debug_bus_sb,
+    output [7:0] o_debug_ir,
+    output [2:0] o_debug_tcu
 );
 
 // internal busses
@@ -14,8 +22,25 @@ wire [7:0] w_bus_adl;
 wire [7:0] w_bus_adh;
 wire [7:0] w_bus_sb;
 
+// instruction register
+wire [7:0] w_ir;
+/// @todo implement Instruction register
+assign w_ir = 8'h00;
+
+// Timing Control Unit
+wire [2:0] w_tcu;
+/// @todo implement TCU
+assign w_tcu = 3'b000;
+
+// drive debug signals
+assign o_debug_bus_db = w_bus_db;
+assign o_debug_bus_adl = w_bus_adl;
+assign o_debug_bus_adh = w_bus_adh;
+assign o_debug_bus_sb = w_bus_sb;
+assign o_debug_ir = w_ir;
+assign o_debug_tcu = w_tcu;
+
 // control signals from Decoder
-/* verilator lint_off UNDRIVEN */
 wire w_rw;
 wire w_dl_db;
 wire w_dl_adl;
@@ -53,9 +78,50 @@ wire w_sb_ac;
 wire w_sb_s;
 wire w_adl_abl;
 wire w_adh_abh;
-/* verilator lint_on UNDRIVEN */
 
-/// @todo Use Decoder to drive all signals
+// Decoder
+// transform IR and TCU into control signals
+Decoder decoder(
+    .i_ir(w_ir),
+    .i_tcu(w_tcu),
+    .o_rw(w_rw),
+    .o_dl_db(w_dl_db),
+    .o_dl_adl(w_dl_adl),
+    .o_dl_adh(w_dl_adh),
+    .o_pcl_pcl(w_pcl_pcl),
+    .o_adl_pcl(w_adl_pcl),
+    .o_i_pc(w_i_pc),
+    .o_pclc(w_pclc),
+    .o_pcl_adl(w_pcl_adl),
+    .o_pcl_db(w_pcl_db),
+    .o_pch_pch(w_pch_pch),
+    .o_adh_pch(w_adh_pch),
+    .o_pch_adh(w_pch_adh),
+    .o_pch_db(w_pch_db),
+    .o_x_sb(w_x_sb),
+    .o_y_sb(w_y_sb),
+    .o_ac_sb(w_ac_sb),
+    .o_ac_db(w_ac_db),
+    .o_s_sb(w_s_sb),
+    .o_s_adl(w_s_adl),
+    .o_add_sb_7(w_add_sb_7),
+    .o_add_sb_0_6(w_add_sb_0_6),
+    .o_add_adl(w_add_adl),
+    .o_p_db(w_p_db),
+    .o_0_adl0(w_0_adl0),
+    .o_0_adl1(w_0_adl1),
+    .o_0_adl2(w_0_adl2),
+    .o_0_adh0(w_0_adh0),
+    .o_0_adh1_7(w_0_adh1_7),
+    .o_sb_adh(w_sb_adh),
+    .o_sb_db(w_sb_db),
+    .o_sb_x(w_sb_x),
+    .o_sb_y(w_sb_y),
+    .o_sb_ac(w_sb_ac),
+    .o_sb_s(w_sb_s),
+    .o_adl_abl(w_adl_abl),
+    .o_adh_abh(w_adh_abh)
+);
 
 // Input Data Latch
 wire [7:0] w_dl;
