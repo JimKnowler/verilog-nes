@@ -228,3 +228,5 @@ TEST_F(Cpu6502, ShouldLDAiSTAa) {
 }
 
 #endif
+
+// todo: test that o_sync is high during T1, especially on pipelined instructions

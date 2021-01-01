@@ -80,3 +80,14 @@ TEST_F(TCU, ShouldIncrementThenReset) {
 
     EXPECT_THAT(expected, MatchesTrace(testBench.trace));
 }
+
+TEST_F(TCU, ShouldEmitSyncDuringT1) {
+    tick(4);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-").repeat(4)
+        .port(o_tcu).signal({0, 1, 2, 3}).repeatEachStep(2)
+        .port(o_sync).signal("_-__").repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}

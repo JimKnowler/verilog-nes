@@ -7,6 +7,8 @@ module Cpu6502(
     input [7:0] i_data,                     // 8 bit data - used for READ
     output [7:0] o_data,                    // 8 bit data - used for WRITE
 
+    output o_sync,                          // 1 for clock cycle where opcode is loaded
+
     // debug ports
     output [7:0] o_debug_bus_db,
     output [7:0] o_debug_bus_adl,
@@ -22,19 +24,26 @@ wire [7:0] w_bus_adl;
 wire [7:0] w_bus_adh;
 wire [7:0] w_bus_sb;
 
-// instruction register
-wire [7:0] w_ir;
-/// @todo implement Instruction register
-assign w_ir = 8'h00;
-
 // Timing Control Unit
 wire [2:0] w_tcu;
 wire [2:0] w_tcu_next;
+wire w_sync;
 TCU tcu(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
     .i_tcu_next(w_tcu_next),
-    .o_tcu(w_tcu)
+    .o_tcu(w_tcu),
+    .o_sync(w_sync)
+);
+
+// instruction register
+wire [7:0] w_ir;
+IR ir(
+    .i_clk(i_clk),
+    .i_reset_n(i_reset_n),
+    .i_data(i_data),
+    .i_tcu(w_tcu),
+    .o_ir(w_ir)
 );
 
 // drive debug signals
@@ -288,5 +297,6 @@ Routing routing(
 assign o_address[7:0] = w_abl;
 assign o_address[15:8] = w_abh;
 assign o_rw = w_rw;
+assign o_sync = w_sync;
 
 endmodule
