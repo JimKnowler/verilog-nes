@@ -30,11 +30,15 @@ assign w_ir = 8'h00;
 // Timing Control Unit
 wire [2:0] w_tcu;
 wire [2:0] w_tcu_next;
+/* verilator lint_off UNUSED */
+wire w_sync;
+/* verilator lint_on UNUSED */
 TCU tcu(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
     .i_tcu_next(w_tcu_next),
-    .o_tcu(w_tcu)
+    .o_tcu(w_tcu),
+    .o_sync(w_sync)
 );
 
 // drive debug signals

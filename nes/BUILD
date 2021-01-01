@@ -112,6 +112,16 @@ gtest_verilog_testbench(
     deps = [":DOR"]
 )
 
+verilator_cc_library(
+    name = "TCU",
+    srcs = ["cpu6502/TCU.v"]
+)
+
+gtest_verilog_testbench(
+    name = "TCUTestBench",
+    deps = [":TCU"]
+)
+
 cc_test(
     name = "test",
     srcs = glob(
@@ -129,7 +139,8 @@ cc_test(
         ":DLTestBench",
         ":RoutingTestBench",
         ":RegisterTestBench",
-        ":DORTestBench"
+        ":DORTestBench",
+        ":TCUTestBench"
     ],
     deps = [
         "@com_google_googletest//:gtest",
@@ -143,6 +154,7 @@ cc_test(
         ":DL",
         ":Routing",
         ":Register",
-        ":DOR"
+        ":DOR",
+        ":TCU"
     ],
 )
