@@ -38,12 +38,14 @@ TCU tcu(
 
 // instruction register
 wire [7:0] w_ir;
+wire w_interrupt;
 IR ir(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
     .i_data(i_data),
     .i_tcu(w_tcu),
-    .o_ir(w_ir)
+    .o_ir(w_ir),
+    .i_interrupt(w_interrupt)
 );
 
 // drive debug signals
@@ -99,6 +101,7 @@ Decoder decoder(
     .i_ir(w_ir),
     .i_tcu(w_tcu),
     .o_tcu(w_tcu_next),
+    .o_interrupt(w_interrupt),
     .o_rw(w_rw),
     .o_dl_db(w_dl_db),
     .o_dl_adl(w_dl_adl),

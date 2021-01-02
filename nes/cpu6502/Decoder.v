@@ -10,9 +10,12 @@ module Decoder(
     input [2:0] i_tcu,
     /* verilator lint_on UNUSED */
 
-    output reg [2:0] o_tcu,       // next value for tcu
-
+    output reg [2:0] o_tcu,         // next value for tcu
+    
     /* verilator lint_off UNDRIVEN */
+    output reg o_interrupt,         // HIGH when interrupt is running
+
+
     output reg o_rw,
     output reg o_dl_db,
     output reg o_dl_adl,
