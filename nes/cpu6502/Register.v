@@ -1,10 +1,13 @@
 // Register
 // Implementation of S, AC, X and Y registers
-module Register(
+module Register
+#(
+    // NOTE: 0xFF is default value used for Stack
+    parameter [7:0] DEFAULT_VALUE = 8'hFF
+)
+(
     input i_clk,
-    /* verilator lint_off UNUSED */
     input i_reset_n,
-    /* verilator lint_on UNUSED */
 
     input [7:0] i_data,         // input from data bus
     input i_load,               // control signal to load
@@ -18,9 +21,11 @@ module Register(
 
 reg [7:0] r_data;
 
-always @(negedge i_clk)
+always @(negedge i_reset_n or negedge i_clk)
 begin
-    if (i_load)
+    if (!i_reset_n)
+        r_data <= DEFAULT_VALUE;
+    else if (i_load)
         r_data <= i_data;
 end
 

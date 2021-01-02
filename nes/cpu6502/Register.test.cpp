@@ -26,6 +26,13 @@ TEST_F(Register, ShouldConstruct) {
     EXPECT_EQ(0, core.o_data);
 }
 
+TEST_F(Register, ShouldReset) {
+    testBench.reset();
+    auto& core = testBench.core();
+
+    EXPECT_EQ(0xFF, core.o_data);
+}
+
 TEST_F(Register, ShouldLoadOnClockFallingEdge) {
     auto& core = testBench.core();
 
