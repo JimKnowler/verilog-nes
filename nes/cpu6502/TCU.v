@@ -9,21 +9,16 @@ module TCU(
 );
 
 reg [2:0] r_tcu;
-reg r_has_started;
 
-always @(negedge i_clk or negedge i_reset_n)
+always @(posedge i_clk or negedge i_reset_n)
 begin
     if (!i_reset_n)
     begin
         r_tcu <= 0;
-        r_has_started <= 0;
     end
     else
     begin
-        if (r_has_started)
-            r_tcu <= i_tcu_next;
-        else
-            r_has_started <= 1;
+        r_tcu <= i_tcu_next;
     end
 end
 
