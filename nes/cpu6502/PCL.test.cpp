@@ -110,3 +110,17 @@ TEST_F(PCL, ShouldOutputCarry) {
     EXPECT_EQ(1, core.o_pclc);
     EXPECT_EQ(0, core.o_pcl);
 }
+
+TEST_F(PCL, ShouldNotIncrementWhileResetting) {
+    auto& core = testBench.core();
+
+    core.i_i_pc = 1;
+    core.i_reset_n = 0;
+    testBench.tick(2);
+
+    EXPECT_EQ(0, core.o_pcl);
+}
+
+
+/// TODO: should only increment on phi2 (posedge i_clk) so ready for phi1
+///       add a nice signal diagram test to prove it :)

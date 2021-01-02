@@ -56,9 +56,12 @@ begin
 end
 
 // Program Counter Low Register
-always @(posedge i_clk)
+always @(posedge i_clk or negedge i_reset_n)
 begin
-    r_pcl <= r_pcls_inc[7:0];
+    if (!i_reset_n)
+        r_pcl <= 0;
+    else
+        r_pcl <= r_pcls_inc[7:0];
 end
 
 assign o_pcl = r_pcl;
