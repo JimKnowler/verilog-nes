@@ -87,3 +87,23 @@ TEST_F(IR, ShouldResetAfterLoadingIR) {
 
     EXPECT_EQ(OPCODE_BRK, testBench.core().o_ir);
 }
+
+TEST_F(IR, ShouldAssertInterruptControl) {
+    auto& core = testBench.core();
+
+    // tick 1
+    core.i_tcu = 0;
+    core.i_data = 0x5C;
+    core.i_interrupt = 1;
+    testBench.tick();
+
+    // tick 2
+    core.i_tcu = 1;
+    testBench.tick();
+    
+    // tick 3
+    core.i_tcu = 2;
+    testBench.tick();
+
+    EXPECT_EQ(OPCODE_BRK, testBench.core().o_ir);
+}

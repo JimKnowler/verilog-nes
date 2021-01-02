@@ -6,10 +6,8 @@ module IR(
     input i_reset_n,
     input [7:0] i_data,         // input data bus
     input [2:0] i_tcu,          // current microcode step
-    output [7:0] o_ir           // value of instruction register
-
-    // todo: resg - inhibit loading IR
-    // todo: intg - inhibit loading IR
+    output [7:0] o_ir,          // value of instruction register
+    input i_interrupt           // force BRK opcode during interrupt
 );
 
 reg [7:0] r_pd;
@@ -34,7 +32,10 @@ begin
         // phi 1 - clock from predecode register into IR
         if (i_tcu == 1)
         begin
-            r_ir <= r_pd;
+            if (i_interrupt)
+                r_ir <= OPCODE_BRK;
+            else
+                r_ir <= r_pd;
         end
     end
 end
