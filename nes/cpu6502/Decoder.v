@@ -48,7 +48,18 @@ module Decoder(
     output reg o_sb_ac,
     output reg o_sb_s,
     output reg o_adl_abl,
-    output reg o_adh_abh
+    output reg o_adh_abh,
+    output reg o_db_n_add,
+    output reg o_db_add,
+    output reg o_adl_add,
+    output reg o_0_add,
+    output reg o_sb_add,
+    output reg o_1_addc,
+    output reg o_sums,
+    output reg o_ands,
+    output reg o_eors,
+    output reg o_ors,
+    output reg o_srs
 );
 
 localparam [7:0] OPCODE_BRK = 8'h00;
@@ -100,6 +111,17 @@ begin
     o_sb_s = 0;
     o_adl_abl = 0;
     o_adh_abh = 0;
+    o_db_n_add = 0;
+    o_db_add = 0;
+    o_adl_add = 0;
+    o_0_add = 0;
+    o_sb_add = 0;
+    o_1_addc = 0;
+    o_sums = 0;
+    o_ands = 0;
+    o_eors = 0;
+    o_ors = 0;
+    o_srs = 0;
 
     case (i_tcu)
     0:  // T0

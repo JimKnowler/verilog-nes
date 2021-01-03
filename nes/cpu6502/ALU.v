@@ -17,7 +17,6 @@ module ALU(
     input [7:0] i_db,
     input i_db_n_add,       // invert db
     input i_db_add,
-    /* verilator lint_off UNUSED */
     input [7:0] i_adl,
     input i_adl_add,
 
@@ -27,19 +26,17 @@ module ALU(
     input i_sb_add,
 
     // Arithmetic Logic
+    /* verilator lint_off UNUSED */
     input i_1_addc,         // carry in
+    /* verilator lint_on UNUSED */
     input i_sums,           // a + b
     input i_ands,           // a & b
     input i_eors,           // a ^ b
     input i_ors,            // a | b
     input i_srs,            // a >> 1
     
-    /* verilator lint_on UNUSED */
-
-    /* verilator lint_off UNDRIVEN */
-    output o_avr,           // overflow signal
-    output o_acr,           // carry signal
-    /* verilator lint_on UNDRIVEN */
+    //output o_avr,           // overflow signal
+    //output o_acr,           // carry signal
 
     output [7:0] o_add      // ADD register
 );

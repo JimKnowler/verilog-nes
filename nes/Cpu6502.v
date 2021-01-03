@@ -99,6 +99,17 @@ wire w_sb_ac;
 wire w_sb_s;
 wire w_adl_abl;
 wire w_adh_abh;
+wire w_db_n_add;
+wire w_db_add;
+wire w_adl_add;
+wire w_0_add;
+wire w_sb_add;
+wire w_1_addc;
+wire w_sums;
+wire w_ands;
+wire w_eors;
+wire w_ors;
+wire w_srs;
 
 // Decoder
 // transform IR and TCU into control signals
@@ -143,7 +154,18 @@ Decoder decoder(
     .o_sb_ac(w_sb_ac),
     .o_sb_s(w_sb_s),
     .o_adl_abl(w_adl_abl),
-    .o_adh_abh(w_adh_abh)
+    .o_adh_abh(w_adh_abh),
+    .o_db_n_add(w_db_n_add),
+    .o_db_add(w_db_add),
+    .o_adl_add(w_adl_add),
+    .o_0_add(w_0_add),
+    .o_sb_add(w_sb_add),
+    .o_1_addc(w_1_addc),
+    .o_sums(w_sums),
+    .o_ands(w_ands),
+    .o_eors(w_eors),
+    .o_ors(w_ors),
+    .o_srs(w_srs)
 );
 
 // Input Data Latch
@@ -230,10 +252,27 @@ Register s(
     .o_data(w_s)
 );
 
-/// @todo Adder Hold Register (add)
-//        note - loads on posedge
+/// ALU
 wire [7:0] w_add;
-assign w_add = 8'h0;
+ALU alu(
+    .i_clk(i_clk),
+    .i_reset_n(i_reset_n),
+    .i_db(w_bus_db),
+    .i_db_n_add(w_db_n_add),
+    .i_db_add(w_db_add),
+    .i_adl(w_bus_adl),
+    .i_adl_add(w_adl_add),
+    .i_0_add(w_0_add),
+    .i_sb(w_bus_sb),
+    .i_sb_add(w_sb_add),
+    .i_1_addc(w_1_addc),
+    .i_sums(w_sums),
+    .i_ands(w_ands),
+    .i_eors(w_eors),
+    .i_ors(w_ors),
+    .i_srs(w_srs),
+    .o_add(w_add)
+);
 
 /// @todo Processor Status Register (p)
 wire [7:0] w_p;
