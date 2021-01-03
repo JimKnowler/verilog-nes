@@ -15,7 +15,12 @@ module Cpu6502(
     output [7:0] o_debug_bus_adh,
     output [7:0] o_debug_bus_sb,
     output [7:0] o_debug_ir,
-    output [2:0] o_debug_tcu
+    output [2:0] o_debug_tcu,
+    output [7:0] o_debug_s,
+    output [7:0] o_debug_pcl
+
+
+    // TODO defines: to turn on/off sections of debugging
 );
 
 // internal busses
@@ -301,5 +306,6 @@ assign o_address[7:0] = w_abl;
 assign o_address[15:8] = w_abh;
 assign o_rw = w_rw;
 assign o_sync = w_sync;
-
+assign o_debug_s = w_s;
+assign o_debug_pcl = w_pcl;
 endmodule

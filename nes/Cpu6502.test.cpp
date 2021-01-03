@@ -101,14 +101,16 @@ TEST_F(Cpu6502, ShouldUseResetVector) {
         .port(o_rw).signal("11").repeat(8)
         .port(o_address)
             .signal({
-                0, 0,                           // PC, PC
+                0x0000, 0x0001,                 // PC, PC + 1
                 0x01FF, 0x01FE, 0x01FD,         // SP, SP-1, SP-2
                 0xFFFC, 0xFFFD,                 // Reset Vector (low byte), Reset Vector (high byte)
                 0x8002                          // The reset vector
             }).repeatEachStep(2)
         .port(i_data)
-            .signal({NOP}).repeat(5)
-            .signal({0x02, 0x80, NOP})
+            .signal({0})                        // memory simulation is warming up
+            .signal({NOP}).repeat(4)            // reading unset memory
+            .signal({0x02, 0x80})               // load PC from RESET vector
+            .signal({NOP})                      // 
             .concat().repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
