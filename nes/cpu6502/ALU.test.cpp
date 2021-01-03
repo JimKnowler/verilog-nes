@@ -11,6 +11,7 @@ namespace {
     class ALU : public ::testing::Test {
     public:
         void SetUp() override {
+            testBench.setClockPolarity(1);
         }
         
         void TearDown() override {
@@ -23,7 +24,52 @@ namespace {
 TEST_F(ALU, ShouldConstruct) {
 }
 
+TEST_F(ALU, ShouldAddDbToZeroAndRegisterOutputOnPhi2) {
+    auto& core = testBench.core();
+
+    core.i_db = 0xAE;
+    core.i_db_add = 1;
+    core.i_0_add = 1;
+    core.i_sums = 1;
+    testBench.tick(2);
+    
+    const Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-_-")
+        .port(o_add)
+            .signal({0})
+            .signal({0xAE}).repeat(3);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(ALU, ShouldInvertDb) {
+    auto& core = testBench.core();
+
+    core.i_db = 0xAE;
+    core.i_db_n_add = 1;
+    core.i_0_add = 1;
+    core.i_sums = 1;
+    core.eval();
+
+    testBench.tick(2);
+    
+    const Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-_-")
+        .port(o_add).signal({0}).signal({0x51}).repeat(3);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
 TEST_F(ALU, ShouldReset) {
+    auto& core = testBench.core();
+
+    core.i_db = 0xAE;
+    core.i_db_add = 1;
+    core.i_0_add = 1;
+    core.i_sums = 1;
+    testBench.tick();
+
     testBench.reset();
+    EXPECT_EQ(0, core.o_add);
 }
 

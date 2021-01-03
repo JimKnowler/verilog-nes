@@ -10,13 +10,15 @@
 // - o_hc: half carry (used by decimal adj adders)
 // - 
 module ALU( 
-    /* verilator lint_off UNUSED */
     input i_clk,
     input i_reset_n,
 
     // B Input Register
-    input i_db_n_add,       // ~db
-    input i_db_add,         // db
+    input [7:0] i_db,
+    input i_db_n_add,       // invert db
+    input i_db_add,
+    /* verilator lint_off UNUSED */
+    input [7:0] i_bus_adl,
     input i_adl_add,
 
     // A Input Register
@@ -36,8 +38,31 @@ module ALU(
     /* verilator lint_off UNDRIVEN */
     output o_avr,           // overflow signal
     output o_acr,           // carry signal
-    output [7:0] o_add      // ADD register
     /* verilator lint_on UNDRIVEN */
+
+    output [7:0] o_add      // ADD register
 );
+
+reg [7:0] w_add;
+reg [7:0] r_add;
+
+always @(*)
+begin
+    w_add = 0;
+
+    if (i_db_add)
+        w_add = i_db;
+    else if (i_db_n_add)
+        w_add = ~i_db;
+end
+
+always @(posedge i_clk or negedge i_reset_n) begin
+    if (!i_reset_n)
+        r_add <= 0;
+    else
+        r_add <= w_add;
+end
+
+assign o_add = r_add;
 
 endmodule
