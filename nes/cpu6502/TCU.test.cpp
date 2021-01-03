@@ -51,7 +51,7 @@ TEST_F(TCU, ShouldReset) {
 
     Trace expected = TraceBuilder()
         .port(i_clk).signal("_-")
-        .port(o_tcu).signal({0}).repeat(2);
+        .port(o_tcu).signal({0, 1});
 
     EXPECT_THAT(expected, MatchesTrace(testBench.trace));
 }
@@ -61,7 +61,10 @@ TEST_F(TCU, ShouldIncrement) {
 
     Trace expected = TraceBuilder()
         .port(i_clk).signal("_-").repeat(4)
-        .port(o_tcu).signal({0, 1, 2, 3}).repeatEachStep(2);
+        .port(o_tcu)
+            .signal({0})
+            .signal({1, 2, 3}).repeatEachStep(2)
+            .signal({4});
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -78,7 +81,7 @@ TEST_F(TCU, ShouldIncrementThenReset) {
         .port(i_clk).signal("_-")
         .port(o_tcu).signal({0}).repeat(2);
 
-    EXPECT_THAT(expected, MatchesTrace(testBench.trace));
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
 TEST_F(TCU, ShouldEmitSyncDuringT1) {
@@ -86,7 +89,10 @@ TEST_F(TCU, ShouldEmitSyncDuringT1) {
 
     Trace expected = TraceBuilder()
         .port(i_clk).signal("_-").repeat(4)
-        .port(o_tcu).signal({0, 1, 2, 3}).repeatEachStep(2)
+        .port(o_tcu)
+            .signal({0})
+            .signal({1, 2, 3}).repeatEachStep(2)
+            .signal({4})
         .port(o_sync).signal("_-__").repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
