@@ -109,3 +109,77 @@ TEST_F(ALU, ShouldAddAdlToSb) {
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
+
+TEST_F(ALU, ShouldAndAdlWithSb) {
+    auto& core = testBench.core();
+
+    core.i_adl = 0x9F;
+    core.i_adl_add = 1;
+    core.i_sb = 0x3F;
+    core.i_sb_add = 1;
+    core.i_ands = 1;
+    core.eval();
+
+    testBench.tick(2);
+    
+    const Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-_-")
+        .port(o_add).signal({0}).signal({0x1F}).repeat(3);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(ALU, ShouldEorAdlWithSb) {
+    auto& core = testBench.core();
+
+    core.i_adl = 0x9F;
+    core.i_adl_add = 1;
+    core.i_sb = 0x3F;
+    core.i_sb_add = 1;
+    core.i_eors = 1;
+    core.eval();
+
+    testBench.tick(2);
+    
+    const Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-_-")
+        .port(o_add).signal({0}).signal({0xA0}).repeat(3);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(ALU, ShouldOrAdlWithSb) {
+    auto& core = testBench.core();
+
+    core.i_adl = 0x9F;
+    core.i_adl_add = 1;
+    core.i_sb = 0x3F;
+    core.i_sb_add = 1;
+    core.i_ors = 1;
+    core.eval();
+
+    testBench.tick(2);
+    
+    const Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-_-")
+        .port(o_add).signal({0}).signal({0xBF}).repeat(3);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(ALU, ShouldShiftRightDb) {
+    auto& core = testBench.core();
+
+    core.i_db = 0xF0;
+    core.i_db_add = 1;
+    core.i_srs = 1;
+    core.eval();
+
+    testBench.tick(2);
+    
+    const Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-_-")
+        .port(o_add).signal({0}).signal({0x78}).repeat(3);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}

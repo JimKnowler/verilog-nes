@@ -73,7 +73,7 @@ begin
 
     if (i_0_add)
         r_a = 0;
-    if (i_sb_add)
+    else if (i_sb_add)
         r_a = i_sb;
 end
 
@@ -85,6 +85,14 @@ begin
 
     if (i_sums)
         r_alu = r_a + r_b;
+    else if (i_ands)
+        r_alu = r_a & r_b;
+    else if (i_eors)
+        r_alu = r_a ^ r_b;
+    else if (i_ors)
+        r_alu = r_a | r_b;
+    else if (i_srs)
+        r_alu = r_b >> 1;
 end
 
 // Adder Hold Register (ADD)
