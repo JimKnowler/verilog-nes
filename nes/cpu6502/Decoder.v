@@ -190,7 +190,11 @@ begin
             o_0_adh1_7 = 1;
             o_adh_abh = 1;
 
-            /// @todo: decrement stack ptr for next tick
+            // use ALU to decrement the SP
+            o_adl_add = 1;
+            o_sb_add = 1;       // pre-charge mosfets = -1
+            o_sums = 1;
+
         end
         default:
         begin
@@ -202,15 +206,18 @@ begin
         case (i_ir)
         OPCODE_BRK:
         begin
-            // output S on ABL
-            o_s_adl = 1;
+            // output S-1 on ABL
+            o_add_adl = 1;
             o_adl_abl = 1;
 
             // output 0x1 on ABH
             o_0_adh1_7 = 1;
             o_adh_abh = 1;
 
-            /// @todo: decrement stack ptr for next tick
+            // use ALU to decrement the SP
+            o_adl_add = 1;
+            o_sb_add = 1;       // pre-charge mosfets = -1
+            o_sums = 1;
         end
         default:
         begin
@@ -222,11 +229,15 @@ begin
         case (i_ir)
         OPCODE_BRK:
         begin
-            // output stack ptr 
-
-            // output S on ABL
-            o_s_adl = 1;
+            // output s-2 on ABL
+            o_add_adl = 1;
             o_adl_abl = 1;
+
+            // load sp - 2 into stack register
+            // todo: should we be putting sp - 3 into stack register?
+            o_add_sb_0_6 = 1;
+            o_add_sb_7 = 1;
+            o_sb_s = 1;
 
             // output 0x1 on ABH
             o_0_adh1_7 = 1;

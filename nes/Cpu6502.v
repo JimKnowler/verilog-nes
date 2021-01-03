@@ -17,8 +17,8 @@ module Cpu6502(
     output [7:0] o_debug_ir,
     output [2:0] o_debug_tcu,
     output [7:0] o_debug_s,
-    output [7:0] o_debug_pcl
-
+    output [7:0] o_debug_pcl,
+    output [7:0] o_debug_add
 
     // TODO defines: to turn on/off sections of debugging
 );
@@ -347,4 +347,6 @@ assign o_rw = w_rw;
 assign o_sync = w_sync;
 assign o_debug_s = w_s;
 assign o_debug_pcl = w_pcl;
+assign o_debug_add = w_add;
+
 endmodule
