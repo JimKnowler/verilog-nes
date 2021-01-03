@@ -34,7 +34,8 @@ verilator_cc_library(
         "cpu6502/DOR.v",
         "cpu6502/Routing.v",
         "cpu6502/TCU.v",
-        "cpu6502/IR.v"
+        "cpu6502/IR.v",
+        "cpu6502/ALU.v"
     ],
 )
 
@@ -133,6 +134,16 @@ gtest_verilog_testbench(
     deps = [":IR"]
 )
 
+verilator_cc_library(
+    name = "ALU",
+    srcs = ["cpu6502/ALU.v"],
+)
+
+gtest_verilog_testbench(
+    name = "ALUTestBench",
+    deps = [":ALU"]
+)
+
 cc_test(
     name = "test",
     srcs = glob(
@@ -152,7 +163,8 @@ cc_test(
         ":RegisterTestBench",
         ":DORTestBench",
         ":TCUTestBench",
-        ":IRTestBench"
+        ":IRTestBench",
+        ":ALUTestBench"
     ],
     deps = [
         "@com_google_googletest//:gtest",
@@ -168,6 +180,7 @@ cc_test(
         ":Register",
         ":DOR",
         ":TCU",
-        ":IR"
+        ":IR",
+        ":ALU"
     ],
 )
