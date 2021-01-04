@@ -1,6 +1,8 @@
 // Data Output Register
-//
-// including the data bus tristate buffer
+// - including the data bus tristate buffer
+// - Where DOR is transparent latch on phi1
+// - Where Tristate bus is enabled on phi2
+// - implemented as register that latches in on rising edge of phi2
 
 module DOR(
     input i_clk,
@@ -15,7 +17,7 @@ module DOR(
 reg [7:0] r_data;
 reg r_tristate_enable;
 
-always @(posedge i_clk or negedge i_clk or negedge i_reset_n)
+always @(posedge i_clk or negedge i_reset_n)
 begin
     if (!i_reset_n)
     begin
@@ -24,12 +26,8 @@ begin
     end
     else if (i_clk)
     begin
-        // rising edge
+        // phi2 rising edge
         r_tristate_enable <= !i_rw;
-    end
-    else if (!i_clk)
-    begin
-        // falling edge
         r_data <= i_data;
     end
 end
