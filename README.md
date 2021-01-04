@@ -77,6 +77,7 @@ Aim: to play the original NES [Super Mario Bros](https://en.wikipedia.org/wiki/S
 - Build 6502 soft core
   - cycle timings are documented in [Synertek hardware manual](http://archive.6502.org/datasheets/synertek_hardware_manual.pdf) in appendix A
   - [6502 opcode reference](http://www.obelisk.me.uk/6502/reference.html)
+  - [Visualizing CPU Timing](https://laughtonelectronics.com/Arcana/Visualizing%2065xx%20Timing/Visualizing%2065xx%20CPU%20Timing.html)
 - Build PPU soft core
 - Build VGA output
 - Build HDMI output (perhaps?)
