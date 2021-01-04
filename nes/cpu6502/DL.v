@@ -12,7 +12,8 @@ module DL(
 
 reg [7:0] r_data;
 
-always @(posedge i_clk)
+// phi1: when read data is valid on data bus
+always @(negedge i_clk)
 begin
     r_data <= i_data;
 end

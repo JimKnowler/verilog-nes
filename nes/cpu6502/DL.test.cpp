@@ -33,7 +33,7 @@ TEST_F(DL, ShouldReset) {
 TEST_F(DL, ShouldLoadData) {
     auto& core = testBench.core();
 
-    core.i_clk = 1;
+    core.i_clk = 0;
     core.eval();
 
     core.i_data = 0x42;
@@ -42,13 +42,13 @@ TEST_F(DL, ShouldLoadData) {
     core.eval();
     EXPECT_EQ(0x00, core.o_data);
 
-    // should not load on falling edge of clk
-    core.i_clk = 0;
+    // should not load on rising edge of clk (phi2)
+    core.i_clk = 1;
     core.eval();
     EXPECT_EQ(0x00, core.o_data);
 
-    // should load on rising edge of clk
-    core.i_clk = 1;
+    // should load on falling edge of clk (phi1)
+    core.i_clk = 0;
     core.eval();
     EXPECT_EQ(0x42, core.o_data);
 }
