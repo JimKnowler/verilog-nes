@@ -33,38 +33,38 @@ TEST_F(Register, ShouldReset) {
     EXPECT_EQ(0xFF, core.o_data);
 }
 
-TEST_F(Register, ShouldLoadOnClockFallingEdge) {
+TEST_F(Register, ShouldNotPassThroughWhileLoadSignalIsLow) {
     auto& core = testBench.core();
 
-    core.i_clk = 0;
+    core.i_data = 0xAF;
+    core.i_load = 0;
     core.eval();
+    EXPECT_EQ(0, core.o_data);
+}
+
+TEST_F(Register, ShouldPassThroughWhileLoadSignalIsHigh) {
+auto& core = testBench.core();
 
     core.i_data = 0xAF;
     core.i_load = 1;
-    
-    // should not load without clock
-    core.eval();
-    EXPECT_EQ(0, core.o_data);
-
-    // should not load on rising edge of clock
-    core.i_clk = 1;
-    core.eval();
-    EXPECT_EQ(0, core.o_data);
-
-    // should load on falling edge of clock
-    core.i_clk = 0;
     core.eval();
     EXPECT_EQ(0xAF, core.o_data);
 }
 
-TEST_F(Register, ShouldNotLoadWithoutControlSignal) {
+TEST_F(Register, ShouldLoadOnFallingEdgeOfLoadSignal) {
     auto& core = testBench.core();
 
-    core.i_clk = 1;
+    core.i_data = 0xAF;
+    core.i_load = 0;
     core.eval();
 
-    core.i_clk = 0;
-    core.i_data = 0xAF;
+    // RISING EDGE
+    core.i_load = 1;
     core.eval();
-    EXPECT_EQ(0, core.o_data);
+    EXPECT_EQ(0xAF, core.o_data);
+
+    // FALLING EDGE
+    core.i_load = 0;
+    core.eval();
+    EXPECT_EQ(0xAF, core.o_data);
 }
