@@ -24,22 +24,60 @@ namespace {
 TEST_F(ALU, ShouldConstruct) {
 }
 
-TEST_F(ALU, ShouldAddDbToZeroAndRegisterOutputOnPhi2) {
+TEST_F(ALU, ShouldPassThroughDuringPhi2) {
+    auto& core = testBench.core();
+
+    core.i_clk = 1;
+    core.i_db = 0xDB;
+    core.i_db_add = 1;
+    core.i_0_add = 1;
+    core.i_sums = 1;
+    core.eval();
+    EXPECT_EQ(0xDB, core.o_add);
+
+    // change input during phi2
+    core.i_db = 0xAF;
+    core.eval();
+    EXPECT_EQ(0xAF, core.o_add);
+
+    // change input again during phi2
+    core.i_db = 0xE2;
+    core.eval();
+    EXPECT_EQ(0xE2, core.o_add);
+}
+
+TEST_F(ALU, ShouldLatchAtFallingEdgeOfPhi2) {
+    auto& core = testBench.core();
+
+    core.i_clk = 1;
+    core.i_db = 0xAE;
+    core.i_db_add = 1;
+    core.i_0_add = 1;
+    core.i_sums = 1;
+    core.eval();
+
+    // falling edge of phi2
+    core.i_clk = 0;
+    core.eval();
+
+    // input changing during phi1
+    core.i_db = 0xFF;
+    core.eval();
+    EXPECT_EQ(0xAE, core.o_add);
+}
+
+TEST_F(ALU, ShouldAddDbToZero) {
     auto& core = testBench.core();
 
     core.i_db = 0xAE;
     core.i_db_add = 1;
     core.i_0_add = 1;
     core.i_sums = 1;
-    testBench.tick(2);
     
-    const Trace expected = TraceBuilder()
-        .port(i_clk).signal("_-_-")
-        .port(o_add)
-            .signal({0})
-            .signal({0xAE}).repeat(3);
-
-    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+    // pass through during phi2
+    core.i_clk = 1;
+    core.eval();
+    EXPECT_EQ(0xAE, core.o_add);
 }
 
 TEST_F(ALU, ShouldInvertDb) {
@@ -49,27 +87,29 @@ TEST_F(ALU, ShouldInvertDb) {
     core.i_db_n_add = 1;
     core.i_0_add = 1;
     core.i_sums = 1;
+
+    // pass through during phi2
+    core.i_clk = 1;
     core.eval();
-
-    testBench.tick(2);
-    
-    const Trace expected = TraceBuilder()
-        .port(i_clk).signal("_-_-")
-        .port(o_add).signal({0}).signal({0x51}).repeat(3);
-
-    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+    EXPECT_EQ(0x51, core.o_add);
 }
 
 TEST_F(ALU, ShouldReset) {
     auto& core = testBench.core();
 
+    // clock in data
     core.i_db = 0xAE;
     core.i_db_add = 1;
     core.i_0_add = 1;
     core.i_sums = 1;
     testBench.tick();
 
-    testBench.reset();
+    // reset (during phi1)
+    core.i_clk = 0;
+    core.i_reset_n = 0;
+    core.eval();
+    core.i_reset_n = 1;
+    core.eval();
     EXPECT_EQ(0, core.o_add);
 }
 
@@ -80,15 +120,11 @@ TEST_F(ALU, ShouldAddAdlToZero) {
     core.i_adl_add = 1;
     core.i_0_add = 1;
     core.i_sums = 1;
+
+    // pass through during phi2
+    core.i_clk = 1;
     core.eval();
-
-    testBench.tick(2);
-    
-    const Trace expected = TraceBuilder()
-        .port(i_clk).signal("_-_-")
-        .port(o_add).signal({0}).signal({0xBC}).repeat(3);
-
-    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+    EXPECT_EQ(0xBC, core.o_add);
 }
 
 TEST_F(ALU, ShouldAddAdlToSb) {
@@ -99,15 +135,11 @@ TEST_F(ALU, ShouldAddAdlToSb) {
     core.i_sb = 0x22;
     core.i_sb_add = 1;
     core.i_sums = 1;
-    core.eval();
-
-    testBench.tick(2);
     
-    const Trace expected = TraceBuilder()
-        .port(i_clk).signal("_-_-")
-        .port(o_add).signal({0}).signal({0x33}).repeat(3);
-
-    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+    // pass through during phi2
+    core.i_clk = 1;
+    core.eval();
+    EXPECT_EQ(0x33, core.o_add);
 }
 
 TEST_F(ALU, ShouldAndAdlWithSb) {
@@ -118,15 +150,11 @@ TEST_F(ALU, ShouldAndAdlWithSb) {
     core.i_sb = 0x3F;
     core.i_sb_add = 1;
     core.i_ands = 1;
+
+    // pass through during phi2
+    core.i_clk = 1;
     core.eval();
-
-    testBench.tick(2);
-    
-    const Trace expected = TraceBuilder()
-        .port(i_clk).signal("_-_-")
-        .port(o_add).signal({0}).signal({0x1F}).repeat(3);
-
-    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+    EXPECT_EQ(0x1F, core.o_add);
 }
 
 TEST_F(ALU, ShouldEorAdlWithSb) {
@@ -137,15 +165,11 @@ TEST_F(ALU, ShouldEorAdlWithSb) {
     core.i_sb = 0x3F;
     core.i_sb_add = 1;
     core.i_eors = 1;
-    core.eval();
-
-    testBench.tick(2);
     
-    const Trace expected = TraceBuilder()
-        .port(i_clk).signal("_-_-")
-        .port(o_add).signal({0}).signal({0xA0}).repeat(3);
-
-    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+    // pass through during phi2
+    core.i_clk = 1;
+    core.eval();
+    EXPECT_EQ(0xA0, core.o_add);
 }
 
 TEST_F(ALU, ShouldOrAdlWithSb) {
@@ -156,15 +180,11 @@ TEST_F(ALU, ShouldOrAdlWithSb) {
     core.i_sb = 0x3F;
     core.i_sb_add = 1;
     core.i_ors = 1;
-    core.eval();
-
-    testBench.tick(2);
     
-    const Trace expected = TraceBuilder()
-        .port(i_clk).signal("_-_-")
-        .port(o_add).signal({0}).signal({0xBF}).repeat(3);
-
-    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+    // pass through during phi2
+    core.i_clk = 1;
+    core.eval();
+    EXPECT_EQ(0xBF, core.o_add);
 }
 
 TEST_F(ALU, ShouldShiftRightDb) {
@@ -173,13 +193,9 @@ TEST_F(ALU, ShouldShiftRightDb) {
     core.i_db = 0xF0;
     core.i_db_add = 1;
     core.i_srs = 1;
-    core.eval();
-
-    testBench.tick(2);
     
-    const Trace expected = TraceBuilder()
-        .port(i_clk).signal("_-_-")
-        .port(o_add).signal({0}).signal({0x78}).repeat(3);
-
-    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+    // pass through during phi2
+    core.i_clk = 1;
+    core.eval();
+    EXPECT_EQ(0x78, core.o_add);
 }

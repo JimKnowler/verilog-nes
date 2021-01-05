@@ -41,11 +41,12 @@ module ALU(
     output [7:0] o_add      // ADD register
 );
 
-
 reg [7:0] r_a;
 reg [7:0] r_b;
-reg [7:0] r_alu;
 
+/* verilator lint_off UNOPTFLAT */
+reg [7:0] r_alu;
+/* verilator lint_on UNOPTFLAT */
 reg [7:0] r_add;
 
 // B Input Register
@@ -93,13 +94,13 @@ begin
 end
 
 // Adder Hold Register (ADD)
-always @(posedge i_clk or negedge i_reset_n) begin
+always @(negedge i_clk or negedge i_reset_n) begin
     if (!i_reset_n)
         r_add <= 0;
     else
         r_add <= r_alu;
 end
 
-assign o_add = r_add;
+assign o_add = (i_clk) ? r_alu : r_add;
 
 endmodule
