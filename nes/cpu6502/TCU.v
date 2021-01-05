@@ -9,21 +9,17 @@ module TCU(
 );
 
 reg [2:0] r_tcu;
-reg r_started;
 
 always @(negedge i_clk or negedge i_reset_n)
 begin
     if (!i_reset_n)
     begin
-        r_tcu <= 0;
-        r_started <= 0;
+        // start at -1, so TCU starts at 0 on first tick
+        r_tcu <= 3'b111;
     end
     else
     begin
-        if (r_started)
-            r_tcu <= i_tcu_next;
-        else
-            r_started <= 1;
+        r_tcu <= i_tcu_next;
     end
 end
 
