@@ -1,3 +1,8 @@
+// Address Bus Register
+// Transparent Latch
+// - pass through during phi1
+// - latch value at falling edge of phi1
+
 module AddressBusRegister(
     input i_clk,
     /* verilator lint_off UNUSED */
@@ -11,7 +16,7 @@ module AddressBusRegister(
 
 reg [7:0] r_address;
 
-always @(negedge i_clk)
+always @(posedge i_clk)
 begin
     if (i_load)
     begin
@@ -19,7 +24,9 @@ begin
     end
 end
 
-assign o_address = r_address;
+wire w_enabled = (i_clk == 0) && (i_load);
+
+assign o_address = w_enabled ? i_address : r_address;
 
 endmodule
 
