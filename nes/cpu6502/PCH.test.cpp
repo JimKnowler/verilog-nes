@@ -84,3 +84,73 @@ TEST_F(PCH, ShouldIncrementPCH) {
     testBench.tick();
     EXPECT_EQ(0xEB, core.o_pch);
 }
+
+TEST_F(PCH, ShouldPassThroughDuringPhi2) {
+    auto& core = testBench.core();
+
+    // phi 2
+    core.i_clk = 1;
+    core.eval();
+
+    core.i_adh = 0xB3;
+    core.i_adh_pch = 1;
+    core.eval();
+
+    EXPECT_EQ(0xB3, core.o_pch);
+}
+
+TEST_F(PCH, ShouldNotPassThroughDuringPhi1) {
+    auto& core = testBench.core();
+
+    // phi 1
+    core.i_clk = 0;
+    core.eval();
+
+    // phi 1
+    core.i_adh = 0xB3;
+    core.i_adh_pch = 1;
+    core.eval();
+
+    EXPECT_EQ(0x00, core.o_pch);
+}
+
+TEST_F(PCH, ShouldLatchAtEndOfPhi2) {
+    auto& core = testBench.core();
+
+    // phi 2
+    core.i_clk = 1;
+    core.eval();
+
+    // opportunity to load data
+    core.i_adh = 0xB3;
+    core.i_adh_pch = 1;
+    core.eval();
+
+    // phi 1
+    core.i_clk = 0;
+    core.eval();
+
+    EXPECT_EQ(0xB3, core.o_pch);
+}
+
+TEST_F(PCH, ShouldNotLatchAtEndOfPhi1) {
+    auto& core = testBench.core();
+
+    // phi 1
+    core.i_clk = 0;
+    core.eval();
+
+    // opportunity to load data
+    core.i_adh = 0xD2;
+    core.i_adh_pch = 1;
+
+    // phi 2
+    core.i_clk = 1;
+    core.eval();
+
+    // should pass through new value
+    core.i_adh = 0x32;
+    core.eval();
+
+    EXPECT_EQ(0x32, core.o_pch);
+}
