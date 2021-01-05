@@ -121,6 +121,72 @@ TEST_F(PCL, ShouldNotIncrementWhileResetting) {
     EXPECT_EQ(0, core.o_pcl);
 }
 
+TEST_F(PCL, ShouldPassThroughDuringPhi2) {
+    auto& core = testBench.core();
 
-/// TODO: should only increment on phi2 (posedge i_clk) so ready for phi1
-///       add a nice signal diagram test to prove it :)
+    // phi 2
+    core.i_clk = 1;
+    core.eval();
+
+    core.i_adl = 0xB3;
+    core.i_adl_pcl = 1;
+    core.eval();
+
+    EXPECT_EQ(0xB3, core.o_pcl);
+}
+
+TEST_F(PCL, ShouldNotPassThroughDuringPhi1) {
+    auto& core = testBench.core();
+
+    // phi 1
+    core.i_clk = 0;
+    core.eval();
+
+    // phi 1
+    core.i_adl = 0xB3;
+    core.i_adl_pcl = 1;
+    core.eval();
+
+    EXPECT_EQ(0x00, core.o_pcl);
+}
+
+TEST_F(PCL, ShouldLatchAtEndOfPhi2) {
+    auto& core = testBench.core();
+
+    // phi 2
+    core.i_clk = 1;
+    core.eval();
+
+    // opportunity to load data
+    core.i_adl = 0xB3;
+    core.i_adl_pcl = 1;
+    core.eval();
+
+    // phi 1
+    core.i_clk = 0;
+    core.eval();
+
+    EXPECT_EQ(0xB3, core.o_pcl);
+}
+
+TEST_F(PCL, ShouldNotLatchAtEndOfPhi1) {
+    auto& core = testBench.core();
+
+    // phi 1
+    core.i_clk = 0;
+    core.eval();
+
+    // opportunity to load data
+    core.i_adl = 0xD2;
+    core.i_adl_pcl = 1;
+
+    // phi 2
+    core.i_clk = 1;
+    core.eval();
+
+    // should pass through new value
+    core.i_adl = 0x32;
+    core.eval();
+
+    EXPECT_EQ(0x32, core.o_pcl);
+}

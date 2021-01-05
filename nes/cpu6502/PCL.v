@@ -4,6 +4,10 @@
 // - Program Counter Low Select (PCLS)
 // - Increment logic
 // - Program Counter Low Register (PCL)
+//
+// Implemented as Transparent Latch
+// - Pass through during phi2
+// - Latch at falling edge of phi2
 
 module PCL(
     input i_clk,
@@ -55,15 +59,17 @@ begin
     o_pclc = r_pcls_inc[8];
 end
 
+wire [7:0] w_pcls_inc_output = r_pcls_inc[7:0];
+
 // Program Counter Low Register
-always @(posedge i_clk or negedge i_reset_n)
+always @(negedge i_clk or negedge i_reset_n)
 begin
     if (!i_reset_n)
         r_pcl <= 0;
     else
-        r_pcl <= r_pcls_inc[7:0];
+        r_pcl <= w_pcls_inc_output;
 end
 
-assign o_pcl = r_pcl;
+assign o_pcl = (i_clk) ? w_pcls_inc_output : r_pcl;
 
 endmodule
