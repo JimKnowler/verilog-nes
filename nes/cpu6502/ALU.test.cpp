@@ -11,7 +11,7 @@ namespace {
     class ALU : public ::testing::Test {
     public:
         void SetUp() override {
-            testBench.setClockPolarity(1);
+            testBench.setClockPolarity(0);
         }
         
         void TearDown() override {
@@ -24,7 +24,7 @@ namespace {
 TEST_F(ALU, ShouldConstruct) {
 }
 
-TEST_F(ALU, ShouldPassThroughDuringPhi2) {
+TEST_F(ALU, ShouldNotPassThroughDuringPhi2) {
     auto& core = testBench.core();
 
     core.i_clk = 1;
@@ -33,17 +33,16 @@ TEST_F(ALU, ShouldPassThroughDuringPhi2) {
     core.i_0_add = 1;
     core.i_sums = 1;
     core.eval();
-    EXPECT_EQ(0xDB, core.o_add);
+
+    // latch in at falling edge of phi2
+    core.i_clk = 0;
+    core.eval();
 
     // change input during phi2
+    core.i_clk = 1;
     core.i_db = 0xAF;
     core.eval();
-    EXPECT_EQ(0xAF, core.o_add);
-
-    // change input again during phi2
-    core.i_db = 0xE2;
-    core.eval();
-    EXPECT_EQ(0xE2, core.o_add);
+    EXPECT_EQ(0xDB, core.o_add);
 }
 
 TEST_F(ALU, ShouldLatchAtFallingEdgeOfPhi2) {
@@ -74,9 +73,7 @@ TEST_F(ALU, ShouldAddDbToZero) {
     core.i_0_add = 1;
     core.i_sums = 1;
     
-    // pass through during phi2
-    core.i_clk = 1;
-    core.eval();
+    testBench.tick();
     EXPECT_EQ(0xAE, core.o_add);
 }
 
@@ -88,9 +85,7 @@ TEST_F(ALU, ShouldInvertDb) {
     core.i_0_add = 1;
     core.i_sums = 1;
 
-    // pass through during phi2
-    core.i_clk = 1;
-    core.eval();
+    testBench.tick();
     EXPECT_EQ(0x51, core.o_add);
 }
 
@@ -121,9 +116,7 @@ TEST_F(ALU, ShouldAddAdlToZero) {
     core.i_0_add = 1;
     core.i_sums = 1;
 
-    // pass through during phi2
-    core.i_clk = 1;
-    core.eval();
+    testBench.tick();
     EXPECT_EQ(0xBC, core.o_add);
 }
 
@@ -136,9 +129,7 @@ TEST_F(ALU, ShouldAddAdlToSb) {
     core.i_sb_add = 1;
     core.i_sums = 1;
     
-    // pass through during phi2
-    core.i_clk = 1;
-    core.eval();
+    testBench.tick();
     EXPECT_EQ(0x33, core.o_add);
 }
 
@@ -151,9 +142,7 @@ TEST_F(ALU, ShouldAndAdlWithSb) {
     core.i_sb_add = 1;
     core.i_ands = 1;
 
-    // pass through during phi2
-    core.i_clk = 1;
-    core.eval();
+    testBench.tick();
     EXPECT_EQ(0x1F, core.o_add);
 }
 
@@ -166,9 +155,7 @@ TEST_F(ALU, ShouldEorAdlWithSb) {
     core.i_sb_add = 1;
     core.i_eors = 1;
     
-    // pass through during phi2
-    core.i_clk = 1;
-    core.eval();
+    testBench.tick();
     EXPECT_EQ(0xA0, core.o_add);
 }
 
@@ -181,9 +168,7 @@ TEST_F(ALU, ShouldOrAdlWithSb) {
     core.i_sb_add = 1;
     core.i_ors = 1;
     
-    // pass through during phi2
-    core.i_clk = 1;
-    core.eval();
+    testBench.tick();
     EXPECT_EQ(0xBF, core.o_add);
 }
 
@@ -194,8 +179,6 @@ TEST_F(ALU, ShouldShiftRightDb) {
     core.i_db_add = 1;
     core.i_srs = 1;
     
-    // pass through during phi2
-    core.i_clk = 1;
-    core.eval();
+    testBench.tick();
     EXPECT_EQ(0x78, core.o_add);
 }

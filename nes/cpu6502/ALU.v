@@ -4,11 +4,13 @@
 // - B Input Register
 // - Arithmetic Logic
 // - Adder Hold Register (ADD)
-// 
+//
+// Implemented as latch on falling edge of phi2
+//
 // note: not implemented
 // - i_daa: decimal enable
 // - o_hc: half carry (used by decimal adj adders)
-// - 
+//
 module ALU( 
     input i_clk,
     input i_reset_n,
@@ -43,10 +45,7 @@ module ALU(
 
 reg [7:0] r_a;
 reg [7:0] r_b;
-
-/* verilator lint_off UNOPTFLAT */
 reg [7:0] r_alu;
-/* verilator lint_on UNOPTFLAT */
 reg [7:0] r_add;
 
 // B Input Register
@@ -101,6 +100,6 @@ always @(negedge i_clk or negedge i_reset_n) begin
         r_add <= r_alu;
 end
 
-assign o_add = (i_clk) ? r_alu : r_add;
+assign o_add = r_add;
 
 endmodule
