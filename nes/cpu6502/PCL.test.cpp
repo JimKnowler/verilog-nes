@@ -121,7 +121,7 @@ TEST_F(PCL, ShouldNotIncrementWhileResetting) {
     EXPECT_EQ(0, core.o_pcl);
 }
 
-TEST_F(PCL, ShouldPassThroughDuringPhi2) {
+TEST_F(PCL, ShouldNotPassThroughDuringPhi2) {
     auto& core = testBench.core();
 
     // phi 2
@@ -132,7 +132,7 @@ TEST_F(PCL, ShouldPassThroughDuringPhi2) {
     core.i_adl_pcl = 1;
     core.eval();
 
-    EXPECT_EQ(0xB3, core.o_pcl);
+    EXPECT_EQ(0, core.o_pcl);
 }
 
 TEST_F(PCL, ShouldNotPassThroughDuringPhi1) {
@@ -184,9 +184,5 @@ TEST_F(PCL, ShouldNotLatchAtEndOfPhi1) {
     core.i_clk = 1;
     core.eval();
 
-    // should pass through new value
-    core.i_adl = 0x32;
-    core.eval();
-
-    EXPECT_EQ(0x32, core.o_pcl);
+    EXPECT_EQ(0, core.o_pcl);
 }
