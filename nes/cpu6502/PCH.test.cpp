@@ -85,7 +85,7 @@ TEST_F(PCH, ShouldIncrementPCH) {
     EXPECT_EQ(0xEB, core.o_pch);
 }
 
-TEST_F(PCH, ShouldPassThroughDuringPhi2) {
+TEST_F(PCH, ShouldNotPassThroughDuringPhi2) {
     auto& core = testBench.core();
 
     // phi 2
@@ -96,7 +96,7 @@ TEST_F(PCH, ShouldPassThroughDuringPhi2) {
     core.i_adh_pch = 1;
     core.eval();
 
-    EXPECT_EQ(0xB3, core.o_pch);
+    EXPECT_EQ(0x00, core.o_pch);
 }
 
 TEST_F(PCH, ShouldNotPassThroughDuringPhi1) {
@@ -148,9 +148,5 @@ TEST_F(PCH, ShouldNotLatchAtEndOfPhi1) {
     core.i_clk = 1;
     core.eval();
 
-    // should pass through new value
-    core.i_adh = 0x32;
-    core.eval();
-
-    EXPECT_EQ(0x32, core.o_pch);
+    EXPECT_EQ(0, core.o_pch);
 }

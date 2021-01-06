@@ -5,9 +5,7 @@
 // - Increment logic
 // - Program Counter High Register (PCH)
 //
-// Implemented as Transparent Latch
-// - pass through during phi2
-// - latch at falling edge of phi2
+// Implemented as Latch on falling edge of phi2
 
 module PCH(
     input i_clk,
@@ -55,6 +53,6 @@ begin
     r_pch <= r_pchs_inc;
 end
 
-assign o_pch = (i_clk) ? r_pchs_inc : r_pch;
+assign o_pch =  r_pch;
 
 endmodule
