@@ -25,8 +25,8 @@ http_archive(
 
 http_archive(
     name = "gtestverilog",
-    strip_prefix = "gtestverilog-0.1-rc5",
-    url="https://github.com/JimKnowler/gtestverilog/archive/v0.1-rc5.zip"
+    strip_prefix = "gtestverilog-0.1-rc6",
+    url="https://github.com/JimKnowler/gtestverilog/archive/v0.1-rc6.zip"
 )
 
 load(
