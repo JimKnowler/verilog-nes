@@ -5,6 +5,8 @@
 //       have finished and should return to T0/T1
 
 module Decoder(
+    input i_clk,
+    
     input [7:0] i_ir,
     input [2:0] i_tcu,
 
@@ -129,7 +131,6 @@ begin
         // increment PC for T1
         o_i_pc = 1;
 
-
         // fetch
 
         // output PCL on ABL
@@ -194,7 +195,6 @@ begin
             o_adl_add = 1;
             o_sb_add = 1;       // pre-charge mosfets = -1
             o_sums = 1;
-
         end
         default:
         begin
@@ -206,11 +206,11 @@ begin
         case (i_ir)
         OPCODE_BRK:
         begin
-            // output S-1 on ABL
+            // output S-1 via ADL on ABL
             o_add_adl = 1;
             o_adl_abl = 1;
 
-            // output 0x1 on ABH
+            // output 0x1 via ADH on ABH
             o_0_adh1_7 = 1;
             o_adh_abh = 1;
 
@@ -234,7 +234,7 @@ begin
             o_adl_abl = 1;
 
             // load sp - 2 into stack register
-            // todo: should we be putting sp - 3 into stack register?
+            /// @todo: should we be putting sp - 3 into stack register?
             o_add_sb_0_6 = 1;
             o_add_sb_7 = 1;
             o_sb_s = 1;
@@ -242,8 +242,6 @@ begin
             // output 0x1 on ABH
             o_0_adh1_7 = 1;
             o_adh_abh = 1;
-
-            // todo: decrement stack ptr for next tick
         end
         default:
         begin
@@ -255,8 +253,10 @@ begin
         case (i_ir)
         OPCODE_BRK:
         begin
-            // hardcoded for RESET interrupt
+            /// @note currently hardcoded for RESET interrupt
             
+            // >> address of reset vector low byte
+
             // ABH = 0xff
             o_adh_abh = 1;
 
@@ -264,6 +264,13 @@ begin
             o_adl_abl = 1;
             o_0_adl0 = 1;
             o_0_adl1 = 1;
+
+            // >> read low byte of reset vector at end of phi 2
+            //  into ALU
+            o_dl_db = 1;
+            o_db_add = 1;
+            o_0_add = 1;
+            o_sums = 1;
         end
         default:
         begin
@@ -276,29 +283,57 @@ begin
         case (i_ir)
         OPCODE_BRK:
         begin
-            // hardcoded for RESET interrupt
-            
-            // ABH = 0xff
-            o_adh_abh = 1;
+            /// @note currently hardcoded for RESET interrupt
 
-            // ABL = 0xfd
-            o_adl_abl = 1;
-            o_0_adl1 = 1;
-
-            // load address low -> where to?
+            // >> setting up high byte of reset vector
             
+            if (i_clk == 0)
+            begin
+                // phase 1
+
+                // ABH = 0xff (precharge mosfets)
+                o_adh_abh = 1;
+
+                // ABL = 0xfd
+                o_0_adl1 = 1;
+                o_adl_abl = 1;
+            end
+            else
+            begin
+                // phase 2
+
+
+                // >> read high byte of reset vector at end of phi 2
+                o_dl_adh = 1;
+                o_adh_pch = 1;     
+
+                // >> read low byte of reset into PCL from ADD
+                o_add_adl = 1;
+                o_adl_pcl = 1;   
+
+            end
         end
         default:
         begin
-            // load address high
-            
             
         end
         endcase
     end
     7: // T5
     begin
-        
+        // >> output new PC (0x8002) via ABH/ABL
+
+        // high byte - from PCH
+        o_pch_adh = 1;
+        o_adh_abh = 1;
+
+        // low byte - from PCL
+        o_pcl_adl = 1;
+        o_adl_abl = 1;
+
+        // retain PCL and PCH
+        o_pcl_pcl = 1;
+        o_pch_pch = 1;
     end
     default:
     begin

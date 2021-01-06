@@ -20,12 +20,33 @@ namespace {
     class Cpu6502 : public ::testing::Test {
     public:
         Cpu6502() : sram(64 * 1024) {
-
         }
 
         void SetUp() override {
             testBench.setClockPolarity(1);
             sram.clear(0);
+
+            // simulation at the end of a clock phase, before
+            //   transition to other clock phase
+            testBench.setCallbackSimulateCombinatorial([this]{
+                auto& cpu = testBench.core();
+
+                if (cpu.i_clk == 1) {
+                    // clock: end of phi2
+                    // R/W data is valid on the bus
+                    if (cpu.o_rw == 0) {
+                        // write
+                        sram.write(cpu.o_address, cpu.o_data);
+                    } else {
+                        // read
+                        cpu.i_data = sram.read(cpu.o_address);
+                    }
+                } else {
+                    // clock: end of phi 1
+                    // undefined data on the bus
+                    cpu.i_data = 0xFF;
+                }
+            });
 
             testBench.reset();
             testBench.trace.clear();
@@ -34,36 +55,10 @@ namespace {
         void TearDown() override {
         }
 
-        /// @brief simulate memory access using address, data + RW lines
-        void tick(uint32_t numTicks) {
-            for (uint32_t i=0; i<numTicks; i++) {
-                auto& cpu = testBench.core();
-
-                for (uint32_t j=0; j<2; j++) {
-                    testBench.step();
-
-                    if (cpu.i_clk == 1) {
-                        // simulating that all memory access will occur in second half-cycle (step)
-                        // of each clock tick, when address is valid while i_clk is high
-                        
-                        // note: actual READ/WRITE will be registered on next falling edge of the clock
-
-                        if (cpu.o_rw == 0) {
-                            // write
-                            sram.write(cpu.o_address, cpu.o_data);
-                        } else {
-                            // read
-                            cpu.i_data = sram.read(cpu.o_address);
-                        }
-                    }
-                }
-            }
-        }
-
         /// @brief skip 7 steps of reset vector
         /// @note Next tick will be T0 of first opcode
         void helperSkipResetVector() {
-            tick(7);
+            testBench.tick(7);
             testBench.trace.clear();
         }
 
@@ -94,24 +89,27 @@ TEST_F(Cpu6502, ShouldUseResetVector) {
     sram.write(0xFFFC, 0x02);               // low byte of 16bit address
     sram.write(0xFFFD, 0x80);               // high byte of 16bit address
 
-    tick(8);
+    testBench.tick(8);
 
     Trace expected = TraceBuilder()
         .port(i_clk).signal("_-").repeat(8)
         .port(o_rw).signal("11").repeat(8)
+        .port(o_sync).signal("01000000").repeatEachStep(2)
         .port(o_address)
             .signal({
-                0x0000, 0x0001,                 // PC, PC + 1
-                0x01FF, 0x01FE, 0x01FD,         // SP, SP-1, SP-2
-                0xFFFC, 0xFFFD,                 // Reset Vector (low byte), Reset Vector (high byte)
-                0x8002                          // The reset vector
-            }).repeatEachStep(2)
+                0x0000, 0x0001,             // PC, PC + 1
+                0x01FF, 0x01FE, 0x01FD,     // SP, SP-1, SP-2
+                0xFFFC, 0xFFFD,             // Reset Vector (low byte), Reset Vector (high byte)
+                0x8002                      // The reset vector
+            }).repeatEachStep(2);
+        /*
+        // TODO: would need to be zipped with random data during phi2
         .port(i_data)
-            .signal({0})                        // memory simulation is warming up
-            .signal({NOP}).repeat(4)            // reading unset memory
-            .signal({0x02, 0x80})               // load PC from RESET vector
-            .signal({NOP})                      // 
+            .signal({0})                    // memory simulation is warming up
+            .signal({NOP}).repeat(5)        // reading unset memory
+            .signal({0x02, 0x80})           // load PC from RESET vector
             .concat().repeatEachStep(2);
+        */
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }

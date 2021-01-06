@@ -18,7 +18,9 @@ module Cpu6502(
     output [2:0] o_debug_tcu,
     output [7:0] o_debug_s,
     output [7:0] o_debug_pcl,
-    output [7:0] o_debug_add
+    output [7:0] o_debug_pch,
+    output [7:0] o_debug_add,
+    output [7:0] o_debug_dl
 
     // TODO defines: to turn on/off sections of debugging
 );
@@ -114,6 +116,7 @@ wire w_srs;
 // Decoder
 // transform IR and TCU into control signals
 Decoder decoder(
+    .i_clk,
     .i_ir(w_ir),
     .i_tcu(w_tcu),
     .o_tcu(w_tcu_next),
@@ -347,6 +350,8 @@ assign o_rw = w_rw;
 assign o_sync = w_sync;
 assign o_debug_s = w_s;
 assign o_debug_pcl = w_pcl;
+assign o_debug_pch = w_pch;
 assign o_debug_add = w_add;
+assign o_debug_dl = w_dl;
 
 endmodule
