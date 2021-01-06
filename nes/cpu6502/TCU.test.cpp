@@ -16,7 +16,7 @@ namespace {
         void SetUp() override {
             testBench.setClockPolarity(1);
 
-            testBench.setCallbackSimulate([this]{
+            testBench.setCallbackSimulateCombinatorial([this]{
                 auto& core = testBench.core();
 
                 core.i_tcu_next = (core.o_tcu + 1) % (kMinusOne+1);
