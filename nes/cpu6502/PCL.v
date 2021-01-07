@@ -41,8 +41,6 @@ begin
         r_pcls[7:0] = r_pcl;
     else if (i_adl_pcl)
         r_pcls[7:0] = i_adl;
-    else
-        r_pcls[7:0] = 8'h0;
 end
 
 // Increment Logic
