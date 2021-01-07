@@ -8,7 +8,8 @@ using namespace gtestverilog;
 using namespace irtestbench;
 
 namespace {
-    const uint8_t OPCODE_BRK = 0;
+    const uint8_t OPCODE_BRK = 0x00;
+    const uint8_t OPCODE_NOP = 0xAE;
 
     class IR : public ::testing::Test {
     public:
@@ -32,78 +33,62 @@ TEST_F(IR, ShouldConstruct) {
 
 TEST_F(IR, ShouldReset) {
     testBench.reset();
-    
     EXPECT_EQ(OPCODE_BRK, testBench.core().o_ir);
 }
 
-TEST_F(IR, ShouldFetchOpcodeOnT1) {
-    auto& core = testBench.core();
-
-    // tick 1
-    core.i_tcu = 0;
-    testBench.tick();
-
-    // tick 2
-    // note: simulate opcode appearing on data bus at 
-    //       start of T1
-    core.i_data = 0xAE;
-    testBench.step();
-    // note: simulate tcu changing after clock edge
-    core.i_tcu = 1;
-    // note: simulate data bus changing after clock edge
-    core.i_data = 0xFF;
-    testBench.step();
-
-    // tick 3
-    core.i_tcu = 2;
-    testBench.tick();
-
-    Trace expected = TraceBuilder()
-        .port(i_clk).signal("_-").repeat(3)
-        .port(o_ir)
-            .signal({0}).repeat(3)
-            .signal({0xAE}).repeat(3);
-
-    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
-}
-
-TEST_F(IR, ShouldResetAfterLoadingIR) {
-    auto& core = testBench.core();
-
-    // tick 1
-    core.i_tcu = 0;
-    core.i_data = 0x5C;
-    testBench.tick();
-
-    // tick 2
-    core.i_tcu = 1;
-    testBench.tick();
-    
-    // tick 3
-    core.i_tcu = 2;
-    testBench.tick();
-    
+TEST_F(IR, ShouldNotLoadOpcodeAtT1AfterReset) {
     testBench.reset();
 
+    auto& core = testBench.core();
+
+    // start phi2
+    core.i_tcu_next = 1;
+    core.i_data = OPCODE_NOP;
+    core.eval();
+
+    // end phi2
+    core.i_clk = 0;
+    core.i_tcu_next = 2;
+    core.eval();
+
     EXPECT_EQ(OPCODE_BRK, testBench.core().o_ir);
 }
 
-TEST_F(IR, ShouldAssertInterruptControl) {
+TEST_F(IR, ShouldLoadOpcodesAfterHandlingInterrupt) {
+    testBench.reset();
+
     auto& core = testBench.core();
+    core.i_data = OPCODE_NOP;
 
-    // tick 1
-    core.i_tcu = 0;
-    core.i_data = 0x5C;
-    core.i_interrupt = 1;
-    testBench.tick();
-
-    // tick 2
-    core.i_tcu = 1;
-    testBench.tick();
-    
-    // tick 3
-    core.i_tcu = 2;
-    testBench.tick();
-
+    // start phi2 (T0 - BRK)
+    core.i_tcu_next = 1;
+    core.eval();
     EXPECT_EQ(OPCODE_BRK, testBench.core().o_ir);
+
+    // end phi2 (T0 - BRK)
+    core.i_clk = 0;
+    core.eval();
+    EXPECT_EQ(OPCODE_BRK, testBench.core().o_ir);
+
+    // start phi2 (T1 - BRK)
+    core.i_clk = 1;
+    core.i_tcu_next = 0;
+    core.eval();
+    EXPECT_EQ(OPCODE_BRK, testBench.core().o_ir);
+
+    // end phi2 (T1 - BRK)
+    core.i_clk = 0;
+    core.eval();
+    EXPECT_EQ(OPCODE_BRK, testBench.core().o_ir);
+
+    // start phi2 (T0 - NOP)
+    core.i_clk = 1;
+    core.i_tcu_next = 1;
+    core.eval();
+    EXPECT_EQ(OPCODE_BRK, testBench.core().o_ir);
+
+    // end phi2 (T0 - NOP)
+    core.i_clk = 0;
+    core.eval();
+    EXPECT_EQ(OPCODE_NOP, testBench.core().o_ir);
 }
