@@ -55,14 +55,6 @@ IR ir(
     .i_interrupt(w_interrupt)
 );
 
-// drive debug signals
-assign o_debug_bus_db = w_bus_db;
-assign o_debug_bus_adl = w_bus_adl;
-assign o_debug_bus_adh = w_bus_adh;
-assign o_debug_bus_sb = w_bus_sb;
-assign o_debug_ir = w_ir;
-assign o_debug_tcu = w_tcu;
-
 // control signals from Decoder
 wire w_rw;
 wire w_dl_db;
@@ -344,6 +336,13 @@ Routing routing(
     .o_bus_adh(w_bus_adh)
 );
 
+// drive debug signals
+assign o_debug_bus_db = w_bus_db;
+assign o_debug_bus_adl = w_bus_adl;
+assign o_debug_bus_adh = w_bus_adh;
+assign o_debug_bus_sb = w_bus_sb;
+assign o_debug_ir = w_ir;
+assign o_debug_tcu = w_tcu;
 assign o_address[7:0] = w_abl;
 assign o_address[15:8] = w_abh;
 assign o_rw = w_rw;
