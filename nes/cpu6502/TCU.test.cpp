@@ -8,8 +8,8 @@ using namespace gtestverilog;
 using namespace tcutestbench;
 
 namespace {
-    // maximum value that TCU can output with 3 bits
-    const int kMinusOne = 0b111;
+    // maximum value that TCU can output with 4 bits
+    const int kMinusOne = 0b1111;
 
     class TCU : public ::testing::Test {
     public:
