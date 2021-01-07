@@ -314,7 +314,7 @@ begin
 
             end
 
-            // TODO: can we jump to T0 next tick?
+            o_tcu = 0;
         end
         default:
         begin
@@ -325,28 +325,6 @@ begin
     7: // T7
     begin
         case (i_ir)
-        OPCODE_BRK:
-        begin
-            // >> output new PC (0x8002) via ABH/ABL
-
-            // high byte - from PCH
-            o_pch_adh = 1;
-            o_adh_abh = 1;
-
-            // low byte - from PCL
-            o_pcl_adl = 1;
-            o_adl_abl = 1;
-
-            // retain PCL and PCH
-            o_pcl_pcl = 1;
-            o_pch_pch = 1;
-
-            // jump to T1 for next opcode
-            o_tcu = 1;
-
-            // increment PC for T1
-            o_i_pc = 1;
-        end
         default: begin
             
         end
