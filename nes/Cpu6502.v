@@ -15,7 +15,7 @@ module Cpu6502(
     output [7:0] o_debug_bus_adh,
     output [7:0] o_debug_bus_sb,
     output [7:0] o_debug_ir,
-    output [2:0] o_debug_tcu,
+    output [3:0] o_debug_tcu,
     output [7:0] o_debug_s,
     output [7:0] o_debug_pcl,
     output [7:0] o_debug_pch,
@@ -32,8 +32,8 @@ wire [7:0] w_bus_adh;
 wire [7:0] w_bus_sb;
 
 // Timing Control Unit
-wire [2:0] w_tcu;
-wire [2:0] w_tcu_next;
+wire [3:0] w_tcu;
+wire [3:0] w_tcu_next;
 wire w_sync;
 TCU tcu(
     .i_clk(i_clk),
@@ -45,14 +45,12 @@ TCU tcu(
 
 // instruction register
 wire [7:0] w_ir;
-wire w_interrupt;
 IR ir(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
     .i_data(i_data),
-    .i_tcu(w_tcu),
-    .o_ir(w_ir),
-    .i_interrupt(w_interrupt)
+    .i_tcu_next(w_tcu_next),
+    .o_ir(w_ir)
 );
 
 // control signals from Decoder
@@ -112,7 +110,6 @@ Decoder decoder(
     .i_ir(w_ir),
     .i_tcu(w_tcu),
     .o_tcu(w_tcu_next),
-    .o_interrupt(w_interrupt),
     .o_rw(w_rw),
     .o_dl_db(w_dl_db),
     .o_dl_adl(w_dl_adl),

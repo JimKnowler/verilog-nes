@@ -8,10 +8,9 @@ module Decoder(
     input i_clk,
     
     input [7:0] i_ir,
-    input [2:0] i_tcu,
+    input [3:0] i_tcu,
 
-    output reg [2:0] o_tcu,         // value TCU at next phi2 clock tick
-    output reg o_interrupt,         // HIGH when interrupt is running
+    output reg [3:0] o_tcu,         // value TCU at next phi2 clock tick
 
     // control signals
     output reg o_rw,
@@ -64,7 +63,7 @@ module Decoder(
     output reg o_srs
 );
 
-localparam [7:0] OPCODE_BRK = 8'h00;
+localparam [7:0] OPCODE_BRK = 8'h00, OPCODE_NOP = 8'hEA;
 
 localparam RW_READ = 1;
 localparam RW_WRITE = 0;
@@ -75,7 +74,6 @@ begin
     o_tcu = i_tcu + 1;
 
     // default all control signals
-    o_interrupt = 0;
     o_rw = RW_READ;
     o_dl_db = 0;
     o_dl_adl = 0;
@@ -128,9 +126,6 @@ begin
     case (i_tcu)
     0:  // T0
     begin        
-        // increment PC for T1
-        o_i_pc = 1;
-
         // fetch
 
         // output PCL on ABL
@@ -141,26 +136,18 @@ begin
         o_pch_adh = 1;
         o_adh_abh = 1;
 
-        case (i_ir)
-        OPCODE_BRK:
-        begin
-            // during an interrupt, we force IR to use BRK opcode
-            o_interrupt = 1;
-        end
-        default:
-        begin
-            
-        end
-        endcase
+        // retain PCL and PCH
+        o_pcl_pcl = 1;
+        o_pch_pch = 1;
+
+        // increment PC for T1
+        o_i_pc = 1;
     end
     1: // T1
     begin
         case (i_ir)
         OPCODE_BRK: 
         begin
-            // during an interrupt, we force IR to use BRK opcode
-            o_interrupt = 1;
-
             // output PCL on ABL
             o_pcl_adl = 1;
             o_adl_abl = 1;
@@ -168,6 +155,23 @@ begin
             // output PCH on ABH
             o_pch_adh = 1;
             o_adh_abh = 1;
+        end
+        OPCODE_NOP:
+        begin
+            // high byte - from PCH
+            o_pch_adh = 1;
+            o_adh_abh = 1;
+
+            // low byte - from PCL
+            o_pcl_adl = 1;
+            o_adl_abl = 1;
+
+            // retain PCL and PCH
+            o_pcl_pcl = 1;
+            o_pch_pch = 1;
+
+            // next opcode
+            o_tcu = 0;
         end
         default:
         begin
@@ -180,9 +184,6 @@ begin
         case (i_ir)
         OPCODE_BRK:
         begin
-            // during an interrupt, we force IR to use BRK opcode
-            o_interrupt = 1;
-
             // output S on ABL
             o_s_adl = 1;
             o_adl_abl = 1;
@@ -278,7 +279,7 @@ begin
         end
         endcase
     end
-    6: // T5
+    6: // T6
     begin
         case (i_ir)
         OPCODE_BRK:
@@ -312,6 +313,8 @@ begin
                 o_adl_pcl = 1;   
 
             end
+
+            // TODO: can we jump to T0 next tick?
         end
         default:
         begin
@@ -319,21 +322,35 @@ begin
         end
         endcase
     end
-    7: // T5
+    7: // T7
     begin
-        // >> output new PC (0x8002) via ABH/ABL
+        case (i_ir)
+        OPCODE_BRK:
+        begin
+            // >> output new PC (0x8002) via ABH/ABL
 
-        // high byte - from PCH
-        o_pch_adh = 1;
-        o_adh_abh = 1;
+            // high byte - from PCH
+            o_pch_adh = 1;
+            o_adh_abh = 1;
 
-        // low byte - from PCL
-        o_pcl_adl = 1;
-        o_adl_abl = 1;
+            // low byte - from PCL
+            o_pcl_adl = 1;
+            o_adl_abl = 1;
 
-        // retain PCL and PCH
-        o_pcl_pcl = 1;
-        o_pch_pch = 1;
+            // retain PCL and PCH
+            o_pcl_pcl = 1;
+            o_pch_pch = 1;
+
+            // jump to T1 for next opcode
+            o_tcu = 1;
+
+            // increment PC for T1
+            o_i_pc = 1;
+        end
+        default: begin
+            
+        end
+        endcase
     end
     default:
     begin
