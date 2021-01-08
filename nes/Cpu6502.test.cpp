@@ -237,4 +237,5 @@ TEST_F(Cpu6502, ShouldSTAa) {
                          .repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+    EXPECT_EQ(kTestData, sram.read(kTestAddress));
 }
