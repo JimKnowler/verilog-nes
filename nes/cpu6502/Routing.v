@@ -104,6 +104,8 @@ begin
         r_bus_sb = i_ac;
     else if (i_s_sb)
         r_bus_sb = i_s;
+    else if (i_add_sb_0_6 && i_add_sb_7)
+        r_bus_sb = i_add;
     else if (i_add_sb_7)
         r_bus_sb[7] = i_add[7];
     else if (i_add_sb_0_6)

@@ -287,6 +287,20 @@ TEST_F(Routing, ShouldRouteAddToSb_0_6) {
     EXPECT_EQ(0x80, core.o_bus_sb); 
 }
 
+TEST_F(Routing, ShouldRouteAddToSb) {
+    auto& core = testBench.core();
+
+    core.i_add = 0;
+    core.i_add_sb_0_6 = 1;
+    core.i_add_sb_7 = 1;
+    core.eval();
+
+    EXPECT_EQ(0xFF, core.o_bus_adh);
+    EXPECT_EQ(0xFF, core.o_bus_adl);
+    EXPECT_EQ(0xFF, core.o_bus_db);
+    EXPECT_EQ(0x00, core.o_bus_sb); 
+}
+
 TEST_F(Routing, ShouldRouteAddToAdl) {
     auto& core = testBench.core();
 
