@@ -11,6 +11,8 @@ namespace {
     class Register : public ::testing::Test {
     public:
         void SetUp() override {
+            testBench.reset();
+            testBench.trace.clear();
         }
         
         void TearDown() override {
@@ -21,9 +23,6 @@ namespace {
 }
 
 TEST_F(Register, ShouldConstruct) {    
-    auto& core = testBench.core();
-
-    EXPECT_EQ(0, core.o_data);
 }
 
 TEST_F(Register, ShouldReset) {
@@ -39,16 +38,16 @@ TEST_F(Register, ShouldNotPassThroughWhileLoadSignalIsLow) {
     core.i_data = 0xAF;
     core.i_load = 0;
     core.eval();
-    EXPECT_EQ(0, core.o_data);
+    EXPECT_EQ(0xFF, core.o_data);
 }
 
-TEST_F(Register, ShouldPassThroughWhileLoadSignalIsHigh) {
-auto& core = testBench.core();
+TEST_F(Register, ShouldNotPassThroughWhileLoadSignalIsHigh) {
+    auto& core = testBench.core();
 
     core.i_data = 0xAF;
     core.i_load = 1;
     core.eval();
-    EXPECT_EQ(0xAF, core.o_data);
+    EXPECT_EQ(0xFF, core.o_data);
 }
 
 TEST_F(Register, ShouldLoadOnFallingEdgeOfLoadSignal) {
@@ -61,7 +60,7 @@ TEST_F(Register, ShouldLoadOnFallingEdgeOfLoadSignal) {
     // RISING EDGE
     core.i_load = 1;
     core.eval();
-    EXPECT_EQ(0xAF, core.o_data);
+    EXPECT_EQ(0xFF, core.o_data);
 
     // FALLING EDGE
     core.i_load = 0;

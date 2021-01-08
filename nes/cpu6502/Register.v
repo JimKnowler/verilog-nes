@@ -5,6 +5,9 @@
 // - Pass input through while i_load is HIGH
 // - Latch input on FALLING EDGE of i_load 
 // Reference: http://forum.6502.org/viewtopic.php?f=4&t=4651
+//
+// This Register simulation will only clock values 
+// at falling edge of i_load
 
 module Register
 #(
@@ -32,6 +35,6 @@ begin
         r_data <= i_data;
 end
 
-assign o_data = i_load ? i_data : r_data;
+assign o_data = r_data;
 
 endmodule
