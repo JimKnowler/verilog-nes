@@ -64,7 +64,7 @@ module Decoder(
 );
 
 localparam [7:0] OPCODE_BRK = 8'h00, OPCODE_NOP = 8'hEA,
-                 OPCODE_LDAi = 8'hA9;
+                 OPCODE_LDAi = 8'hA9, OPCODE_LDAa = 8'hAD;
 
 localparam RW_READ = 1;
 localparam RW_WRITE = 0;
@@ -182,6 +182,32 @@ begin
             // end of opcode
             o_tcu = 0;
         end
+        OPCODE_LDAa:
+        begin
+            // PC + 1 = Fetch low order effective address byte
+
+            // output PCL on ABL
+            o_pcl_adl = 1;
+            o_adl_abl = 1;
+
+            // output PCH on ABH
+            o_pch_adh = 1;
+            o_adh_abh = 1;
+
+            // retain PCL and PCH
+            o_pcl_pcl = 1;
+            o_pch_pch = 1;
+
+            // increment PC for T2
+            o_i_pc = 1;
+
+            // read low byte of address at end of phi 2
+            // into ALU
+            o_dl_db = 1;
+            o_db_add = 1;
+            o_0_add = 1;
+            o_sums = 1;
+        end
         OPCODE_NOP:
         begin
             // high byte - from PCH
@@ -223,6 +249,29 @@ begin
             o_sb_add = 1;       // pre-charge mosfets = -1
             o_sums = 1;
         end
+        OPCODE_LDAa:
+        begin
+            // PC + 2 = Fetch high order effective address byte
+            
+            // retain PCL and PCH
+            o_pcl_pcl = 1;
+            o_pch_pch = 1;
+
+            // output PCL on ABL
+            o_pcl_adl = 1;
+            o_adl_abl = 1;
+
+            // output PCH on ABH
+            o_pch_adh = 1;
+            o_adh_abh = 1;
+
+            // keep value cached in ADD
+            o_add_sb_0_6 = 1;    // TODO: test using o_add_sb_0_6 and 7 at the same time
+            o_add_sb_7 = 1;
+            o_sb_add = 1;
+            o_db_n_add = 1;      // inverse of mosfets
+            o_sums = 1;
+        end
         default:
         begin
         end
@@ -245,6 +294,33 @@ begin
             o_adl_add = 1;
             o_sb_add = 1;       // pre-charge mosfets = -1
             o_sums = 1;
+        end
+        OPCODE_LDAa:
+        begin
+            // output absolute address ADH, ADL
+
+            // retain PCL and PCH
+            o_pcl_pcl = 1;
+            o_pch_pch = 1;
+
+            // increment PC for next T0
+            o_i_pc = 1;
+
+            // output ADL from ADD on ABL
+            o_add_adl = 1;
+            o_adl_abl = 1;
+
+            // output ADH from DL on ABH
+            o_dl_adh = 1;
+            o_adh_abh = 1;
+
+            // load value into AC
+            o_dl_db = 1;
+            o_sb_db = 1;
+            o_sb_ac = 1;
+
+            // start next opcode
+            o_tcu = 0;
         end
         default:
         begin

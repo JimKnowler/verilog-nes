@@ -161,6 +161,7 @@ TEST_F(Cpu6502, ShouldExecuteLDAi) {
                     .repeat(4)
         .port(o_rw).signal("11")
                     .repeat(4)
+        .port(o_sync).signal("0101").repeatEachStep(2)
         .port(o_address).signal({0, 1, 2, 3})
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({0xFF, 0xFF, 0x53, 0x53})
@@ -169,35 +170,39 @@ TEST_F(Cpu6502, ShouldExecuteLDAi) {
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
-#if 0
-TEST_F(Cpu6502, ShouldLDAa) {
+TEST_F(Cpu6502, ShouldExecuteLDAa) {
     sram.clear(0);
     
+    const uint16_t kTestAddress = 0x5678;
+    const uint8_t kTestData = 0x42;
+
     Assembler()
-        .LDA().a(0x5678)
+        .LDA().a(kTestAddress)
         .NOP()
         .compileTo(sram);
 
-    sram.write(0x5678, 0x42);
+    sram.write(kTestAddress, kTestData);
 
     helperSkipResetVector();
 
-    tick(7);
+    testBench.tick(6);
 
     Trace expected = TraceBuilder()
-        .port(i_clk).signal("_-")
-                    .repeat(7)
-        .port(o_rw).signal("11")
-                    .repeat(7)
-        .port(o_address).signal({0, 1, 2, 0x5678, 3, 4, 4})
-                        .repeatEachStep(2)
-        .port(o_debug_a).signal({0x00}).repeat(4)
-                        .signal({0x42}).repeat(3)
-                        .concat().repeatEachStep(2);
+        .port(i_clk).signal("_-").repeat(6)
+        .port(o_rw).signal("11").repeat(6)
+        .port(o_sync).signal("010001").repeatEachStep(2)
+        .port(o_address)
+            .signal({0, 1, 2, kTestAddress, 3, 4})
+            .repeatEachStep(2)
+        .port(o_debug_ac)
+            .signal({0xFF}).repeat(4)
+            .signal({kTestData}).repeat(2)
+            .concat().repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
+#if 0
 /// @note this test case is based on Ben Eater's video
 ///       "'hello world' from scratch on a 6502 - Part 2"
 ///       https://www.youtube.com/watch?v=yl8vPW5hydQ
