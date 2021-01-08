@@ -1,6 +1,6 @@
 # Compile cpp with c++20 standard
 build --cxxopt='-std=c++2a'
-build --cxxopt='-Werror'
+#build --cxxopt='-Werror'
 
 # "bazel build --config debug"
 build:debug -c dbg
