@@ -63,7 +63,8 @@ module Decoder(
     output reg o_srs
 );
 
-localparam [7:0] OPCODE_BRK = 8'h00, OPCODE_NOP = 8'hEA;
+localparam [7:0] OPCODE_BRK = 8'h00, OPCODE_NOP = 8'hEA,
+                 OPCODE_LDAi = 8'hA9;
 
 localparam RW_READ = 1;
 localparam RW_WRITE = 0;
@@ -155,6 +156,31 @@ begin
             // output PCH on ABH
             o_pch_adh = 1;
             o_adh_abh = 1;
+        end
+        OPCODE_LDAi:
+        begin
+            // output PCL on ABL
+            o_pcl_adl = 1;
+            o_adl_abl = 1;
+
+            // output PCH on ABH
+            o_pch_adh = 1;
+            o_adh_abh = 1;
+
+            // retain PCL and PCH
+            o_pcl_pcl = 1;
+            o_pch_pch = 1;
+
+            // increment PC for next T0
+            o_i_pc = 1;
+
+            // load Accumulator
+            o_dl_db = 1;
+            o_sb_db = 1;
+            o_sb_ac = 1;
+
+            // end of opcode
+            o_tcu = 0;
         end
         OPCODE_NOP:
         begin

@@ -83,7 +83,7 @@ TEST_F(Cpu6502, ShouldReset) {
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
-TEST_F(Cpu6502, ShouldUseResetVector) {
+TEST_F(Cpu6502, ShouldExecuteResetVector) {
     sram.clear(OPCODE_NOP);
 
     // write address for reset vector
@@ -144,9 +144,7 @@ TEST_F(Cpu6502, ShouldExecuteNOP) {
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
-#if 0
-
-TEST_F(Cpu6502, ShouldLDAi) {
+TEST_F(Cpu6502, ShouldExecuteLDAi) {
     sram.clear(0);
     
     Assembler()
@@ -156,21 +154,22 @@ TEST_F(Cpu6502, ShouldLDAi) {
 
     helperSkipResetVector();
 
-    tick(5);
+    testBench.tick(4);
 
     Trace expected = TraceBuilder()
         .port(i_clk).signal("_-")
-                    .repeat(5)
+                    .repeat(4)
         .port(o_rw).signal("11")
-                    .repeat(5)
-        .port(o_address).signal({0, 1, 2, 3, 3})
+                    .repeat(4)
+        .port(o_address).signal({0, 1, 2, 3})
                         .repeatEachStep(2)
-        .port(o_debug_a).signal({0x00, 0x00, 0x53, 0x53, 0x53})
+        .port(o_debug_ac).signal({0xFF, 0xFF, 0x53, 0x53})
                         .repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
+#if 0
 TEST_F(Cpu6502, ShouldLDAa) {
     sram.clear(0);
     
