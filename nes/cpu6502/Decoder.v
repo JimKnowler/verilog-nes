@@ -64,7 +64,8 @@ module Decoder(
 );
 
 localparam [7:0] OPCODE_BRK = 8'h00, OPCODE_NOP = 8'hEA,
-                 OPCODE_LDAi = 8'hA9, OPCODE_LDAa = 8'hAD;
+                 OPCODE_LDAi = 8'hA9, OPCODE_LDAa = 8'hAD,
+                 OPCODE_STAa = 8'h8D;
 
 localparam RW_READ = 1;
 localparam RW_WRITE = 0;
@@ -182,7 +183,7 @@ begin
             // end of opcode
             o_tcu = 0;
         end
-        OPCODE_LDAa:
+        OPCODE_LDAa, OPCODE_STAa:
         begin
             // PC + 1 = Fetch low order effective address byte
 
@@ -249,7 +250,7 @@ begin
             o_sb_add = 1;       // pre-charge mosfets = -1
             o_sums = 1;
         end
-        OPCODE_LDAa:
+        OPCODE_LDAa, OPCODE_STAa:
         begin
             // PC + 2 = Fetch high order effective address byte
             
@@ -295,7 +296,7 @@ begin
             o_sb_add = 1;       // pre-charge mosfets = -1
             o_sums = 1;
         end
-        OPCODE_LDAa:
+        OPCODE_LDAa, OPCODE_STAa:
         begin
             // output absolute address ADH, ADL
 
@@ -314,10 +315,19 @@ begin
             o_dl_adh = 1;
             o_adh_abh = 1;
 
-            // load value into AC
-            o_dl_db = 1;
-            o_sb_db = 1;
-            o_sb_ac = 1;
+            if (i_ir == OPCODE_LDAa)
+            begin
+                // load value into AC
+                o_dl_db = 1;
+                o_sb_db = 1;
+                o_sb_ac = 1;
+            end
+            else if (i_ir == OPCODE_STAa)
+            begin
+                // write value from AC
+                o_ac_db = 1;
+                o_rw = RW_WRITE;
+            end
 
             // start next opcode
             o_tcu = 0;

@@ -125,11 +125,6 @@ TEST_F(Cpu6502, ShouldExecuteNOP) {
 
     helperSkipResetVector();
 
-    // TODO: why isn't IR picking up the new instruction?
-    //  -> debug into when IR picks up new value
-
-    // test executing NOP opcodes
-    // NOTE: NOP should execute for 2 clock ticks
     testBench.tick(5);
     Trace expected = TraceBuilder()
         .port(i_clk).signal("_-").repeat(5)
@@ -202,41 +197,44 @@ TEST_F(Cpu6502, ShouldExecuteLDAa) {
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
-#if 0
-/// @note this test case is based on Ben Eater's video
-///       "'hello world' from scratch on a 6502 - Part 2"
-///       https://www.youtube.com/watch?v=yl8vPW5hydQ
-TEST_F(Cpu6502, ShouldLDAiSTAa) {
+TEST_F(Cpu6502, ShouldSTAa) {
     sram.clear(0);
     
+    const uint16_t kTestAddress = 0x1234;
+    const uint8_t kTestData = 0x42;
+
     Assembler()
-        .LDA().immediate(0x42)
-        .STA().a(0x1234)
+        .LDA().immediate(kTestData)
+        .STA().a(kTestAddress)
         .NOP()
         .compileTo(sram);
 
     helperSkipResetVector();
 
-    tick(9);
+    // skip LDAi
+    testBench.tick(2);
+    testBench.trace.clear();
 
+    // test STAa (then NOP)
+    testBench.tick(6);
+
+    // note: o_data has valid data for step before and after
+    //       write data should be valid at end of phi 2
     Trace expected = TraceBuilder()
         .port(i_clk).signal("_-")
-                    .repeat(9)
-        .port(o_rw).signal("11").repeat(5)      // READ
-                    .signal("00")               // WRITE
-                    .signal("11").repeat(3)     // READ
-        .port(o_data).signal({0, 0}).repeat(5)
-                    .signal({0x42}).repeat(2)
-                    .signal({0, 0}).repeat(3)
-        .port(o_address).signal({0, 1, 2, 3, 4, 0x1234, 5, 6, 6 })
-                        .repeatEachStep(2)
-        .port(o_debug_a).signal({0x00}).repeat(2)
-                        .signal({0x42}).repeat(7)
-                        .concat().repeatEachStep(2);
+                    .repeat(6)
+        .port(o_sync).signal("010001").repeatEachStep(2)
+        .port(o_rw).signal("11").repeat(3)      // READ (STAa)
+                    .signal("00")               // WRITE (STAa)
+                    .signal("11").repeat(2)     // READ (NOP)
+        .port(o_data).signal({0}).repeatEachStep(2).repeat(3)
+                     .signal({0, kTestData, kTestData, 0})
+                     .signal({0}).repeatEachStep(2)
+        .port(o_address).signal({2, 3, 4, kTestAddress})    // STAa
+                        .signal({5, 6 })                    // NOP
+                        .concat().repeatEachStep(2)
+        .port(o_debug_ac).signal({kTestData}).repeat(6)
+                         .repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
-
-#endif
-
-// todo: test that o_sync is high during T1, especially on pipelined instructions
