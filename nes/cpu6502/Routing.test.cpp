@@ -340,3 +340,14 @@ TEST_F(Routing, ShouldRouteSbToDb) {
     EXPECT_EQ(0x2C, core.o_bus_db);
     EXPECT_EQ(0x2C, core.o_bus_sb); 
 }
+
+TEST_F(Routing, ShouldRouteDlViaDbToSb) {
+    auto& core = testBench.core();
+
+    core.i_dl = 0x5D;
+    core.i_dl_db = 1;
+    core.i_sb_db = 1;
+    core.eval();
+
+    EXPECT_EQ(0x5D, core.o_bus_sb);
+}

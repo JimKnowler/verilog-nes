@@ -79,15 +79,15 @@ begin
 
     if (i_dl_db)
         r_bus_db = i_dl;
-    if (i_pcl_db) 
+    else if (i_pcl_db) 
         r_bus_db = i_pcl;
-    if (i_pch_db)
+    else if (i_pch_db)
         r_bus_db = i_pch;
-    if (i_ac_db)
+    else if (i_ac_db)
         r_bus_db = i_ac;
-    if (i_p_db)
+    else if (i_p_db)
         r_bus_db = i_p;
-    if (i_sb_db)
+    else if (i_sb_db)
         r_bus_db = r_bus_sb;
 end
 
@@ -98,16 +98,18 @@ begin
 
     if (i_x_sb)
         r_bus_sb = i_x;
-    if (i_y_sb)
+    else if (i_y_sb)
         r_bus_sb = i_y;
-    if (i_ac_sb)
+    else if (i_ac_sb)
         r_bus_sb = i_ac;
-    if (i_s_sb)
+    else if (i_s_sb)
         r_bus_sb = i_s;
-    if (i_add_sb_7)
+    else if (i_add_sb_7)
         r_bus_sb[7] = i_add[7];
-    if (i_add_sb_0_6)
+    else if (i_add_sb_0_6)
         r_bus_sb[6:0] = i_add[6:0];
+    else if (i_dl_db && i_sb_db)
+        r_bus_sb = i_dl;
 end
 
 // Drive ADL bus
