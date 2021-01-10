@@ -9,7 +9,7 @@ module ProcessorStatus(
 
     output [7:0] o_p,
 
-    input [7:0] i_db
+    input [7:0] i_db,
 
     /*
     input i_ir5,
@@ -19,10 +19,10 @@ module ProcessorStatus(
     input i_db0_c,
     input i_ir5_c,
     input i_acr_c,
-
+    */
     input i_db1_z,
-    input i_dbz_z,
-
+    input i_db7_n
+    /*
     input i_db3_d,
     input i_ir5_d,
 
@@ -50,9 +50,13 @@ assign w_dbz = ~i_db;
 
 reg [7:0] r_p;
 
-always @(negedge i_reset_n)
+// N - Negative Flag
+always @(negedge i_reset_n or negedge i_db7_n)
 begin
-    r_p <= 0;
+    if (!i_reset_n)
+        r_p[N] <= 0;
+    else 
+        r_p[N] <= i_db[N];
 end
 
 assign o_p = r_p;
