@@ -19,19 +19,21 @@ module ProcessorStatus(
     input i_db0_c,
     input i_ir5_c,
     input i_acr_c,
-    */
+
     input i_db1_z,
-    input i_db7_n
+    */
+    input i_dbz_z,
     /*
+
     input i_db3_d,
     input i_ir5_d,
 
     input i_db6_v,
     input i_avr_v,
     input i_1_v,
+    */
 
     input i_db7_n
-    */
     /* verilator lint_on UNUSED */
 );
 
@@ -43,22 +45,37 @@ localparam B = 4;       // Break Command
 localparam V = 6;       // Overflow Flag
 localparam N = 7;       // Negative Flag
 
-/* verilator lint_off UNUSED */
-wire [7:0] w_dbz;
-/* verilator lint_on UNUSED */
-assign w_dbz = ~i_db;
+wire w_dbz;
+assign w_dbz = ~(|i_db);
 
-reg [7:0] r_p;
+reg r_z;
+reg r_n;
+
+// Z - zero flag
+always @(negedge i_reset_n or negedge i_dbz_z)
+begin
+    if (!i_reset_n)
+        r_z <= 0;
+    else
+        r_z <= w_dbz;
+end
 
 // N - Negative Flag
 always @(negedge i_reset_n or negedge i_db7_n)
 begin
     if (!i_reset_n)
-        r_p[N] <= 0;
+        r_n <= 0;
     else 
-        r_p[N] <= i_db[N];
+        r_n <= i_db[N];
 end
 
-assign o_p = r_p;
+
+assign o_p[C] = 0;
+assign o_p[Z] = r_z;
+assign o_p[I] = 0;
+assign o_p[D] = 0;
+assign o_p[B] = 0;
+assign o_p[V] = 0;
+assign o_p[N] = r_n;
 
 endmodule
