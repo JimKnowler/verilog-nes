@@ -67,6 +67,7 @@ module Decoder(
 );
 
 localparam [7:0] BRK = 8'h00, NOP = 8'hEA,
+                 INX = 8'hE8, INY = 8'hC8,
                  LDAi = 8'hA9, LDAa = 8'hAD,
                  LDXi = 8'hA2, LDXa = 8'hAE,
                  LDYi = 8'hA0, LDYa = 8'hAC,
@@ -151,6 +152,27 @@ begin
 
         // increment PC for T1
         o_i_pc = 1;
+
+        case (i_ir)
+        INX, INY: begin
+            // output value from ALU to register
+            o_add_sb_0_6 = 1;
+            o_add_sb_7 = 1;
+
+            case (i_ir)
+            INX: o_sb_x = 1;
+            INY: o_sb_y = 1;
+            default: begin
+            end
+            endcase
+
+            o_sb_db = 1;
+            
+            // todo: status flags
+        end
+        default: begin
+        end
+        endcase
     end
     1: // T1
     begin
@@ -164,6 +186,38 @@ begin
             // output PCH on ABH
             o_pch_adh = 1;
             o_adh_abh = 1;
+        end
+        INX, INY:
+        begin
+            // high byte - from PCH
+            o_pch_adh = 1;
+            o_adh_abh = 1;
+
+            // low byte - from PCL
+            o_pcl_adl = 1;
+            o_adl_abl = 1;
+
+            // retain PCL and PCH
+            o_pcl_pcl = 1;
+            o_pch_pch = 1;
+
+            // output register to input register A
+            case (i_ir)
+            INX: o_x_sb = 1;
+            INY: o_y_sb = 1;
+            default: begin
+            end
+            endcase
+
+            o_sb_add = 1;
+            o_db_n_add = 1;
+            o_sums = 1;
+
+            // use carry-in to +1
+            o_1_addc = 1;
+
+            // end of opcode
+            o_tcu = 0;
         end
         LDAi, LDXi, LDYi:
         begin
