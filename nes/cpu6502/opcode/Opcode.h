@@ -24,14 +24,17 @@ namespace cpu6502 {
             Opcode();
             virtual ~Opcode();
 
-            Opcode& immediate(uint8_t value);  
+            Opcode& immediate(uint8_t value = 0);  
 
-            Opcode& a(uint16_t value);
-            Opcode& absolute(uint16_t value);      
+            Opcode& a(uint16_t value = 0);
+            Opcode& absolute(uint16_t value = 0);      
 
             /// @brief Serialise the opcode to a byte stream
             /// @note Must be implemented in sub-classes
             virtual std::vector<uint8_t> serialise() const;
+
+            // cast to uint8_t opcode
+            operator uint8_t() const;
 
         protected:
             // todo: turn these bool flags into a bitmask

@@ -36,5 +36,9 @@ namespace cpu6502 { namespace opcode {
         return std::vector<uint8_t>();
     }
 
+    Opcode::operator uint8_t() const {
+        return serialise()[0];
+    }
+
 } // opcode
 } // cpu6502
