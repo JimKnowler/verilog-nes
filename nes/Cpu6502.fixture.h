@@ -18,6 +18,8 @@ using namespace memory;
 #include "cpu6502/Assembler.h"
 using namespace cpu6502;
 
+#include "cpu6502/ProcessorStatusFlags.h"
+
 class Cpu6502 : public ::testing::Test {
 public:
     Cpu6502();

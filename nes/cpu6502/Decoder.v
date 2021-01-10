@@ -60,7 +60,9 @@ module Decoder(
     output reg o_ands,
     output reg o_eors,
     output reg o_ors,
-    output reg o_srs
+    output reg o_srs,
+    output reg o_dbz_z,
+    output reg o_db7_n
 );
 
 localparam [7:0] OPCODE_BRK = 8'h00, OPCODE_NOP = 8'hEA,
@@ -124,6 +126,8 @@ begin
     o_eors = 0;
     o_ors = 0;
     o_srs = 0;
+    o_dbz_z = 0;
+    o_db7_n = 0;
 
     case (i_tcu)
     0:  // T0
@@ -179,6 +183,10 @@ begin
             o_dl_db = 1;
             o_sb_db = 1;
             o_sb_ac = 1;
+
+            // load Z and N from DB
+            o_dbz_z = 1;
+            o_db7_n = 1;
 
             // end of opcode
             o_tcu = 0;
