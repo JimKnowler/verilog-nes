@@ -15,7 +15,7 @@ TEST_F(Cpu6502, ShouldReset) {
 }
 
 TEST_F(Cpu6502, ShouldImplementResetVector) {
-    sram.clear(OPCODE_NOP);
+    sram.clear(NOP());
 
     // write address for reset vector
     sram.write(0xFFFC, 0x02);               // low byte of 16bit address
@@ -39,20 +39,17 @@ TEST_F(Cpu6502, ShouldImplementResetVector) {
         // TODO: would need to be zipped with random data during phi2
         .port(i_data)
             .signal({0})                    // memory simulation is warming up
-            .signal({OPCODE_NOP}).repeat(5)        // reading unset memory
+            .signal({NOP()}).repeat(5)        // reading unset memory
             .signal({0x02, 0x80})           // load PC from RESET vector
-            .signal({OPCODE_NOP})                  // load NOP instruction at RESET vector
+            .signal({NOP()})                  // load NOP instruction at RESET vector
             .concat().repeatEachStep(2);
         */
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
-/// @note this test case is based on Ben Eater's video 
-///       "'hello world' from scratch on a 6502 - Part 1"
-///       https://www.youtube.com/watch?v=LnzuMJLZRdU
 TEST_F(Cpu6502, ShouldImplementNOP) {
-    sram.clear(OPCODE_NOP);
+    sram.clear(NOP());
 
     helperSkipResetVector();
 

@@ -18,9 +18,6 @@ using namespace memory;
 #include "cpu6502/Assembler.h"
 using namespace cpu6502;
 
-// TODO: move this to the opcode code?
-const uint8_t OPCODE_NOP = 0xEA;
-
 class Cpu6502 : public ::testing::Test {
 public:
     Cpu6502();
