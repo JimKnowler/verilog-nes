@@ -166,10 +166,11 @@ begin
             default: begin
             end
             endcase
-
-            o_sb_db = 1;
             
             // todo: status flags
+            o_sb_db = 1;
+            o_db7_n = 1;
+            o_dbz_z = 1;
         end
         default: begin
         end
