@@ -28,9 +28,7 @@ module ALU(
     input i_sb_add,
 
     // Arithmetic Logic
-    /* verilator lint_off UNUSED */
     input i_1_addc,         // carry in
-    /* verilator lint_on UNUSED */
     input i_sums,           // a + b
     input i_ands,           // a & b
     input i_eors,           // a ^ b
@@ -81,7 +79,7 @@ begin
     r_alu = 8'h00;
 
     if (i_sums)
-        r_alu = r_a + r_b;
+        r_alu = r_a + r_b + ( i_1_addc ? 8'h01 : 8'h00);
     else if (i_ands)
         r_alu = r_a & r_b;
     else if (i_eors)

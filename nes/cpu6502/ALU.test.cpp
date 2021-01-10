@@ -182,3 +182,17 @@ TEST_F(ALU, ShouldShiftRightDb) {
     testBench.tick();
     EXPECT_EQ(0x78, core.o_add);
 }
+
+TEST_F(ALU, ShouldAddWithCarryIn) {
+    auto& core = testBench.core();
+    
+    core.i_adl = 0x11;
+    core.i_adl_add = 1;
+    core.i_sb = 0x32;
+    core.i_sb_add = 1;
+    core.i_sums = 1;
+    core.i_1_addc = 1;
+    
+    testBench.tick();
+    EXPECT_EQ(0x44, core.o_add);
+}
