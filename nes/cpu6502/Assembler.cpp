@@ -18,6 +18,10 @@ namespace cpu6502 {
     OPCODE_ASM_IMPL(LDX);
     OPCODE_ASM_IMPL(LDY);
     OPCODE_ASM_IMPL(STA);
+    OPCODE_ASM_IMPL(DEX);
+    OPCODE_ASM_IMPL(DEY);
+    OPCODE_ASM_IMPL(INX);
+    OPCODE_ASM_IMPL(INY);
 
     Assembler& Assembler::immediate(uint8_t value) {
         currentOpcode()->immediate(value);

@@ -40,5 +40,10 @@ namespace cpu6502 { namespace opcode {
         return serialise()[0];
     }
 
+    bool Opcode::isImplied() const {
+        // todo: update after adding after addressing modes
+        return (!m_hasImmediate) && (!m_hasAbsolute);
+    }
+
 } // opcode
 } // cpu6502

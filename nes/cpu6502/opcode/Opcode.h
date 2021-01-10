@@ -37,6 +37,8 @@ namespace cpu6502 {
             operator uint8_t() const;
 
         protected:
+            bool isImplied() const;
+
             // todo: turn these bool flags into a bitmask
             //     -> useful when setting multiple fields
             bool m_hasImmediate;
