@@ -341,11 +341,13 @@ begin
             end
             endcase
 
-            // todo: status flags
-            // but NOT for TXS
-            //o_sb_db = 1;
-            //o_dbz_z = 1;
-            //o_db7_n = 1;
+            // status flags
+            if (i_ir != TXS)
+            begin
+                o_sb_db = 1;
+                o_dbz_z = 1;
+                o_db7_n = 1;
+            end
             
             // start next opcode 
             o_tcu = 0;
