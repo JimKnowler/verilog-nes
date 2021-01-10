@@ -9,9 +9,9 @@ module ProcessorStatus(
 
     output [7:0] o_p,
 
-    input [7:0] i_db,
-    input i_p_db,
+    input [7:0] i_db
 
+    /*
     input i_ir5,
     input i_acr,                        // ALU Carry
     input i_avr,                        // ALU overflow
@@ -31,6 +31,7 @@ module ProcessorStatus(
     input i_1_v,
 
     input i_db7_n
+    */
     /* verilator lint_on UNUSED */
 );
 
@@ -42,7 +43,9 @@ localparam B = 4;       // Break Command
 localparam V = 6;       // Overflow Flag
 localparam N = 7;       // Negative Flag
 
+/* verilator lint_off UNUSED */
 wire [7:0] w_dbz;
+/* verilator lint_on UNUSED */
 assign w_dbz = ~i_db;
 
 reg [7:0] r_p;

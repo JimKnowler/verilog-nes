@@ -21,7 +21,8 @@ module Cpu6502(
     output [7:0] o_debug_pch,
     output [7:0] o_debug_add,
     output [7:0] o_debug_dl,
-    output [7:0] o_debug_ac
+    output [7:0] o_debug_ac,
+    output [7:0] o_debug_p
 
     // TODO defines: to turn on/off sections of debugging
 );
@@ -267,9 +268,14 @@ ALU alu(
     .o_add(w_add)
 );
 
-/// @todo Processor Status Register (p)
+// Processor Status Register (p)
 wire [7:0] w_p;
-assign w_p = 8'h0;
+ProcessorStatus p(
+    .i_clk(i_clk),
+    .i_reset_n(i_reset_n),
+    .o_p(w_p),
+    .i_db(w_bus_db)
+);
 
 // Address bus register - High
 wire [7:0] w_abh;
@@ -351,5 +357,6 @@ assign o_debug_pch = w_pch;
 assign o_debug_add = w_add;
 assign o_debug_dl = w_dl;
 assign o_debug_ac = w_ac;
+assign o_debug_p = w_p;
 
 endmodule
