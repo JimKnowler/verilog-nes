@@ -4,14 +4,30 @@
 
 namespace cpu6502 {
     namespace opcode {
+        OPCODE_DEFN(NOP);
+        
+        // dec
+        OPCODE_DEFN(DEX);
+        OPCODE_DEFN(DEY);
+
+        // inc
+        OPCODE_DEFN(INX);
+        OPCODE_DEFN(INY);
+        
+        // load
         OPCODE_DEFN(LDA);
         OPCODE_DEFN(LDX);
         OPCODE_DEFN(LDY);
+
+        // store
         OPCODE_DEFN(STA);
-        OPCODE_DEFN(NOP);
-        OPCODE_DEFN(INX);
-        OPCODE_DEFN(INY);
-        OPCODE_DEFN(DEX);
-        OPCODE_DEFN(DEY);
+
+        // transfer
+        OPCODE_DEFN(TAX);
+        OPCODE_DEFN(TAY);
+        OPCODE_DEFN(TXA);
+        OPCODE_DEFN(TYA);
+        OPCODE_DEFN(TSX);
+        OPCODE_DEFN(TXS);
     }
 }

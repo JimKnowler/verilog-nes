@@ -1,13 +1,13 @@
-#include "Opcodes.h"
+#include "../Opcodes.h"
 
 #include <cassert>
 
 namespace {
-    const uint8_t OPCODE_IMMEDIATE = 0xA9;
-    const uint8_t OPCODE_ABSOLUTE = 0xAD;
+    const uint8_t OPCODE_IMMEDIATE = 0xA2;
+    const uint8_t OPCODE_ABSOLUTE = 0xAE;
 }
 
-OPCODE_IMPL(LDA, {
+OPCODE_IMPL(LDX, {
     assert(m_hasImmediate || m_hasAbsolute);
 
     std::vector<uint8_t> bytes;

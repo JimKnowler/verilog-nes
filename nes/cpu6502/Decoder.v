@@ -167,7 +167,7 @@ begin
             end
             endcase
             
-            // todo: status flags
+            // Z & N status flags
             o_sb_db = 1;
             o_db7_n = 1;
             o_dbz_z = 1;

@@ -24,6 +24,12 @@ namespace cpu6502 {
         OPCODE_ASM(DEY);
         OPCODE_ASM(INX);
         OPCODE_ASM(INY);
+        OPCODE_ASM(TAX);
+        OPCODE_ASM(TAY);
+        OPCODE_ASM(TXA);
+        OPCODE_ASM(TYA);
+        OPCODE_ASM(TSX);
+        OPCODE_ASM(TXS);
 
         Assembler& immediate(uint8_t value);  
         Assembler& a(uint16_t value);
