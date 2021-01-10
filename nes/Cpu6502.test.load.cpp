@@ -85,3 +85,32 @@ TEST_F(Cpu6502, ShouldImplementLDAa) {
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
+
+TEST_F(Cpu6502, ShouldImplementLDAaProcessorStatus) {
+    const std::map<uint8_t, uint8_t> testCases = {
+        {0x00, Z},
+        {1<<7, N},
+        {1, 0}
+    };
+
+    for (auto& testCase : testCases) {
+        const uint16_t kTestAddress = 0x5678;
+        const uint8_t kTestData = testCase.first;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+        
+        Assembler()
+            .LDA().a(kTestAddress)
+            .NOP()
+            .compileTo(sram);
+
+        sram.write(kTestAddress, kTestData);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(5);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}

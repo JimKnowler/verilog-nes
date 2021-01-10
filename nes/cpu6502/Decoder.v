@@ -329,6 +329,10 @@ begin
                 o_dl_db = 1;
                 o_sb_db = 1;
                 o_sb_ac = 1;
+
+                // load Z and N from DB
+                o_dbz_z = 1;
+                o_db7_n = 1;
             end
             else if (i_ir == OPCODE_STAa)
             begin
