@@ -26,5 +26,7 @@ TEST_F(ProcessorStatus, ShouldConstruct) {
 
 TEST_F(ProcessorStatus, ShouldReset) {
     testBench.reset();
+
+    EXPECT_EQ(0, testBench.core().o_p);
 }
 
