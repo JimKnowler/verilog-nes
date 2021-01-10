@@ -22,6 +22,8 @@ module Cpu6502(
     output [7:0] o_debug_add,
     output [7:0] o_debug_dl,
     output [7:0] o_debug_ac,
+    output [7:0] o_debug_x,
+    output [7:0] o_debug_y,
     output [7:0] o_debug_p
 
     // TODO defines: to turn on/off sections of debugging
@@ -363,6 +365,8 @@ assign o_debug_pch = w_pch;
 assign o_debug_add = w_add;
 assign o_debug_dl = w_dl;
 assign o_debug_ac = w_ac;
+assign o_debug_x = w_x;
+assign o_debug_y = w_y;
 assign o_debug_p = w_p;
 
 endmodule

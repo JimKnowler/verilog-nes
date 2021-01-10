@@ -1,8 +1,9 @@
 // Model the Decode Rom in 6502
 // -> combinatorial logic mapping (IR, TCU) => control lines
 //
-// IDEA: o_tcu_next, as a way to control when instructions
-//       have finished and should return to T0/T1
+
+// TODO: use 'functions' to enapsulate repeated combinatorial flags
+//       simplify code, and self-document! 
 
 module Decoder(
     input i_clk,
@@ -65,9 +66,11 @@ module Decoder(
     output reg o_db7_n
 );
 
-localparam [7:0] OPCODE_BRK = 8'h00, OPCODE_NOP = 8'hEA,
-                 OPCODE_LDAi = 8'hA9, OPCODE_LDAa = 8'hAD,
-                 OPCODE_STAa = 8'h8D;
+localparam [7:0] BRK = 8'h00, NOP = 8'hEA,
+                 LDAi = 8'hA9, LDAa = 8'hAD,
+                 LDXi = 8'hA2, LDXa = 8'hAE,
+                 LDYi = 8'hA0, LDYa = 8'hAC,
+                 STAa = 8'h8D;
 
 localparam RW_READ = 1;
 localparam RW_WRITE = 0;
@@ -152,7 +155,7 @@ begin
     1: // T1
     begin
         case (i_ir)
-        OPCODE_BRK: 
+        BRK: 
         begin
             // output PCL on ABL
             o_pcl_adl = 1;
@@ -162,7 +165,7 @@ begin
             o_pch_adh = 1;
             o_adh_abh = 1;
         end
-        OPCODE_LDAi:
+        LDAi, LDXi, LDYi:
         begin
             // output PCL on ABL
             o_pcl_adl = 1;
@@ -179,10 +182,17 @@ begin
             // increment PC for next T0
             o_i_pc = 1;
 
-            // load Accumulator
+            // input DL into SB via DB
             o_dl_db = 1;
             o_sb_db = 1;
-            o_sb_ac = 1;
+
+            case (i_ir)
+            LDAi: o_sb_ac = 1;
+            LDXi: o_sb_x = 1;
+            LDYi: o_sb_y = 1;
+            default: begin
+            end
+            endcase
 
             // load Z and N from DB
             o_dbz_z = 1;
@@ -191,7 +201,8 @@ begin
             // end of opcode
             o_tcu = 0;
         end
-        OPCODE_LDAa, OPCODE_STAa:
+        LDAa, LDXa, LDYa,
+        STAa:
         begin
             // PC + 1 = Fetch low order effective address byte
 
@@ -217,7 +228,7 @@ begin
             o_0_add = 1;
             o_sums = 1;
         end
-        OPCODE_NOP:
+        NOP:
         begin
             // high byte - from PCH
             o_pch_adh = 1;
@@ -243,7 +254,7 @@ begin
     2: // T2
     begin
         case (i_ir)
-        OPCODE_BRK:
+        BRK:
         begin
             // output S on ABL
             o_s_adl = 1;
@@ -258,7 +269,8 @@ begin
             o_sb_add = 1;       // pre-charge mosfets = -1
             o_sums = 1;
         end
-        OPCODE_LDAa, OPCODE_STAa:
+        LDAa, LDXa, LDYa,
+        STAa:
         begin
             // PC + 2 = Fetch high order effective address byte
             
@@ -289,7 +301,7 @@ begin
     3: // T3
     begin
         case (i_ir)
-        OPCODE_BRK:
+        BRK:
         begin
             // output S-1 via ADL on ABL
             o_add_adl = 1;
@@ -304,7 +316,8 @@ begin
             o_sb_add = 1;       // pre-charge mosfets = -1
             o_sums = 1;
         end
-        OPCODE_LDAa, OPCODE_STAa:
+        LDAa, LDXa, LDYa,
+        STAa:
         begin
             // output absolute address ADH, ADL
 
@@ -323,23 +336,32 @@ begin
             o_dl_adh = 1;
             o_adh_abh = 1;
 
-            if (i_ir == OPCODE_LDAa)
-            begin
-                // load value into AC
+            case (i_ir)
+            LDAa, LDXa, LDYa: begin
+                // load value from DL into SB via DB
                 o_dl_db = 1;
                 o_sb_db = 1;
-                o_sb_ac = 1;
+
+                case (i_ir)
+                LDAa: o_sb_ac = 1;
+                LDXa: o_sb_x = 1;
+                LDYa: o_sb_y = 1;
+                default: begin
+                end
+                endcase
 
                 // load Z and N from DB
                 o_dbz_z = 1;
                 o_db7_n = 1;
             end
-            else if (i_ir == OPCODE_STAa)
-            begin
+            STAa: begin
                 // write value from AC
                 o_ac_db = 1;
                 o_rw = RW_WRITE;
             end
+            default: begin
+            end
+            endcase
 
             // start next opcode
             o_tcu = 0;
@@ -352,7 +374,7 @@ begin
     4: // T4
     begin
         case (i_ir)
-        OPCODE_BRK:
+        BRK:
         begin
             // output s-2 on ABL
             o_add_adl = 1;
@@ -376,7 +398,7 @@ begin
     5: // T5
     begin
         case (i_ir)
-        OPCODE_BRK:
+        BRK:
         begin
             /// @note currently hardcoded for RESET interrupt
             
@@ -406,7 +428,7 @@ begin
     6: // T6
     begin
         case (i_ir)
-        OPCODE_BRK:
+        BRK:
         begin
             /// @note currently hardcoded for RESET interrupt
 

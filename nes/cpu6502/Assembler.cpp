@@ -15,6 +15,8 @@ namespace cpu6502 {
 
     OPCODE_ASM_IMPL(NOP);
     OPCODE_ASM_IMPL(LDA);
+    OPCODE_ASM_IMPL(LDX);
+    OPCODE_ASM_IMPL(LDY);
     OPCODE_ASM_IMPL(STA);
 
     Assembler& Assembler::immediate(uint8_t value) {

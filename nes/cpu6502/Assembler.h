@@ -16,6 +16,8 @@ namespace cpu6502 {
         Assembler();
 
         OPCODE_ASM(LDA);
+        OPCODE_ASM(LDX);
+        OPCODE_ASM(LDY);
         OPCODE_ASM(STA);
         OPCODE_ASM(NOP);
 
