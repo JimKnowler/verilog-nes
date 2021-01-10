@@ -72,7 +72,10 @@ localparam [7:0] BRK = 8'h00, NOP = 8'hEA,
                  LDAi = 8'hA9, LDAa = 8'hAD,
                  LDXi = 8'hA2, LDXa = 8'hAE,
                  LDYi = 8'hA0, LDYa = 8'hAC,
-                 STAa = 8'h8D;
+                 STAa = 8'h8D,
+                 TAX = 8'hAA, TAY = 8'hA8,
+                 TSX = 8'hBA, TXA = 8'h8A,
+                 TXS = 8'h9A, TYA = 8'h98;
 
 localparam RW_READ = 1;
 localparam RW_WRITE = 0;
@@ -295,6 +298,57 @@ begin
             o_db_add = 1;
             o_0_add = 1;
             o_sums = 1;
+        end
+        TAX, TAY, TXA, TYA, TXS, TSX: begin
+            // high byte - from PCH
+            o_pch_adh = 1;
+            o_adh_abh = 1;
+
+            // low byte - from PCL
+            o_pcl_adl = 1;
+            o_adl_abl = 1;
+
+            // retain PCL and PCH
+            o_pcl_pcl = 1;
+            o_pch_pch = 1;
+
+            case (i_ir)
+            TAX: begin
+                o_ac_sb = 1;
+                o_sb_x = 1;
+            end
+            TAY: begin
+                o_ac_sb = 1;
+                o_sb_y = 1;
+            end
+            TXA: begin
+                o_x_sb = 1;
+                o_sb_ac = 1;
+            end
+            TYA: begin
+                o_y_sb = 1;
+                o_sb_ac = 1;
+            end
+            TXS: begin
+                o_x_sb = 1;
+                o_sb_s = 1;
+            end
+            TSX: begin
+                o_s_sb = 1;
+                o_sb_x = 1;
+            end
+            default: begin
+            end
+            endcase
+
+            // todo: status flags
+            // but NOT for TXS
+            //o_sb_db = 1;
+            //o_dbz_z = 1;
+            //o_db7_n = 1;
+            
+            // start next opcode 
+            o_tcu = 0;
         end
         NOP:
         begin
