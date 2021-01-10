@@ -68,6 +68,7 @@ module Decoder(
 
 localparam [7:0] BRK = 8'h00, NOP = 8'hEA,
                  INX = 8'hE8, INY = 8'hC8,
+                 DEX = 8'hCA, DEY = 8'h88,
                  LDAi = 8'hA9, LDAa = 8'hAD,
                  LDXi = 8'hA2, LDXa = 8'hAE,
                  LDYi = 8'hA0, LDYa = 8'hAC,
@@ -154,14 +155,14 @@ begin
         o_i_pc = 1;
 
         case (i_ir)
-        INX, INY: begin
+        INX, INY, DEX, DEY: begin
             // output value from ALU to register
             o_add_sb_0_6 = 1;
             o_add_sb_7 = 1;
 
             case (i_ir)
-            INX: o_sb_x = 1;
-            INY: o_sb_y = 1;
+            INX, DEX: o_sb_x = 1;
+            INY, DEY: o_sb_y = 1;
             default: begin
             end
             endcase
@@ -187,7 +188,7 @@ begin
             o_pch_adh = 1;
             o_adh_abh = 1;
         end
-        INX, INY:
+        INX, INY, DEX, DEY:
         begin
             // high byte - from PCH
             o_pch_adh = 1;
@@ -201,20 +202,32 @@ begin
             o_pcl_pcl = 1;
             o_pch_pch = 1;
 
-            // output register to input register A
+            // output register to input register A via SB
             case (i_ir)
-            INX: o_x_sb = 1;
-            INY: o_y_sb = 1;
+            INX, DEX: o_x_sb = 1;
+            INY, DEY: o_y_sb = 1;
             default: begin
             end
             endcase
 
             o_sb_add = 1;
-            o_db_n_add = 1;
             o_sums = 1;
 
-            // use carry-in to +1
-            o_1_addc = 1;
+            case (i_ir)
+            INX, INY: begin
+                // load 0 as inverted 0xFF (from precharged mosfets)        
+                o_db_n_add = 1;
+        
+                // use carry-in to +1
+                o_1_addc = 1;
+            end
+            DEX, DEY: begin
+                // load -1 as 0xFF (from precharged mosfets)
+                o_db_add = 1;
+            end
+            default: begin
+            end
+            endcase
 
             // end of opcode
             o_tcu = 0;
