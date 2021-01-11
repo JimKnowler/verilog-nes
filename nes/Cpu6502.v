@@ -254,6 +254,9 @@ Register s(
 
 /// ALU
 wire [7:0] w_add;
+/* verilator lint_off UNUSED */
+wire w_acr;
+/* verilator lint_on UNUSED */
 ALU alu(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
@@ -271,6 +274,7 @@ ALU alu(
     .i_eors(w_eors),
     .i_ors(w_ors),
     .i_srs(w_srs),
+    .o_acr(w_acr),
     .o_add(w_add)
 );
 

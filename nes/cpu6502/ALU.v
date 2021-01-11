@@ -5,7 +5,8 @@
 // - Arithmetic Logic
 // - Adder Hold Register (ADD)
 //
-// Implemented as latch on falling edge of phi2
+// o_add: Implemented as latch on falling edge of phi2
+// o_avr/o_acr: Implemented as combinatorial logic
 //
 // note: not implemented
 // - i_daa: decimal enable
@@ -34,17 +35,18 @@ module ALU(
     input i_eors,           // a ^ b
     input i_ors,            // a | b
     input i_srs,            // a >> 1
-    
     //output o_avr,           // overflow signal
-    //output o_acr,           // carry signal
+    output o_acr,           // carry signal
 
-    output [7:0] o_add      // ADD register
+    // Adder Hold Register
+    output [7:0] o_add
 );
 
 reg [7:0] r_a;
 reg [7:0] r_b;
 reg [7:0] r_alu;
 reg [7:0] r_add;
+reg r_acr;
 
 // B Input Register
 always @(*)
@@ -77,6 +79,7 @@ always @(*)
 begin
     // default values
     r_alu = 8'h00;
+    r_acr = 0;
 
     if (i_sums)
         r_alu = r_a + r_b + ( i_1_addc ? 8'h01 : 8'h00);
@@ -88,6 +91,7 @@ begin
         r_alu = r_a | r_b;
     else if (i_srs)
         r_alu = r_a >> 1;
+        r_acr = r_a[0];
 end
 
 // Adder Hold Register (ADD)
@@ -99,5 +103,6 @@ always @(negedge i_clk or negedge i_reset_n) begin
 end
 
 assign o_add = r_add;
+assign o_acr = r_acr;
 
 endmodule

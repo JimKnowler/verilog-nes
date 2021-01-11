@@ -196,3 +196,27 @@ TEST_F(ALU, ShouldAddWithCarryIn) {
     testBench.tick();
     EXPECT_EQ(0x44, core.o_add);
 }
+
+TEST_F(ALU, ShouldOutputACRDuringShiftRight) {
+    auto& core = testBench.core();
+    
+    const std::map<uint8_t, uint8_t> testCases = {
+        {0, 0},
+        {2, 0},
+        {1, 1},
+        {3, 1},
+        {0xff, 1}
+    };
+
+    for (auto& testCase: testCases) {
+        const uint8_t kTestValue = testCase.first;
+        const uint8_t kExpectedAcr = testCase.second;
+
+        core.i_sb = kTestValue;
+        core.i_sb_add = 1;
+        core.i_srs = 1;
+        
+        testBench.tick();
+        EXPECT_EQ(kExpectedAcr, core.o_acr);
+    }
+}
