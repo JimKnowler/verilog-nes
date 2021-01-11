@@ -40,8 +40,9 @@ TEST_F(Cpu6502, ShouldImplementLSRaccumulator) {
 TEST_F(Cpu6502, ShouldImplementLSRProcessorStatus) {
     const std::map<uint8_t, uint8_t> testCases = {
         {1, Z | C},
+        {2, 0},
         {3, C},
-        {0, 0},
+        {0, Z},
         {0xFF, C}
     };
 

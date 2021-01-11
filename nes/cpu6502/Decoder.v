@@ -237,6 +237,9 @@ begin
             end
             LSR_A: begin
                 o_srs = 1;
+
+                // load carry flag during the calculation
+                o_acr_c = 1;
             end
             default: begin
             end
