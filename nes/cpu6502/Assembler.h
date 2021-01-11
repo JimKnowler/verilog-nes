@@ -30,10 +30,12 @@ namespace cpu6502 {
         OPCODE_ASM(TYA);
         OPCODE_ASM(TSX);
         OPCODE_ASM(TXS);
+        OPCODE_ASM(LSR);
 
         Assembler& immediate(uint8_t value);  
         Assembler& a(uint16_t value);
         Assembler& absolute(uint16_t value); 
+        Assembler& A();
 
         void compileTo(memory::SRAM& sram);
     

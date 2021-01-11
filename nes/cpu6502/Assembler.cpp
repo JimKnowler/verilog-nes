@@ -28,6 +28,7 @@ namespace cpu6502 {
     OPCODE_ASM_IMPL(TYA);
     OPCODE_ASM_IMPL(TSX);
     OPCODE_ASM_IMPL(TXS);
+    OPCODE_ASM_IMPL(LSR);
 
     Assembler& Assembler::immediate(uint8_t value) {
         currentOpcode()->immediate(value);
@@ -43,6 +44,12 @@ namespace cpu6502 {
 
     Assembler& Assembler::absolute(uint16_t value) {
         currentOpcode()->absolute(value);
+
+        return *this;
+    }
+
+    Assembler& Assembler::A() {
+        currentOpcode()->A();
 
         return *this;
     }

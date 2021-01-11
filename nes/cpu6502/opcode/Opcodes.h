@@ -29,5 +29,8 @@ namespace cpu6502 {
         OPCODE_DEFN(TYA);
         OPCODE_DEFN(TSX);
         OPCODE_DEFN(TXS);
+
+        // shift
+        OPCODE_DEFN(LSR);
     }
 }

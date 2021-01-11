@@ -87,7 +87,7 @@ begin
     else if (i_ors)
         r_alu = r_a | r_b;
     else if (i_srs)
-        r_alu = r_b >> 1;
+        r_alu = r_a >> 1;
 end
 
 // Adder Hold Register (ADD)

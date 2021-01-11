@@ -6,6 +6,7 @@ namespace cpu6502 { namespace opcode {
     Opcode::Opcode() {
         m_hasImmediate = false;
         m_hasAbsolute = false;
+        m_hasAccumulator = false;
     }
 
     Opcode::~Opcode() {
@@ -30,6 +31,12 @@ namespace cpu6502 { namespace opcode {
         return *this;
     }
 
+    Opcode& Opcode::A() {
+        m_hasAccumulator = true;
+
+        return *this;
+    }
+
     std::vector<uint8_t> Opcode::serialise() const {
         assert(!"should be implemented by sub class");
 
@@ -41,8 +48,12 @@ namespace cpu6502 { namespace opcode {
     }
 
     bool Opcode::isImplied() const {
-        // todo: update after adding after addressing modes
-        return (!m_hasImmediate) && (!m_hasAbsolute);
+        // todo: update after adding addressing modes
+        return (!m_hasImmediate) && (!m_hasAbsolute) && (!m_hasAccumulator);
+    }
+
+    bool Opcode::isAccumulator() const {
+        return m_hasAccumulator;
     }
 
 } // opcode

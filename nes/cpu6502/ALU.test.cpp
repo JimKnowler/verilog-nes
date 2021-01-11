@@ -172,11 +172,11 @@ TEST_F(ALU, ShouldOrAdlWithSb) {
     EXPECT_EQ(0xBF, core.o_add);
 }
 
-TEST_F(ALU, ShouldShiftRightDb) {
+TEST_F(ALU, ShouldShiftRightSb) {
     auto& core = testBench.core();
 
-    core.i_db = 0xF0;
-    core.i_db_add = 1;
+    core.i_sb = 0xF0;
+    core.i_sb_add = 1;
     core.i_srs = 1;
     
     testBench.tick();

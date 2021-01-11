@@ -75,7 +75,8 @@ localparam [7:0] BRK = 8'h00, NOP = 8'hEA,
                  STAa = 8'h8D,
                  TAX = 8'hAA, TAY = 8'hA8,
                  TSX = 8'hBA, TXA = 8'h8A,
-                 TXS = 8'h9A, TYA = 8'h98;
+                 TXS = 8'h9A, TYA = 8'h98,
+                 LSR_A = 8'h4A;
 
 localparam RW_READ = 1;
 localparam RW_WRITE = 0;
@@ -158,7 +159,7 @@ begin
         o_i_pc = 1;
 
         case (i_ir)
-        INX, INY, DEX, DEY: begin
+        INX, INY, DEX, DEY, LSR_A: begin
             // output value from ALU to register
             o_add_sb_0_6 = 1;
             o_add_sb_7 = 1;
@@ -166,6 +167,7 @@ begin
             case (i_ir)
             INX, DEX: o_sb_x = 1;
             INY, DEY: o_sb_y = 1;
+            LSR_A: o_sb_ac = 1;
             default: begin
             end
             endcase
@@ -192,7 +194,7 @@ begin
             o_pch_adh = 1;
             o_adh_abh = 1;
         end
-        INX, INY, DEX, DEY:
+        INX, INY, DEX, DEY, LSR_A:
         begin
             // high byte - from PCH
             o_pch_adh = 1;
@@ -210,12 +212,12 @@ begin
             case (i_ir)
             INX, DEX: o_x_sb = 1;
             INY, DEY: o_y_sb = 1;
+            LSR_A: o_ac_sb = 1;
             default: begin
             end
             endcase
 
             o_sb_add = 1;
-            o_sums = 1;
 
             case (i_ir)
             INX, INY: begin
@@ -224,10 +226,15 @@ begin
         
                 // use carry-in to +1
                 o_1_addc = 1;
+                o_sums = 1;
             end
             DEX, DEY: begin
                 // load -1 as 0xFF (from precharged mosfets)
                 o_db_add = 1;
+                o_sums = 1;
+            end
+            LSR_A: begin
+                o_srs = 1;
             end
             default: begin
             end
