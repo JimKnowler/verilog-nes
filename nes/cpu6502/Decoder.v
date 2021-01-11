@@ -63,7 +63,8 @@ module Decoder(
     output reg o_ors,
     output reg o_srs,
     output reg o_dbz_z,
-    output reg o_db7_n
+    output reg o_db7_n,
+    output reg o_acr_c
 );
 
 localparam [7:0] BRK = 8'h00, NOP = 8'hEA,
@@ -137,6 +138,7 @@ begin
     o_srs = 0;
     o_dbz_z = 0;
     o_db7_n = 0;
+    o_acr_c = 0;
 
     case (i_tcu)
     0:  // T0

@@ -108,3 +108,41 @@ TEST_F(ProcessorStatus, ShouldNotLoadZFromNonZeroDB7) {
     EXPECT_EQ(0, core.o_p);  
 }
 
+TEST_F(ProcessorStatus, ShouldLoadCFromACR) {
+    auto& core = testBench.core();
+
+    core.i_acr_c = 0;
+    core.eval();
+
+    // 1 on acr
+    core.i_acr = 1;
+
+    // should not load while control signal is low
+    core.eval();
+    EXPECT_EQ(0, core.o_p);
+
+    // should not load on rising edge of control signal
+    core.i_acr_c = 1;
+    core.eval();
+    EXPECT_EQ(0, core.o_p);
+
+    // should load on falling edge of control signal
+    core.i_acr_c = 0;
+    core.eval();
+    EXPECT_EQ(C, core.o_p); 
+}
+
+TEST_F(ProcessorStatus, ShouldNotLoadCfromZeroACR) {
+    auto& core = testBench.core();
+
+    core.i_acr_c = 1;
+    core.eval();
+
+    // 0 on acr
+    core.i_acr = 0;
+
+    // should not load on falling edge
+    core.i_acr_c = 0;
+    core.eval();
+    EXPECT_EQ(0, core.o_p); 
+}

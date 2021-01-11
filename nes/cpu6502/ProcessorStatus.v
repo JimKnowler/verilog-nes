@@ -13,13 +13,17 @@ module ProcessorStatus(
 
     /*
     input i_ir5,
+    */
     input i_acr,                        // ALU Carry
+    /*
     input i_avr,                        // ALU overflow
 
     input i_db0_c,
     input i_ir5_c,
+    */
     input i_acr_c,
 
+    /*
     input i_db1_z,
     */
     input i_dbz_z,
@@ -48,8 +52,18 @@ localparam N = 7;       // Negative Flag
 wire w_dbz;
 assign w_dbz = ~(|i_db);
 
+reg r_c;
 reg r_z;
 reg r_n;
+
+// C - Carry flag
+always @(negedge i_reset_n or negedge i_acr_c)
+begin
+    if (!i_reset_n)
+        r_c <= 0;
+    else
+        r_c <= i_acr;
+end
 
 // Z - zero flag
 always @(negedge i_reset_n or negedge i_dbz_z)
@@ -69,8 +83,7 @@ begin
         r_n <= i_db[N];
 end
 
-
-assign o_p[C] = 0;
+assign o_p[C] = r_c;
 assign o_p[Z] = r_z;
 assign o_p[I] = 0;
 assign o_p[D] = 0;
