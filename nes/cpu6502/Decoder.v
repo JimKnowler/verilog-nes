@@ -64,7 +64,8 @@ module Decoder(
     output reg o_srs,
     output reg o_dbz_z,
     output reg o_db7_n,
-    output reg o_acr_c
+    output reg o_acr_c,
+    output reg o_ir5_c
 );
 
 localparam [7:0] BRK = 8'h00, NOP = 8'hEA,
@@ -77,7 +78,8 @@ localparam [7:0] BRK = 8'h00, NOP = 8'hEA,
                  TAX = 8'hAA, TAY = 8'hA8,
                  TSX = 8'hBA, TXA = 8'h8A,
                  TXS = 8'h9A, TYA = 8'h98,
-                 LSR_A = 8'h4A;
+                 LSR_A = 8'h4A,
+                 CLC = 8'h18, SEC = 8'h38;
 
 localparam RW_READ = 1;
 localparam RW_WRITE = 0;
@@ -139,6 +141,7 @@ begin
     o_dbz_z = 0;
     o_db7_n = 0;
     o_acr_c = 0;
+    o_ir5_c = 0;
 
     case (i_tcu)
     0:  // T0
@@ -195,6 +198,26 @@ begin
             // output PCH on ABH
             o_pch_adh = 1;
             o_adh_abh = 1;
+        end
+        SEC, CLC:
+        begin
+            // high byte - from PCH
+            o_pch_adh = 1;
+            o_adh_abh = 1;
+
+            // low byte - from PCL
+            o_pcl_adl = 1;
+            o_adl_abl = 1;
+
+            // retain PCL and PCH
+            o_pcl_pcl = 1;
+            o_pch_pch = 1;
+
+            // read C from IR5
+            o_ir5_c = 1;
+
+            // start next instruction
+            o_tcu = 0;
         end
         INX, INY, DEX, DEY, LSR_A:
         begin

@@ -109,6 +109,7 @@ wire w_srs;
 wire w_dbz_z;
 wire w_db7_n;
 wire w_acr_c;
+wire w_ir5_c;
 
 // Decoder
 // transform IR and TCU into control signals
@@ -167,7 +168,8 @@ Decoder decoder(
     .o_srs(w_srs),
     .o_dbz_z(w_dbz_z),
     .o_db7_n(w_db7_n),
-    .o_acr_c(w_acr_c)
+    .o_acr_c(w_acr_c),
+    .o_ir5_c(w_ir5_c)
 );
 
 // Input Data Latch
@@ -288,7 +290,9 @@ ProcessorStatus p(
     .i_dbz_z(w_dbz_z),
     .i_db7_n(w_db7_n),
     .i_acr(w_acr),
-    .i_acr_c(w_acr_c)
+    .i_acr_c(w_acr_c),
+    .i_ir5_c(w_ir5_c),
+    .i_ir5(w_ir[5])
 );
 
 // Address bus register - High
