@@ -29,6 +29,8 @@ namespace cpu6502 {
     OPCODE_ASM_IMPL(TSX);
     OPCODE_ASM_IMPL(TXS);
     OPCODE_ASM_IMPL(LSR);
+    OPCODE_ASM_IMPL(CLC);
+    OPCODE_ASM_IMPL(SEC);
 
     Assembler& Assembler::immediate(uint8_t value) {
         currentOpcode()->immediate(value);
