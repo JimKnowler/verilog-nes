@@ -13,6 +13,7 @@ namespace {
     class ProcessorStatus : public ::testing::Test {
     public:
         void SetUp() override {
+            testBench.setClockPolarity(1);
             testBench.reset();
             testBench.trace.clear();
         }
@@ -36,113 +37,156 @@ TEST_F(ProcessorStatus, ShouldReset) {
 
 TEST_F(ProcessorStatus, ShouldLoadNFromNegativeDB7) {
     auto& core = testBench.core();
-
+    
+    core.i_db = (1<<7);     // negative value on db
     core.i_db7_n = 0;
-    core.eval();
+    testBench.tick();
 
-    // negative value on db
-    core.i_db = (1<<7);
-
-    // should not load while control signal is low
-    core.eval();
-    EXPECT_EQ(0, core.o_p);
-
-    // should not load on rising edge of control signal
     core.i_db7_n = 1;
-    core.eval();
-    EXPECT_EQ(0, core.o_p);
+    testBench.tick();
 
-    // should load on falling edge of control signal
     core.i_db7_n = 0;
-    core.eval();
-    EXPECT_EQ(N, core.o_p);    
+    testBench.tick();
+
+    Trace expected = TraceBuilder()
+        .port(o_p).signal({0,N,N}).repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
 TEST_F(ProcessorStatus, ShouldNotLoadNFromPositiveDB7) {
     auto& core = testBench.core();
 
-    core.i_db7_n = 1;
     core.i_db = (1 << 7) - 1;       // set all bits except 7
-    core.eval();
+    core.i_db7_n = 0;
+    testBench.tick();
+
+    core.i_db7_n = 1;
+    testBench.tick();
 
     core.i_db7_n = 0;
-    core.eval();
+    testBench.tick();
 
-    EXPECT_EQ(0, core.o_p);  
+    Trace expected = TraceBuilder()
+        .port(o_p).signal({0}).repeat(6); 
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
 TEST_F(ProcessorStatus, ShouldLoadZFromZeroDB) {
     auto& core = testBench.core();
-
-    core.i_dbz_z = 0;
-    core.eval();
-
-    // zero on db
+    
     core.i_db = 0;
-
-    // should not load while control signal is low
-    core.eval();
-    EXPECT_EQ(0, core.o_p);
-
-    // should not load on rising edge of control signal
-    core.i_dbz_z = 1;
-    core.eval();
-    EXPECT_EQ(0, core.o_p);
-
-    // should load on falling edge of control signal
     core.i_dbz_z = 0;
-    core.eval();
-    EXPECT_EQ(Z, core.o_p);  
+    testBench.tick();
+
+    core.i_dbz_z = 1;
+    testBench.tick();
+
+    core.i_dbz_z = 0;
+    testBench.tick();
+
+    Trace expected = TraceBuilder()
+        .port(o_p).signal({0,Z,Z}).repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
 TEST_F(ProcessorStatus, ShouldNotLoadZFromNonZeroDB7) {
     auto& core = testBench.core();
+    
+    core.i_db = 0xff;
+    core.i_dbz_z = 0;
+    testBench.tick();
 
     core.i_dbz_z = 1;
-    core.i_db = 0xff;
-    core.eval();
+    testBench.tick();
 
     core.i_dbz_z = 0;
-    core.eval();
+    testBench.tick();
 
-    EXPECT_EQ(0, core.o_p);  
+    Trace expected = TraceBuilder()
+        .port(o_p).signal({0}).repeat(6);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
 TEST_F(ProcessorStatus, ShouldLoadCFromACR) {
     auto& core = testBench.core();
-
-    core.i_acr_c = 0;
-    core.eval();
-
-    // 1 on acr
+    
     core.i_acr = 1;
-
-    // should not load while control signal is low
-    core.eval();
-    EXPECT_EQ(0, core.o_p);
-
-    // should not load on rising edge of control signal
-    core.i_acr_c = 1;
-    core.eval();
-    EXPECT_EQ(0, core.o_p);
-
-    // should load on falling edge of control signal
     core.i_acr_c = 0;
-    core.eval();
-    EXPECT_EQ(C, core.o_p); 
+    testBench.tick();
+
+    core.i_acr_c = 1;
+    testBench.tick();
+
+    core.i_acr_c = 0;
+    testBench.tick();
+
+    Trace expected = TraceBuilder()
+        .port(o_p).signal({0,C,C}).repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
 TEST_F(ProcessorStatus, ShouldNotLoadCfromZeroACR) {
     auto& core = testBench.core();
+    
+    core.i_acr = 0;
+    core.i_acr_c = 0;
+    testBench.tick();
 
     core.i_acr_c = 1;
-    core.eval();
+    testBench.tick();
 
-    // 0 on acr
-    core.i_acr = 0;
-
-    // should not load on falling edge
     core.i_acr_c = 0;
-    core.eval();
-    EXPECT_EQ(0, core.o_p); 
+    testBench.tick();
+
+    Trace expected = TraceBuilder()
+        .port(o_p).signal({0}).repeatEachStep(6);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(ProcessorStatus, ShouldSetCFromIR5) {
+    auto& core = testBench.core();
+    
+    core.i_ir5= 1;
+    core.i_ir5_c = 0;
+    testBench.tick();
+
+    core.i_ir5_c = 1;
+    testBench.tick();
+
+    core.i_ir5_c = 0;
+    testBench.tick();
+
+    Trace expected = TraceBuilder()
+        .port(o_p).signal({0,C,C}).repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+
+TEST_F(ProcessorStatus, ShouldClearCFromIR5) {
+    auto& core = testBench.core();
+    
+    core.i_ir5 = 1;
+    core.i_ir5_c = 0;
+    testBench.tick();
+
+    core.i_ir5_c = 1;
+    testBench.tick();
+
+    core.i_ir5 = 0;
+    testBench.tick();
+
+    core.i_ir5_c = 0;
+    testBench.tick();
+
+    Trace expected = TraceBuilder()
+        .port(o_p).signal({0,C,0,0}).repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
