@@ -190,3 +190,45 @@ TEST_F(ProcessorStatus, ShouldClearCFromIR5) {
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
+
+TEST_F(ProcessorStatus, ShouldSetIFromIR5) {
+    auto& core = testBench.core();
+    
+    core.i_ir5 = 1;
+    core.i_ir5_i = 0;
+    testBench.tick();
+
+    core.i_ir5_i = 1;
+    testBench.tick();
+
+    core.i_ir5_i = 0;
+    testBench.tick();
+
+    Trace expected = TraceBuilder()
+        .port(o_p).signal({0,I,I}).repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+
+TEST_F(ProcessorStatus, ShouldClearIFromIR5) {
+    auto& core = testBench.core();
+    
+    core.i_ir5 = 1;
+    core.i_ir5_i = 0;
+    testBench.tick();
+
+    core.i_ir5_i = 1;
+    testBench.tick();
+
+    core.i_ir5 = 0;
+    testBench.tick();
+
+    core.i_ir5_c = 0;
+    testBench.tick();
+
+    Trace expected = TraceBuilder()
+        .port(o_p).signal({0,I,0,0}).repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
