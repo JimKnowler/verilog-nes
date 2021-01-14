@@ -35,6 +35,21 @@ wire [7:0] w_bus_adl;
 wire [7:0] w_bus_adh;
 wire [7:0] w_bus_sb;
 
+// Module/Register outputs
+wire [7:0] w_dl;
+wire [7:0] w_pcl; 
+wire [7:0] w_ir;
+wire [7:0] w_s;
+wire [7:0] w_add;
+wire w_acr;
+wire [7:0] w_p;
+wire [7:0] w_abh;
+wire [7:0] w_abl;
+wire [7:0] w_pch;
+wire [7:0] w_x;
+wire [7:0] w_y;
+wire [7:0] w_ac;
+
 // Timing Control Unit
 wire [3:0] w_tcu;
 wire [3:0] w_tcu_next;
@@ -48,7 +63,6 @@ TCU tcu(
 );
 
 // instruction register
-wire [7:0] w_ir;
 IR ir(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
@@ -118,6 +132,7 @@ Decoder decoder(
     .i_clk,
     .i_ir(w_ir),
     .i_tcu(w_tcu),
+    .i_p(w_p),
     .o_tcu(w_tcu_next),
     .o_rw(w_rw),
     .o_dl_db(w_dl_db),
@@ -175,7 +190,6 @@ Decoder decoder(
 );
 
 // Input Data Latch
-wire [7:0] w_dl;
 DL dl(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
@@ -194,7 +208,6 @@ DOR dor(
 );
 
 // Program Counter Low
-wire [7:0] w_pcl;
 PCL pcl(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
@@ -207,7 +220,6 @@ PCL pcl(
 );
 
 // Program Counter High
-wire [7:0] w_pch;
 PCH pch(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
@@ -219,7 +231,6 @@ PCH pch(
 );
 
 // X Register
-wire [7:0] w_x;
 Register x(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
@@ -229,7 +240,6 @@ Register x(
 );
 
 // Y Register
-wire [7:0] w_y;
 Register y(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
@@ -239,7 +249,6 @@ Register y(
 );
 
 // Accumulator Register (ac)
-wire [7:0] w_ac;
 Register ac(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
@@ -249,7 +258,6 @@ Register ac(
 );
 
 // Stack Register (s)
-wire [7:0] w_s;
 Register s(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
@@ -259,8 +267,6 @@ Register s(
 );
 
 /// ALU
-wire [7:0] w_add;
-wire w_acr;
 ALU alu(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
@@ -283,7 +289,6 @@ ALU alu(
 );
 
 // Processor Status Register (p)
-wire [7:0] w_p;
 ProcessorStatus p(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
@@ -299,7 +304,6 @@ ProcessorStatus p(
 );
 
 // Address bus register - High
-wire [7:0] w_abh;
 AddressBusRegister abh(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
@@ -309,7 +313,6 @@ AddressBusRegister abh(
 );
 
 // Address bus register - Low
-wire [7:0] w_abl;
 AddressBusRegister abl(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),

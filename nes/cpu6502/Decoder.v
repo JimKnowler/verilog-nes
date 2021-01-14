@@ -1,5 +1,5 @@
 // Model the Decode Rom in 6502
-// -> combinatorial logic mapping (IR, TCU) => control lines
+// -> combinatorial logic mapping (IR, TCU, P) => control lines
 //
 
 // TODO: use 'functions' to enapsulate repeated combinatorial flags
@@ -8,8 +8,9 @@
 module Decoder(
     input i_clk,
     
-    input [7:0] i_ir,
-    input [3:0] i_tcu,
+    input [7:0] i_ir,               // Instruction Register
+    input [3:0] i_tcu,              // Opcode timing
+    input [7:0] i_p,                // Processor status register
 
     output reg [3:0] o_tcu,         // value TCU at next phi2 clock tick
 
@@ -69,6 +70,10 @@ module Decoder(
     output reg o_ir5_i
 );
 
+// Processor Status Register bitfields
+localparam C = 0;       // Carry Flag
+
+// Opcodes
 localparam [7:0] BRK = 8'h00, NOP = 8'hEA,
                  INX = 8'hE8, INY = 8'hC8,
                  DEX = 8'hCA, DEY = 8'h88,
@@ -84,6 +89,7 @@ localparam [7:0] BRK = 8'h00, NOP = 8'hEA,
                  SEI = 8'h78, CLI = 8'h58,
                  ROL_A = 8'h2A, ROR_A = 8'h6A;
 
+// RW pin
 localparam RW_READ = 1;
 localparam RW_WRITE = 0;
 
@@ -285,6 +291,15 @@ begin
 
                 // load carry into status register
                 o_acr_c = 1;
+            end
+            default: begin
+            end
+            endcase
+
+            case (i_ir)
+            ROR_A, ROL_A: begin
+                // use CARRY flag to drive CARRY_IN on accumulator
+                o_1_addc = i_p[C];
             end
             default: begin
             end
