@@ -220,3 +220,29 @@ TEST_F(ALU, ShouldOutputACRDuringShiftRight) {
         EXPECT_EQ(kExpectedAcr, core.o_acr);
     }
 }
+
+TEST_F(ALU, ShouldOuputACRDuringSum) {
+    auto& core = testBench.core();
+    
+    const std::map<std::pair<uint8_t, uint8_t>, uint8_t> testCases = {
+        {{0,0}, 0},
+        {{0x80,0x80}, 1},
+        {{0xff, 0xff}, 1},
+        {{0x80,0x40}, 0},
+    };
+
+    for (auto& testCase: testCases) {
+        const uint8_t kTestValue1 = testCase.first.first;
+        const uint8_t kTestValue2 = testCase.first.second;
+        const uint8_t kExpectedAcr = testCase.second;
+
+        core.i_sb = kTestValue1;
+        core.i_sb_add = 1;
+        core.i_db = kTestValue2;
+        core.i_db_add = 1;
+        core.i_sums = 1;
+        
+        testBench.tick();
+        EXPECT_EQ(kExpectedAcr, core.o_acr);
+    }
+}

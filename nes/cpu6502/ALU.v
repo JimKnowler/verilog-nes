@@ -82,7 +82,10 @@ begin
     r_acr = 0;
 
     if (i_sums)
+    begin
         r_alu = r_a + r_b + ( i_1_addc ? 8'h01 : 8'h00);
+        r_acr = r_a[7] & r_b[7];
+    end
     else if (i_ands)
         r_alu = r_a & r_b;
     else if (i_eors)
@@ -90,8 +93,10 @@ begin
     else if (i_ors)
         r_alu = r_a | r_b;
     else if (i_srs)
+    begin
         r_alu = r_a >> 1;
         r_acr = r_a[0];
+    end
 end
 
 // Adder Hold Register (ADD)
