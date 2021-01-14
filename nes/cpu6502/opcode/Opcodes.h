@@ -37,5 +37,7 @@ namespace cpu6502 {
         // status
         OPCODE_DEFN(CLC);
         OPCODE_DEFN(SEC);
+        OPCODE_DEFN(SEI);
+        OPCODE_DEFN(CLI);
     }
 }

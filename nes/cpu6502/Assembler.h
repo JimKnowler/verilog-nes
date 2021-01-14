@@ -34,6 +34,8 @@ namespace cpu6502 {
         OPCODE_ASM(SEC);
         OPCODE_ASM(CLC);
         OPCODE_ASM(ASL);
+        OPCODE_ASM(SEI);
+        OPCODE_ASM(CLI);
 
         Assembler& immediate(uint8_t value);  
         Assembler& a(uint16_t value);
