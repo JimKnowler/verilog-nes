@@ -95,6 +95,7 @@ begin
     else if (i_srs)
     begin
         r_alu = r_a >> 1;
+        r_alu[7] = i_1_addc;
         r_acr = r_a[0];
     end
 end
