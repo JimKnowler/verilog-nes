@@ -81,7 +81,8 @@ localparam [7:0] BRK = 8'h00, NOP = 8'hEA,
                  TXS = 8'h9A, TYA = 8'h98,
                  LSR_A = 8'h4A, ASL_A = 8'h0A,
                  CLC = 8'h18, SEC = 8'h38,
-                 SEI = 8'h78, CLI = 8'h58;
+                 SEI = 8'h78, CLI = 8'h58,
+                 ROL_A = 8'h2A, ROR_A = 8'h6A;
 
 localparam RW_READ = 1;
 localparam RW_WRITE = 0;
@@ -167,20 +168,22 @@ begin
         o_i_pc = 1;
 
         case (i_ir)
-        INX, INY, DEX, DEY, LSR_A, ASL_A: begin
-            // output value from ALU to register
+        INX, INY, DEX, DEY,
+        LSR_A, ASL_A, ROL_A, ROR_A: begin
+            // output value from ALU to SB
             o_add_sb_0_6 = 1;
             o_add_sb_7 = 1;
 
+            // load from SB into register
             case (i_ir)
             INX, DEX: o_sb_x = 1;
             INY, DEY: o_sb_y = 1;
-            LSR_A, ASL_A: o_sb_ac = 1;
+            LSR_A, ASL_A, ROL_A, ROR_A: o_sb_ac = 1;
             default: begin
             end
             endcase
             
-            // Z & N status flags
+            // load Z & N status flags from SB via DB
             o_sb_db = 1;
             o_db7_n = 1;
             o_dbz_z = 1;
@@ -226,7 +229,8 @@ begin
             // start next instruction
             o_tcu = 0;
         end
-        INX, INY, DEX, DEY, LSR_A, ASL_A:
+        INX, INY, DEX, DEY,
+        LSR_A, ASL_A, ROL_A, ROR_A:
         begin
             // high byte - from PCH
             o_pch_adh = 1;
@@ -244,7 +248,7 @@ begin
             case (i_ir)
             INX, DEX: o_x_sb = 1;
             INY, DEY: o_y_sb = 1;
-            LSR_A, ASL_A: o_ac_sb = 1;
+            LSR_A, ASL_A, ROL_A, ROR_A: o_ac_sb = 1;
             default: begin
             end
             endcase
@@ -265,13 +269,13 @@ begin
                 o_db_add = 1;
                 o_sums = 1;
             end
-            LSR_A: begin
+            LSR_A, ROR_A: begin
                 o_srs = 1;
 
                 // load carry flag during the calculation
                 o_acr_c = 1;
             end
-            ASL_A: begin
+            ASL_A, ROL_A: begin
                 // load accumulator into both A and B registers
                 o_sb_db = 1;
                 o_db_add = 1;
