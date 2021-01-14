@@ -32,6 +32,7 @@ namespace cpu6502 {
 
         // shift
         OPCODE_DEFN(LSR);
+        OPCODE_DEFN(ASL);
 
         // status
         OPCODE_DEFN(CLC);
