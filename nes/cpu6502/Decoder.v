@@ -80,7 +80,8 @@ localparam [7:0] BRK = 8'h00, NOP = 8'hEA,
                  TSX = 8'hBA, TXA = 8'h8A,
                  TXS = 8'h9A, TYA = 8'h98,
                  LSR_A = 8'h4A, ASL_A = 8'h0A,
-                 CLC = 8'h18, SEC = 8'h38;
+                 CLC = 8'h18, SEC = 8'h38,
+                 SEI = 8'h78, CLI = 8'h58;
 
 localparam RW_READ = 1;
 localparam RW_WRITE = 0;
@@ -201,7 +202,7 @@ begin
             o_pch_adh = 1;
             o_adh_abh = 1;
         end
-        SEC, CLC:
+        SEC, CLC, SEI, CLI:
         begin
             // high byte - from PCH
             o_pch_adh = 1;
@@ -215,8 +216,12 @@ begin
             o_pcl_pcl = 1;
             o_pch_pch = 1;
 
-            // read C from IR5
-            o_ir5_c = 1;
+            case (i_ir)
+            SEC, CLC: o_ir5_c = 1; // read C from IR5
+            SEI, CLI: o_ir5_i = 1; // read I from IR5
+            default: begin
+            end
+            endcase
 
             // start next instruction
             o_tcu = 0;
