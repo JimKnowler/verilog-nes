@@ -41,5 +41,11 @@ namespace cpu6502 {
         OPCODE_DEFN(SEC);
         OPCODE_DEFN(SEI);
         OPCODE_DEFN(CLI);
+
+        // stack
+        OPCODE_DEFN(PHA);
+        OPCODE_DEFN(PHP);
+        OPCODE_DEFN(PLA);
+        OPCODE_DEFN(PLP);
     }
 }

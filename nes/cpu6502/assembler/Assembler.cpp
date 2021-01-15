@@ -36,6 +36,10 @@ namespace cpu6502 { namespace assembler {
     OPCODE_ASM_IMPL(CLI);
     OPCODE_ASM_IMPL(ROL);
     OPCODE_ASM_IMPL(ROR);
+    OPCODE_ASM_IMPL(PHA);
+    OPCODE_ASM_IMPL(PHP);
+    OPCODE_ASM_IMPL(PLA);
+    OPCODE_ASM_IMPL(PLP);
 
     Assembler& Assembler::immediate(uint8_t value) {
         currentOpcode()->immediate(value);
