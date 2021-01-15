@@ -1,15 +1,15 @@
 #include <cassert>
 
-#include "nes/cpu6502/Assembler.h"
-#include "nes/cpu6502/opcode/Opcodes.h"
+#include "nes/cpu6502/assembler/Assembler.h"
+#include "nes/cpu6502/assembler/Opcodes.h"
 
 #define OPCODE_ASM_IMPL(_opcode) \
     Assembler& Assembler::_opcode() { \
-        m_opcodes.push_back(std::make_unique<opcode::_opcode>()); \
+        m_opcodes.push_back(std::make_unique<::cpu6502::assembler::_opcode>()); \
         return *this; \
     }
 
-namespace cpu6502 {
+namespace cpu6502 { namespace assembler {
     Assembler::Assembler() {
     }
 
@@ -72,11 +72,12 @@ namespace cpu6502 {
         sram.write(0, program);
     }
 
-    opcode::Opcode* Assembler::currentOpcode() {
+    Opcode* Assembler::currentOpcode() {
         assert(!m_opcodes.empty());
 
         auto& opcode = m_opcodes[m_opcodes.size() - 1];
         
         return opcode.get();
     }
-}
+} // assembler
+} // Cpu6502

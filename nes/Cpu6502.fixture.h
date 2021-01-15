@@ -9,14 +9,11 @@ using namespace gtestverilog;
 #include "nes/Cpu6502TestBench.h"
 using namespace cpu6502testbench;
 
-#include "cpu6502/opcode/Opcodes.h"
-using namespace cpu6502::opcode;
-
 #include "memory/SRAM.h"
 using namespace memory;
 
-#include "cpu6502/Assembler.h"
-using namespace cpu6502;
+#include "cpu6502/assembler/Assembler.h"
+using namespace cpu6502::assembler;
 
 #include "cpu6502/ProcessorStatusFlags.h"
 

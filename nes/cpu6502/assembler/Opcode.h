@@ -10,13 +10,13 @@
     }
 
 #define OPCODE_IMPL(_opcode, _implementation) \
-    namespace cpu6502 { namespace opcode { \
+    namespace cpu6502 { namespace assembler { \
         std::vector<uint8_t> _opcode::serialise() const \
         _implementation \
     }}
 
 namespace cpu6502 {
-    namespace opcode {
+    namespace assembler {
         /// @class Opcode
         /// @brief Base case for 6502 opcode assembler
         class Opcode {

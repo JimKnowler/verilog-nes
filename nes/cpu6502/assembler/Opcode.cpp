@@ -2,7 +2,7 @@
 
 #include <cassert>
 
-namespace cpu6502 { namespace opcode {
+namespace cpu6502 { namespace assembler {
     Opcode::Opcode() {
         m_hasImmediate = false;
         m_hasAbsolute = false;
@@ -56,5 +56,5 @@ namespace cpu6502 { namespace opcode {
         return m_hasAccumulator;
     }
 
-} // opcode
+} // assembler
 } // cpu6502

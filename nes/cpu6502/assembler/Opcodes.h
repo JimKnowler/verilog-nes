@@ -3,7 +3,7 @@
 #include "Opcode.h"
 
 namespace cpu6502 {
-    namespace opcode {
+    namespace assembler {
         OPCODE_DEFN(NOP);
         
         // dec
