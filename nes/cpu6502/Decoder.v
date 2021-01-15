@@ -87,7 +87,9 @@ localparam [7:0] BRK = 8'h00, NOP = 8'hEA,
                  LSR_A = 8'h4A, ASL_A = 8'h0A,
                  CLC = 8'h18, SEC = 8'h38,
                  SEI = 8'h78, CLI = 8'h58,
-                 ROL_A = 8'h2A, ROR_A = 8'h6A;
+                 ROL_A = 8'h2A, ROR_A = 8'h6A,
+                 PHA = 8'h48, PHP = 8'h08,
+                 PLA = 8'h68, PLP = 8'h28;
 
 // RW pin
 localparam RW_READ = 1;
@@ -194,6 +196,13 @@ begin
             o_db7_n = 1;
             o_dbz_z = 1;
         end
+        PHA: begin
+            // store SP-1 in S
+            o_add_sb_0_6 = 1;
+            o_add_sb_7 = 1;
+
+            o_sb_s = 1;
+        end
         default: begin
         end
         endcase
@@ -201,8 +210,12 @@ begin
     1: // T1
     begin
         case (i_ir)
-        BRK: 
+        BRK, PHA: 
         begin
+            // retain PCL and PCH
+            o_pcl_pcl = 1;
+            o_pch_pch = 1;
+            
             // output PCL on ABL
             o_pcl_adl = 1;
             o_adl_abl = 1;
@@ -450,8 +463,12 @@ begin
     2: // T2
     begin
         case (i_ir)
-        BRK:
+        BRK, PHA:
         begin
+            // retain PCL and PCH
+            o_pcl_pcl = 1;
+            o_pch_pch = 1;
+
             // output S on ABL
             o_s_adl = 1;
             o_adl_abl = 1;
@@ -464,6 +481,14 @@ begin
             o_adl_add = 1;
             o_sb_add = 1;       // pre-charge mosfets = -1
             o_sums = 1;
+
+            if (i_ir == PHA)
+            begin
+                o_rw = RW_WRITE;
+                o_tcu = 0;      // start next opcode
+
+                o_ac_db = 1;    // output AC on DB
+            end
         end
         LDAa, LDXa, LDYa,
         STAa:
@@ -483,7 +508,7 @@ begin
             o_adh_abh = 1;
 
             // keep value cached in ADD
-            o_add_sb_0_6 = 1;    // TODO: test using o_add_sb_0_6 and 7 at the same time
+            o_add_sb_0_6 = 1;
             o_add_sb_7 = 1;
             o_sb_add = 1;
             o_db_n_add = 1;      // inverse of mosfets
