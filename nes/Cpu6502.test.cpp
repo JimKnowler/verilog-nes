@@ -34,16 +34,11 @@ TEST_F(Cpu6502, ShouldImplementResetVector) {
                 0xFFFC, 0xFFFD,             // Reset Vector (low byte), Reset Vector (high byte)
                 0x8002,                     // The reset vector (pointing at NOP)
                 0x8003,                     // NOP incrememting PC
-            }).repeatEachStep(2);
-        /*
-        // TODO: would need to be zipped with random data during phi2
-        .port(i_data)
-            .signal({0})                    // memory simulation is warming up
-            .signal({NOP()}).repeat(5)        // reading unset memory
-            .signal({0x02, 0x80})           // load PC from RESET vector
-            .signal({NOP()})                  // load NOP instruction at RESET vector
+            }).repeatEachStep(2)
+        .port(o_debug_s)
+            .signal({0xFF}).repeat(6)
+            .signal({0xFC}).repeat(3)       // store SP-3 after 3rd push
             .concat().repeatEachStep(2);
-        */
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }

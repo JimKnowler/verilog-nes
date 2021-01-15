@@ -576,11 +576,10 @@ begin
             o_add_adl = 1;
             o_adl_abl = 1;
 
-            // load sp - 2 into stack register
-            /// @todo: should we be putting sp - 3 into stack register?
-            o_add_sb_0_6 = 1;
-            o_add_sb_7 = 1;
-            o_sb_s = 1;
+            // use ALU to decrement the SP
+            o_adl_add = 1;
+            o_sb_add = 1;       // pre-charge mosfets = -1
+            o_sums = 1;
 
             // output 0x1 on ABH
             o_0_adh1_7 = 1;
@@ -598,6 +597,11 @@ begin
         begin
             /// @note currently hardcoded for RESET interrupt
             
+            // load sp - 3 into stack register
+            o_add_sb_0_6 = 1;
+            o_add_sb_7 = 1;
+            o_sb_s = 1;
+
             // >> address of reset vector low byte
 
             // ABH = 0xff
