@@ -196,8 +196,8 @@ begin
             o_db7_n = 1;
             o_dbz_z = 1;
         end
-        PHA: begin
-            // store SP-1 in S
+        PHA, PLA: begin
+            // store modified SP from ALU in S
             o_add_sb_0_6 = 1;
             o_add_sb_7 = 1;
 
@@ -210,7 +210,7 @@ begin
     1: // T1
     begin
         case (i_ir)
-        BRK, PHA: 
+        BRK, PHA, PLA: 
         begin
             // retain PCL and PCH
             o_pcl_pcl = 1;
@@ -489,6 +489,32 @@ begin
 
                 o_ac_db = 1;    // output AC on DB
             end
+        end
+        PLA: begin
+            // retain PCL and PCH
+            o_pcl_pcl = 1;
+            o_pch_pch = 1;
+
+            // output S on ABL
+            o_s_adl = 1;
+            o_adl_abl = 1;
+
+            // output 0x1 on ABH
+            o_0_adh1_7 = 1;
+            o_adh_abh = 1;
+
+            // use ALU to increment the SP
+            o_adl_add = 1;
+            o_0_add = 1;
+            o_1_addc = 1;
+            o_sums = 1;
+
+            o_tcu = 0;      // start next opcode
+
+            // read DL into AC
+            o_dl_db = 1;
+            o_sb_db = 1;
+            o_sb_ac = 1;
         end
         LDAa, LDXa, LDYa,
         STAa:
