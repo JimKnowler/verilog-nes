@@ -292,7 +292,7 @@ TEST_F(Cpu6502, ShouldImplementTXS) {
         .port(o_debug_x).signal({kTestData})
                         .repeat(8)
         .port(o_debug_y).signal({0xFF}).repeat(8)
-        .port(o_debug_s).signal({0xFD}).repeat(4)
+        .port(o_debug_s).signal({0xFC}).repeat(4)
                         .signal({kTestData}).repeat(4);
         
 
