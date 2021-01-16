@@ -35,7 +35,7 @@ module ALU(
     input i_eors,           // a ^ b
     input i_ors,            // a | b
     input i_srs,            // a >> 1
-    //output o_avr,           // overflow signal
+    output o_avr,           // overflow signal
     output o_acr,           // carry signal
 
     // Adder Hold Register
@@ -47,6 +47,7 @@ reg [7:0] r_b;
 reg [7:0] r_alu;
 reg [7:0] r_add;
 reg r_acr;
+reg r_avr;
 
 // B Input Register
 always @(*)
@@ -80,6 +81,7 @@ begin
     // default values
     r_alu = 8'h00;
     r_acr = 0;
+    r_avr = 0;
 
     if (i_sums)
     begin
@@ -110,5 +112,6 @@ end
 
 assign o_add = r_add;
 assign o_acr = r_acr;
+assign o_avr = r_avr;
 
 endmodule

@@ -24,6 +24,13 @@ namespace {
 TEST_F(ALU, ShouldConstruct) {
 }
 
+TEST_F(ALU, ShouldOutputDefaultValues) {
+    auto& core = testBench.core();
+
+    EXPECT_EQ(0, core.o_avr);
+    EXPECT_EQ(0, core.o_acr);
+}
+
 TEST_F(ALU, ShouldNotPassThroughDuringPhi2) {
     auto& core = testBench.core();
 
