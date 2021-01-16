@@ -478,3 +478,44 @@ TEST_F(ProcessorStatus, ShouldClearVFromDB6) {
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
+
+TEST_F(ProcessorStatus, ShouldSetVFromAVR) {
+    auto& core = testBench.core();
+    
+    core.i_avr = 1;
+    core.i_avr_v = 0;
+    testBench.tick();
+
+    core.i_avr_v = 1;
+    testBench.tick();
+
+    core.i_avr_v = 0;
+    testBench.tick();
+
+    Trace expected = TraceBuilder()
+        .port(o_p).signal({0,V,V}).repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(ProcessorStatus, ShouldClearVFromAVR) {
+    auto& core = testBench.core();
+    
+    core.i_avr = 1;
+    core.i_avr_v = 0;
+    testBench.tick();
+
+    core.i_avr_v = 1;
+    testBench.tick();
+
+    core.i_avr = 0;
+    testBench.tick();
+
+    core.i_avr_v = 0;
+    testBench.tick();
+
+    Trace expected = TraceBuilder()
+        .port(o_p).signal({0,V,0,0}).repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}

@@ -14,9 +14,7 @@ module ProcessorStatus(
     // general inputs
     input i_ir5,
     input i_acr,                        // ALU Carry
-    /*
     input i_avr,                        // ALU overflow
-    */
 
     // CARRY control signals
     input i_db0_c,
@@ -42,8 +40,8 @@ module ProcessorStatus(
 
     // OVERFLOW control signals
     input i_db6_v,
-    /*
     input i_avr_v,
+    /*
     input i_1_v,
     */
 
@@ -147,7 +145,9 @@ begin
     else
     begin
         if (i_db6_v)
-            r_v <= i_db[V]; 
+            r_v <= i_db[V];
+        if (i_avr_v)
+            r_v <= i_avr;
     end
 end
 
