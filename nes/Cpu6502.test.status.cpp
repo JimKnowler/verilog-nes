@@ -144,9 +144,7 @@ TEST_F(Cpu6502, ShouldImplementCLV) {
 
     helperSkipResetVector();
 
-    sram.write(0x01fd, kBefore);
-
-    printf("BEFORE: %02x %02x\n", kBefore, sram.read(0x01FD));
+    sram.write(0x100 | testBench.core().o_debug_s + 1, kBefore);
 
     // skip PLV
     testBench.tick(4);
