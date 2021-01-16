@@ -64,6 +64,12 @@ module Decoder(
     output reg o_ors,
     output reg o_srs,
     output reg o_dbz_z,
+    output reg o_db0_c,
+    output reg o_db1_z,
+    output reg o_db2_i,
+    output reg o_db3_d,
+    output reg o_db4_b,
+    output reg o_db6_v,
     output reg o_db7_n,
     output reg o_acr_c,
     output reg o_ir5_c,
@@ -150,6 +156,12 @@ begin
     o_ors = 0;
     o_srs = 0;
     o_dbz_z = 0;
+    o_db0_c = 0;
+    o_db1_z = 0;
+    o_db2_i = 0;
+    o_db3_d = 0;
+    o_db4_b = 0;
+    o_db6_v = 0;
     o_db7_n = 0;
     o_acr_c = 0;
     o_ir5_c = 0;
@@ -196,7 +208,7 @@ begin
             o_db7_n = 1;
             o_dbz_z = 1;
         end
-        PHA, PLA: begin
+        PHA, PLA, PLP: begin
             // store modified SP from ALU in S
             o_add_sb_0_6 = 1;
             o_add_sb_7 = 1;
@@ -210,7 +222,7 @@ begin
     1: // T1
     begin
         case (i_ir)
-        BRK, PHA, PLA: 
+        BRK, PHA, PLA, PLP: 
         begin
             // retain PCL and PCH
             o_pcl_pcl = 1;
@@ -490,7 +502,7 @@ begin
                 o_ac_db = 1;    // output AC on DB
             end
         end
-        PLA: begin
+        PLA, PLP: begin
             // retain PCL and PCH
             o_pcl_pcl = 1;
             o_pch_pch = 1;
@@ -511,10 +523,23 @@ begin
 
             o_tcu = 0;      // start next opcode
 
-            // read DL into AC
-            o_dl_db = 1;
-            o_sb_db = 1;
-            o_sb_ac = 1;
+            if (i_ir == PLA) begin
+                // read DL into AC
+                o_dl_db = 1;
+                o_sb_db = 1;
+                o_sb_ac = 1;
+            end
+            else if (i_ir == PLP) begin
+                // read DL into P
+                o_dl_db = 1;
+                o_db0_c = 1;
+                o_db1_z = 1;
+                o_db2_i = 1;
+                o_db3_d = 1;
+                o_db4_b = 1;
+                o_db6_v = 1;
+                o_db7_n = 1;
+            end
         end
         LDAa, LDXa, LDYa,
         STAa:

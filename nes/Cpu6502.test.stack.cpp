@@ -73,11 +73,45 @@ TEST_F(Cpu6502, ShouldImplementPLA) {
                          .signal({kTestData}).repeat(2)
                          .concat().repeatEachStep(2)
         .port(o_debug_x).signal({0xFF}).repeat(10)
-        .port(o_debug_y).signal({0xFF}).repeat(10);
+        .port(o_debug_y).signal({0xFF}).repeat(10)
+        .port(o_debug_p).signal({0x00}).repeat(10);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
 TEST_F(Cpu6502, ShouldImplementPLP) {
+    sram.clear(0);
     
+    const uint8_t kTestData = 0xFF;
+    const uint8_t kExpectedP = C|Z|I|B|D|V|N;
+    sram.write(0x01FC, kTestData);
+
+    Assembler()
+        .PLP()
+        .NOP()
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    // simulate PLP and NOP
+    testBench.tick(5);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(5)
+        .port(o_rw).signal("1").repeat(10)
+        .port(o_sync).signal("01001").repeatEachStep(2)
+        .port(o_address).signal({0, 1, 0x01FC, 1, 2})
+                        .repeatEachStep(2)
+        .port(o_debug_s).signal({0xFC}).repeat(4)
+                        .signal({0xFD}).repeat(1)
+                        .concat().repeatEachStep(2)
+        .port(o_debug_ac).signal({0xFF}).repeat(10)
+        .port(o_debug_x).signal({0xFF}).repeat(10)
+        .port(o_debug_y).signal({0xFF}).repeat(10)
+        .port(o_debug_p).signal({0x00}).repeat(3)
+                        .signal({kExpectedP}).repeat(2)
+                        .concat().repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }

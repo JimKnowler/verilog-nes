@@ -121,6 +121,12 @@ wire w_eors;
 wire w_ors;
 wire w_srs;
 wire w_dbz_z;
+wire w_db0_c;
+wire w_db1_z;
+wire w_db2_i;
+wire w_db3_d;
+wire w_db4_b;
+wire w_db6_v;
 wire w_db7_n;
 wire w_acr_c;
 wire w_ir5_c;
@@ -183,6 +189,12 @@ Decoder decoder(
     .o_ors(w_ors),
     .o_srs(w_srs),
     .o_dbz_z(w_dbz_z),
+    .o_db0_c(w_db0_c),
+    .o_db1_z(w_db1_z),
+    .o_db2_i(w_db2_i),
+    .o_db3_d(w_db3_d),
+    .o_db4_b(w_db4_b),
+    .o_db6_v(w_db6_v),
     .o_db7_n(w_db7_n),
     .o_acr_c(w_acr_c),
     .o_ir5_c(w_ir5_c),
@@ -295,6 +307,12 @@ ProcessorStatus p(
     .o_p(w_p),
     .i_db(w_bus_db),
     .i_dbz_z(w_dbz_z),
+    .i_db0_c(w_db0_c),
+    .i_db1_z(w_db1_z),
+    .i_db2_i(w_db2_i),
+    .i_db3_d(w_db3_d),
+    .i_db4_b(w_db4_b),
+    .i_db6_v(w_db6_v),
     .i_db7_n(w_db7_n),
     .i_acr(w_acr),
     .i_acr_c(w_acr_c),
