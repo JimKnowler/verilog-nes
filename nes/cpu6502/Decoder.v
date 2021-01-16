@@ -208,7 +208,7 @@ begin
             o_db7_n = 1;
             o_dbz_z = 1;
         end
-        PHA, PLA, PLP: begin
+        PHA, PHP: begin
             // store modified SP from ALU in S
             o_add_sb_0_6 = 1;
             o_add_sb_7 = 1;
@@ -222,7 +222,7 @@ begin
     1: // T1
     begin
         case (i_ir)
-        BRK, PHA, PLA, PLP: 
+        BRK, PHA, PHP, PLA, PLP: 
         begin
             // retain PCL and PCH
             o_pcl_pcl = 1;
@@ -235,6 +235,20 @@ begin
             // output PCH on ABH
             o_pch_adh = 1;
             o_adh_abh = 1;
+
+            case (i_ir)
+            PLA, PLP: begin
+                // use ALU to increment the SP
+                o_s_sb = 1;
+                o_sb_add = 1;
+                o_db_n_add = 1;
+                o_1_addc = 1;
+                o_sums = 1;
+            end
+            default: begin
+                
+            end
+            endcase
         end
         SEC, CLC, SEI, CLI:
         begin
@@ -475,7 +489,7 @@ begin
     2: // T2
     begin
         case (i_ir)
-        BRK, PHA:
+        BRK, PHA, PHP:
         begin
             // retain PCL and PCH
             o_pcl_pcl = 1;
@@ -498,8 +512,13 @@ begin
             begin
                 o_rw = RW_WRITE;
                 o_tcu = 0;      // start next opcode
-
-                o_ac_db = 1;    // output AC on DB
+                o_ac_db = 1;
+            end
+            else if (i_ir == PHP)
+            begin
+                o_rw = RW_WRITE;
+                o_tcu = 0;      // start next opcode
+                o_p_db = 1;
             end
         end
         PLA, PLP: begin
@@ -515,31 +534,15 @@ begin
             o_0_adh1_7 = 1;
             o_adh_abh = 1;
 
-            // use ALU to increment the SP
-            o_adl_add = 1;
-            o_0_add = 1;
-            o_1_addc = 1;
+            // write SP+1 to S
+            o_add_sb_0_6 = 1;
+            o_add_sb_7 = 1;
+            o_sb_s = 1;
+
+            // retain the value in ADD
+            o_sb_add = 1;
+            o_db_n_add = 1;
             o_sums = 1;
-
-            o_tcu = 0;      // start next opcode
-
-            if (i_ir == PLA) begin
-                // read DL into AC
-                o_dl_db = 1;
-                o_sb_db = 1;
-                o_sb_ac = 1;
-            end
-            else if (i_ir == PLP) begin
-                // read DL into P
-                o_dl_db = 1;
-                o_db0_c = 1;
-                o_db1_z = 1;
-                o_db2_i = 1;
-                o_db3_d = 1;
-                o_db4_b = 1;
-                o_db6_v = 1;
-                o_db7_n = 1;
-            end
         end
         LDAa, LDXa, LDYa,
         STAa:
@@ -637,6 +640,41 @@ begin
 
             // start next opcode
             o_tcu = 0;
+        end
+        PLA, PLP: begin
+            // retain PCL and PCH
+            o_pcl_pcl = 1;
+            o_pch_pch = 1;
+
+            // output SP+1 on ABL
+            o_add_adl = 1;
+            o_adl_abl = 1;
+
+            // output 0x1 on ABH
+            o_0_adh1_7 = 1;
+            o_adh_abh = 1;
+
+            o_tcu = 0;      // start next opcode
+
+            if (i_ir == PLA) begin
+                // read DL into AC
+                o_dl_db = 1;
+                
+                o_sb_db = 1;
+                o_sb_ac = 1;
+            end
+            else if (i_ir == PLP) begin
+                // read DL into P
+                o_dl_db = 1;
+
+                o_db0_c = 1;
+                o_db1_z = 1;
+                o_db2_i = 1;
+                o_db3_d = 1;
+                o_db4_b = 1;
+                o_db6_v = 1;
+                o_db7_n = 1;
+            end
         end
         default:
         begin

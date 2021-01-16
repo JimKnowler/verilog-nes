@@ -13,11 +13,18 @@ void Cpu6502::SetUp() {
         auto& cpu = testBench.core();
 
         if (cpu.i_clk == 1) {
+#ifdef CPU6502_VERBOSE
+            printf("SRAM: %s [0x%04x] <= [0x%02x]\n", 
+                    (cpu.o_rw == 1) ? "R" : "W",
+                    cpu.o_address,
+                    cpu.o_data);
+#endif
             // clock: end of phi2
             // R/W data is valid on the bus
             if (cpu.o_rw == 0) {
                 // write
                 sram.write(cpu.o_address, cpu.o_data);
+                
             } else {
                 // read
                 cpu.i_data = sram.read(cpu.o_address);
@@ -25,7 +32,7 @@ void Cpu6502::SetUp() {
         } else {
             // clock: end of phi 1
             // undefined data on the bus
-            cpu.i_data = 0xFF;
+            //cpu.i_data = 0xFF;
         }
     });
 
