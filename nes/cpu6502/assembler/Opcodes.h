@@ -41,6 +41,7 @@ namespace cpu6502 {
         OPCODE_DEFN(SEC);
         OPCODE_DEFN(SEI);
         OPCODE_DEFN(CLI);
+        OPCODE_DEFN(CLV);
 
         // stack
         OPCODE_DEFN(PHA);
