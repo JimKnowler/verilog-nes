@@ -73,7 +73,8 @@ module Decoder(
     output reg o_db7_n,
     output reg o_acr_c,
     output reg o_ir5_c,
-    output reg o_ir5_i
+    output reg o_ir5_i,
+    output reg o_avr_v
 );
 
 // Processor Status Register bitfields
@@ -93,6 +94,7 @@ localparam [7:0] BRK = 8'h00, NOP = 8'hEA,
                  LSR_A = 8'h4A, ASL_A = 8'h0A,
                  CLC = 8'h18, SEC = 8'h38,
                  SEI = 8'h78, CLI = 8'h58,
+                 CLV = 8'hb8,
                  ROL_A = 8'h2A, ROR_A = 8'h6A,
                  PHA = 8'h48, PHP = 8'h08,
                  PLA = 8'h68, PLP = 8'h28;
@@ -166,6 +168,7 @@ begin
     o_acr_c = 0;
     o_ir5_c = 0;
     o_ir5_i = 0;
+    o_avr_v = 0;
 
     case (i_tcu)
     0:  // T0
@@ -250,7 +253,7 @@ begin
             end
             endcase
         end
-        SEC, CLC, SEI, CLI:
+        SEC, CLC, SEI, CLI, CLV:
         begin
             // high byte - from PCH
             o_pch_adh = 1;
@@ -267,6 +270,7 @@ begin
             case (i_ir)
             SEC, CLC: o_ir5_c = 1; // read C from IR5
             SEI, CLI: o_ir5_i = 1; // read I from IR5
+            CLV: o_avr_v = 1; // read V from (0) avr
             default: begin
             end
             endcase

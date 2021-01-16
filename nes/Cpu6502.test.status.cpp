@@ -96,7 +96,7 @@ TEST_F(Cpu6502, ShouldImplementSEI) {
 }
 
 TEST_F(Cpu6502, ShouldImplementCLI) {
-sram.clear(0);
+    sram.clear(0);
 
     Assembler()
         .SEI()
@@ -126,6 +126,48 @@ sram.clear(0);
         .port(o_debug_y).signal({0xFF}).repeat(8)
         .port(o_debug_p).signal({I}).repeat(4)
                         .signal({0}).repeat(4);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldImplementCLV) {
+    sram.clear(0);
+
+    const uint8_t kBefore = C|Z|I|D|B|V|N;
+    const uint8_t kAfter = kBefore & ~V;
+
+    Assembler()
+        .PLP()
+        .CLV()
+        .NOP()
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    sram.write(0x01fd, kBefore);
+
+    printf("BEFORE: %02x %02x\n", kBefore, sram.read(0x01FD));
+
+    // skip PLV
+    testBench.tick(4);
+    testBench.trace.clear();
+
+    // simulate CLV and NOP
+    testBench.tick(4);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(4)
+        .port(o_rw).signal("11")
+                    .repeat(4)
+        .port(o_sync).signal("0101").repeatEachStep(2)
+        .port(o_address).signal({1, 2, 2, 3})
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({0xFF}).repeat(8)
+        .port(o_debug_x).signal({0xFF}).repeat(8)
+        .port(o_debug_y).signal({0xFF}).repeat(8)
+        .port(o_debug_p).signal({kBefore}).repeat(4)
+                        .signal({kAfter}).repeat(4);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
