@@ -69,5 +69,6 @@
         "thread": "cpp",
         "typeinfo": "cpp",
         "variant": "cpp"
-    }
+    },
+    "testMate.cpp.test.executables": "bazel-bin/nes/test"
 }
