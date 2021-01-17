@@ -16,43 +16,9 @@ namespace cpu6502 {
         public:
             Assembler();
 
-            OPCODE_ASM(LDA);
-            OPCODE_ASM(LDX);
-            OPCODE_ASM(LDY);
-            OPCODE_ASM(STA);
-            OPCODE_ASM(NOP);
-            OPCODE_ASM(DEX);
-            OPCODE_ASM(DEY);
-            OPCODE_ASM(INX);
-            OPCODE_ASM(INY);
-            OPCODE_ASM(TAX);
-            OPCODE_ASM(TAY);
-            OPCODE_ASM(TXA);
-            OPCODE_ASM(TYA);
-            OPCODE_ASM(TSX);
-            OPCODE_ASM(TXS);
-            OPCODE_ASM(LSR);
-            OPCODE_ASM(SEC);
-            OPCODE_ASM(CLC);
-            OPCODE_ASM(ASL);
-            OPCODE_ASM(SEI);
-            OPCODE_ASM(CLI);
-            OPCODE_ASM(CLV);
-            OPCODE_ASM(ROL);
-            OPCODE_ASM(ROR);
-            OPCODE_ASM(PHA);
-            OPCODE_ASM(PHP);
-            OPCODE_ASM(PLA);
-            OPCODE_ASM(PLP);
-            OPCODE_ASM(CMP);
-            OPCODE_ASM(CPX);
-            OPCODE_ASM(CPY);
-            OPCODE_ASM(EOR);
-            OPCODE_ASM(ADC);
-            OPCODE_ASM(AND);
-            OPCODE_ASM(ORA);
-            OPCODE_ASM(SBC);
-
+#define OPCODE(_x) OPCODE_ASM(_x)
+# include "OpcodeList.inl"
+#undef OPCODE
             Assembler& immediate(uint8_t value);  
             Assembler& a(uint16_t value);
             Assembler& absolute(uint16_t value); 

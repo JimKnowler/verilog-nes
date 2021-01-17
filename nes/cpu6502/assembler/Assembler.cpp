@@ -13,42 +13,9 @@ namespace cpu6502 { namespace assembler {
     Assembler::Assembler() {
     }
 
-    OPCODE_ASM_IMPL(NOP);
-    OPCODE_ASM_IMPL(LDA);
-    OPCODE_ASM_IMPL(LDX);
-    OPCODE_ASM_IMPL(LDY);
-    OPCODE_ASM_IMPL(STA);
-    OPCODE_ASM_IMPL(DEX);
-    OPCODE_ASM_IMPL(DEY);
-    OPCODE_ASM_IMPL(INX);
-    OPCODE_ASM_IMPL(INY);
-    OPCODE_ASM_IMPL(TAX);
-    OPCODE_ASM_IMPL(TAY);
-    OPCODE_ASM_IMPL(TXA);
-    OPCODE_ASM_IMPL(TYA);
-    OPCODE_ASM_IMPL(TSX);
-    OPCODE_ASM_IMPL(TXS);
-    OPCODE_ASM_IMPL(LSR);
-    OPCODE_ASM_IMPL(CLC);
-    OPCODE_ASM_IMPL(SEC);
-    OPCODE_ASM_IMPL(ASL);
-    OPCODE_ASM_IMPL(SEI);
-    OPCODE_ASM_IMPL(CLI);
-    OPCODE_ASM_IMPL(CLV);
-    OPCODE_ASM_IMPL(ROL);
-    OPCODE_ASM_IMPL(ROR);
-    OPCODE_ASM_IMPL(PHA);
-    OPCODE_ASM_IMPL(PHP);
-    OPCODE_ASM_IMPL(PLA);
-    OPCODE_ASM_IMPL(PLP);
-    OPCODE_ASM_IMPL(CMP);
-    OPCODE_ASM_IMPL(CPX);
-    OPCODE_ASM_IMPL(CPY);
-    OPCODE_ASM_IMPL(EOR);
-    OPCODE_ASM_IMPL(ADC);
-    OPCODE_ASM_IMPL(AND);
-    OPCODE_ASM_IMPL(ORA);
-    OPCODE_ASM_IMPL(SBC);
+#define OPCODE(_x) OPCODE_ASM_IMPL(_x)
+# include "OpcodeList.inl"
+#undef OPCODE
 
     Assembler& Assembler::immediate(uint8_t value) {
         currentOpcode()->immediate(value);

@@ -160,7 +160,8 @@ cc_test(
     srcs = glob(
         include =[
             "**/*.cpp",
-            "**/*.h"
+            "**/*.h",
+            "**/*.inl"
         ]
     ) + [
         ":MasterClockTestBench",
