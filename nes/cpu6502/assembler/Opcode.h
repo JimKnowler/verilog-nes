@@ -44,6 +44,7 @@ namespace cpu6502 {
         protected:
             bool isImplied() const;
             bool isAccumulator() const;
+            bool isImmediate() const;
 
             // todo: turn these bool flags into a bitmask
             //     -> useful when setting multiple fields

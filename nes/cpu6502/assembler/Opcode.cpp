@@ -56,5 +56,9 @@ namespace cpu6502 { namespace assembler {
         return m_hasAccumulator;
     }
 
+    bool Opcode::isImmediate() const {
+        return m_hasImmediate;
+    }
+
 } // assembler
 } // cpu6502

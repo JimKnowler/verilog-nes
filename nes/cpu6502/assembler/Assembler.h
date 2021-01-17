@@ -44,6 +44,14 @@ namespace cpu6502 {
             OPCODE_ASM(PHP);
             OPCODE_ASM(PLA);
             OPCODE_ASM(PLP);
+            OPCODE_ASM(CMP);
+            OPCODE_ASM(CPX);
+            OPCODE_ASM(CPY);
+            OPCODE_ASM(EOR);
+            OPCODE_ASM(ADC);
+            OPCODE_ASM(AND);
+            OPCODE_ASM(ORA);
+            OPCODE_ASM(SBC);
 
             Assembler& immediate(uint8_t value);  
             Assembler& a(uint16_t value);

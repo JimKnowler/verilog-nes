@@ -9,10 +9,12 @@ namespace cpu6502 {
         // dec
         OPCODE_DEFN(DEX);
         OPCODE_DEFN(DEY);
+        OPCODE_DEFN(SBC);
 
         // inc
         OPCODE_DEFN(INX);
         OPCODE_DEFN(INY);
+        OPCODE_DEFN(ADC);
         
         // load
         OPCODE_DEFN(LDA);
@@ -48,5 +50,15 @@ namespace cpu6502 {
         OPCODE_DEFN(PHP);
         OPCODE_DEFN(PLA);
         OPCODE_DEFN(PLP);
+
+        // compare
+        OPCODE_DEFN(CMP);
+        OPCODE_DEFN(CPX);
+        OPCODE_DEFN(CPY);
+
+        // logic
+        OPCODE_DEFN(EOR);
+        OPCODE_DEFN(AND);
+        OPCODE_DEFN(ORA);
     }
 }
