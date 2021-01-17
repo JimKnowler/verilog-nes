@@ -42,15 +42,19 @@ namespace cpu6502 {
             operator uint8_t() const;
 
         protected:
+            enum AddressingMode : uint32_t {
+                kImplied = 0,
+                kImmediate = 1 << 0,
+                kAbsolute = 1 << 1,
+                kAccumulator = 1 << 2
+            };
+
             bool isImplied() const;
             bool isAccumulator() const;
             bool isImmediate() const;
+            bool isAbsolute() const;
 
-            // todo: turn these bool flags into a bitmask
-            //     -> useful when setting multiple fields
-            bool m_hasImmediate;
-            bool m_hasAbsolute;
-            bool m_hasAccumulator;
+            uint32_t m_addressingMode;
 
             uint8_t m_immediate;
             uint16_t m_absolute;

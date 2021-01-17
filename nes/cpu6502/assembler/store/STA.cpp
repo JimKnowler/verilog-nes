@@ -7,7 +7,7 @@ namespace {
 }
 
 OPCODE_IMPL(STA, {
-    assert(m_hasAbsolute);
+    assert(isAbsolute());
 
     std::vector<uint8_t> bytes;
     bytes.push_back(OPCODE_ABSOLUTE);

@@ -8,14 +8,14 @@ namespace {
 }
 
 OPCODE_IMPL(LDX, {
-    assert(m_hasImmediate || m_hasAbsolute);
+    assert(isImmediate() || isAbsolute());
 
     std::vector<uint8_t> bytes;
 
-    if (m_hasImmediate) {
+    if (isImmediate()) {
         bytes.push_back(OPCODE_IMMEDIATE);
         bytes.push_back(m_immediate);
-    } else if (m_hasAbsolute) {
+    } else if (isAbsolute()) {
         bytes.push_back(OPCODE_ABSOLUTE);
         uint8_t low = m_absolute & 0xff;
         bytes.push_back(low);

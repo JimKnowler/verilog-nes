@@ -3,10 +3,7 @@
 #include <cassert>
 
 namespace cpu6502 { namespace assembler {
-    Opcode::Opcode() {
-        m_hasImmediate = false;
-        m_hasAbsolute = false;
-        m_hasAccumulator = false;
+    Opcode::Opcode() : m_addressingMode(kImplied) {
     }
 
     Opcode::~Opcode() {
@@ -14,7 +11,7 @@ namespace cpu6502 { namespace assembler {
     }
     
     Opcode& Opcode::immediate(uint8_t value) {
-        m_hasImmediate = true;
+        m_addressingMode |= kImmediate;
         m_immediate = value;
 
         return *this;
@@ -25,14 +22,14 @@ namespace cpu6502 { namespace assembler {
     }
 
     Opcode& Opcode::absolute(uint16_t value) {
-        m_hasAbsolute = true;
+        m_addressingMode |= kAbsolute;
         m_absolute = value;
 
         return *this;
     }
 
     Opcode& Opcode::A() {
-        m_hasAccumulator = true;
+        m_addressingMode |= kAccumulator;
 
         return *this;
     }
@@ -48,16 +45,19 @@ namespace cpu6502 { namespace assembler {
     }
 
     bool Opcode::isImplied() const {
-        // todo: update after adding addressing modes
-        return (!m_hasImmediate) && (!m_hasAbsolute) && (!m_hasAccumulator);
+        return (m_addressingMode == kImplied);
     }
 
     bool Opcode::isAccumulator() const {
-        return m_hasAccumulator;
+        return (m_addressingMode == kAccumulator);
     }
 
     bool Opcode::isImmediate() const {
-        return m_hasImmediate;
+        return (m_addressingMode == kImmediate);
+    }
+
+    bool Opcode::isAbsolute() const {
+        return (m_addressingMode == kAbsolute);
     }
 
 } // assembler
