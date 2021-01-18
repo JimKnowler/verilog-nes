@@ -98,7 +98,8 @@ localparam [7:0] BRK = 8'h00, NOP = 8'hEA,
                  ROL_A = 8'h2A, ROR_A = 8'h6A,
                  PHA = 8'h48, PHP = 8'h08,
                  PLA = 8'h68, PLP = 8'h28,
-                 AND_i = 8'h29, EOR_i = 8'h49;
+                 AND_i = 8'h29, EOR_i = 8'h49,
+                 ORA_i = 8'h09;
 
 // RW pin
 localparam RW_READ = 1;
@@ -195,7 +196,7 @@ begin
         case (i_ir)
         INX, INY, DEX, DEY,
         LSR_A, ASL_A, ROL_A, ROR_A,
-        AND_i, EOR_i: begin
+        AND_i, EOR_i, ORA_i: begin
             // output value from ALU to SB
             o_add_sb_0_6 = 1;
             o_add_sb_7 = 1;
@@ -210,7 +211,7 @@ begin
             end
             LSR_A, ASL_A,
             ROL_A, ROR_A,
-            AND_i, EOR_i: begin
+            AND_i, EOR_i, ORA_i: begin
                 o_sb_ac = 1;
             end
             default: begin
@@ -398,7 +399,7 @@ begin
             // end of opcode
             o_tcu = 0;
         end
-        AND_i, EOR_i:
+        AND_i, EOR_i, ORA_i:
         begin
             // output PCL on ABL
             o_pcl_adl = 1;
@@ -423,10 +424,13 @@ begin
             o_db_add = 1;
             o_sb_add = 1;
 
-            if (i_ir == AND_i)
-                o_ands = 1;
-            else if (i_ir == EOR_i)
-                o_eors = 1;
+            case (i_ir)
+            AND_i: o_ands = 1;
+            EOR_i: o_eors = 1;
+            ORA_i: o_ors = 1;
+            default: begin
+            end
+            endcase
 
             // end of opcode
             o_tcu = 0;
