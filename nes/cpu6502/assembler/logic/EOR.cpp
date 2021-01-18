@@ -11,6 +11,7 @@ OPCODE_IMPL(EOR, {
 
     std::vector<uint8_t> bytes;
     bytes.push_back(OPCODE_IMMEDIATE);
+    bytes.push_back(m_immediate);
 
     return bytes;
 });
