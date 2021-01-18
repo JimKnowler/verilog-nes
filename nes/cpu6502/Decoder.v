@@ -97,7 +97,8 @@ localparam [7:0] BRK = 8'h00, NOP = 8'hEA,
                  CLV = 8'hb8,
                  ROL_A = 8'h2A, ROR_A = 8'h6A,
                  PHA = 8'h48, PHP = 8'h08,
-                 PLA = 8'h68, PLP = 8'h28;
+                 PLA = 8'h68, PLP = 8'h28,
+                 AND_i = 8'h29;
 
 // RW pin
 localparam RW_READ = 1;
@@ -190,18 +191,27 @@ begin
         // increment PC for T1
         o_i_pc = 1;
 
+        // finish previous opcode
         case (i_ir)
         INX, INY, DEX, DEY,
-        LSR_A, ASL_A, ROL_A, ROR_A: begin
+        LSR_A, ASL_A, ROL_A, ROR_A, AND_i: begin
             // output value from ALU to SB
             o_add_sb_0_6 = 1;
             o_add_sb_7 = 1;
 
             // load from SB into register
             case (i_ir)
-            INX, DEX: o_sb_x = 1;
-            INY, DEY: o_sb_y = 1;
-            LSR_A, ASL_A, ROL_A, ROR_A: o_sb_ac = 1;
+            INX, DEX: begin
+                o_sb_x = 1;
+            end
+            INY, DEY: begin
+                o_sb_y = 1;
+            end
+            LSR_A, ASL_A,
+            ROL_A, ROR_A,
+            AND_i: begin
+                o_sb_ac = 1;
+            end
             default: begin
             end
             endcase
@@ -383,6 +393,35 @@ begin
             // load Z and N from DB
             o_dbz_z = 1;
             o_db7_n = 1;
+
+            // end of opcode
+            o_tcu = 0;
+        end
+        AND_i:
+        begin
+            // output PCL on ABL
+            o_pcl_adl = 1;
+            o_adl_abl = 1;
+
+            // output PCH on ABH
+            o_pch_adh = 1;
+            o_adh_abh = 1;
+
+            // retain PCL and PCH
+            o_pcl_pcl = 1;
+            o_pch_pch = 1;
+
+            // increment PC for next T0
+            o_i_pc = 1;
+
+            // load immediate operand into AC
+            o_dl_db = 1;
+
+            // ALU 
+            o_ac_sb = 1;
+            o_db_add = 1;
+            o_sb_add = 1;
+            o_ands = 1;
 
             // end of opcode
             o_tcu = 0;
