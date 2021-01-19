@@ -75,6 +75,9 @@ begin
         r_a = i_sb;
 end
 
+wire [8:0] w_alu_sum;
+assign w_alu_sum = {1'b0, r_a} + {1'b0, r_b} + ( i_1_addc ? 9'd1 : 9'd0);
+
 // ALU calculation
 always @(*)
 begin
@@ -85,8 +88,9 @@ begin
 
     if (i_sums)
     begin
-        r_alu = r_a + r_b + ( i_1_addc ? 8'h01 : 8'h00);
-        r_acr = r_a[7] & r_b[7];
+        r_alu = w_alu_sum[7:0];
+        r_acr = w_alu_sum[8];
+        r_avr = (r_a[7] == r_b[7]) && (r_a[7] != r_alu[7]);
     end
     else if (i_ands)
         r_alu = r_a & r_b;
