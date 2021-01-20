@@ -296,3 +296,63 @@ TEST_F(ALU, ShouldOutputAVRDuringSum) {
         EXPECT_EQ(kExpectedAvr, core.o_avr);
     }
 }
+
+TEST_F(ALU, ShouldOutputACRDuringSumWithCarryIn) {
+    auto& core = testBench.core();
+    
+    // examples from: http://www.6502.org/tutorials/vflag.html
+    const std::map<std::pair<uint8_t, uint8_t>, uint8_t> testCases = {
+        {{0x00, 0x00}, 0},      //    0 +  0  + 1 = 1
+        {{0x01, 0x01}, 0},      //    1 +  1  + 1 = 3
+        {{0x01, 0xFF}, 1},      //    1 + 255 + 1 = 257
+        {{0x7F, 0x01}, 0},      //  127 +  1  + 1 = 129
+        {{0x80, 0xFF}, 1},      //  128 + 255 + 1 = 384
+    };
+
+    for (auto& testCase: testCases) {
+        const uint8_t kTestValue1 = testCase.first.first;
+        const uint8_t kTestValue2 = testCase.first.second;
+        const uint8_t kExpectedAcr = testCase.second;
+
+        core.i_sb = kTestValue1;
+        core.i_sb_add = 1;
+        core.i_db = kTestValue2;
+        core.i_db_add = 1;
+        core.i_sums = 1;
+        core.i_1_addc = 1;
+        
+        testBench.tick();
+        EXPECT_EQ(kExpectedAcr, core.o_acr);
+    }
+}
+
+TEST_F(ALU, ShouldOutputAVRDuringSumWithCarryIn) {
+    auto& core = testBench.core();
+    
+    // examples from: http://www.6502.org/tutorials/vflag.html
+    const std::map<std::pair<uint8_t, uint8_t>, uint8_t> testCases = {
+        {{0x00, 0x00}, 0},      //    0 +  0   + 1 = 1
+        {{0x01, 0x01}, 0},      //    1 +  1   + 1 = 3
+        {{0x01, 0xFF}, 0},      //    1 + -1   + 1 = 1
+        {{0x7F, 0x01}, 1},      //  127 +  1   + 1 = 129
+        {{0x80, 0xFF}, 0},      // -128 + -1   + 1 = -128
+        {{0x00, 0xFF}, 0},      //    0 + -1   + 1 = -1
+        {{0xFF, 0x7F}, 0},      //   -1 +  127 + 1 = 127
+    };
+
+    for (auto& testCase: testCases) {
+        const uint8_t kTestValue1 = testCase.first.first;
+        const uint8_t kTestValue2 = testCase.first.second;
+        const uint8_t kExpectedAvr = testCase.second;
+
+        core.i_sb = kTestValue1;
+        core.i_sb_add = 1;
+        core.i_db = kTestValue2;
+        core.i_db_add = 1;
+        core.i_sums = 1;
+        core.i_1_addc = 1;
+        
+        testBench.tick();
+        EXPECT_EQ(kExpectedAvr, core.o_avr);
+    }
+}

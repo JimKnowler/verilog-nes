@@ -36,6 +36,7 @@ verilator_cc_library(
         "cpu6502/TCU.v",
         "cpu6502/IR.v",
         "cpu6502/ALU.v",
+        "cpu6502/ALUFullAdder.v",
         "cpu6502/ProcessorStatus.v"
     ],
 )
@@ -137,7 +138,7 @@ gtest_verilog_testbench(
 
 verilator_cc_library(
     name = "ALU",
-    srcs = ["cpu6502/ALU.v"],
+    srcs = ["cpu6502/ALU.v", "cpu6502/ALUFullAdder.v"],
 )
 
 gtest_verilog_testbench(

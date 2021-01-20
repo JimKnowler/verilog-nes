@@ -12,6 +12,7 @@
 // - i_daa: decimal enable
 // - o_hc: half carry (used by decimal adj adders)
 //
+
 module ALU( 
     input i_clk,
     input i_reset_n,
@@ -75,8 +76,24 @@ begin
         r_a = i_sb;
 end
 
-wire [8:0] w_alu_sum;
-assign w_alu_sum = {1'b0, r_a} + {1'b0, r_b} + ( i_1_addc ? 9'd1 : 9'd0);
+// generate SUM logic with Full Adder
+wire [7:0] w_alu_sum;
+genvar i;
+/* verilator lint_off UNOPTFLAT */
+wire [8:0] w_carry;
+/* verilator lint_on UNOPTFLAT */
+assign w_carry[0] = i_1_addc;
+generate
+    for (i=0; i<8; i=i+1) begin
+        ALUFullAdder fullAdder(
+            .i_a(r_a[i]),
+            .i_b(r_b[i]),
+            .i_carry_in(w_carry[i]),
+            .o_sum(w_alu_sum[i]),
+            .o_carry_out(w_carry[i+1])
+        );
+    end
+endgenerate
 
 // ALU calculation
 always @(*)
@@ -89,8 +106,8 @@ begin
     if (i_sums)
     begin
         r_alu = w_alu_sum[7:0];
-        r_acr = w_alu_sum[8];
-        r_avr = (r_a[7] == r_b[7]) && (r_a[7] != r_alu[7]);
+        r_acr = w_carry[8];
+        r_avr = w_carry[7] ^ w_carry[8];
     end
     else if (i_ands)
         r_alu = r_a & r_b;
