@@ -42,6 +42,7 @@ wire [7:0] w_ir;
 wire [7:0] w_s;
 wire [7:0] w_add;
 wire w_acr;
+wire w_avr;
 wire [7:0] w_p;
 wire [7:0] w_abh;
 wire [7:0] w_abl;
@@ -132,7 +133,6 @@ wire w_acr_c;
 wire w_ir5_c;
 wire w_ir5_i;
 wire w_avr_v;
-wire w_avr;
 
 // Decoder
 // transform IR and TCU into control signals
