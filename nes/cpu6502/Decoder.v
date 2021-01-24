@@ -84,10 +84,10 @@ localparam C = 0;       // Carry Flag
 localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  INX = 8'hE8,       INY = 8'hC8,
                  DEX = 8'hCA,       DEY = 8'h88,
-                 LDAi = 8'hA9,      LDAa = 8'hAD,
-                 LDXi = 8'hA2,      LDXa = 8'hAE,
-                 LDYi = 8'hA0,      LDYa = 8'hAC,
-                 STAa = 8'h8D,
+                 LDA_i = 8'hA9,     LDA_a = 8'hAD,
+                 LDX_i = 8'hA2,     LDX_a = 8'hAE,
+                 LDY_i = 8'hA0,     LDY_a = 8'hAC,
+                 STA_a = 8'h8D,
                  TAX = 8'hAA,       TAY = 8'hA8,
                  TSX = 8'hBA,       TXA = 8'h8A,
                  TXS = 8'h9A,       TYA = 8'h98,
@@ -367,7 +367,7 @@ begin
             // end of opcode
             o_tcu = 0;
         end
-        LDAi, LDXi, LDYi:
+        LDA_i, LDX_i, LDY_i:
         begin
             // output PCL on ABL
             o_pcl_adl = 1;
@@ -389,9 +389,9 @@ begin
             o_sb_db = 1;
 
             case (i_ir)
-            LDAi: o_sb_ac = 1;
-            LDXi: o_sb_x = 1;
-            LDYi: o_sb_y = 1;
+            LDA_i: o_sb_ac = 1;
+            LDX_i: o_sb_x = 1;
+            LDY_i: o_sb_y = 1;
             default: begin
             end
             endcase
@@ -469,8 +469,8 @@ begin
             // end of opcode
             o_tcu = 0;
         end
-        LDAa, LDXa, LDYa,
-        STAa:
+        LDA_a, LDX_a, LDY_a,
+        STA_a:
         begin
             // PC + 1 = Fetch low order effective address byte
 
@@ -630,8 +630,8 @@ begin
             o_db_n_add = 1;
             o_sums = 1;
         end
-        LDAa, LDXa, LDYa,
-        STAa:
+        LDA_a, LDX_a, LDY_a,
+        STA_a:
         begin
             // PC + 2 = Fetch high order effective address byte
             
@@ -677,8 +677,8 @@ begin
             o_sb_add = 1;       // pre-charge mosfets = -1
             o_sums = 1;
         end
-        LDAa, LDXa, LDYa,
-        STAa:
+        LDA_a, LDX_a, LDY_a,
+        STA_a:
         begin
             // output absolute address ADH, ADL
 
@@ -698,15 +698,15 @@ begin
             o_adh_abh = 1;
 
             case (i_ir)
-            LDAa, LDXa, LDYa: begin
+            LDA_a, LDX_a, LDY_a: begin
                 // load value from DL into SB via DB
                 o_dl_db = 1;
                 o_sb_db = 1;
 
                 case (i_ir)
-                LDAa: o_sb_ac = 1;
-                LDXa: o_sb_x = 1;
-                LDYa: o_sb_y = 1;
+                LDA_a: o_sb_ac = 1;
+                LDX_a: o_sb_x = 1;
+                LDY_a: o_sb_y = 1;
                 default: begin
                 end
                 endcase
@@ -715,7 +715,7 @@ begin
                 o_dbz_z = 1;
                 o_db7_n = 1;
             end
-            STAa: begin
+            STA_a: begin
                 // write value from AC
                 o_ac_db = 1;
                 o_rw = RW_WRITE;
