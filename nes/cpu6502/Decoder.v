@@ -100,7 +100,7 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  PLA = 8'h68,       PLP = 8'h28,
                  AND_i = 8'h29,     EOR_i = 8'h49,
                  ORA_i = 8'h09,     ADC_i = 8'h69,
-                 SBC_i = 8'hE9;
+                 SBC_i = 8'hE9,     CMP_i = 8'hC9;
 
 // RW pin
 localparam RW_READ = 1;
@@ -198,7 +198,7 @@ begin
         INX, INY, DEX, DEY,
         LSR_A, ASL_A, ROL_A, ROR_A,
         AND_i, EOR_i, ORA_i, ADC_i,
-        SBC_i: begin
+        SBC_i, CMP_i: begin
             // output value from ALU to SB
             o_add_sb_0_6 = 1;
             o_add_sb_7 = 1;
@@ -403,7 +403,7 @@ begin
             // end of opcode
             o_tcu = 0;
         end
-        AND_i, EOR_i, ORA_i, ADC_i, SBC_i:
+        AND_i, EOR_i, ORA_i, ADC_i, SBC_i, CMP_i:
         begin
             // output PCL on ABL
             o_pcl_adl = 1;
@@ -461,7 +461,18 @@ begin
                 // C + V flags
                 o_acr_c = 1;
                 o_avr_v = 1;
-            end 
+            end
+            CMP_i: begin
+                // subtraction as 2's complement addition
+                o_db_n_add = 1;
+                o_1_addc = 1;
+
+                o_sums = 1;
+
+                // C + V flags
+                o_acr_c = 1;
+                o_avr_v = 1;
+            end
             default: begin
             end
             endcase
