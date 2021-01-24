@@ -100,7 +100,8 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  PLA = 8'h68,       PLP = 8'h28,
                  AND_i = 8'h29,     EOR_i = 8'h49,
                  ORA_i = 8'h09,     ADC_i = 8'h69,
-                 SBC_i = 8'hE9,     CMP_i = 8'hC9;
+                 SBC_i = 8'hE9,     CMP_i = 8'hC9,
+                 CPX_i = 8'hE0,     CPY_i = 8'hC0;
 
 // RW pin
 localparam RW_READ = 1;
@@ -197,8 +198,9 @@ begin
         case (i_ir)
         INX, INY, DEX, DEY,
         LSR_A, ASL_A, ROL_A, ROR_A,
-        AND_i, EOR_i, ORA_i, ADC_i,
-        SBC_i, CMP_i: begin
+        AND_i, EOR_i, ORA_i,
+        ADC_i, SBC_i,
+        CMP_i, CPX_i, CPY_i: begin
             // output value from ALU to SB
             o_add_sb_0_6 = 1;
             o_add_sb_7 = 1;
@@ -403,7 +405,8 @@ begin
             // end of opcode
             o_tcu = 0;
         end
-        AND_i, EOR_i, ORA_i, ADC_i, SBC_i, CMP_i:
+        AND_i, EOR_i, ORA_i, ADC_i, SBC_i,
+        CMP_i, CPX_i, CPY_i:
         begin
             // output PCL on ABL
             o_pcl_adl = 1;
@@ -423,8 +426,13 @@ begin
             // load immediate operand into ALU via DB from DL
             o_dl_db = 1;
 
-            // load SB into ALU via sb
-            o_ac_sb = 1;
+            // load register into ALU via SB
+            case (i_ir)
+            CPX_i: o_x_sb = 1;
+            CPY_i: o_y_sb = 1;
+            default: o_ac_sb = 1;
+            endcase
+                
             o_sb_add = 1;
 
             case (i_ir)
@@ -462,7 +470,7 @@ begin
                 o_acr_c = 1;
                 o_avr_v = 1;
             end
-            CMP_i: begin
+            CMP_i, CPX_i, CPY_i: begin
                 // subtraction as 2's complement addition
                 o_db_n_add = 1;
                 o_1_addc = 1;
