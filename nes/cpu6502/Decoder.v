@@ -81,25 +81,26 @@ module Decoder(
 localparam C = 0;       // Carry Flag
 
 // Opcodes
-localparam [7:0] BRK = 8'h00, NOP = 8'hEA,
-                 INX = 8'hE8, INY = 8'hC8,
-                 DEX = 8'hCA, DEY = 8'h88,
-                 LDAi = 8'hA9, LDAa = 8'hAD,
-                 LDXi = 8'hA2, LDXa = 8'hAE,
-                 LDYi = 8'hA0, LDYa = 8'hAC,
+localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
+                 INX = 8'hE8,       INY = 8'hC8,
+                 DEX = 8'hCA,       DEY = 8'h88,
+                 LDAi = 8'hA9,      LDAa = 8'hAD,
+                 LDXi = 8'hA2,      LDXa = 8'hAE,
+                 LDYi = 8'hA0,      LDYa = 8'hAC,
                  STAa = 8'h8D,
-                 TAX = 8'hAA, TAY = 8'hA8,
-                 TSX = 8'hBA, TXA = 8'h8A,
-                 TXS = 8'h9A, TYA = 8'h98,
-                 LSR_A = 8'h4A, ASL_A = 8'h0A,
-                 CLC = 8'h18, SEC = 8'h38,
-                 SEI = 8'h78, CLI = 8'h58,
+                 TAX = 8'hAA,       TAY = 8'hA8,
+                 TSX = 8'hBA,       TXA = 8'h8A,
+                 TXS = 8'h9A,       TYA = 8'h98,
+                 LSR_A = 8'h4A,     ASL_A = 8'h0A,
+                 CLC = 8'h18,       SEC = 8'h38,
+                 SEI = 8'h78,       CLI = 8'h58,
                  CLV = 8'hb8,
-                 ROL_A = 8'h2A, ROR_A = 8'h6A,
-                 PHA = 8'h48, PHP = 8'h08,
-                 PLA = 8'h68, PLP = 8'h28,
-                 AND_i = 8'h29, EOR_i = 8'h49,
-                 ORA_i = 8'h09, ADC_i = 8'h69;
+                 ROL_A = 8'h2A,     ROR_A = 8'h6A,
+                 PHA = 8'h48,       PHP = 8'h08,
+                 PLA = 8'h68,       PLP = 8'h28,
+                 AND_i = 8'h29,     EOR_i = 8'h49,
+                 ORA_i = 8'h09,     ADC_i = 8'h69,
+                 SBC_i = 8'hE9;
 
 // RW pin
 localparam RW_READ = 1;
@@ -196,7 +197,8 @@ begin
         case (i_ir)
         INX, INY, DEX, DEY,
         LSR_A, ASL_A, ROL_A, ROR_A,
-        AND_i, EOR_i, ORA_i, ADC_i: begin
+        AND_i, EOR_i, ORA_i, ADC_i,
+        SBC_i: begin
             // output value from ALU to SB
             o_add_sb_0_6 = 1;
             o_add_sb_7 = 1;
@@ -212,7 +214,8 @@ begin
             LSR_A, ASL_A,
             ROL_A, ROR_A,
             AND_i, EOR_i, 
-            ORA_i, ADC_i: begin
+            ORA_i, ADC_i,
+            SBC_i: begin
                 o_sb_ac = 1;
             end
             default: begin
@@ -400,7 +403,7 @@ begin
             // end of opcode
             o_tcu = 0;
         end
-        AND_i, EOR_i, ORA_i, ADC_i:
+        AND_i, EOR_i, ORA_i, ADC_i, SBC_i:
         begin
             // output PCL on ABL
             o_pcl_adl = 1;
@@ -419,15 +422,26 @@ begin
 
             // load immediate operand into ALU via DB from DL
             o_dl_db = 1;
+
+            // load SB into ALU via sb
             o_ac_sb = 1;
-            o_db_add = 1;
             o_sb_add = 1;
 
             case (i_ir)
-            AND_i: o_ands = 1;
-            EOR_i: o_eors = 1;
-            ORA_i: o_ors = 1;
+            AND_i: begin
+                o_db_add = 1;
+                o_ands = 1;
+            end
+            EOR_i: begin
+                o_db_add = 1;
+                o_eors = 1;
+            end
+            ORA_i: begin
+                o_db_add = 1;
+                o_ors = 1;
+            end
             ADC_i: begin
+                o_db_add = 1;
                 o_sums = 1;
 
                 // carry in
@@ -437,6 +451,17 @@ begin
                 o_acr_c = 1;
                 o_avr_v = 1;
             end
+            SBC_i: begin
+                o_db_n_add = 1;
+                o_sums = 1;
+                
+                // carry in
+                o_1_addc = ~i_p[C];
+
+                // C + V flags
+                o_acr_c = 1;
+                o_avr_v = 1;
+            end 
             default: begin
             end
             endcase
