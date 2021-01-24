@@ -54,6 +54,9 @@ namespace cpu6502 {
             bool isImmediate() const;
             bool isAbsolute() const;
 
+            uint8_t absoluteLowByte() const;
+            uint8_t absoluteHighByte() const;
+
             uint32_t m_addressingMode;
 
             uint8_t m_immediate;

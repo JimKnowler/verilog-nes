@@ -60,5 +60,17 @@ namespace cpu6502 { namespace assembler {
         return (m_addressingMode == kAbsolute);
     }
 
+    uint8_t Opcode::absoluteLowByte() const {
+        uint8_t low = m_absolute & 0xff;
+
+        return low;
+    }
+
+    uint8_t Opcode::absoluteHighByte() const {
+        uint8_t high = (m_absolute >> 8) & 0xff;
+
+        return high;
+    }
+
 } // assembler
 } // cpu6502

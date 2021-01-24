@@ -3,10 +3,10 @@
 #include <cassert>
 
 namespace {
-    const uint8_t OPCODE_ABSOLUTE = 0x8D;
+    const uint8_t OPCODE_ABSOLUTE = 0x2C;
 }
 
-OPCODE_IMPL(STA, {
+OPCODE_IMPL(BIT, {
     assert(isAbsolute());
 
     std::vector<uint8_t> bytes;

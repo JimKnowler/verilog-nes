@@ -17,10 +17,8 @@ OPCODE_IMPL(LDY, {
         bytes.push_back(m_immediate);
     } else if (isAbsolute()) {
         bytes.push_back(OPCODE_ABSOLUTE);
-        uint8_t low = m_absolute & 0xff;
-        bytes.push_back(low);
-        uint8_t high = (m_absolute >> 8) & 0xff;
-        bytes.push_back(high);
+        bytes.push_back(absoluteLowByte());
+        bytes.push_back(absoluteHighByte());
     }
 
     return bytes;
