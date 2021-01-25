@@ -87,7 +87,7 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  LDA_i = 8'hA9,     LDA_a = 8'hAD,
                  LDX_i = 8'hA2,     LDX_a = 8'hAE,
                  LDY_i = 8'hA0,     LDY_a = 8'hAC,
-                 STA_a = 8'h8D,
+                 STA_a = 8'h8D,     BIT_a = 8'h2C,
                  TAX = 8'hAA,       TAY = 8'hA8,
                  TSX = 8'hBA,       TXA = 8'h8A,
                  TXS = 8'h9A,       TYA = 8'h98,
@@ -235,6 +235,15 @@ begin
             o_add_sb_7 = 1;
 
             o_sb_s = 1;
+        end
+        BIT_a: begin
+            // output AND result from ALU to DB via SB
+            o_add_sb_0_6 = 1;
+            o_add_sb_7 = 1;
+            o_sb_db = 1;
+
+            // set Z if ALU result on DB is zero
+            o_dbz_z = 1;
         end
         default: begin
         end
@@ -489,7 +498,8 @@ begin
             o_tcu = 0;
         end
         LDA_a, LDX_a, LDY_a,
-        STA_a:
+        STA_a,
+        BIT_a:
         begin
             // PC + 1 = Fetch low order effective address byte
 
@@ -650,7 +660,8 @@ begin
             o_sums = 1;
         end
         LDA_a, LDX_a, LDY_a,
-        STA_a:
+        STA_a,
+        BIT_a:
         begin
             // PC + 2 = Fetch high order effective address byte
             
@@ -697,7 +708,8 @@ begin
             o_sums = 1;
         end
         LDA_a, LDX_a, LDY_a,
-        STA_a:
+        STA_a,
+        BIT_a:
         begin
             // output absolute address ADH, ADL
 
@@ -738,6 +750,22 @@ begin
                 // write value from AC
                 o_ac_db = 1;
                 o_rw = RW_WRITE;
+            end
+            BIT_a: begin
+                // load value from DL into ALU via DB
+                o_dl_db = 1;
+                o_db_add = 1;
+
+                // load value from AC into ALU
+                o_ac_sb = 1;
+                o_sb_add = 1;
+
+                // use ALU for AND
+                o_ands = 1;
+
+                // load V and N from DB
+                o_db6_v = 1;
+                o_db7_n = 1;
             end
             default: begin
             end
