@@ -11,8 +11,8 @@ OPCODE_IMPL(BIT, {
 
     std::vector<uint8_t> bytes;
     bytes.push_back(OPCODE_ABSOLUTE);
-    bytes.push_back(absoluteLowByte());
-    bytes.push_back(absoluteHighByte());
+    bytes.push_back(m_absolute.lo());
+    bytes.push_back(m_absolute.hi());
 
     return bytes;
 });

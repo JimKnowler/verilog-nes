@@ -1,13 +1,18 @@
 #include "Opcode.h"
+#include "Assembler.h"
 
 #include <cassert>
 
 namespace cpu6502 { namespace assembler {
-    Opcode::Opcode() : m_addressingMode(kImplied) {
+    Opcode::Opcode() : m_addressingMode(kImplied), m_byteIndex(0), m_assembler(0) {
     }
 
     Opcode::~Opcode() {
         
+    }
+
+    void Opcode::init(Assembler* assembler) {
+        m_assembler = assembler;
     }
     
     Opcode& Opcode::immediate(uint8_t value) {
@@ -17,13 +22,13 @@ namespace cpu6502 { namespace assembler {
         return *this;
     }
 
-    Opcode& Opcode::a(uint16_t value) {
-        return absolute(value);
+    Opcode& Opcode::a(const Address& address) {
+        return absolute(address);
     }
 
-    Opcode& Opcode::absolute(uint16_t value) {
+    Opcode& Opcode::absolute(const Address& address) {
         m_addressingMode |= kAbsolute;
-        m_absolute = value;
+        m_absolute = address;
 
         return *this;
     }
@@ -32,6 +37,19 @@ namespace cpu6502 { namespace assembler {
         m_addressingMode |= kAccumulator;
 
         return *this;
+    }
+
+    Opcode& Opcode::relative(const Address& address) {
+        m_addressingMode |= kRelative;
+        m_relative = address;
+
+        return *this;
+    }
+
+    uint8_t Opcode::offset() const {
+        uint8_t offset = uint8_t(m_relative.byteIndex() - (m_byteIndex + 2));
+
+        return offset;
     }
 
     std::vector<uint8_t> Opcode::serialise() const {
@@ -60,16 +78,12 @@ namespace cpu6502 { namespace assembler {
         return (m_addressingMode == kAbsolute);
     }
 
-    uint8_t Opcode::absoluteLowByte() const {
-        uint8_t low = m_absolute & 0xff;
-
-        return low;
+    bool Opcode::isRelative() const {
+        return (m_addressingMode == kRelative);
     }
 
-    uint8_t Opcode::absoluteHighByte() const {
-        uint8_t high = (m_absolute >> 8) & 0xff;
-
-        return high;
+    void Opcode::setByteIndex(uint16_t byteIndex) {
+        m_byteIndex = byteIndex;
     }
 
 } // assembler

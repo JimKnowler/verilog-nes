@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <memory>
+#include <map>
 
 #include "nes/memory/SRAM.h"
 #include "nes/cpu6502/assembler/Opcodes.h"
@@ -23,13 +24,21 @@ namespace cpu6502 {
             Assembler& a(uint16_t value);
             Assembler& absolute(uint16_t value); 
             Assembler& A();
+            Assembler& relative(uint8_t value);
 
             void compileTo(memory::SRAM& sram);
+
+            void registerAddress(const Address& address);
+            void lookupAddress(Address& address);
         
         private:
             Opcode* currentOpcode();
+            void compileFirstPass();
+            void compileSecondPassTo(memory::SRAM& sram);
 
             std::vector<std::unique_ptr<Opcode>> m_opcodes;
+
+            std::map<const std::string, uint16_t> m_addressLookup;
         };
     }
 }
