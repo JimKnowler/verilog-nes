@@ -37,6 +37,7 @@ namespace memory {
 std::ostream& operator<<(std::ostream& os, const memory::SRAM& sram) {
     const size_t kRowSize = 16;
     const size_t kNumRows = sram.size() / kRowSize;
+    char buffer[16];
 
     std::vector<uint8_t> rowCache;
     bool hasReportedRun = false;
@@ -55,7 +56,8 @@ std::ostream& operator<<(std::ostream& os, const memory::SRAM& sram) {
                 hasReportedRun = true;
             }
         } else {
-            printf("%08zx  ", rowIndex * kRowSize);
+            sprintf(buffer, "%08zx  ", rowIndex * kRowSize);
+            os << buffer;
 
             const size_t kChunkSize = 8;
             const size_t kNumChunks = kRowSize / kChunkSize;
@@ -65,27 +67,30 @@ std::ostream& operator<<(std::ostream& os, const memory::SRAM& sram) {
                 size_t chunkEnd = chunkStart + kChunkSize;
 
                 for (uint8_t i=chunkStart; i<chunkEnd; i++) {
-                    printf("%02x ", row[i]);
+                    sprintf(buffer, "%02x ", row[i]);
+                    os << buffer;
                 }
 
-                printf(" ");
+                os << " ";
             }
 
-            printf("|");
+            os << "|";
             for (size_t i=0; i<kRowSize; i++) {
                 char c = char(row[i]);
 
-                printf("%1c", isprint(c) ? c : '.');
+                sprintf(buffer, "%1c", isprint(c) ? c : '.');
+                os << buffer;
             }
 
-            printf("|\n");
+            os << "|\n";
 
             rowCache = row;
         }
     }
 
     if (hasReportedRun) {
-        printf("%08zx\n", sram.size());
+        sprintf(buffer, "%08zx\n", sram.size());
+        os << buffer;
     }
 
     return os;
