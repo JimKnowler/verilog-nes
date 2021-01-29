@@ -35,6 +35,8 @@ namespace memory {
 }
 
 std::ostream& operator<<(std::ostream& os, const memory::SRAM& sram) {
+    // ostream formatting based on 'hexdump' tool 
+
     const size_t kRowSize = 16;
     const size_t kNumRows = sram.size() / kRowSize;
     char buffer[16];
