@@ -11,6 +11,7 @@ module Decoder(
     input [7:0] i_ir,               // Instruction Register
     input [3:0] i_tcu,              // Opcode timing
     input [7:0] i_p,                // Processor status register
+    input i_acr,                    // ALU - carry out
 
     output reg [3:0] o_tcu,         // value TCU at next phi2 clock tick
 
@@ -101,11 +102,19 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  AND_i = 8'h29,     EOR_i = 8'h49,
                  ORA_i = 8'h09,     ADC_i = 8'h69,
                  SBC_i = 8'hE9,     CMP_i = 8'hC9,
-                 CPX_i = 8'hE0,     CPY_i = 8'hC0;
+                 CPX_i = 8'hE0,     CPY_i = 8'hC0,
+                 BCC = 8'h90;
 
 // RW pin
 localparam RW_READ = 1;
 localparam RW_WRITE = 0;
+
+// carry out from last cycle
+reg r_last_acr;
+always @(negedge i_clk)
+begin
+    r_last_acr <= i_acr;
+end
 
 always @(*)
 begin
@@ -595,6 +604,45 @@ begin
             // next opcode
             o_tcu = 0;
         end
+        BCC: 
+        begin
+            // high byte - from PCH
+            o_pch_adh = 1;
+            o_adh_abh = 1;
+
+            // low byte - from PCL
+            o_pcl_adl = 1;
+            o_adl_abl = 1;
+
+            // retain PCL and PCH
+            o_pcl_pcl = 1;
+            o_pch_pch = 1;
+
+            if (i_p[C] == 0)
+            begin
+                // use ALU to add offset to PC
+                o_sums = 1;
+
+                // PC + 1
+                o_adl_add = 1;
+
+                // + 1
+                o_1_addc = 1;
+
+                // + segment
+                o_dl_db = 1;
+                o_sb_db = 1;
+                o_sb_add = 1;
+            end
+            else
+            begin
+                // increment PC for T0 next instruction
+                o_i_pc = 1;
+
+                // start next instruction
+                o_tcu = 0;
+            end
+        end
         default:
         begin
             
@@ -604,6 +652,43 @@ begin
     2: // T2
     begin
         case (i_ir)
+        BCC:
+        begin
+            // high byte - from PCH
+            o_pch_adh = 1;
+            o_adh_abh = 1;
+
+            // low byte - from ALU
+            o_add_adl = 1;
+            o_adl_abl = 1;
+
+            // retain PCH
+            o_pch_pch = 1;
+
+            // load PCL from ALU
+            o_adl_pcl = 1;
+
+            if (r_last_acr == 1)
+            begin
+                // use ALU to add 1 to ADH
+                o_sums = 1;
+
+                // B INPUT = pch
+                o_pch_db = 1;
+                o_db_add = 1;
+
+                // + 1
+                o_1_addc = 1;
+
+                // A INPUT = 0
+                o_0_add = 1;
+            end
+            else
+            begin
+                // start next instruction
+                o_tcu = 0;
+            end
+        end
         BRK, PHA, PHP:
         begin
             // retain PCL and PCH
@@ -692,6 +777,28 @@ begin
     3: // T3
     begin
         case (i_ir)
+        BCC:
+        begin
+            // high byte - from ALU
+            o_pch_adh = 1;
+            o_adh_abh = 1;
+
+            // low byte - from PCL
+            o_pcl_adl = 1;
+            o_adl_abl = 1;
+
+            // retain PCL
+            o_pcl_pcl = 1;
+
+            // load PCH from ALU
+            o_add_sb_0_6 = 1;
+            o_add_sb_7 = 1;
+            o_sb_adh = 1;
+            o_adh_pch = 1;
+        
+            // start next instruction
+            o_tcu = 0;
+        end
         BRK:
         begin
             // output S-1 via ADL on ABL

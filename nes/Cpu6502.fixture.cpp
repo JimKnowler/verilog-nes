@@ -37,7 +37,7 @@ void Cpu6502::SetUp() {
         } else {
             // clock: end of phi 1
             // undefined data on the bus
-            cpu.i_data = 0xFF;
+            //cpu.i_data = 0xFF;
         }
     });
 

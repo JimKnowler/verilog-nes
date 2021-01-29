@@ -141,6 +141,7 @@ Decoder decoder(
     .i_ir(w_ir),
     .i_tcu(w_tcu),
     .i_p(w_p),
+    .i_acr(w_acr),
     .o_tcu(w_tcu_next),
     .o_rw(w_rw),
     .o_dl_db(w_dl_db),
