@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <cstdint>
+#include <ostream>
 
 namespace memory {
     /// @class SRAM
@@ -14,6 +15,9 @@ namespace memory {
         /// @brief clear the memory to a common value
         /// @param value the value to set all memory as (defaults to 0)
         void clear(uint8_t value = 0);
+
+        /// @brief retrieve the size of memory
+        size_t size() const;
 
         /// @brief set a byte in memory to the specified value
         /// @param address byte offset from start of memory
@@ -31,8 +35,9 @@ namespace memory {
 
         /// @todo set a sequence of opcodes (which will serialise each of them in turn)
         /// @todo handle loops / labels / etc
-
     private:
         std::vector<uint8_t> memory;
     };
 }
+
+std::ostream& operator<<(std::ostream& os, const memory::SRAM& sram);
