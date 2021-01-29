@@ -445,3 +445,116 @@ TEST_F(Cpu6502, ShouldImplementBNEWhenZeroFlagClearAndNewPage) {
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
+
+TEST_F(Cpu6502, ShouldImplementBMIWhenNegativeFlagClear) {
+    sram.clear(0);
+
+    // BMI should not branch while Negative Flag is clear
+    // BMI should finish in two cycles and excute NOP
+    //     at PC=0x0004
+
+    Assembler()
+            .LDA().immediate(0x7F)
+            .BCS().relative("skip_nop")
+            .NOP()
+            .NOP()
+            .NOP()
+        .label("skip_nop")
+            .NOP()    
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    testBench.tick(6);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(6)
+        .port(o_rw).signal("11")
+                    .repeat(6)
+        .port(o_sync).signal("010101").repeatEachStep(2)
+        .port(o_address).signal({0, 1, 2, 3, 4, 5})
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({0xFF}).repeat(4)
+                         .signal({0x7F}).repeat(8)
+        .port(o_debug_x).signal({0xFF}).repeat(12)
+        .port(o_debug_y).signal({0xFF}).repeat(12);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldImplementBMIWhenNegativeFlagSet) {
+    sram.clear(0);
+
+    // BMI should branch while negative flag is set
+    // BMI should finish in three cycles and branch to
+    //     NOP at PC=0x0007
+
+    Assembler()
+            .LDA().immediate(0x80)
+            .BMI().relative("skip_nop")
+            .NOP()
+            .NOP()
+            .NOP()
+        .label("skip_nop")
+            .NOP()
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    testBench.tick(7);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(7)
+        .port(o_rw).signal("11")
+                    .repeat(7)
+        .port(o_sync).signal("0101001").repeatEachStep(2)
+        .port(o_address).signal({0, 1, 2, 3, 7, 7, 8})
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({0xFF}).repeat(4)
+                         .signal({0x80}).repeat(10)
+        .port(o_debug_x).signal({0xFF}).repeat(14)
+        .port(o_debug_y).signal({0xFF}).repeat(14);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldImplementBMIWhenNegativeFlagSetAndNewPage) {
+     sram.clear(0);
+
+    // BMI should branch while negative flag is set
+    // BMI should finish in four cycles and branch to
+    //     NOP at PC=0x0100
+
+    Assembler()
+        .label("start")
+            .LDA().immediate(0x80)
+            .BMI().relative("skip_nop")
+            .NOP()
+            .NOP()
+            .NOP()
+        .org(0x0100)
+        .label("skip_nop")
+            .NOP()
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    testBench.tick(8);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(8)
+        .port(o_rw).signal("11")
+                    .repeat(8)
+        .port(o_sync).signal("01010001").repeatEachStep(2)
+        .port(o_address).signal({0, 1, 2, 3, 0, 0x100, 0x100, 0x101})
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({0xFF}).repeat(4)
+                         .signal({0x80}).repeat(12)
+        .port(o_debug_x).signal({0xFF}).repeat(16)
+        .port(o_debug_y).signal({0xFF}).repeat(16);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
