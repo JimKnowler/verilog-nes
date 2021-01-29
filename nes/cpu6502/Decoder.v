@@ -105,7 +105,7 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  SBC_i = 8'hE9,     CMP_i = 8'hC9,
                  CPX_i = 8'hE0,     CPY_i = 8'hC0,
                  BCC = 8'h90,       BCS = 8'hB0,
-                 BEQ = 8'hF0;
+                 BEQ = 8'hF0,       BNE = 8'hD0;
 
 // RW pin
 localparam RW_READ = 1;
@@ -606,7 +606,7 @@ begin
             // next opcode
             o_tcu = 0;
         end
-        BCC, BCS, BEQ: 
+        BCC, BCS, BEQ, BNE: 
         begin
             // high byte - from PCH
             o_pch_adh = 1;
@@ -622,7 +622,8 @@ begin
 
             if ( ((i_p[C] == 0) && (i_ir == BCC)) ||
                  ((i_p[C] == 1) && (i_ir == BCS)) ||
-                 ((i_p[Z] == 1) && (i_ir == BEQ)))
+                 ((i_p[Z] == 1) && (i_ir == BEQ)) ||
+                 ((i_p[Z] == 0) && (i_ir == BNE)))
             begin
                 // use ALU to add offset to PC
                 o_sums = 1;
@@ -656,7 +657,7 @@ begin
     2: // T2
     begin
         case (i_ir)
-        BCC, BCS, BEQ:
+        BCC, BCS, BEQ, BNE:
         begin
             // high byte - from PCH
             o_pch_adh = 1;
@@ -781,7 +782,7 @@ begin
     3: // T3
     begin
         case (i_ir)
-        BCC, BCS, BEQ:
+        BCC, BCS, BEQ, BNE:
         begin
             // high byte - from ALU
             o_pch_adh = 1;
