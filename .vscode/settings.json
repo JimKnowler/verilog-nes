@@ -68,7 +68,8 @@
         "streambuf": "cpp",
         "thread": "cpp",
         "typeinfo": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "__split_buffer": "cpp"
     },
     "testMate.cpp.test.executables": "bazel-bin/nes/test"
 }

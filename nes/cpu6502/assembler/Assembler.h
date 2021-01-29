@@ -20,11 +20,14 @@ namespace cpu6502 {
 #define OPCODE(_x) OPCODE_ASM(_x)
 # include "OpcodeList.inl"
 #undef OPCODE
+
+            Assembler& label(const char* label);
+
             Assembler& immediate(uint8_t value);  
-            Assembler& a(uint16_t value);
-            Assembler& absolute(uint16_t value); 
+            Assembler& a(const Address& address);
+            Assembler& absolute(const Address& address); 
             Assembler& A();
-            Assembler& relative(uint8_t value);
+            Assembler& relative(const Address& address);
 
             void compileTo(memory::SRAM& sram);
 
@@ -35,6 +38,8 @@ namespace cpu6502 {
             Opcode* currentOpcode();
             void compileFirstPass();
             void compileSecondPassTo(memory::SRAM& sram);
+
+            void addOpcode(std::unique_ptr<Opcode>&& opcode);
 
             std::vector<std::unique_ptr<Opcode>> m_opcodes;
 

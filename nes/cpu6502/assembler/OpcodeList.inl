@@ -68,5 +68,3 @@ OPCODE(BPL);
 OPCODE(BVC);
 OPCODE(BVS);
 
-// Utility
-OPCODE(Label);

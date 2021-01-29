@@ -6,9 +6,14 @@ namespace cpu6502 { namespace assembler {
     }
 
     Address::Address(const char* label) : m_label(label), m_byteIndex(0) {
+
     }
 
     Address::Address(const uint16_t byteIndex) : m_byteIndex(byteIndex) {
+
+    }
+
+    Address::Address(const char* label, const uint16_t byteIndex) : m_label(label), m_byteIndex(byteIndex) {
 
     }
 

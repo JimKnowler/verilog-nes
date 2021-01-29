@@ -86,5 +86,13 @@ namespace cpu6502 { namespace assembler {
         m_byteIndex = byteIndex;
     }
 
+    void Opcode::registerAddresses() {
+    }
+
+    void Opcode::lookupAddresses() {
+        m_assembler->lookupAddress(m_absolute);
+        m_assembler->lookupAddress(m_relative);
+    }
+
 } // assembler
 } // cpu6502

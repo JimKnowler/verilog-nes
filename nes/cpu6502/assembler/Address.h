@@ -15,6 +15,7 @@ namespace cpu6502 {
             Address();
             Address(const char* label);
             Address(const uint16_t byteIndex);
+            Address(const char* label, const uint16_t byteIndex);
 
             // retrieve address as 16bit byte index
             uint16_t byteIndex() const;

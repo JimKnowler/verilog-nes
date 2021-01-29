@@ -57,6 +57,12 @@ namespace cpu6502 {
             // set the position of the opcode in memory
             void setByteIndex(uint16_t byteIndex);
 
+            // used by Assembler to register addresses that other 
+            virtual void registerAddresses();
+
+            // used by Assembler to lookup addresses that Opcode may require
+            virtual void lookupAddresses();
+
         protected:
             enum AddressingMode : uint32_t {
                 kImplied = 0,

@@ -1,10 +1,21 @@
-#include "Opcodes.h"
+#include "Assembler.h"
+#include "Label.h"
 
-OPCODE_IMPL(Label, {
-    // todo: ask assembler for actual address for this label
-    //  - on 1st pass, this will register 
+namespace cpu6502 { namespace assembler {
+    Label::Label(const char* label) {
+        m_label = label;
+    }
 
-    std::vector<uint8_t> emptyBytes;
+    std::vector<uint8_t> Label::serialise() const {
+        std::vector<uint8_t> emptyBytes;
 
-    return emptyBytes;
-});
+        return emptyBytes;        
+    }
+
+    void Label::registerAddresses() {
+        Opcode::registerAddresses();
+
+        Address address(m_label.c_str(), m_byteIndex);
+        m_assembler->registerAddress(address);
+    }
+}}
