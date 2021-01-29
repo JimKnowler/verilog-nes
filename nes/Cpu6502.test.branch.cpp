@@ -4,12 +4,19 @@ TEST_F(Cpu6502, ShouldImplementBCCWhenCarrySet) {
     sram.clear(0);
 
     Assembler()
+        .org(0x8000)
             .NOP()
+        .label("start")
             .NOP()
             .NOP()
         .label("my label")
-            .LDA().absolute(0x22)
+            .LDA().absolute("my data")
             .BCC().relative("my label")
+        .org(0x8332)
+        .label("my data")
+        .word(0x1234)
+        .org(0xfffc)
+        .word("start")
         .compileTo(sram);
 
     std::cout << sram;

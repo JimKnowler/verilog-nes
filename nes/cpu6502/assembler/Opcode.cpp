@@ -82,8 +82,10 @@ namespace cpu6502 { namespace assembler {
         return (m_addressingMode == kRelative);
     }
 
-    void Opcode::setByteIndex(uint16_t byteIndex) {
+    uint16_t Opcode::setByteIndex(uint16_t byteIndex) {
         m_byteIndex = byteIndex;
+        
+        return m_byteIndex;
     }
 
     void Opcode::registerAddresses() {

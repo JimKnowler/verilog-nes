@@ -55,7 +55,8 @@ namespace cpu6502 {
             operator uint8_t() const;
 
             // set the position of the opcode in memory
-            void setByteIndex(uint16_t byteIndex);
+            /// @return the byte index where the opcode expects to be placed
+            virtual uint16_t setByteIndex(uint16_t byteIndex);
 
             // used by Assembler to register addresses that other 
             virtual void registerAddresses();

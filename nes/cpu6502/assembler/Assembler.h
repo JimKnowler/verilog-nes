@@ -22,6 +22,8 @@ namespace cpu6502 {
 #undef OPCODE
 
             Assembler& label(const char* label);
+            Assembler& org(uint16_t address);
+            Assembler& word(const Address& address);
 
             Assembler& immediate(uint8_t value);  
             Assembler& a(const Address& address);

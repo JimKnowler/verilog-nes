@@ -3,6 +3,8 @@
 #include "nes/cpu6502/assembler/Assembler.h"
 #include "nes/cpu6502/assembler/Opcodes.h"
 #include "nes/cpu6502/assembler/Label.h"
+#include "nes/cpu6502/assembler/Org.h"
+#include "nes/cpu6502/assembler/Word.h"
 
 #define OPCODE_ASM_IMPL(_opcode) \
     Assembler& Assembler::_opcode() { \
@@ -20,6 +22,18 @@ namespace cpu6502 { namespace assembler {
 
     Assembler& Assembler::label(const char* label) {
         addOpcode(std::make_unique<Label>(label));
+
+        return *this;
+    }
+
+    Assembler& Assembler::org(uint16_t address) {
+        addOpcode(std::make_unique<Org>(address));
+
+        return *this;
+    }
+
+    Assembler& Assembler::word(const Address& address) {
+        addOpcode(std::make_unique<Word>(address));
 
         return *this;
     }
@@ -83,12 +97,13 @@ namespace cpu6502 { namespace assembler {
     void Assembler::compileFirstPass() {
         std::vector<uint8_t> temp;
     
+        size_t byteIndex = 0;
         for (auto& opcode: m_opcodes) {
-            size_t byteIndex = temp.size();
-            opcode->setByteIndex(uint16_t(byteIndex));
+            byteIndex = opcode->setByteIndex(uint16_t(byteIndex));
             opcode->registerAddresses();
 
             auto byteCode = opcode->serialise();
+            byteIndex += byteCode.size();
             temp.insert(temp.end(), byteCode.begin(), byteCode.end());
         }
     }
@@ -96,10 +111,31 @@ namespace cpu6502 { namespace assembler {
     /// @brief 2nd pass - compile to program
     void Assembler::compileSecondPassTo(memory::SRAM& sram) {
         std::vector<uint8_t> program;
-           
+        
+        uint16_t byteIndex = 0;
         for (auto& opcode: m_opcodes) {
+            uint16_t opcodeByteIndex = opcode->setByteIndex(byteIndex);
+            if (opcodeByteIndex != byteIndex) {
+                assert(opcodeByteIndex > byteIndex);
+
+                if (byteIndex == 0) {
+                    // using .org to place assembled code in a memory map
+                    byteIndex = opcodeByteIndex;
+                } else {
+                    // using .org to position data at specific point in memory
+                    uint16_t gapSize = opcodeByteIndex - byteIndex;
+                    for (uint16_t i=0; i<gapSize; i++) {
+                        program.push_back(0);
+                    }
+
+                    byteIndex = opcodeByteIndex;
+                }
+            }
+
             opcode->lookupAddresses();
+
             auto byteCode = opcode->serialise();
+            byteIndex += uint16_t(byteCode.size());
             program.insert(program.end(), byteCode.begin(), byteCode.end());
         }
 
