@@ -82,6 +82,7 @@ module Decoder(
 localparam C = 0;       // Carry
 localparam Z = 1;       // Zero
 localparam N = 7;       // Negative
+localparam V = 6;       // Overflow
 
 // Opcodes
 localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
@@ -107,7 +108,8 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  CPX_i = 8'hE0,     CPY_i = 8'hC0,
                  BCC = 8'h90,       BCS = 8'hB0,
                  BEQ = 8'hF0,       BNE = 8'hD0,
-                 BMI = 8'h30,       BPL = 8'h10;
+                 BMI = 8'h30,       BPL = 8'h10,
+                 BVC = 8'h50,       BVS = 8'h70;
 
 // RW pin
 localparam RW_READ = 1;
@@ -608,7 +610,7 @@ begin
             // next opcode
             o_tcu = 0;
         end
-        BCC, BCS, BEQ, BNE, BMI, BPL: 
+        BCC, BCS, BEQ, BNE, BMI, BPL, BVC, BVS: 
         begin
             // high byte - from PCH
             o_pch_adh = 1;
@@ -627,7 +629,9 @@ begin
                  ((i_p[Z] == 1) && (i_ir == BEQ)) ||
                  ((i_p[Z] == 0) && (i_ir == BNE)) ||
                  ((i_p[N] == 1) && (i_ir == BMI)) ||
-                 ((i_p[N] == 0) && (i_ir == BPL)))
+                 ((i_p[N] == 0) && (i_ir == BPL)) ||
+                 ((i_p[V] == 0) && (i_ir == BVC)) ||
+                 ((i_p[V] == 1) && (i_ir == BVS)) )
             begin
                 // use ALU to add offset to PC
                 o_sums = 1;
@@ -661,7 +665,7 @@ begin
     2: // T2
     begin
         case (i_ir)
-        BCC, BCS, BEQ, BNE, BMI, BPL:
+        BCC, BCS, BEQ, BNE, BMI, BPL, BVC, BVS:
         begin
             // high byte - from PCH
             o_pch_adh = 1;
@@ -786,7 +790,7 @@ begin
     3: // T3
     begin
         case (i_ir)
-        BCC, BCS, BEQ, BNE, BMI, BPL:
+        BCC, BCS, BEQ, BNE, BMI, BPL, BVC, BVS:
         begin
             // high byte - from ALU
             o_pch_adh = 1;

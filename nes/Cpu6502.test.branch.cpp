@@ -671,3 +671,256 @@ TEST_F(Cpu6502, ShouldImplementBPLWhenNegativeFlagClearAndNewPage) {
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
+
+TEST_F(Cpu6502, ShouldImplementBVSWhenOverflowFlagClear) {
+    sram.clear(0);
+
+    // BVS should not branch while Overflow Flag is clear
+    // BVS should finish in two cycles and excute NOP
+    //     at PC=0x0003
+
+    Assembler()
+            .CLV()
+            .BVS().relative("skip_nop")
+            .NOP()
+            .NOP()
+            .NOP()
+        .label("skip_nop")
+            .NOP()    
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    testBench.tick(6);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(6)
+        .port(o_rw).signal("11")
+                    .repeat(6)
+        .port(o_sync).signal("010101").repeatEachStep(2)
+        .port(o_address).signal({0, 1, 1, 2, 3, 4})
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({0xFF}).repeat(12)
+        .port(o_debug_x).signal({0xFF}).repeat(12)
+        .port(o_debug_y).signal({0xFF}).repeat(12);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldImplementBVSWhenOverflowFlagSet) {
+    sram.clear(0);
+
+    // BVS should branch while overflow flag is set
+    // BVS should finish in three cycles and branch to
+    //     NOP at skip_nop
+
+    Assembler assembler;
+    assembler
+            .BIT().absolute("overflow_flag")
+            .BVS().relative("skip_nop")
+            .NOP()
+            .NOP()
+            .NOP()
+        .label("skip_nop")
+            .NOP()
+        .label("overflow_flag")
+            .byte(0x40)
+        .compileTo(sram);
+
+    cpu6502::assembler::Address overflowFlag("overflow_flag");
+    assembler.lookupAddress(overflowFlag);
+
+    cpu6502::assembler::Address skipNop("skip_nop");
+    assembler.lookupAddress(skipNop);
+
+    helperSkipResetVector();
+
+    testBench.tick(9);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(9)
+        .port(o_rw).signal("11")
+                    .repeat(9)
+        .port(o_sync).signal("010001001").repeatEachStep(2)
+        .port(o_address).signal({0, 1, 2, 
+                                overflowFlag.byteIndex(), 
+                                3, 4, 
+                                skipNop.byteIndex(),
+                                skipNop.byteIndex(),
+                                uint32_t(skipNop.byteIndex()) + 1})
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({0xFF}).repeat(18)
+        .port(o_debug_x).signal({0xFF}).repeat(18)
+        .port(o_debug_y).signal({0xFF}).repeat(18);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldImplementBVSWhenOverflowFlagSetAndNewPage) {
+     sram.clear(0);
+
+    // BVS should branch while overflow flag is set
+    // BVS should finish in four cycles and branch to
+    //     NOP at PC=0x0100
+
+    Assembler assembler;
+    assembler
+        .label("start")
+            .BIT().absolute("overflow_flag")
+            .BVS().relative("skip_nop")
+            .NOP()
+            .NOP()
+            .NOP()
+        .org(0x0100)
+        .label("skip_nop")
+            .NOP()
+        .label("overflow_flag")
+            .byte(0x40)
+        .compileTo(sram);
+    
+    cpu6502::assembler::Address overflowFlag("overflow_flag");
+    assembler.lookupAddress(overflowFlag);
+
+    helperSkipResetVector();
+
+    testBench.tick(10);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(10)
+        .port(o_rw).signal("11")
+                    .repeat(10)
+        .port(o_sync).signal("0100010001").repeatEachStep(2)
+        .port(o_address).signal({0, 1, 2, overflowFlag.byteIndex(), 3, 4, 0, 0x100, 0x100, 0x101})
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({0xFF}).repeat(20)
+        .port(o_debug_x).signal({0xFF}).repeat(20)
+        .port(o_debug_y).signal({0xFF}).repeat(20);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldImplementBVCWhenOverflowFlagSet) {
+    sram.clear(0);
+
+    // BVC should not branch while Overflow Flag is set
+    // BVC should finish in two cycles and excute NOP
+    //     at PC=0x0005
+
+    Assembler assembler;
+    assembler
+            .BIT().absolute("overflow_flag")
+            .BVC().relative("skip_nop")
+            .NOP()
+            .NOP()
+            .NOP()
+        .label("skip_nop")
+            .NOP()    
+        .label("overflow_flag")
+            .byte(0x40)
+        .compileTo(sram);
+
+    cpu6502::assembler::Address overflowFlag("overflow_flag");
+    assembler.lookupAddress(overflowFlag);
+
+    helperSkipResetVector();
+
+    testBench.tick(8);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(8)
+        .port(o_rw).signal("11")
+                    .repeat(8)
+        .port(o_sync).signal("01000101").repeatEachStep(2)
+        .port(o_address).signal({0, 1, 2, overflowFlag.byteIndex(), 3, 4, 5, 6})
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({0xFF}).repeat(16)
+        .port(o_debug_x).signal({0xFF}).repeat(16)
+        .port(o_debug_y).signal({0xFF}).repeat(16);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldImplementBVCWhenOverflowFlagClear) {
+    sram.clear(0);
+
+    // BCC should branch while overflow flag is clear
+    // BCC should finish in three cycles and branch to
+    //     NOP at skip_nop
+
+    Assembler assembler;
+    assembler
+            .CLV()
+            .BVC().relative("skip_nop")
+            .NOP()
+            .NOP()
+            .NOP()
+        .label("skip_nop")
+            .NOP()
+        .compileTo(sram);
+
+    cpu6502::assembler::Address skipNop("skip_nop");
+    assembler.lookupAddress(skipNop);
+
+    helperSkipResetVector();
+
+    testBench.tick(7);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(7)
+        .port(o_rw).signal("11")
+                    .repeat(7)
+        .port(o_sync).signal("0101001").repeatEachStep(2)
+        .port(o_address).signal({0, 1, 1, 2,
+                                skipNop.byteIndex(),
+                                skipNop.byteIndex(),
+                                uint32_t(skipNop.byteIndex()) + 1})
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({0xFF}).repeat(14)
+        .port(o_debug_x).signal({0xFF}).repeat(14)
+        .port(o_debug_y).signal({0xFF}).repeat(14);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldImplementBVCWhenOverflowFlagClearAndNewPage) {
+     sram.clear(0);
+
+    // BVC should branch while overflow flag is clear
+    // BVC should finish in four cycles and branch to
+    //     NOP at PC=0x0100
+
+    Assembler()
+        .label("start")
+            .CLV()
+            .BVC().relative("skip_nop")
+            .NOP()
+            .NOP()
+            .NOP()
+        .org(0x0100)
+        .label("skip_nop")
+            .NOP()
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    testBench.tick(8);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(8)
+        .port(o_rw).signal("11")
+                    .repeat(8)
+        .port(o_sync).signal("01010001").repeatEachStep(2)
+        .port(o_address).signal({0, 1, 1, 2, 0, 0x100, 0x100, 0x101})
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({0xFF}).repeat(16)
+        .port(o_debug_x).signal({0xFF}).repeat(16)
+        .port(o_debug_y).signal({0xFF}).repeat(16);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
