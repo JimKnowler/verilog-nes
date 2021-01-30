@@ -24,6 +24,7 @@ namespace cpu6502 {
             Assembler& label(const char* label);
             Assembler& org(uint16_t address);
             Assembler& word(const Address& address);
+            Assembler& byte(uint8_t data);
 
             Assembler& immediate(uint8_t value);  
             Assembler& a(const Address& address);

@@ -5,6 +5,7 @@
 #include "nes/cpu6502/assembler/Label.h"
 #include "nes/cpu6502/assembler/Org.h"
 #include "nes/cpu6502/assembler/Word.h"
+#include "nes/cpu6502/assembler/Byte.h"
 
 #define OPCODE_ASM_IMPL(_opcode) \
     Assembler& Assembler::_opcode() { \
@@ -34,6 +35,12 @@ namespace cpu6502 { namespace assembler {
 
     Assembler& Assembler::word(const Address& address) {
         addOpcode(std::make_unique<Word>(address));
+
+        return *this;
+    }
+
+    Assembler& Assembler::byte(uint8_t data) {
+        addOpcode(std::make_unique<Byte>(data));
 
         return *this;
     }
