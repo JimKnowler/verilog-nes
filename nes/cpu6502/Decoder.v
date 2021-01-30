@@ -84,6 +84,15 @@ localparam Z = 1;       // Zero
 localparam N = 7;       // Negative
 localparam V = 6;       // Overflow
 
+// register clock phase - so that Decoder can use clock
+//    phase in combinatorial logic, without risking timing
+//    issues with any of the latches (ABH/ABH/DL/etc)
+reg r_clk;
+always @(posedge i_clk or negedge i_clk)
+begin
+    r_clk <= i_clk;
+end
+
 // Opcodes
 localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  INX = 8'hE8,       INY = 8'hC8,
@@ -788,7 +797,7 @@ begin
         begin
             // PC + 2 = Fetch high order effective address byte
 
-            if (i_clk == 0)
+            if (r_clk == 0)
             begin
                 // phase 1
 
@@ -1046,7 +1055,7 @@ begin
 
             // >> setting up high byte of reset vector
             
-            if (i_clk == 0)
+            if (r_clk == 0)
             begin
                 // phase 1
 
