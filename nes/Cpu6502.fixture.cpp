@@ -22,7 +22,6 @@ void Cpu6502::SetUp() {
             if (cpu.o_rw == 0) {
                 // write
                 sram.write(cpu.o_address, cpu.o_data);
-                
             } else {
                 // read
                 cpu.i_data = sram.read(cpu.o_address);
@@ -37,7 +36,7 @@ void Cpu6502::SetUp() {
         } else {
             // clock: end of phi 1
             // undefined data on the bus
-            //cpu.i_data = 0xFF;
+            cpu.i_data = 0xFF;
         }
     });
 
