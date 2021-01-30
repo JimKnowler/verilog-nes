@@ -110,7 +110,8 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  BEQ = 8'hF0,       BNE = 8'hD0,
                  BMI = 8'h30,       BPL = 8'h10,
                  BVC = 8'h50,       BVS = 8'h70,
-                 JMP_a = 8'h4C;
+                 JMP_a = 8'h4C,     STX_a = 8'h8E,
+                 STY_a = 8'h8C;
 
 // RW pin
 localparam RW_READ = 1;
@@ -514,7 +515,7 @@ begin
             o_tcu = 0;
         end
         LDA_a, LDX_a, LDY_a,
-        STA_a,
+        STA_a, STX_a, STY_a,
         BIT_a, JMP_a :
         begin
             // PC + 1 = Fetch low order effective address byte
@@ -759,7 +760,7 @@ begin
             o_sums = 1;
         end
         LDA_a, LDX_a, LDY_a,
-        STA_a,
+        STA_a, STX_a, STY_a,
         BIT_a:
         begin
             // PC + 2 = Fetch high order effective address byte
@@ -860,7 +861,7 @@ begin
             o_sums = 1;
         end
         LDA_a, LDX_a, LDY_a,
-        STA_a,
+        STA_a, STX_a, STY_a,
         BIT_a:
         begin
             // output absolute address ADH, ADL
@@ -901,6 +902,18 @@ begin
             STA_a: begin
                 // write value from AC
                 o_ac_db = 1;
+                o_rw = RW_WRITE;
+            end
+            STX_a: begin
+                // write value from X
+                o_x_sb = 1;
+                o_sb_db = 1;
+                o_rw = RW_WRITE;
+            end
+            STY_a: begin
+                // write value from Y
+                o_y_sb = 1;
+                o_sb_db = 1;
                 o_rw = RW_WRITE;
             end
             BIT_a: begin
