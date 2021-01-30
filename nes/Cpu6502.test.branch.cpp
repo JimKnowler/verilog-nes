@@ -888,7 +888,7 @@ TEST_F(Cpu6502, ShouldImplementBVCWhenOverflowFlagClear) {
 }
 
 TEST_F(Cpu6502, ShouldImplementBVCWhenOverflowFlagClearAndNewPage) {
-     sram.clear(0);
+    sram.clear(0);
 
     // BVC should branch while overflow flag is clear
     // BVC should finish in four cycles and branch to
@@ -924,3 +924,43 @@ TEST_F(Cpu6502, ShouldImplementBVCWhenOverflowFlagClearAndNewPage) {
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
+
+TEST_F(Cpu6502, ShouldImplementJMPabsolute) {
+    sram.clear(0);
+
+    Assembler assembler;
+    assembler
+        .label("start")
+            .NOP()
+            .JMP().absolute("jmp_to")
+            .NOP()
+            .NOP()
+            .NOP()
+        .label("jmp_to")
+            .NOP()
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    cpu6502::assembler::Address jmpTo("jmp_to");
+    assembler.lookupAddress(jmpTo);
+
+    testBench.tick(7);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(7)
+        .port(o_rw).signal("11")
+                    .repeat(7)
+        .port(o_sync).signal("0101001").repeatEachStep(2)
+        .port(o_address).signal({0, 1, 1, 2, 3,
+                                jmpTo.byteIndex(),
+                                uint32_t(jmpTo.byteIndex()) + 1})
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({0xFF}).repeat(14)
+        .port(o_debug_x).signal({0xFF}).repeat(14)
+        .port(o_debug_y).signal({0xFF}).repeat(14);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+

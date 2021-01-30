@@ -109,7 +109,8 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  BCC = 8'h90,       BCS = 8'hB0,
                  BEQ = 8'hF0,       BNE = 8'hD0,
                  BMI = 8'h30,       BPL = 8'h10,
-                 BVC = 8'h50,       BVS = 8'h70;
+                 BVC = 8'h50,       BVS = 8'h70,
+                 JMP_a = 8'h4C;
 
 // RW pin
 localparam RW_READ = 1;
@@ -514,7 +515,7 @@ begin
         end
         LDA_a, LDX_a, LDY_a,
         STA_a,
-        BIT_a:
+        BIT_a, JMP_a :
         begin
             // PC + 1 = Fetch low order effective address byte
 
@@ -781,6 +782,37 @@ begin
             o_sb_add = 1;
             o_db_n_add = 1;      // inverse of mosfets
             o_sums = 1;
+        end
+        JMP_a:
+        begin
+            // PC + 2 = Fetch high order effective address byte
+
+            if (i_clk == 0)
+            begin
+                // phase 1
+
+                // output PCL on ABL
+                o_pcl_adl = 1;
+                o_adl_abl = 1;
+
+                // output PCH on ABH
+                o_pch_adh = 1;
+                o_adh_abh = 1;
+            end
+            else
+            begin
+                // phase 2
+
+                // load PCL from ALU
+                o_add_adl = 1;
+                o_adl_pcl = 1;
+
+                // load PCH from Data bus
+                o_dl_adh = 1;
+                o_adh_pch = 1;
+            end
+
+            o_tcu = 0;
         end
         default:
         begin
