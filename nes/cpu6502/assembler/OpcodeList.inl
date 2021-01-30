@@ -19,6 +19,8 @@ OPCODE(LDY);
 
 // store
 OPCODE(STA);
+OPCODE(STX);
+OPCODE(STY);
 
 // transfer
 OPCODE(TAX);
