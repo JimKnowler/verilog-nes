@@ -7,7 +7,7 @@
 // Reference: http://forum.6502.org/viewtopic.php?f=4&t=4651
 //
 // This Register simulation will only clock values 
-// at falling edge of i_load
+// at falling edge of i_clk while i_load is high
 
 module Register
 #(
@@ -15,9 +15,7 @@ module Register
     parameter [7:0] DEFAULT_VALUE = 8'hFF
 )
 (
-    /* verilator lint_off UNUSED */
     input i_clk,
-    /* verilator lint_on UNUSED */
     input i_reset_n,
 
     input [7:0] i_data,         // input from data bus
@@ -27,11 +25,11 @@ module Register
 
 reg [7:0] r_data;
 
-always @(negedge i_reset_n or negedge i_load)
+always @(negedge i_reset_n or negedge i_clk)
 begin
     if (!i_reset_n)
         r_data <= DEFAULT_VALUE;
-    else
+    else if (i_load)
         r_data <= i_data;
 end
 

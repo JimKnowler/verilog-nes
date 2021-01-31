@@ -11,6 +11,7 @@ namespace {
     class Register : public ::testing::Test {
     public:
         void SetUp() override {
+            testBench.setClockPolarity(1);
             testBench.reset();
             testBench.trace.clear();
         }
@@ -50,20 +51,25 @@ TEST_F(Register, ShouldNotPassThroughWhileLoadSignalIsHigh) {
     EXPECT_EQ(0xFF, core.o_data);
 }
 
-TEST_F(Register, ShouldLoadOnFallingEdgeOfLoadSignal) {
+TEST_F(Register, ShouldLoadOnFallingEdgeOfClkWhileLoadIsHigh) {
     auto& core = testBench.core();
 
+    core.i_data = 0;
+    core.i_load = 0;
+    testBench.tick();
+    
     core.i_data = 0xAF;
-    core.i_load = 0;
-    core.eval();
+    testBench.tick();
 
-    // RISING EDGE
     core.i_load = 1;
-    core.eval();
-    EXPECT_EQ(0xFF, core.o_data);
+    testBench.tick();
 
-    // FALLING EDGE
     core.i_load = 0;
-    core.eval();
-    EXPECT_EQ(0xAF, core.o_data);
+    core.i_load = 0x12;
+    testBench.tick();
+
+    Trace expected = TraceBuilder()
+        .port(o_data).signal({0xFF,0xFF,0xAF,0xAF}).repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
