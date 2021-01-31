@@ -120,7 +120,7 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  BMI = 8'h30,       BPL = 8'h10,
                  BVC = 8'h50,       BVS = 8'h70,
                  JMP_a = 8'h4C,     STX_a = 8'h8E,
-                 STY_a = 8'h8C;
+                 STY_a = 8'h8C,     JSR_a = 8'h20;
 
 // RW pin
 localparam RW_READ = 1;
@@ -205,6 +205,7 @@ begin
     begin        
         // fetch
 
+        
         // output PCL on ABL
         o_pcl_adl = 1;
         o_adl_abl = 1;
@@ -525,7 +526,7 @@ begin
         end
         LDA_a, LDX_a, LDY_a,
         STA_a, STX_a, STY_a,
-        BIT_a, JMP_a :
+        BIT_a, JMP_a, JSR_a :
         begin
             // PC + 1 = Fetch low order effective address byte
 
@@ -541,7 +542,7 @@ begin
             o_pcl_pcl = 1;
             o_pch_pch = 1;
 
-            // increment PC for T2
+            // increment PC for T5
             o_i_pc = 1;
 
             // read low byte of address at end of phi 2
@@ -712,6 +713,30 @@ begin
                 // start next instruction
                 o_tcu = 0;
             end
+        end
+        JSR_a:
+        begin
+            // retain PCL and PCH (PC + 2)
+            o_pcl_pcl = 1;
+            o_pch_pch = 1;
+
+            // output S on ABL
+            o_s_adl = 1;
+            o_adl_abl = 1;
+
+            // output 0x1 on ABH
+            o_0_adh1_7 = 1;
+            o_adh_abh = 1;
+
+            // load SP into ADD
+            o_adl_add = 1;
+            o_sums = 1;
+            o_0_add = 1;
+
+            // load ADD (subroutine address lo) into SP
+            o_add_sb_0_6 = 1;
+            o_add_sb_7 = 1;
+            o_sb_s = 1;
         end
         BRK, PHA, PHP:
         begin
@@ -983,6 +1008,29 @@ begin
                 o_db7_n = 1;
             end
         end
+        JSR_a:
+        begin
+            // retain PCL and PCH (PC + 2)
+            o_pcl_pcl = 1;
+            o_pch_pch = 1;
+
+            // output S on ABL from ALU
+            o_add_adl = 1;
+            o_adl_abl = 1;
+
+            // output 0x1 on ABH
+            o_0_adh1_7 = 1;
+            o_adh_abh = 1;
+
+            // write PCH to data bus
+            o_rw = RW_WRITE;
+            o_pch_db = 1;
+
+            // decrement SP with ALU
+            o_adl_add = 1;
+            o_sums = 1;
+            o_sb_add = 1;       // 0xff == -1
+        end
         default:
         begin
         end
@@ -1005,6 +1053,29 @@ begin
             // output 0x1 on ABH
             o_0_adh1_7 = 1;
             o_adh_abh = 1;
+        end
+        JSR_a:
+        begin
+            // retain PCL and PCH
+            o_pcl_pcl = 1;
+            o_pch_pch = 1;
+
+            // output S-1 on ABL from ALU
+            o_add_adl = 1;
+            o_adl_abl = 1;
+
+            // output 0x1 on ABH
+            o_0_adh1_7 = 1;
+            o_adh_abh = 1;
+
+            // write PCL to data bus
+            o_rw = RW_WRITE;
+            o_pcl_db = 1;
+
+            // decrement SP with ALU
+            o_adl_add = 1;
+            o_sums = 1;
+            o_sb_add = 1;       // 0xff == -1
         end
         default:
         begin
@@ -1040,6 +1111,47 @@ begin
             o_0_add = 1;
             o_sums = 1;
         end
+        JSR_a:
+        begin
+            if (r_clk == 0)
+            begin
+                // phi 1 - output PC + 2 on address
+
+                // retain PCL & PCH
+                o_pcl_pcl = 1;
+                o_pch_pch = 1;
+                
+                // output PCL on ABL
+                o_pcl_adl = 1;
+                o_adl_abl = 1;
+
+                // output PCH on ABH
+                o_pch_adh = 1;
+                o_adh_abh = 1;    
+            end
+            else
+            begin
+                // phi 2
+
+                // load ABL from cached lo (S?)
+                o_s_adl = 1;
+                o_adl_pcl = 1;
+
+                // load PCH with ADH from DL
+                o_dl_adh = 1;
+                o_adh_pch = 1;
+
+                // read sp-2 from ALU into Stack
+                o_add_sb_0_6 = 1;
+                o_add_sb_7 = 1;
+                o_sb_s = 1;
+
+            end
+
+            // start next opcode
+            o_tcu = 0;
+        end
+
         default:
         begin
             
