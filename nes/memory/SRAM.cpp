@@ -25,7 +25,7 @@ namespace memory {
 
     void SRAM::write(size_t address, const std::vector<uint8_t>& program) {
         for (size_t i=0; i<program.size(); i++) {
-            write(i, program[i]);
+            write(i + address, program[i]);
         }
     }
 
@@ -58,6 +58,8 @@ std::ostream& operator<<(std::ostream& os, const memory::SRAM& sram) {
                 hasReportedRun = true;
             }
         } else {
+            hasReportedRun = false;
+
             sprintf(buffer, "%08zx  ", rowIndex * kRowSize);
             os << buffer;
 
