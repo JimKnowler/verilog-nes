@@ -323,6 +323,7 @@ TEST_F(Cpu6502, ShouldImplementINCabsolute) {
                         .repeat(16);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+    EXPECT_EQ(kTestData + 1, sram.read(kTestAddress));
 }
 
 TEST_F(Cpu6502, ShouldImplementINCabsoluteProcessorStatus) {
