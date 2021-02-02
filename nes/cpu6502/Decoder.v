@@ -121,7 +121,8 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  BVC = 8'h50,       BVS = 8'h70,
                  JMP_a = 8'h4C,     STX_a = 8'h8E,
                  STY_a = 8'h8C,     JSR_a = 8'h20,
-                 RTS = 8'h60,       INC_a = 8'hEE;
+                 RTS = 8'h60,       INC_a = 8'hEE,
+                 DEC_a = 8'hCE;
 
 // RW pin
 localparam RW_READ = 1;
@@ -528,7 +529,7 @@ begin
         LDA_a, LDX_a, LDY_a,
         STA_a, STX_a, STY_a,
         BIT_a, JMP_a, JSR_a,
-        INC_a :
+        INC_a, DEC_a :
         begin
             // PC + 1 = Fetch low order effective address byte
 
@@ -822,7 +823,7 @@ begin
         end
         LDA_a, LDX_a, LDY_a,
         STA_a, STX_a, STY_a,
-        BIT_a, INC_a:
+        BIT_a, INC_a, DEC_a:
         begin
             // PC + 2 = Fetch high order effective address byte
             
@@ -923,7 +924,7 @@ begin
         end
         LDA_a, LDX_a, LDY_a,
         STA_a, STX_a, STY_a,
-        BIT_a, INC_a:
+        BIT_a, INC_a, DEC_a:
         begin
             // output absolute address ADH, ADL
 
@@ -943,7 +944,7 @@ begin
             o_adh_abh = 1;
 
             case (i_ir)
-            INC_a: begin
+            INC_a, DEC_a: begin
                 // load value from DL into ALU
                 o_dl_db = 1;
                 o_db_add = 1;
@@ -1004,11 +1005,14 @@ begin
             end
             endcase
 
-            if (i_ir != INC_a) 
-            begin
+            case (i_ir)
+            INC_a, DEC_a: begin
+            end
+            default: begin
                 // start next opcode
                 o_tcu = 0;
             end
+            endcase
         end
         PLA, PLP: begin
             // retain PCL and PCH
@@ -1169,7 +1173,7 @@ begin
 
             
         end
-        INC_a: 
+        INC_a, DEC_a: 
         begin
             // retain PCL and PCH
             o_pcl_pcl = 1;
@@ -1183,12 +1187,26 @@ begin
             o_add_sb_7 = 1;
             o_sb_db = 1;
 
-            // increment ALU
-            o_db_add = 1;
-            o_1_addc = 1;
-            o_sums = 1;
-            o_0_add = 1; 
-
+            case (i_ir)
+            INC_a: 
+            begin
+                // increment ALU
+                o_db_add = 1;
+                o_1_addc = 1;
+                o_sums = 1;
+                o_0_add = 1; 
+            end
+            DEC_a:
+            begin
+                // decrement ALU 
+                o_sb_add = 1;
+                o_sums = 1;
+                o_adl_add = 1;  // 0xFF from precharge mosfets
+            end
+            default:
+            begin
+            end
+            endcase
         end
         default:
         begin
@@ -1284,7 +1302,7 @@ begin
             // start next opcode
             o_tcu = 0;
         end
-        INC_a:
+        INC_a, DEC_a:
         begin
             // retain PCL and PCH
             o_pcl_pcl = 1;
