@@ -121,7 +121,7 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  BVC = 8'h50,       BVS = 8'h70,
                  JMP_a = 8'h4C,     STX_a = 8'h8E,
                  STY_a = 8'h8C,     JSR_a = 8'h20,
-                 RTS = 8'h60;
+                 RTS = 8'h60,       INC_a = 8'hEE;
 
 // RW pin
 localparam RW_READ = 1;
@@ -527,7 +527,8 @@ begin
         end
         LDA_a, LDX_a, LDY_a,
         STA_a, STX_a, STY_a,
-        BIT_a, JMP_a, JSR_a :
+        BIT_a, JMP_a, JSR_a,
+        INC_a :
         begin
             // PC + 1 = Fetch low order effective address byte
 
@@ -821,7 +822,7 @@ begin
         end
         LDA_a, LDX_a, LDY_a,
         STA_a, STX_a, STY_a,
-        BIT_a:
+        BIT_a, INC_a:
         begin
             // PC + 2 = Fetch high order effective address byte
             
@@ -922,7 +923,7 @@ begin
         end
         LDA_a, LDX_a, LDY_a,
         STA_a, STX_a, STY_a,
-        BIT_a:
+        BIT_a, INC_a:
         begin
             // output absolute address ADH, ADL
 
@@ -942,6 +943,13 @@ begin
             o_adh_abh = 1;
 
             case (i_ir)
+            INC_a: begin
+                // load value from DL into ALU
+                o_dl_db = 1;
+                o_db_add = 1;
+                o_sums = 1;
+                o_0_add = 1;
+            end
             LDA_a, LDX_a, LDY_a: begin
                 // load value from DL into SB via DB
                 o_dl_db = 1;
@@ -996,8 +1004,11 @@ begin
             end
             endcase
 
-            // start next opcode
-            o_tcu = 0;
+            if (i_ir != INC_a) 
+            begin
+                // start next opcode
+                o_tcu = 0;
+            end
         end
         PLA, PLP: begin
             // retain PCL and PCH
@@ -1158,6 +1169,27 @@ begin
 
             
         end
+        INC_a: 
+        begin
+            // retain PCL and PCH
+            o_pcl_pcl = 1;
+            o_pch_pch = 1;
+
+            // note: the correct address is already buffered in ABL/ABH
+
+            // write from ALU
+            o_rw = RW_WRITE;
+            o_add_sb_0_6 = 1;
+            o_add_sb_7 = 1;
+            o_sb_db = 1;
+
+            // increment ALU
+            o_db_add = 1;
+            o_1_addc = 1;
+            o_sums = 1;
+            o_0_add = 1; 
+
+        end
         default:
         begin
         end
@@ -1248,6 +1280,27 @@ begin
 
             // increment PC
             o_i_pc = 1;
+
+            // start next opcode
+            o_tcu = 0;
+        end
+        INC_a:
+        begin
+            // retain PCL and PCH
+            o_pcl_pcl = 1;
+            o_pch_pch = 1;
+
+            // note: the correct address is already buffered in ABL/ABH
+
+            // write from ALU
+            o_rw = RW_WRITE;
+            o_add_sb_0_6 = 1;
+            o_add_sb_7 = 1;
+            o_sb_db = 1;
+
+            // load Z and N from DB
+            o_dbz_z = 1;
+            o_db7_n = 1;
 
             // start next opcode
             o_tcu = 0;

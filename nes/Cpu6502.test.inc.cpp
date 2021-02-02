@@ -270,3 +270,88 @@ TEST_F(Cpu6502, ShouldImplementADCimmediateProcessorStatusWithCarryIn) {
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
+
+TEST_F(Cpu6502, ShouldImplementINCabsolute) {
+    sram.clear(0);
+    
+    const uint16_t kTestAddress = 0x5678;
+    const uint8_t kTestData = 0x49;
+
+    Assembler assembler;
+    assembler
+            .INC().absolute(kTestAddress)
+            .NOP()
+        .org(kTestAddress)
+        .byte(kTestData)
+        .compileTo(sram);
+
+    cpu6502::assembler::Address addressTestData;
+    assembler.lookupAddress(addressTestData);
+
+    helperSkipResetVector();
+
+    testBench.tick(8);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(8)
+        .port(o_rw).signal("11110011")
+                    .repeatEachStep(2)
+        .port(o_sync).signal("01000001").repeatEachStep(2)
+        .port(o_data).signal({0}).repeat(9)
+                     .signal({kTestData}).repeat(2)
+                     .signal({kTestData + 1}).repeat(2)
+                     .signal({0}).repeat(3)
+        .port(o_address).signal({
+                            // INC
+                            0,
+                            1,
+                            2,
+                            kTestAddress,
+                            kTestAddress,
+                            kTestAddress,
+                            // NOP
+                            3,
+                            4
+                        })
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({0xFF})
+                        .repeat(16)
+        .port(o_debug_x).signal({0xFF})
+                        .repeat(16)
+        .port(o_debug_y).signal({0xFF})
+                        .repeat(16);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldImplementINCabsoluteProcessorStatus) {
+    const std::map<uint8_t, uint8_t> testCases = {
+        {0 - 1, Z},
+        {(1<<7) - 1, N},
+        {1 - 1, 0}
+    };
+
+    for (auto& testCase : testCases) {
+        const uint8_t kTestData = testCase.first;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        const uint16_t kTestAddress = 0x5678;
+        
+        Assembler assembler;
+        assembler
+                .INC().absolute(kTestAddress)
+                .NOP()
+            .org(kTestAddress)
+            .byte(kTestData)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(8);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
