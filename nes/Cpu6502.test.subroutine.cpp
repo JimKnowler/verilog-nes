@@ -145,3 +145,43 @@ TEST_F(Cpu6502, ShouldImplementRTS) {
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
+
+TEST_F(Cpu6502, ShouldImplementJSRandRTS) {
+    sram.clear(0);
+
+    const uint8_t kTestValue = 0xAB;
+
+    // NOTE: using .org to locate this code in the middle of memory, so that PC
+    //       has an interesting value with non-zero hi and lo bytes
+    Assembler assembler;
+    assembler
+        .label("start")
+            .NOP()
+        .org(0x3456)
+        .label("start")
+            .NOP()
+            .JSR().absolute("jmp_to")
+        .label("return_to")
+            .NOP()
+            .NOP()
+            .NOP()
+        .org(0x4567)
+        .label("jmp_to")
+            .NOP()
+            .LDA().immediate(kTestValue)
+            .RTS()
+        .org(0xfffc)
+        .word("start")
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    testBench.tick(19);
+
+    cpu6502::assembler::Address returnTo("return_to");
+    assembler.lookupAddress(returnTo);
+
+    auto& core = testBench.core();
+    EXPECT_EQ(returnTo.byteIndex(), core.o_address);
+    EXPECT_EQ(kTestValue, core.o_debug_ac);
+}
