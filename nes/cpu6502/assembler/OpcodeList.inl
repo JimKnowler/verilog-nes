@@ -76,3 +76,7 @@ OPCODE(JMP);
 // subroutine
 OPCODE(JSR);
 OPCODE(RTS);
+
+// interupt
+OPCODE(BRK);
+OPCODE(RTI);
