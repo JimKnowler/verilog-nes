@@ -155,7 +155,6 @@ TEST_F(Cpu6502, ShouldImplementJSRandRTS) {
     //       has an interesting value with non-zero hi and lo bytes
     Assembler assembler;
     assembler
-        .label("start")
             .NOP()
         .org(0x3456)
         .label("start")
