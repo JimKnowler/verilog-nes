@@ -6,6 +6,7 @@
 //       simplify code, and self-document! 
 
 module Decoder(
+    input i_reset_n,
     input i_clk,
     
     input [7:0] i_ir,               // Instruction Register
@@ -128,12 +129,51 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
 localparam RW_READ = 1;
 localparam RW_WRITE = 0;
 
-// carry out from last cycle
+// cache acr (alu carry-out) from last cycle
 reg r_last_acr;
 always @(negedge i_clk)
 begin
     r_last_acr <= i_acr;
 end
+
+// distinguish between RESET interrupt and normal BRK 
+// .. and IRQ and NMI
+// -> local reg storing interrupt type
+//    - set to RESET when reset 
+//    - set to IRQ / NMI later when they are used
+//    - reset to NONE when 
+
+
+localparam INTERRUPT_NONE = 0;
+localparam INTERRUPT_RESET = 1;
+localparam INTERRUPT_IRQ = 2;
+localparam INTERRUPT_NMI = 3;
+
+reg [1:0] r_interrupt;
+
+always @(negedge i_reset_n or negedge i_clk)
+begin
+    if (!i_reset_n)
+    begin
+        r_interrupt <= INTERRUPT_RESET;
+    end
+    else
+    begin
+        if (i_tcu == 6)
+        begin
+            // end of T6 for interrupt handling
+            r_interrupt <= INTERRUPT_NONE;
+        end
+
+        // todo: at start of phi1 for T0, 
+        //       check for NMI or IRQ lines
+    end
+end
+
+// w_ir => will usually pass through i_ir, but will report
+//         BRK while handling an interrupt
+wire [7:0] w_ir;
+assign w_ir = (r_interrupt == INTERRUPT_NONE) ? i_ir : BRK;
 
 always @(*)
 begin
@@ -224,7 +264,7 @@ begin
         o_i_pc = 1;
 
         // finish previous opcode
-        case (i_ir)
+        case (w_ir)
         INX, INY, DEX, DEY,
         LSR_A, ASL_A, ROL_A, ROR_A,
         AND_i, EOR_i, ORA_i,
@@ -235,7 +275,7 @@ begin
             o_add_sb_7 = 1;
 
             // load from SB into register
-            case (i_ir)
+            case (w_ir)
             INX, DEX: begin
                 o_sb_x = 1;
             end
@@ -280,7 +320,7 @@ begin
     end
     1: // T1
     begin
-        case (i_ir)
+        case (w_ir)
         BRK, PHA, PHP, PLA, PLP: 
         begin
             // retain PCL and PCH
@@ -295,7 +335,7 @@ begin
             o_pch_adh = 1;
             o_adh_abh = 1;
 
-            case (i_ir)
+            case (w_ir)
             PLA, PLP: begin
                 // use ALU to increment the SP
                 o_s_sb = 1;
@@ -323,7 +363,7 @@ begin
             o_pcl_pcl = 1;
             o_pch_pch = 1;
 
-            case (i_ir)
+            case (w_ir)
             SEC, CLC: o_ir5_c = 1; // read C from IR5
             SEI, CLI: o_ir5_i = 1; // read I from IR5
             CLV: o_avr_v = 1; // read V from (0) avr
@@ -350,7 +390,7 @@ begin
             o_pch_pch = 1;
 
             // output register to input register A via SB
-            case (i_ir)
+            case (w_ir)
             INX, DEX: o_x_sb = 1;
             INY, DEY: o_y_sb = 1;
             LSR_A, ASL_A, ROL_A, ROR_A: o_ac_sb = 1;
@@ -360,7 +400,7 @@ begin
 
             o_sb_add = 1;
 
-            case (i_ir)
+            case (w_ir)
             INX, INY: begin
                 // load 0 as inverted 0xFF (from precharged mosfets)        
                 o_db_n_add = 1;
@@ -395,7 +435,7 @@ begin
             end
             endcase
 
-            case (i_ir)
+            case (w_ir)
             ROR_A, ROL_A: begin
                 // use CARRY flag to drive CARRY_IN on accumulator
                 o_1_addc = i_p[C];
@@ -428,7 +468,7 @@ begin
             o_dl_db = 1;
             o_sb_db = 1;
 
-            case (i_ir)
+            case (w_ir)
             LDA_i: o_sb_ac = 1;
             LDX_i: o_sb_x = 1;
             LDY_i: o_sb_y = 1;
@@ -465,7 +505,7 @@ begin
             o_dl_db = 1;
 
             // load register into ALU via SB
-            case (i_ir)
+            case (w_ir)
             CPX_i: o_x_sb = 1;
             CPY_i: o_y_sb = 1;
             default: o_ac_sb = 1;
@@ -473,7 +513,7 @@ begin
                 
             o_sb_add = 1;
 
-            case (i_ir)
+            case (w_ir)
             AND_i: begin
                 o_db_add = 1;
                 o_ands = 1;
@@ -577,7 +617,7 @@ begin
             o_pcl_pcl = 1;
             o_pch_pch = 1;
 
-            case (i_ir)
+            case (w_ir)
             TAX: begin
                 o_ac_sb = 1;
                 o_sb_x = 1;
@@ -607,7 +647,7 @@ begin
             endcase
 
             // status flags
-            if (i_ir != TXS)
+            if (w_ir != TXS)
             begin
                 o_sb_db = 1;
                 o_dbz_z = 1;
@@ -648,14 +688,14 @@ begin
             o_pcl_pcl = 1;
             o_pch_pch = 1;
 
-            if ( ((i_p[C] == 0) && (i_ir == BCC)) ||
-                 ((i_p[C] == 1) && (i_ir == BCS)) ||
-                 ((i_p[Z] == 1) && (i_ir == BEQ)) ||
-                 ((i_p[Z] == 0) && (i_ir == BNE)) ||
-                 ((i_p[N] == 1) && (i_ir == BMI)) ||
-                 ((i_p[N] == 0) && (i_ir == BPL)) ||
-                 ((i_p[V] == 0) && (i_ir == BVC)) ||
-                 ((i_p[V] == 1) && (i_ir == BVS)) )
+            if ( ((i_p[C] == 0) && (w_ir == BCC)) ||
+                 ((i_p[C] == 1) && (w_ir == BCS)) ||
+                 ((i_p[Z] == 1) && (w_ir == BEQ)) ||
+                 ((i_p[Z] == 0) && (w_ir == BNE)) ||
+                 ((i_p[N] == 1) && (w_ir == BMI)) ||
+                 ((i_p[N] == 0) && (w_ir == BPL)) ||
+                 ((i_p[V] == 0) && (w_ir == BVC)) ||
+                 ((i_p[V] == 1) && (w_ir == BVS)) )
             begin
                 // use ALU to add offset to PC
                 o_sums = 1;
@@ -688,7 +728,7 @@ begin
     end
     2: // T2
     begin
-        case (i_ir)
+        case (w_ir)
         BCC, BCS, BEQ, BNE, BMI, BPL, BVC, BVS:
         begin
             // high byte - from PCH
@@ -785,17 +825,25 @@ begin
             o_sb_add = 1;       // pre-charge mosfets = -1
             o_sums = 1;
 
-            if (i_ir == PHA)
+            if (w_ir == PHA)
             begin
                 o_rw = RW_WRITE;
                 o_tcu = 0;      // start next opcode
                 o_ac_db = 1;
             end
-            else if (i_ir == PHP)
+            else if (w_ir == PHP)
             begin
                 o_rw = RW_WRITE;
                 o_tcu = 0;      // start next opcode
                 o_p_db = 1;
+            end
+            else if (w_ir == BRK)
+            begin
+                if (r_interrupt != INTERRUPT_RESET)
+                begin
+                    o_rw = RW_WRITE;
+                    o_pch_db = 1;
+                end
             end
         end
         PLA, PLP: begin
@@ -884,7 +932,7 @@ begin
     end
     3: // T3
     begin
-        case (i_ir)
+        case (w_ir)
         BCC, BCS, BEQ, BNE, BMI, BPL, BVC, BVS:
         begin
             // high byte - from ALU
@@ -921,6 +969,12 @@ begin
             o_adl_add = 1;
             o_sb_add = 1;       // pre-charge mosfets = -1
             o_sums = 1;
+
+            if (r_interrupt != INTERRUPT_RESET)
+            begin
+                o_rw = RW_WRITE;
+                o_pcl_db = 1;
+            end
         end
         LDA_a, LDX_a, LDY_a,
         STA_a, STX_a, STY_a,
@@ -943,7 +997,7 @@ begin
             o_dl_adh = 1;
             o_adh_abh = 1;
 
-            case (i_ir)
+            case (w_ir)
             INC_a, DEC_a: begin
                 // load value from DL into ALU
                 o_dl_db = 1;
@@ -956,7 +1010,7 @@ begin
                 o_dl_db = 1;
                 o_sb_db = 1;
 
-                case (i_ir)
+                case (w_ir)
                 LDA_a: o_sb_ac = 1;
                 LDX_a: o_sb_x = 1;
                 LDY_a: o_sb_y = 1;
@@ -1005,7 +1059,7 @@ begin
             end
             endcase
 
-            case (i_ir)
+            case (w_ir)
             INC_a, DEC_a: begin
             end
             default: begin
@@ -1029,14 +1083,14 @@ begin
 
             o_tcu = 0;      // start next opcode
 
-            if (i_ir == PLA) begin
+            if (w_ir == PLA) begin
                 // read DL into AC
                 o_dl_db = 1;
                 
                 o_sb_db = 1;
                 o_sb_ac = 1;
             end
-            else if (i_ir == PLP) begin
+            else if (w_ir == PLP) begin
                 // read DL into P
                 o_dl_db = 1;
 
@@ -1100,7 +1154,7 @@ begin
     end
     4: // T4
     begin
-        case (i_ir)
+        case (w_ir)
         BRK:
         begin
             // output s-2 on ABL
@@ -1115,6 +1169,12 @@ begin
             // output 0x1 on ABH
             o_0_adh1_7 = 1;
             o_adh_abh = 1;
+
+            if (r_interrupt != INTERRUPT_RESET)
+            begin
+                o_rw = RW_WRITE;
+                o_p_db = 1;
+            end
         end
         JSR_a:
         begin
@@ -1187,7 +1247,7 @@ begin
             o_add_sb_7 = 1;
             o_sb_db = 1;
 
-            case (i_ir)
+            case (w_ir)
             INC_a: 
             begin
                 // increment ALU
@@ -1215,7 +1275,7 @@ begin
     end
     5: // T5
     begin
-        case (i_ir)
+        case (w_ir)
         BRK:
         begin
             /// @note currently hardcoded for RESET interrupt
@@ -1225,15 +1285,27 @@ begin
             o_add_sb_7 = 1;
             o_sb_s = 1;
 
-            // >> address of reset vector low byte
+            // >> address of interrupt vector low byte
 
             // ABH = 0xff
             o_adh_abh = 1;
 
-            // ABL = 0xfc
+            // ABL
+            case (r_interrupt)
+            INTERRUPT_RESET:
+            begin
+                // ABL = 0xfc
+                o_0_adl0 = 1;
+                o_0_adl1 = 1;
+            end
+            default:
+            begin
+                // ABL = 0xFE
+                o_0_adl0 = 1;
+            end
+            endcase
+
             o_adl_abl = 1;
-            o_0_adl0 = 1;
-            o_0_adl1 = 1;
 
             // >> read low byte of reset vector at end of phi 2
             //  into ALU
@@ -1331,7 +1403,7 @@ begin
     end
     6: // T6
     begin
-        case (i_ir)
+        case (w_ir)
         BRK:
         begin
             /// @note currently hardcoded for RESET interrupt
@@ -1345,8 +1417,19 @@ begin
                 // ABH = 0xff (precharge mosfets)
                 o_adh_abh = 1;
 
-                // ABL = 0xfd
-                o_0_adl1 = 1;
+                case (r_interrupt)
+                INTERRUPT_RESET:
+                begin
+                    // ABL = 0xfd
+                    o_0_adl1 = 1;
+                end
+                default:
+                begin
+                    // ABL = 0xFF
+                    // (use precharge mosfets without modification)
+                end
+                endcase
+                
                 o_adl_abl = 1;
             end
             else
@@ -1364,6 +1447,12 @@ begin
 
             end
 
+            if (r_interrupt == INTERRUPT_NONE)
+            begin
+                // using a BRK instruction
+                o_db4_b = 1;
+            end
+
             o_tcu = 0;
         end
         default:
@@ -1374,7 +1463,7 @@ begin
     end
     7: // T7
     begin
-        case (i_ir)
+        case (w_ir)
         default: begin
             
         end

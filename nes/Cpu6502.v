@@ -137,7 +137,8 @@ wire w_avr_v;
 // Decoder
 // transform IR and TCU into control signals
 Decoder decoder(
-    .i_clk,
+    .i_clk(i_clk),
+    .i_reset_n(i_reset_n),
     .i_ir(w_ir),
     .i_tcu(w_tcu),
     .i_p(w_p),
