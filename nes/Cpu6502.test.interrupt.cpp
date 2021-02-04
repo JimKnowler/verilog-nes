@@ -80,3 +80,100 @@ TEST_F(Cpu6502, ShouldImplementBRK) {
     // processor flags should be unaffected, apart from B=Break
     EXPECT_EQ(p | B, core.o_debug_p);
 }
+
+TEST_F(Cpu6502, ShouldImplementRTI) {
+    const auto& core = testBench.core();
+
+    sram.clear(0);
+
+    Assembler assembler;
+    assembler
+            .NOP()
+        .org(0x1234)
+        .label("init")
+            .SEC()                  // non-zero Processor Status (P)
+            .SEI()
+        .label("start")
+            .BRK()
+        .label("return_to")
+            .NOP()
+            .NOP()
+        .org(0x3456)
+        .label("interrupt")
+            .NOP()
+            .NOP()
+        .label("return_from")
+            .RTI()
+        .org(0xfffc)                // RESET VECTOR
+        .word("init")
+        .org(0xFFFE)                // INTERRUPT VECTOR
+        .word("interrupt")
+        .compileTo(sram);
+
+    // capture information from the assembler
+    cpu6502::assembler::Address start("start");
+    assembler.lookupAddress(start);
+
+    cpu6502::assembler::Address interrupt("interrupt");
+    assembler.lookupAddress(interrupt);
+
+    cpu6502::assembler::Address returnTo("return_to");
+    assembler.lookupAddress(returnTo);
+
+    cpu6502::assembler::Address returnFrom("return_from");
+    assembler.lookupAddress(returnFrom);
+
+    // skip RESET
+    helperSkipResetVector();
+
+    // skip init section
+    testBench.tick(4);
+
+    // capture P before BRK
+    const uint8_t p = core.o_debug_p;
+
+    // skip BRK
+    testBench.tick(7);
+
+    // capture SP after BRK
+    const uint8_t sp = core.o_debug_s;
+
+    // skip 2 x NOPs in 'interrupt' section
+    testBench.tick(4);
+
+    // verify that PC is where we expect
+    EXPECT_EQ(returnFrom.lo(), core.o_debug_pcl);
+    EXPECT_EQ(returnFrom.hi(), core.o_debug_pch);
+
+    // simluate RTI and NOP 
+    testBench.trace.clear();
+    testBench.tick(8);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-").repeat(8)
+        .port(o_rw).signal("11").repeat(8)
+        .port(o_sync).signal("01000001").repeatEachStep(2)
+        .port(o_address)
+            .signal({
+                // RTI - at 'return_from'
+                returnFrom.byteIndex(),
+                returnFrom.byteIndex() + 1u,
+                0x0100u + sp,
+                0x0100u + sp + 1u,
+                0x0100u + sp + 2u,
+                0x0100u + sp + 3u,
+
+                // NOP - at 'return_to'
+                returnTo.byteIndex(),
+                returnTo.byteIndex() + 1u
+            }).repeatEachStep(2)
+        .port(o_debug_s)
+            .signal({sp}).repeat(6)
+            .signal({sp + 3u}).repeat(2)
+            .concat().repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+
+    // processor flags should be restored
+    EXPECT_EQ(p, core.o_debug_p);
+}
