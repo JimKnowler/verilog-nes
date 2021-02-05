@@ -26,7 +26,7 @@ TEST_F(Cpu6502, ShouldImplementResetVector) {
     Trace expected = TraceBuilder()
         .port(i_clk).signal("_-").repeat(9)
         .port(o_rw).signal("11").repeat(9)
-        .port(o_sync).signal("010000001").repeatEachStep(2)
+        .port(o_sync).signal("100000010").repeatEachStep(2)
         .port(o_address)
             .signal({
                 0x0000, 0x0001,             // PC, PC + 1
@@ -52,7 +52,7 @@ TEST_F(Cpu6502, ShouldImplementNOP) {
     Trace expected = TraceBuilder()
         .port(i_clk).signal("_-").repeat(5)
         .port(o_rw).signal("11").repeat(5)
-        .port(o_sync).signal("01010").repeatEachStep(2)
+        .port(o_sync).signal("10101").repeatEachStep(2)
         .port(o_address).signal({
             0xEAEA, 0xEAEB,     // NOP: T0, T1
             0xEAEB, 0xEAEC,     // NOP: T0, T1

@@ -24,6 +24,6 @@ begin
 end
 
 assign o_tcu = r_tcu;
-assign o_sync = (r_tcu == 1);
+assign o_sync = (r_tcu == 0);
 
 endmodule

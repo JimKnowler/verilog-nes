@@ -74,14 +74,14 @@ TEST_F(TCU, ShouldIncrementThenReset) {
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
-TEST_F(TCU, ShouldEmitSyncDuringT1) {
+TEST_F(TCU, ShouldEmitSyncDuringT0) {
     testBench.tick(4);
 
     Trace expected = TraceBuilder()
         .port(i_clk).signal("_-").repeat(4)
         .port(o_tcu)
             .signal({0, 1, 2, 3}).repeatEachStep(2)
-        .port(o_sync).signal("_-__").repeatEachStep(2);
+        .port(o_sync).signal("-___").repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }

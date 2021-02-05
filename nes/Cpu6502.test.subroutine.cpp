@@ -43,7 +43,7 @@ TEST_F(Cpu6502, ShouldImplementJSR) {
         .port(i_clk).signal("_-")
                     .repeat(10)
         .port(o_rw).signal("1111100111").repeatEachStep(2)
-        .port(o_sync).signal("0101000001").repeatEachStep(2)
+        .port(o_sync).signal("1010000010").repeatEachStep(2)
         .port(o_address).signal({
                                 // NOP
                                 start.byteIndex(),
@@ -118,7 +118,7 @@ TEST_F(Cpu6502, ShouldImplementRTS) {
         .port(i_clk).signal("_-")
                     .repeat(10)
         .port(o_rw).signal("1111111111").repeatEachStep(2)
-        .port(o_sync).signal("0101000001").repeatEachStep(2)
+        .port(o_sync).signal("1010000010").repeatEachStep(2)
         .port(o_address).signal({
                                 // NOP
                                 start.byteIndex(),

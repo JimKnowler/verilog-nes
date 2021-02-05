@@ -48,7 +48,7 @@ TEST_F(Cpu6502, ShouldImplementBRK) {
     Trace expected = TraceBuilder()
         .port(i_clk).signal("_-").repeat(9)
         .port(o_rw).signal("110001111").repeatEachStep(2)
-        .port(o_sync).signal("010000001").repeatEachStep(2)
+        .port(o_sync).signal("100000010").repeatEachStep(2)
         .port(o_data)
             .signal({0}).repeat(5)
             .signal({returnTo.hi()}).repeat(2)
@@ -152,7 +152,7 @@ TEST_F(Cpu6502, ShouldImplementRTI) {
     Trace expected = TraceBuilder()
         .port(i_clk).signal("_-").repeat(8)
         .port(o_rw).signal("11").repeat(8)
-        .port(o_sync).signal("01000001").repeatEachStep(2)
+        .port(o_sync).signal("10000010").repeatEachStep(2)
         .port(o_address)
             .signal({
                 // RTI - at 'return_from'
