@@ -92,7 +92,7 @@ TEST_F(Cpu6502, ShouldImplementRTI) {
         .org(0x1234)
         .label("init")
             .SEC()                  // non-zero Processor Status (P)
-            .SEI()
+            .SEI()                  // P = I | C
         .label("start")
             .BRK()
         .label("return_to")
@@ -129,9 +129,6 @@ TEST_F(Cpu6502, ShouldImplementRTI) {
     // skip init section
     testBench.tick(4);
 
-    // capture P before BRK
-    const uint8_t p = core.o_debug_p;
-
     // skip BRK
     testBench.tick(7);
 
@@ -145,7 +142,7 @@ TEST_F(Cpu6502, ShouldImplementRTI) {
     EXPECT_EQ(returnFrom.lo(), core.o_debug_pcl);
     EXPECT_EQ(returnFrom.hi(), core.o_debug_pch);
 
-    // simluate RTI and NOP 
+    // simulate RTI and NOP 
     testBench.trace.clear();
     testBench.tick(8);
 
@@ -168,12 +165,13 @@ TEST_F(Cpu6502, ShouldImplementRTI) {
                 returnTo.byteIndex() + 1u
             }).repeatEachStep(2)
         .port(o_debug_s)
-            .signal({sp}).repeat(6)
+            .signal({sp}).repeat(5)
+            .signal({returnTo.lo()})        // todo: shouldn't be sensitive to internal workings
             .signal({sp + 3u}).repeat(2)
             .concat().repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 
     // processor flags should be restored
-    EXPECT_EQ(p, core.o_debug_p);
+    EXPECT_EQ(I | C, core.o_debug_p);
 }

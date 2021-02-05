@@ -123,7 +123,7 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  JMP_a = 8'h4C,     STX_a = 8'h8E,
                  STY_a = 8'h8C,     JSR_a = 8'h20,
                  RTS = 8'h60,       INC_a = 8'hEE,
-                 DEC_a = 8'hCE;
+                 DEC_a = 8'hCE,     RTI = 8'h40;
 
 // RW pin
 localparam RW_READ = 1;
@@ -321,7 +321,7 @@ begin
     1: // T1
     begin
         case (w_ir)
-        BRK, PHA, PHP, PLA, PLP: 
+        BRK, PHA, PHP, PLA, PLP, RTI: 
         begin
             // retain PCL and PCH
             o_pcl_pcl = 1;
@@ -790,7 +790,7 @@ begin
             o_add_sb_7 = 1;
             o_sb_s = 1;
         end
-        RTS:
+        RTS, RTI:
         begin
             // output S on ABL
             o_s_adl = 1;
@@ -1126,7 +1126,7 @@ begin
             o_sums = 1;
             o_sb_add = 1;       // 0xff == -1
         end
-        RTS:
+        RTS, RTI:
         begin
             // output S+1 on ABL from ALU
             o_add_adl = 1;
@@ -1142,10 +1142,30 @@ begin
             o_sums = 1;
             o_0_add = 1;
 
-            // load return address (lo) into SP temporarily
+            // load from SP+1
             o_dl_db = 1;
-            o_sb_db = 1;
-            o_sb_s = 1;
+
+            case (w_ir)
+            RTS:
+            begin
+                // load return address (lo) into SP temporarily    
+                o_sb_db = 1;
+                o_sb_s = 1;
+            end
+            RTI:
+            begin
+                // load P from stack
+                o_db0_c = 1;
+                o_db1_z = 1;
+                o_db2_i = 1;
+                o_db3_d = 1;
+                o_db4_b = 1;
+                o_db6_v = 1;
+                o_db7_n = 1;
+            end
+            default: begin
+            end
+            endcase
         end
         default:
         begin
@@ -1229,9 +1249,28 @@ begin
             // read S+2 into SP from ALU
             o_add_sb_0_6 = 1;
             o_add_sb_7 = 1;
-            o_sb_s = 1;
+            o_sb_s = 1; 
+        end
+        RTI:
+        begin
+            // output S+2 on ABL from ALU
+            o_add_adl = 1;
+            o_adl_abl = 1;
 
-            
+            // output 0x1 on ABH
+            o_0_adh1_7 = 1;
+            o_adh_abh = 1;
+
+            // increment SP with ALU
+            o_adl_add = 1;
+            o_1_addc = 1;
+            o_sums = 1;
+            o_0_add = 1;
+
+            // load PCL into SP temporarily    
+            o_dl_db = 1;
+            o_sb_db = 1;
+            o_sb_s = 1;
         end
         INC_a, DEC_a: 
         begin
@@ -1313,6 +1352,41 @@ begin
             o_db_add = 1;
             o_0_add = 1;
             o_sums = 1;
+        end
+        RTI:
+        begin
+            if (r_clk == 0)
+            begin
+                // phi 1
+            
+                // output S+3 on ABL from ALU
+                o_add_adl = 1;
+                o_adl_abl = 1;
+
+                // output 0x1 on ABH
+                o_0_adh1_7 = 1;
+                o_adh_abh = 1;
+            end
+            else
+            begin
+                // phi 2
+
+                // load return address (lo) into PCL from SP
+                o_s_adl = 1;
+                o_adl_pcl = 1;
+
+                // load return address (hi) into PCH
+                o_dl_adh = 1;
+                o_adh_pch = 1;
+            end
+
+            // read S+3 into SP from ALU
+            o_add_sb_0_6 = 1;
+            o_add_sb_7 = 1;
+            o_sb_s = 1; 
+
+            // start next opcode
+            o_tcu = 0;
         end
         JSR_a:
         begin
@@ -1436,15 +1510,13 @@ begin
             begin
                 // phase 2
 
-
                 // >> read high byte of reset vector at end of phi 2
                 o_dl_adh = 1;
                 o_adh_pch = 1;     
 
                 // >> read low byte of reset into PCL from ADD
                 o_add_adl = 1;
-                o_adl_pcl = 1;   
-
+                o_adl_pcl = 1;
             end
 
             if (r_interrupt == INTERRUPT_NONE)
