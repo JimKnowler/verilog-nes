@@ -123,7 +123,8 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  JMP_a = 8'h4C,     STX_a = 8'h8E,
                  STY_a = 8'h8C,     JSR_a = 8'h20,
                  RTS = 8'h60,       INC_a = 8'hEE,
-                 DEC_a = 8'hCE,     RTI = 8'h40;
+                 DEC_a = 8'hCE,     RTI = 8'h40,
+                 JMP_indirect = 8'h6C;
 
 // RW pin
 localparam RW_READ = 1;
@@ -569,7 +570,7 @@ begin
         LDA_a, LDX_a, LDY_a,
         STA_a, STX_a, STY_a,
         BIT_a, JMP_a, JSR_a,
-        INC_a, DEC_a :
+        INC_a, DEC_a, JMP_indirect:
         begin
             // PC + 1 = Fetch low order effective address byte
 
@@ -661,7 +662,7 @@ begin
         begin
             // high byte - from PCH
             o_pch_adh = 1;
-            o_adh_abh = 1;
+            o_adh_abh = 1; 
 
             // low byte - from PCL
             o_pcl_adl = 1;
@@ -894,7 +895,7 @@ begin
             o_db_n_add = 1;      // inverse of mosfets
             o_sums = 1;
         end
-        JMP_a:
+        JMP_a, JMP_indirect:
         begin
             // PC + 2 = Fetch high order effective address byte
 
@@ -923,7 +924,10 @@ begin
                 o_adh_pch = 1;
             end
 
-            o_tcu = 0;
+            if (w_ir == JMP_a)
+            begin
+                o_tcu = 0;
+            end
         end
         default:
         begin
@@ -1167,6 +1171,32 @@ begin
             end
             endcase
         end
+        JMP_indirect:
+        begin
+            // Indirect address = Fetch low order effective address byte
+
+            // output PCL on ABL
+            o_pcl_adl = 1;
+            o_adl_abl = 1;
+
+            // output PCH on ABH
+            o_pch_adh = 1;
+            o_adh_abh = 1;
+
+            // retain PCL and PCH
+            o_pcl_pcl = 1;
+            o_pch_pch = 1;
+
+            // increment pc
+            o_i_pc = 1;
+
+            // read low byte of address at end of phi 2
+            // into ALU
+            o_dl_db = 1;
+            o_db_add = 1;
+            o_0_add = 1;
+            o_sums = 1;
+        end
         default:
         begin
         end
@@ -1306,6 +1336,37 @@ begin
             begin
             end
             endcase
+        end
+        JMP_indirect:
+        begin
+            // indirect address high - load high order byte of jump address
+
+            if (r_clk == 0)
+            begin
+                // phase 1
+
+                // output PCL on ABL
+                o_pcl_adl = 1;
+                o_adl_abl = 1;
+
+                // output PCH on ABH
+                o_pch_adh = 1;
+                o_adh_abh = 1;
+            end
+            else
+            begin
+                // phase 2
+
+                // load PCL from ALU
+                o_add_adl = 1;
+                o_adl_pcl = 1;
+
+                // load PCH from Data bus
+                o_dl_adh = 1;
+                o_adh_pch = 1;
+            end
+
+            o_tcu = 0;
         end
         default:
         begin

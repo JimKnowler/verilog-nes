@@ -956,7 +956,7 @@ TEST_F(Cpu6502, ShouldImplementJMPabsolute) {
         .port(o_sync).signal("1010010").repeatEachStep(2)
         .port(o_address).signal({0, 1, 1, 2, 3,
                                 jmpTo.byteIndex(),
-                                uint32_t(jmpTo.byteIndex()) + 1})
+                                jmpTo.byteIndex() + 1u})
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({0xFF}).repeat(14)
         .port(o_debug_x).signal({0xFF}).repeat(14)
@@ -964,8 +964,6 @@ TEST_F(Cpu6502, ShouldImplementJMPabsolute) {
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
-
-//
 
 TEST_F(Cpu6502, ShouldImplementJMPindirect) {
     sram.clear(0);
@@ -983,28 +981,34 @@ TEST_F(Cpu6502, ShouldImplementJMPindirect) {
             .NOP()
         .org(0x4321)
         .label("jmp_address")
+        .word("jmp_to")
         .compileTo(sram);
 
     helperSkipResetVector();
 
+    cpu6502::assembler::Address jmpAddress("jmp_address");
+    assembler.lookupAddress(jmpAddress);
+
     cpu6502::assembler::Address jmpTo("jmp_to");
     assembler.lookupAddress(jmpTo);
 
-    testBench.tick(7);
+    testBench.tick(9);
 
     Trace expected = TraceBuilder()
         .port(i_clk).signal("_-")
-                    .repeat(7)
+                    .repeat(9)
         .port(o_rw).signal("11")
-                    .repeat(7)
-        .port(o_sync).signal("1010010").repeatEachStep(2)
+                    .repeat(9)
+        .port(o_sync).signal("101000010").repeatEachStep(2)
         .port(o_address).signal({0, 1, 1, 2, 3,
+                                jmpAddress.byteIndex(),
+                                jmpAddress.byteIndex() + 1u,
                                 jmpTo.byteIndex(),
-                                uint32_t(jmpTo.byteIndex()) + 1})
+                                jmpTo.byteIndex() + 1u})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(14)
-        .port(o_debug_x).signal({0xFF}).repeat(14)
-        .port(o_debug_y).signal({0xFF}).repeat(14);
+        .port(o_debug_ac).signal({0xFF}).repeat(18)
+        .port(o_debug_x).signal({0xFF}).repeat(18)
+        .port(o_debug_y).signal({0xFF}).repeat(18);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
