@@ -12,11 +12,6 @@ namespace cpu6502 {
             Word(const Address& address);
 
             std::vector<uint8_t> serialise() const override;
-
-            void lookupAddresses() override;
-
-        private:
-            Address m_address;
         };
     }
 }

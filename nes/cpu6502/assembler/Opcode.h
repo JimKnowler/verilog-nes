@@ -87,9 +87,7 @@ namespace cpu6502 {
             uint32_t m_addressingMode;
 
             uint8_t m_immediate;
-            Address m_absolute;
-            Address m_relative;
-            Address m_indirect;
+            Address m_address;
 
             // position of this opcode in SRAM
             uint16_t m_byteIndex;

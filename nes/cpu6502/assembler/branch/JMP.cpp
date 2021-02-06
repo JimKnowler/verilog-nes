@@ -14,12 +14,12 @@ OPCODE_IMPL(JMP, {
 
     if (isAbsolute()) {
         bytes.push_back(OPCODE_ABSOLUTE);
-        bytes.push_back(m_absolute.lo());
-        bytes.push_back(m_absolute.hi());
+        bytes.push_back(m_address.lo());
+        bytes.push_back(m_address.hi());
     } else {
         bytes.push_back(OPCODE_INDIRECT);
-        bytes.push_back(m_indirect.lo());
-        bytes.push_back(m_indirect.hi());
+        bytes.push_back(m_address.lo());
+        bytes.push_back(m_address.hi());
     }
 
     return bytes;

@@ -17,8 +17,8 @@ OPCODE_IMPL(LDA, {
         bytes.push_back(m_immediate);
     } else if (isAbsolute()) {
         bytes.push_back(OPCODE_ABSOLUTE);
-        bytes.push_back(m_absolute.lo());
-        bytes.push_back(m_absolute.hi());
+        bytes.push_back(m_address.lo());
+        bytes.push_back(m_address.hi());
     }
 
     return bytes;

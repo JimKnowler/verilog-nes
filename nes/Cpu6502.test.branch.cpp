@@ -936,6 +936,7 @@ TEST_F(Cpu6502, ShouldImplementJMPabsolute) {
             .NOP()
             .NOP()
             .NOP()
+        .org(0x2345)
         .label("jmp_to")
             .NOP()
         .compileTo(sram);
@@ -964,3 +965,46 @@ TEST_F(Cpu6502, ShouldImplementJMPabsolute) {
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
+//
+
+TEST_F(Cpu6502, ShouldImplementJMPindirect) {
+    sram.clear(0);
+
+    Assembler assembler;
+    assembler
+        .label("start")
+            .NOP()
+            .JMP().indirect("jmp_address")
+            .NOP()
+            .NOP()
+            .NOP()
+        .org(0x1234)
+        .label("jmp_to")
+            .NOP()
+        .org(0x4321)
+        .label("jmp_address")
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    cpu6502::assembler::Address jmpTo("jmp_to");
+    assembler.lookupAddress(jmpTo);
+
+    testBench.tick(7);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(7)
+        .port(o_rw).signal("11")
+                    .repeat(7)
+        .port(o_sync).signal("1010010").repeatEachStep(2)
+        .port(o_address).signal({0, 1, 1, 2, 3,
+                                jmpTo.byteIndex(),
+                                uint32_t(jmpTo.byteIndex()) + 1})
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({0xFF}).repeat(14)
+        .port(o_debug_x).signal({0xFF}).repeat(14)
+        .port(o_debug_y).signal({0xFF}).repeat(14);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}

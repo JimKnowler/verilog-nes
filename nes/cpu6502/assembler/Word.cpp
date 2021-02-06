@@ -13,10 +13,4 @@ namespace cpu6502 { namespace assembler {
 
         return bytes;        
     }
-
-    void Word::lookupAddresses() {
-        Opcode::lookupAddresses();
-
-        m_assembler->lookupAddress(m_address);
-    }
 }}

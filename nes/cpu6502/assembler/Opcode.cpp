@@ -28,7 +28,7 @@ namespace cpu6502 { namespace assembler {
 
     Opcode& Opcode::absolute(const Address& address) {
         m_addressingMode |= kAbsolute;
-        m_absolute = address;
+        m_address = address;
 
         return *this;
     }
@@ -41,20 +41,20 @@ namespace cpu6502 { namespace assembler {
 
     Opcode& Opcode::relative(const Address& address) {
         m_addressingMode |= kRelative;
-        m_relative = address;
+        m_address = address;
 
         return *this;
     }
 
     Opcode& Opcode::indirect(const Address& address) {
         m_addressingMode |= kIndirect;
-        m_indirect = address;
+        m_address = address;
         
         return *this;
     }
 
     uint8_t Opcode::offset() const {
-        uint8_t offset = uint8_t(m_relative.byteIndex() - (m_byteIndex + 2));
+        uint8_t offset = uint8_t(m_address.byteIndex() - (m_byteIndex + 2));
 
         return offset;
     }
@@ -103,9 +103,7 @@ namespace cpu6502 { namespace assembler {
     }
 
     void Opcode::lookupAddresses() {
-        m_assembler->lookupAddress(m_absolute);
-        m_assembler->lookupAddress(m_relative);
-        m_assembler->lookupAddress(m_indirect);
+        m_assembler->lookupAddress(m_address);
     }
 
 } // assembler
