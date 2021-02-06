@@ -94,6 +94,12 @@ begin
     r_clk <= i_clk;
 end
 
+// PHI 1 and PHI 2 clock phases
+wire w_phi1;
+wire w_phi2;
+assign w_phi1 = (r_clk == 0);
+assign w_phi2 = (r_clk == 1);
+
 // Opcodes
 localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  INX = 8'hE8,       INY = 8'hC8,
@@ -176,6 +182,120 @@ end
 wire [7:0] w_ir;
 assign w_ir = (r_interrupt == INTERRUPT_NONE) ? i_ir : BRK;
 
+/* verilator lint_off UNDRIVEN */
+function void retain_pch;
+/* verilator lint_on UNDRIVEN */
+input i_value;
+begin
+    o_pch_pch = i_value;
+end
+endfunction
+
+function void retain_pcl(input i_value);
+begin
+    o_pcl_pcl = i_value;
+end
+endfunction
+
+function void retain_pc(input i_value);
+begin
+    retain_pch(i_value);
+    retain_pcl(i_value);
+end
+endfunction
+
+function void output_pch_on_abh(input i_value);
+begin
+    o_pch_adh = i_value;
+    o_adh_abh = i_value;
+end
+endfunction
+
+function void output_pcl_on_abl(input i_value);
+begin
+    o_pcl_adl = i_value;
+    o_adl_abl = i_value;
+end
+endfunction
+
+function void output_add_on_abl(input i_value);
+begin
+    o_add_adl = i_value;
+    o_adl_abl = i_value;
+end
+endfunction
+
+function void load_s_from_add(input i_value);
+begin
+    o_add_sb_0_6 = i_value;
+    o_add_sb_7 = i_value;
+    o_sb_s = i_value;
+end
+endfunction
+
+function void load_pcl_from_add(input i_value);
+begin
+    o_add_adl = i_value;
+    o_adl_pcl = i_value;
+end
+endfunction
+
+function void output_s_on_abl(input i_value);
+begin
+    o_s_adl = i_value;
+    o_adl_abl = i_value;
+end
+endfunction
+
+function void output_1_on_abh(input i_value);
+begin
+    o_0_adh1_7 = i_value;
+    o_adh_abh = i_value;
+end
+endfunction
+
+function void load_pch_from_dl(input i_value);
+begin
+    o_dl_adh = i_value;
+    o_adh_pch = i_value;    
+end
+endfunction
+
+function void output_dl_on_abh(input value);
+begin
+    o_dl_adh = value;
+    o_adh_abh = value;
+end
+endfunction
+
+function void load_pcl_from_s(input i_value);
+begin
+    o_s_adl = i_value;
+    o_adl_pcl = i_value;
+end
+endfunction
+
+function void load_p_from_db(input i_value);
+begin
+    o_db0_c = i_value;
+    o_db1_z = i_value;
+    o_db2_i = i_value;
+    o_db3_d = i_value;
+    o_db4_b = i_value;
+    o_db6_v = i_value;
+    o_db7_n = i_value;
+end
+endfunction
+
+function void load_add_from_dl(input i_value);
+begin
+    o_dl_db = i_value;
+    o_db_add = i_value;
+    o_0_add = i_value;
+    o_sums = i_value;
+end
+endfunction
+
 always @(*)
 begin
     // default TCU to increment at next clock tick
@@ -248,18 +368,9 @@ begin
     begin        
         // fetch
 
-        
-        // output PCL on ABL
-        o_pcl_adl = 1;
-        o_adl_abl = 1;
-
-        // output PCH on ABH
-        o_pch_adh = 1;
-        o_adh_abh = 1;
-
-        // retain PCL and PCH
-        o_pcl_pcl = 1;
-        o_pch_pch = 1;
+        output_pcl_on_abl(1);
+        output_pch_on_abh(1);
+        retain_pc(1);
 
         // increment PC for T1
         o_i_pc = 1;
@@ -301,10 +412,7 @@ begin
         end
         PHA, PHP: begin
             // store modified SP from ALU in S
-            o_add_sb_0_6 = 1;
-            o_add_sb_7 = 1;
-
-            o_sb_s = 1;
+            load_s_from_add(1);
         end
         BIT_a: begin
             // output AND result from ALU to DB via SB
@@ -324,17 +432,9 @@ begin
         case (w_ir)
         BRK, PHA, PHP, PLA, PLP, RTI: 
         begin
-            // retain PCL and PCH
-            o_pcl_pcl = 1;
-            o_pch_pch = 1;
-            
-            // output PCL on ABL
-            o_pcl_adl = 1;
-            o_adl_abl = 1;
-
-            // output PCH on ABH
-            o_pch_adh = 1;
-            o_adh_abh = 1;
+            retain_pc(1);
+            output_pch_on_abh(1);
+            output_pcl_on_abl(1);
 
             case (w_ir)
             PLA, PLP: begin
@@ -352,17 +452,9 @@ begin
         end
         SEC, CLC, SEI, CLI, CLV:
         begin
-            // high byte - from PCH
-            o_pch_adh = 1;
-            o_adh_abh = 1;
-
-            // low byte - from PCL
-            o_pcl_adl = 1;
-            o_adl_abl = 1;
-
-            // retain PCL and PCH
-            o_pcl_pcl = 1;
-            o_pch_pch = 1;
+            output_pch_on_abh(1);
+            output_pcl_on_abl(1);
+            retain_pc(1);
 
             case (w_ir)
             SEC, CLC: o_ir5_c = 1; // read C from IR5
@@ -378,17 +470,9 @@ begin
         INX, INY, DEX, DEY,
         LSR_A, ASL_A, ROL_A, ROR_A:
         begin
-            // high byte - from PCH
-            o_pch_adh = 1;
-            o_adh_abh = 1;
-
-            // low byte - from PCL
-            o_pcl_adl = 1;
-            o_adl_abl = 1;
-
-            // retain PCL and PCH
-            o_pcl_pcl = 1;
-            o_pch_pch = 1;
+            output_pch_on_abh(1);
+            output_pcl_on_abl(1);
+            retain_pc(1);
 
             // output register to input register A via SB
             case (w_ir)
@@ -450,17 +534,9 @@ begin
         end
         LDA_i, LDX_i, LDY_i:
         begin
-            // output PCL on ABL
-            o_pcl_adl = 1;
-            o_adl_abl = 1;
-
-            // output PCH on ABH
-            o_pch_adh = 1;
-            o_adh_abh = 1;
-
-            // retain PCL and PCH
-            o_pcl_pcl = 1;
-            o_pch_pch = 1;
+            output_pcl_on_abl(1);
+            output_pch_on_abh(1);
+            retain_pc(1);
 
             // increment PC for next T0
             o_i_pc = 1;
@@ -487,17 +563,9 @@ begin
         AND_i, EOR_i, ORA_i, ADC_i, SBC_i,
         CMP_i, CPX_i, CPY_i:
         begin
-            // output PCL on ABL
-            o_pcl_adl = 1;
-            o_adl_abl = 1;
-
-            // output PCH on ABH
-            o_pch_adh = 1;
-            o_adh_abh = 1;
-
-            // retain PCL and PCH
-            o_pcl_pcl = 1;
-            o_pch_pch = 1;
+            output_pch_on_abh(1);
+            output_pcl_on_abl(1);
+            retain_pc(1);
 
             // increment PC for next T0
             o_i_pc = 1;
@@ -572,51 +640,23 @@ begin
         BIT_a, JMP_a, JSR_a,
         INC_a, DEC_a, JMP_indirect:
         begin
-            // PC + 1 = Fetch low order effective address byte
-
-            // output PCL on ABL
-            o_pcl_adl = 1;
-            o_adl_abl = 1;
-
-            // output PCH on ABH
-            o_pch_adh = 1;
-            o_adh_abh = 1;
-
-            // retain PCL and PCH
-            o_pcl_pcl = 1;
-            o_pch_pch = 1;
+            output_pch_on_abh(1);
+            output_pcl_on_abl(1);
+            retain_pc(1);
 
             // increment PC for T5
             o_i_pc = 1;
 
-            // read low byte of address at end of phi 2
-            // into ALU
-            o_dl_db = 1;
-            o_db_add = 1;
-            o_0_add = 1;
-            o_sums = 1;
+            load_add_from_dl(1);        // address lo
         end
         RTS: begin
-            // output PCL on ABL
-            o_pcl_adl = 1;
-            o_adl_abl = 1;
-
-            // output PCH on ABH
-            o_pch_adh = 1;
-            o_adh_abh = 1;
+            output_pch_on_abh(1);
+            output_pcl_on_abl(1);
         end
         TAX, TAY, TXA, TYA, TXS, TSX: begin
-            // high byte - from PCH
-            o_pch_adh = 1;
-            o_adh_abh = 1;
-
-            // low byte - from PCL
-            o_pcl_adl = 1;
-            o_adl_abl = 1;
-
-            // retain PCL and PCH
-            o_pcl_pcl = 1;
-            o_pch_pch = 1;
+            output_pch_on_abh(1);
+            output_pcl_on_abl(1);
+            retain_pc(1);
 
             case (w_ir)
             TAX: begin
@@ -660,34 +700,18 @@ begin
         end
         NOP:
         begin
-            // high byte - from PCH
-            o_pch_adh = 1;
-            o_adh_abh = 1; 
-
-            // low byte - from PCL
-            o_pcl_adl = 1;
-            o_adl_abl = 1;
-
-            // retain PCL and PCH
-            o_pcl_pcl = 1;
-            o_pch_pch = 1;
+            output_pch_on_abh(1);
+            output_pcl_on_abl(1);
+            retain_pc(1);
 
             // next opcode
             o_tcu = 0;
         end
         BCC, BCS, BEQ, BNE, BMI, BPL, BVC, BVS: 
         begin
-            // high byte - from PCH
-            o_pch_adh = 1;
-            o_adh_abh = 1;
-
-            // low byte - from PCL
-            o_pcl_adl = 1;
-            o_adl_abl = 1;
-
-            // retain PCL and PCH
-            o_pcl_pcl = 1;
-            o_pch_pch = 1;
+            output_pch_on_abh(1);
+            output_pcl_on_abl(1);
+            retain_pc(1);
 
             if ( ((i_p[C] == 0) && (w_ir == BCC)) ||
                  ((i_p[C] == 1) && (w_ir == BCS)) ||
@@ -732,16 +756,9 @@ begin
         case (w_ir)
         BCC, BCS, BEQ, BNE, BMI, BPL, BVC, BVS:
         begin
-            // high byte - from PCH
-            o_pch_adh = 1;
-            o_adh_abh = 1;
-
-            // low byte - from ALU
-            o_add_adl = 1;
-            o_adl_abl = 1;
-
-            // retain PCH
-            o_pch_pch = 1;
+            output_pch_on_abh(1);
+            output_add_on_abl(1);
+            retain_pch(1);
 
             // load PCL from ALU
             o_adl_pcl = 1;
@@ -769,37 +786,22 @@ begin
         end
         JSR_a:
         begin
-            // retain PCL and PCH (PC + 2)
-            o_pcl_pcl = 1;
-            o_pch_pch = 1;
+            retain_pc(1);           // PC + 2
 
-            // output S on ABL
-            o_s_adl = 1;
-            o_adl_abl = 1;
-
-            // output 0x1 on ABH
-            o_0_adh1_7 = 1;
-            o_adh_abh = 1;
+            output_s_on_abl(1);
+            output_1_on_abh(1);
 
             // load SP into ADD
             o_adl_add = 1;
             o_sums = 1;
             o_0_add = 1;
 
-            // load ADD (subroutine address lo) into SP
-            o_add_sb_0_6 = 1;
-            o_add_sb_7 = 1;
-            o_sb_s = 1;
+            load_s_from_add(1);
         end
         RTS, RTI:
         begin
-            // output S on ABL
-            o_s_adl = 1;
-            o_adl_abl = 1;
-
-            // output 0x1 on ABH
-            o_0_adh1_7 = 1;
-            o_adh_abh = 1;
+            output_s_on_abl(1);
+            output_1_on_abh(1);
 
             // load SP + 1 into ADD
             o_adl_add = 1;
@@ -809,17 +811,10 @@ begin
         end
         BRK, PHA, PHP:
         begin
-            // retain PCL and PCH
-            o_pcl_pcl = 1;
-            o_pch_pch = 1;
+            retain_pc(1);
 
-            // output S on ABL
-            o_s_adl = 1;
-            o_adl_abl = 1;
-
-            // output 0x1 on ABH
-            o_0_adh1_7 = 1;
-            o_adh_abh = 1;
+            output_s_on_abl(1);
+            output_1_on_abh(1);
 
             // use ALU to decrement the SP
             o_adl_add = 1;
@@ -848,22 +843,13 @@ begin
             end
         end
         PLA, PLP: begin
-            // retain PCL and PCH
-            o_pcl_pcl = 1;
-            o_pch_pch = 1;
+            retain_pc(1);
 
-            // output S on ABL
-            o_s_adl = 1;
-            o_adl_abl = 1;
-
-            // output 0x1 on ABH
-            o_0_adh1_7 = 1;
-            o_adh_abh = 1;
+            output_s_on_abl(1);
+            output_1_on_abh(1);
 
             // write SP+1 to S
-            o_add_sb_0_6 = 1;
-            o_add_sb_7 = 1;
-            o_sb_s = 1;
+            load_s_from_add(1);
 
             // retain the value in ADD
             o_sb_add = 1;
@@ -874,19 +860,10 @@ begin
         STA_a, STX_a, STY_a,
         BIT_a, INC_a, DEC_a:
         begin
-            // PC + 2 = Fetch high order effective address byte
-            
-            // retain PCL and PCH
-            o_pcl_pcl = 1;
-            o_pch_pch = 1;
-
-            // output PCL on ABL
-            o_pcl_adl = 1;
-            o_adl_abl = 1;
-
-            // output PCH on ABH
-            o_pch_adh = 1;
-            o_adh_abh = 1;
+            // PC + 2 = Fetch high order effective address byte            
+            retain_pc(1);
+            output_pcl_on_abl(1);
+            output_pch_on_abh(1);
 
             // keep value cached in ADD
             o_add_sb_0_6 = 1;
@@ -899,30 +876,13 @@ begin
         begin
             // PC + 2 = Fetch high order effective address byte
 
-            if (r_clk == 0)
-            begin
-                // phase 1
-
-                // output PCL on ABL
-                o_pcl_adl = 1;
-                o_adl_abl = 1;
-
-                // output PCH on ABH
-                o_pch_adh = 1;
-                o_adh_abh = 1;
-            end
-            else
-            begin
-                // phase 2
-
-                // load PCL from ALU
-                o_add_adl = 1;
-                o_adl_pcl = 1;
-
-                // load PCH from Data bus
-                o_dl_adh = 1;
-                o_adh_pch = 1;
-            end
+            // phase 1
+            output_pch_on_abh(w_phi1);
+            output_pcl_on_abl(w_phi1);
+        
+            // phase 2
+            load_pcl_from_add(w_phi2);            
+            load_pch_from_dl(w_phi2);
 
             if (w_ir == JMP_a)
             begin
@@ -939,16 +899,9 @@ begin
         case (w_ir)
         BCC, BCS, BEQ, BNE, BMI, BPL, BVC, BVS:
         begin
-            // high byte - from ALU
-            o_pch_adh = 1;
-            o_adh_abh = 1;
-
-            // low byte - from PCL
-            o_pcl_adl = 1;
-            o_adl_abl = 1;
-
-            // retain PCL
-            o_pcl_pcl = 1;
+            output_pch_on_abh(1);
+            output_pcl_on_abl(1);
+            retain_pcl(1);
 
             // load PCH from ALU
             o_add_sb_0_6 = 1;
@@ -961,13 +914,9 @@ begin
         end
         BRK:
         begin
-            // output S-1 via ADL on ABL
-            o_add_adl = 1;
-            o_adl_abl = 1;
-
-            // output 0x1 via ADH on ABH
-            o_0_adh1_7 = 1;
-            o_adh_abh = 1;
+            // output S-1
+            output_add_on_abl(1);
+            output_1_on_abh(1);
 
             // use ALU to decrement the SP
             o_adl_add = 1;
@@ -986,28 +935,17 @@ begin
         begin
             // output absolute address ADH, ADL
 
-            // retain PCL and PCH
-            o_pcl_pcl = 1;
-            o_pch_pch = 1;
+            retain_pc(1);
 
             // increment PC for next T0
             o_i_pc = 1;
 
-            // output ADL from ADD on ABL
-            o_add_adl = 1;
-            o_adl_abl = 1;
-
-            // output ADH from DL on ABH
-            o_dl_adh = 1;
-            o_adh_abh = 1;
-
+            output_add_on_abl(1);
+            output_dl_on_abh(1);
+            
             case (w_ir)
             INC_a, DEC_a: begin
-                // load value from DL into ALU
-                o_dl_db = 1;
-                o_db_add = 1;
-                o_sums = 1;
-                o_0_add = 1;
+                load_add_from_dl(1);
             end
             LDA_a, LDX_a, LDY_a: begin
                 // load value from DL into SB via DB
@@ -1073,17 +1011,11 @@ begin
             endcase
         end
         PLA, PLP: begin
-            // retain PCL and PCH
-            o_pcl_pcl = 1;
-            o_pch_pch = 1;
+            retain_pc(1);
 
-            // output SP+1 on ABL
-            o_add_adl = 1;
-            o_adl_abl = 1;
-
-            // output 0x1 on ABH
-            o_0_adh1_7 = 1;
-            o_adh_abh = 1;
+            // output SP+1
+            output_add_on_abl(1);
+            output_1_on_abh(1);
 
             o_tcu = 0;      // start next opcode
 
@@ -1095,32 +1027,18 @@ begin
                 o_sb_ac = 1;
             end
             else if (w_ir == PLP) begin
-                // read DL into P
                 o_dl_db = 1;
-
-                o_db0_c = 1;
-                o_db1_z = 1;
-                o_db2_i = 1;
-                o_db3_d = 1;
-                o_db4_b = 1;
-                o_db6_v = 1;
-                o_db7_n = 1;
+                load_p_from_db(1);
             end
         end
         JSR_a:
         begin
-            // retain PCL and PCH (PC + 2)
-            o_pcl_pcl = 1;
-            o_pch_pch = 1;
+            retain_pc(1);       // PC + 2
 
-            // output S on ABL from ALU
-            o_add_adl = 1;
-            o_adl_abl = 1;
-
-            // output 0x1 on ABH
-            o_0_adh1_7 = 1;
-            o_adh_abh = 1;
-
+            // output S
+            output_add_on_abl(1);
+            output_1_on_abh(1);
+            
             // write PCH to data bus
             o_rw = RW_WRITE;
             o_pch_db = 1;
@@ -1132,13 +1050,9 @@ begin
         end
         RTS, RTI:
         begin
-            // output S+1 on ABL from ALU
-            o_add_adl = 1;
-            o_adl_abl = 1;
-
-            // output 0x1 on ABH
-            o_0_adh1_7 = 1;
-            o_adh_abh = 1;
+            // output S+1
+            output_add_on_abl(1);
+            output_1_on_abh(1);
 
             // increment SP with ALU
             o_adl_add = 1;
@@ -1158,14 +1072,7 @@ begin
             end
             RTI:
             begin
-                // load P from stack
-                o_db0_c = 1;
-                o_db1_z = 1;
-                o_db2_i = 1;
-                o_db3_d = 1;
-                o_db4_b = 1;
-                o_db6_v = 1;
-                o_db7_n = 1;
+                load_p_from_db(1);
             end
             default: begin
             end
@@ -1175,27 +1082,14 @@ begin
         begin
             // Indirect address = Fetch low order effective address byte
 
-            // output PCL on ABL
-            o_pcl_adl = 1;
-            o_adl_abl = 1;
-
-            // output PCH on ABH
-            o_pch_adh = 1;
-            o_adh_abh = 1;
-
-            // retain PCL and PCH
-            o_pcl_pcl = 1;
-            o_pch_pch = 1;
+            output_pch_on_abh(1);
+            output_pcl_on_abl(1);
+            retain_pc(1);
 
             // increment pc
             o_i_pc = 1;
 
-            // read low byte of address at end of phi 2
-            // into ALU
-            o_dl_db = 1;
-            o_db_add = 1;
-            o_0_add = 1;
-            o_sums = 1;
+            load_add_from_dl(1);        // address lo
         end
         default:
         begin
@@ -1207,19 +1101,15 @@ begin
         case (w_ir)
         BRK:
         begin
-            // output s-2 on ABL
-            o_add_adl = 1;
-            o_adl_abl = 1;
+            // output S-2
+            output_add_on_abl(1);
+            output_1_on_abh(1);
 
             // use ALU to decrement the SP
             o_adl_add = 1;
             o_sb_add = 1;       // pre-charge mosfets = -1
             o_sums = 1;
-
-            // output 0x1 on ABH
-            o_0_adh1_7 = 1;
-            o_adh_abh = 1;
-
+        
             if (r_interrupt != INTERRUPT_RESET)
             begin
                 o_rw = RW_WRITE;
@@ -1228,17 +1118,11 @@ begin
         end
         JSR_a:
         begin
-            // retain PCL and PCH
-            o_pcl_pcl = 1;
-            o_pch_pch = 1;
+            retain_pc(1);
 
-            // output S-1 on ABL from ALU
-            o_add_adl = 1;
-            o_adl_abl = 1;
-
-            // output 0x1 on ABH
-            o_0_adh1_7 = 1;
-            o_adh_abh = 1;
+            // output S-1
+            output_add_on_abl(1);
+            output_1_on_abh(1);
 
             // write PCL to data bus
             o_rw = RW_WRITE;
@@ -1251,45 +1135,24 @@ begin
         end
         RTS:
         begin
-            if (r_clk == 0)
-            begin
-                // phi 1
-            
-                // output S+2 on ABL from ALU
-                o_add_adl = 1;
-                o_adl_abl = 1;
-
-                // output 0x1 on ABH
-                o_0_adh1_7 = 1;
-                o_adh_abh = 1;
-            end
-            else
-            begin
-                // phi 2
-
-                // load return address (lo) into PCL from SP
-                o_s_adl = 1;
-                o_adl_pcl = 1;
-
-                // load return address (hi) into PCH
-                o_dl_adh = 1;
-                o_adh_pch = 1;
-            end
-
+            // phi 1
+        
+            // output S+2
+            output_add_on_abl(w_phi1);
+            output_1_on_abh(w_phi1);
+        
+            // phi 2
+            load_pcl_from_s(w_phi2);        // return address lo
+            load_pch_from_dl(w_phi2);       // return address hi
+        
             // read S+2 into SP from ALU
-            o_add_sb_0_6 = 1;
-            o_add_sb_7 = 1;
-            o_sb_s = 1; 
+            load_s_from_add(1);
         end
         RTI:
         begin
-            // output S+2 on ABL from ALU
-            o_add_adl = 1;
-            o_adl_abl = 1;
-
-            // output 0x1 on ABH
-            o_0_adh1_7 = 1;
-            o_adh_abh = 1;
+            // output S+2
+            output_add_on_abl(1);
+            output_1_on_abh(1);
 
             // increment SP with ALU
             o_adl_add = 1;
@@ -1304,9 +1167,7 @@ begin
         end
         INC_a, DEC_a: 
         begin
-            // retain PCL and PCH
-            o_pcl_pcl = 1;
-            o_pch_pch = 1;
+            retain_pc(1);
 
             // note: the correct address is already buffered in ABL/ABH
 
@@ -1341,30 +1202,13 @@ begin
         begin
             // indirect address high - load high order byte of jump address
 
-            if (r_clk == 0)
-            begin
-                // phase 1
+            // phase 1
+            output_pch_on_abh(w_phi1);
+            output_pcl_on_abl(w_phi1);
 
-                // output PCL on ABL
-                o_pcl_adl = 1;
-                o_adl_abl = 1;
-
-                // output PCH on ABH
-                o_pch_adh = 1;
-                o_adh_abh = 1;
-            end
-            else
-            begin
-                // phase 2
-
-                // load PCL from ALU
-                o_add_adl = 1;
-                o_adl_pcl = 1;
-
-                // load PCH from Data bus
-                o_dl_adh = 1;
-                o_adh_pch = 1;
-            end
+            // phase 2
+            load_pcl_from_add(w_phi2);
+            load_pch_from_dl(w_phi2);
 
             o_tcu = 0;
         end
@@ -1381,9 +1225,7 @@ begin
             /// @note currently hardcoded for RESET interrupt
             
             // load sp - 3 into stack register
-            o_add_sb_0_6 = 1;
-            o_add_sb_7 = 1;
-            o_sb_s = 1;
+            load_s_from_add(1);
 
             // >> address of interrupt vector low byte
 
@@ -1407,101 +1249,44 @@ begin
 
             o_adl_abl = 1;
 
-            // >> read low byte of reset vector at end of phi 2
-            //  into ALU
-            o_dl_db = 1;
-            o_db_add = 1;
-            o_0_add = 1;
-            o_sums = 1;
+            load_add_from_dl(1);        // reset vector lo
         end
         RTI:
         begin
-            if (r_clk == 0)
-            begin
-                // phi 1
-            
-                // output S+3 on ABL from ALU
-                o_add_adl = 1;
-                o_adl_abl = 1;
+            // phi 1 - output SP + 3
+            output_add_on_abl(w_phi1);
+            output_1_on_abh(w_phi1);
 
-                // output 0x1 on ABH
-                o_0_adh1_7 = 1;
-                o_adh_abh = 1;
-            end
-            else
-            begin
-                // phi 2
-
-                // load return address (lo) into PCL from SP
-                o_s_adl = 1;
-                o_adl_pcl = 1;
-
-                // load return address (hi) into PCH
-                o_dl_adh = 1;
-                o_adh_pch = 1;
-            end
+            // phi 2
+            load_pcl_from_s(w_phi2);     // return address lo
+            load_pch_from_dl(w_phi2);    // return address hi
 
             // read S+3 into SP from ALU
-            o_add_sb_0_6 = 1;
-            o_add_sb_7 = 1;
-            o_sb_s = 1; 
+            load_s_from_add(1);
 
             // start next opcode
             o_tcu = 0;
         end
         JSR_a:
         begin
-            if (r_clk == 0)
-            begin
-                // phi 1 - output PC + 2 on address
-
-                // retain PCL & PCH
-                o_pcl_pcl = 1;
-                o_pch_pch = 1;
+            // phi 1 - output PC + 2 on address
+            retain_pc(w_phi1);
+            output_pch_on_abh(w_phi1);
+            output_pcl_on_abl(w_phi1);
                 
-                // output PCL on ABL
-                o_pcl_adl = 1;
-                o_adl_abl = 1;
-
-                // output PCH on ABH
-                o_pch_adh = 1;
-                o_adh_abh = 1;    
-            end
-            else
-            begin
-                // phi 2
-
-                // load ABL from cached lo (S?)
-                o_s_adl = 1;
-                o_adl_pcl = 1;
-
-                // load PCH with ADH from DL
-                o_dl_adh = 1;
-                o_adh_pch = 1;
-
-                // read sp-2 from ALU into Stack
-                o_add_sb_0_6 = 1;
-                o_add_sb_7 = 1;
-                o_sb_s = 1;
-
-            end
+            // phi 2
+            load_pcl_from_s(w_phi2);
+            load_pch_from_dl(w_phi2);
+            load_s_from_add(w_phi2);           // SP-2
 
             // start next opcode
             o_tcu = 0;
         end
         RTS:
         begin
-            // retain PCL and PCH
-            o_pcl_pcl = 1;
-            o_pch_pch = 1;
-
-            // output PCL on ABL
-            o_pcl_adl = 1;
-            o_adl_abl = 1;
-
-            // output PCH on ABH
-            o_pch_adh = 1;
-            o_adh_abh = 1;
+            output_pch_on_abh(1);
+            output_pcl_on_abl(1);
+            retain_pc(1);
 
             // increment PC
             o_i_pc = 1;
@@ -1511,9 +1296,7 @@ begin
         end
         INC_a, DEC_a:
         begin
-            // retain PCL and PCH
-            o_pcl_pcl = 1;
-            o_pch_pch = 1;
+            retain_pc(1);
 
             // note: the correct address is already buffered in ABL/ABH
 
@@ -1541,51 +1324,37 @@ begin
         case (w_ir)
         BRK:
         begin
-            /// @note currently hardcoded for RESET interrupt
+            // phase 1
 
-            // >> setting up high byte of reset vector
+            // ABH = 0xff (precharge mosfets)
+            o_adh_abh = w_phi1;
+
+            case (r_interrupt)
+            INTERRUPT_RESET:
+            begin
+                // ABL = 0xfd
+                o_0_adl1 = w_phi1;
+            end
+            default:
+            begin
+                // ABL = 0xFF
+                // (use precharge mosfets without modification)
+            end
+            endcase
             
-            if (r_clk == 0)
-            begin
-                // phase 1
-
-                // ABH = 0xff (precharge mosfets)
-                o_adh_abh = 1;
-
-                case (r_interrupt)
-                INTERRUPT_RESET:
-                begin
-                    // ABL = 0xfd
-                    o_0_adl1 = 1;
-                end
-                default:
-                begin
-                    // ABL = 0xFF
-                    // (use precharge mosfets without modification)
-                end
-                endcase
-                
-                o_adl_abl = 1;
-            end
-            else
-            begin
-                // phase 2
-
-                // >> read high byte of reset vector at end of phi 2
-                o_dl_adh = 1;
-                o_adh_pch = 1;     
-
-                // >> read low byte of reset into PCL from ADD
-                o_add_adl = 1;
-                o_adl_pcl = 1;
-            end
-
+            o_adl_abl = w_phi1;
+            
+            // phase 2
+            load_pch_from_dl(w_phi2);           // reset vector hi
+            load_pcl_from_add(w_phi2);          // reset vector lo
+        
             if (r_interrupt == INTERRUPT_NONE)
             begin
                 // using a BRK instruction
                 o_db4_b = 1;
             end
 
+            // start next opcode
             o_tcu = 0;
         end
         default:
