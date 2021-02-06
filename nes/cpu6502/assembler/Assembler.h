@@ -31,6 +31,7 @@ namespace cpu6502 {
             Assembler& absolute(const Address& address); 
             Assembler& A();
             Assembler& relative(const Address& address);
+            Assembler& indirect(const Address& address);
 
             void compileTo(memory::SRAM& sram);
 

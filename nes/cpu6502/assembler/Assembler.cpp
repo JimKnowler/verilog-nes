@@ -75,6 +75,12 @@ namespace cpu6502 { namespace assembler {
         return *this;
     }
 
+    Assembler& Assembler::indirect(const Address& address) {
+        currentOpcode()->indirect(address);
+
+        return *this;
+    }
+
     void Assembler::compileTo(memory::SRAM& sram) {
         compileFirstPass();
 

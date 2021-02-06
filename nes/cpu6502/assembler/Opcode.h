@@ -44,6 +44,9 @@ namespace cpu6502 {
             /// @brief Relative operand
             Opcode& relative(const Address& address);
 
+            /// @brief Indirect operand
+            Opcode& indirect(const Address& indirect);
+
             /// @brief retrieve relative address as offset to opcode's location in memory
             uint8_t offset() const;
 
@@ -70,7 +73,8 @@ namespace cpu6502 {
                 kImmediate = 1 << 0,
                 kAbsolute = 1 << 1,
                 kAccumulator = 1 << 2,
-                kRelative = 1 << 3
+                kRelative = 1 << 3,
+                kIndirect = 1 << 4
             };
 
             bool isImplied() const;
@@ -78,12 +82,14 @@ namespace cpu6502 {
             bool isImmediate() const;
             bool isAbsolute() const;
             bool isRelative() const;
+            bool isIndirect() const;
 
             uint32_t m_addressingMode;
 
             uint8_t m_immediate;
             Address m_absolute;
             Address m_relative;
+            Address m_indirect;
 
             // position of this opcode in SRAM
             uint16_t m_byteIndex;
