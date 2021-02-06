@@ -182,9 +182,7 @@ end
 wire [7:0] w_ir;
 assign w_ir = (r_interrupt == INTERRUPT_NONE) ? i_ir : BRK;
 
-/* verilator lint_off UNDRIVEN */
 function void retain_pch;
-/* verilator lint_on UNDRIVEN */
 input i_value;
 begin
     o_pch_pch = i_value;
@@ -225,10 +223,16 @@ begin
 end
 endfunction
 
-function void load_s_from_add(input i_value);
+function void output_add_on_sb(input i_value);
 begin
     o_add_sb_0_6 = i_value;
     o_add_sb_7 = i_value;
+end
+endfunction
+
+function void load_s_from_add(input i_value);
+begin
+    output_add_on_sb(i_value);    
     o_sb_s = i_value;
 end
 endfunction
@@ -292,6 +296,56 @@ begin
     o_dl_db = i_value;
     o_db_add = i_value;
     o_0_add = i_value;
+    o_sums = i_value;
+end
+endfunction
+
+function void load_abh_with_ff(input i_value);
+begin
+    // ABH = 0xff (precharge mosfets on adh)
+    o_adh_abh = i_value;
+end
+endfunction
+
+function void increment_pc(input i_value);
+begin
+    o_i_pc = i_value;
+end
+endfunction
+
+function void load_add_from_adl(input i_value);
+begin
+    o_adl_add = i_value;
+    o_sums = i_value;
+    o_0_add = i_value;
+end
+endfunction
+
+function void load_add_from_adl_minus_1(input i_value);
+begin
+    o_adl_add = i_value;
+    o_sb_add = i_value;       // pre-charge mosfets = -1
+    o_sums = i_value;
+end
+endfunction
+
+function void load_add_from_adl_plus_1(input i_value);
+begin
+    load_add_from_adl(i_value);
+    o_1_addc = i_value;
+end
+endfunction
+
+function void next_opcode();
+begin
+    o_tcu = 0;
+end
+endfunction
+
+function void load_add_from_sb(input i_value);
+begin
+    o_sb_add = i_value;
+    o_db_n_add = i_value;      // 0 (= inverse of mosfets)
     o_sums = i_value;
 end
 endfunction
@@ -371,9 +425,7 @@ begin
         output_pcl_on_abl(1);
         output_pch_on_abh(1);
         retain_pc(1);
-
-        // increment PC for T1
-        o_i_pc = 1;
+        increment_pc(1);
 
         // finish previous opcode
         case (w_ir)
@@ -382,9 +434,7 @@ begin
         AND_i, EOR_i, ORA_i,
         ADC_i, SBC_i,
         CMP_i, CPX_i, CPY_i: begin
-            // output value from ALU to SB
-            o_add_sb_0_6 = 1;
-            o_add_sb_7 = 1;
+            output_add_on_sb(1);
 
             // load from SB into register
             case (w_ir)
@@ -416,8 +466,7 @@ begin
         end
         BIT_a: begin
             // output AND result from ALU to DB via SB
-            o_add_sb_0_6 = 1;
-            o_add_sb_7 = 1;
+            output_add_on_sb(1);
             o_sb_db = 1;
 
             // set Z if ALU result on DB is zero
@@ -440,10 +489,8 @@ begin
             PLA, PLP: begin
                 // use ALU to increment the SP
                 o_s_sb = 1;
-                o_sb_add = 1;
-                o_db_n_add = 1;
+                load_add_from_sb(1);
                 o_1_addc = 1;
-                o_sums = 1;
             end
             default: begin
                 
@@ -464,8 +511,7 @@ begin
             end
             endcase
 
-            // start next instruction
-            o_tcu = 0;
+            next_opcode();
         end
         INX, INY, DEX, DEY,
         LSR_A, ASL_A, ROL_A, ROR_A:
@@ -529,17 +575,14 @@ begin
             end
             endcase
 
-            // end of opcode
-            o_tcu = 0;
+            next_opcode();
         end
         LDA_i, LDX_i, LDY_i:
         begin
             output_pcl_on_abl(1);
             output_pch_on_abh(1);
             retain_pc(1);
-
-            // increment PC for next T0
-            o_i_pc = 1;
+            increment_pc(1);
 
             // input DL into SB via DB
             o_dl_db = 1;
@@ -557,8 +600,7 @@ begin
             o_dbz_z = 1;
             o_db7_n = 1;
 
-            // end of opcode
-            o_tcu = 0;
+            next_opcode();
         end
         AND_i, EOR_i, ORA_i, ADC_i, SBC_i,
         CMP_i, CPX_i, CPY_i:
@@ -566,9 +608,7 @@ begin
             output_pch_on_abh(1);
             output_pcl_on_abl(1);
             retain_pc(1);
-
-            // increment PC for next T0
-            o_i_pc = 1;
+            increment_pc(1);
 
             // load immediate operand into ALU via DB from DL
             o_dl_db = 1;
@@ -632,8 +672,7 @@ begin
             end
             endcase
 
-            // end of opcode
-            o_tcu = 0;
+            next_opcode();
         end
         LDA_a, LDX_a, LDY_a,
         STA_a, STX_a, STY_a,
@@ -643,9 +682,7 @@ begin
             output_pch_on_abh(1);
             output_pcl_on_abl(1);
             retain_pc(1);
-
-            // increment PC for T5
-            o_i_pc = 1;
+            increment_pc(1);
 
             load_add_from_dl(1);        // address lo
         end
@@ -695,17 +732,14 @@ begin
                 o_db7_n = 1;
             end
             
-            // start next opcode 
-            o_tcu = 0;
+            next_opcode();
         end
         NOP:
         begin
             output_pch_on_abh(1);
             output_pcl_on_abl(1);
             retain_pc(1);
-
-            // next opcode
-            o_tcu = 0;
+            next_opcode();
         end
         BCC, BCS, BEQ, BNE, BMI, BPL, BVC, BVS: 
         begin
@@ -738,11 +772,8 @@ begin
             end
             else
             begin
-                // increment PC for T0 next instruction
-                o_i_pc = 1;
-
-                // start next instruction
-                o_tcu = 0;
+                increment_pc(1);
+                next_opcode();
             end
         end
         default:
@@ -780,8 +811,7 @@ begin
             end
             else
             begin
-                // start next instruction
-                o_tcu = 0;
+                next_opcode();
             end
         end
         JSR_a:
@@ -791,10 +821,7 @@ begin
             output_s_on_abl(1);
             output_1_on_abh(1);
 
-            // load SP into ADD
-            o_adl_add = 1;
-            o_sums = 1;
-            o_0_add = 1;
+            load_add_from_adl(1);   // SP
 
             load_s_from_add(1);
         end
@@ -802,12 +829,7 @@ begin
         begin
             output_s_on_abl(1);
             output_1_on_abh(1);
-
-            // load SP + 1 into ADD
-            o_adl_add = 1;
-            o_1_addc = 1;
-            o_sums = 1;
-            o_0_add = 1;
+            load_add_from_adl_plus_1(1);        // SP + 1
         end
         BRK, PHA, PHP:
         begin
@@ -816,22 +838,19 @@ begin
             output_s_on_abl(1);
             output_1_on_abh(1);
 
-            // use ALU to decrement the SP
-            o_adl_add = 1;
-            o_sb_add = 1;       // pre-charge mosfets = -1
-            o_sums = 1;
+            load_add_from_adl_minus_1(1);       // SP - 1
 
             if (w_ir == PHA)
             begin
                 o_rw = RW_WRITE;
-                o_tcu = 0;      // start next opcode
                 o_ac_db = 1;
+                next_opcode();
             end
             else if (w_ir == PHP)
             begin
                 o_rw = RW_WRITE;
-                o_tcu = 0;      // start next opcode
                 o_p_db = 1;
+                next_opcode();
             end
             else if (w_ir == BRK)
             begin
@@ -852,9 +871,7 @@ begin
             load_s_from_add(1);
 
             // retain the value in ADD
-            o_sb_add = 1;
-            o_db_n_add = 1;
-            o_sums = 1;
+            load_add_from_sb(1);
         end
         LDA_a, LDX_a, LDY_a,
         STA_a, STX_a, STY_a,
@@ -866,11 +883,8 @@ begin
             output_pch_on_abh(1);
 
             // keep value cached in ADD
-            o_add_sb_0_6 = 1;
-            o_add_sb_7 = 1;
-            o_sb_add = 1;
-            o_db_n_add = 1;      // inverse of mosfets
-            o_sums = 1;
+            output_add_on_sb(1);
+            load_add_from_sb(1);
         end
         JMP_a, JMP_indirect:
         begin
@@ -886,7 +900,7 @@ begin
 
             if (w_ir == JMP_a)
             begin
-                o_tcu = 0;
+                next_opcode();
             end
         end
         default:
@@ -904,13 +918,11 @@ begin
             retain_pcl(1);
 
             // load PCH from ALU
-            o_add_sb_0_6 = 1;
-            o_add_sb_7 = 1;
+            output_add_on_sb(1);
             o_sb_adh = 1;
             o_adh_pch = 1;
         
-            // start next instruction
-            o_tcu = 0;
+            next_opcode();
         end
         BRK:
         begin
@@ -918,10 +930,7 @@ begin
             output_add_on_abl(1);
             output_1_on_abh(1);
 
-            // use ALU to decrement the SP
-            o_adl_add = 1;
-            o_sb_add = 1;       // pre-charge mosfets = -1
-            o_sums = 1;
+            load_add_from_adl_minus_1(1);       // SP -1
 
             if (r_interrupt != INTERRUPT_RESET)
             begin
@@ -936,9 +945,7 @@ begin
             // output absolute address ADH, ADL
 
             retain_pc(1);
-
-            // increment PC for next T0
-            o_i_pc = 1;
+            increment_pc(1);
 
             output_add_on_abl(1);
             output_dl_on_abh(1);
@@ -1005,8 +1012,7 @@ begin
             INC_a, DEC_a: begin
             end
             default: begin
-                // start next opcode
-                o_tcu = 0;
+                next_opcode();
             end
             endcase
         end
@@ -1017,7 +1023,7 @@ begin
             output_add_on_abl(1);
             output_1_on_abh(1);
 
-            o_tcu = 0;      // start next opcode
+            next_opcode();
 
             if (w_ir == PLA) begin
                 // read DL into AC
@@ -1043,10 +1049,7 @@ begin
             o_rw = RW_WRITE;
             o_pch_db = 1;
 
-            // decrement SP with ALU
-            o_adl_add = 1;
-            o_sums = 1;
-            o_sb_add = 1;       // 0xff == -1
+            load_add_from_adl_minus_1(1);       // SP - 1
         end
         RTS, RTI:
         begin
@@ -1054,11 +1057,7 @@ begin
             output_add_on_abl(1);
             output_1_on_abh(1);
 
-            // increment SP with ALU
-            o_adl_add = 1;
-            o_1_addc = 1;
-            o_sums = 1;
-            o_0_add = 1;
+            load_add_from_adl_plus_1(1);       // SP + 1
 
             // load from SP+1
             o_dl_db = 1;
@@ -1085,9 +1084,7 @@ begin
             output_pch_on_abh(1);
             output_pcl_on_abl(1);
             retain_pc(1);
-
-            // increment pc
-            o_i_pc = 1;
+            increment_pc(1);
 
             load_add_from_dl(1);        // address lo
         end
@@ -1105,10 +1102,7 @@ begin
             output_add_on_abl(1);
             output_1_on_abh(1);
 
-            // use ALU to decrement the SP
-            o_adl_add = 1;
-            o_sb_add = 1;       // pre-charge mosfets = -1
-            o_sums = 1;
+            load_add_from_adl_minus_1(1);      // S-3
         
             if (r_interrupt != INTERRUPT_RESET)
             begin
@@ -1128,10 +1122,7 @@ begin
             o_rw = RW_WRITE;
             o_pcl_db = 1;
 
-            // decrement SP with ALU
-            o_adl_add = 1;
-            o_sums = 1;
-            o_sb_add = 1;       // 0xff == -1
+            load_add_from_adl_minus_1(1);       // S-2
         end
         RTS:
         begin
@@ -1154,11 +1145,7 @@ begin
             output_add_on_abl(1);
             output_1_on_abh(1);
 
-            // increment SP with ALU
-            o_adl_add = 1;
-            o_1_addc = 1;
-            o_sums = 1;
-            o_0_add = 1;
+            load_add_from_adl_plus_1(1);        // SP + 3
 
             // load PCL into SP temporarily    
             o_dl_db = 1;
@@ -1173,8 +1160,7 @@ begin
 
             // write from ALU
             o_rw = RW_WRITE;
-            o_add_sb_0_6 = 1;
-            o_add_sb_7 = 1;
+            output_add_on_sb(1);
             o_sb_db = 1;
 
             case (w_ir)
@@ -1210,7 +1196,7 @@ begin
             load_pcl_from_add(w_phi2);
             load_pch_from_dl(w_phi2);
 
-            o_tcu = 0;
+            next_opcode();
         end
         default:
         begin
@@ -1221,18 +1207,12 @@ begin
     begin
         case (w_ir)
         BRK:
-        begin
-            /// @note currently hardcoded for RESET interrupt
+        begin           
+            load_s_from_add(1);     // SP - 3
+
+            // address of interrupt vector low byte
+            load_abh_with_ff(1);
             
-            // load sp - 3 into stack register
-            load_s_from_add(1);
-
-            // >> address of interrupt vector low byte
-
-            // ABH = 0xff
-            o_adh_abh = 1;
-
-            // ABL
             case (r_interrupt)
             INTERRUPT_RESET:
             begin
@@ -1264,8 +1244,7 @@ begin
             // read S+3 into SP from ALU
             load_s_from_add(1);
 
-            // start next opcode
-            o_tcu = 0;
+            next_opcode();
         end
         JSR_a:
         begin
@@ -1279,20 +1258,16 @@ begin
             load_pch_from_dl(w_phi2);
             load_s_from_add(w_phi2);           // SP-2
 
-            // start next opcode
-            o_tcu = 0;
+            next_opcode();
         end
         RTS:
         begin
             output_pch_on_abh(1);
             output_pcl_on_abl(1);
             retain_pc(1);
+            increment_pc(1);
 
-            // increment PC
-            o_i_pc = 1;
-
-            // start next opcode
-            o_tcu = 0;
+            next_opcode();
         end
         INC_a, DEC_a:
         begin
@@ -1302,16 +1277,14 @@ begin
 
             // write from ALU
             o_rw = RW_WRITE;
-            o_add_sb_0_6 = 1;
-            o_add_sb_7 = 1;
+            output_add_on_sb(1);
             o_sb_db = 1;
 
             // load Z and N from DB
             o_dbz_z = 1;
             o_db7_n = 1;
 
-            // start next opcode
-            o_tcu = 0;
+            next_opcode();
         end
         default:
         begin
@@ -1325,9 +1298,7 @@ begin
         BRK:
         begin
             // phase 1
-
-            // ABH = 0xff (precharge mosfets)
-            o_adh_abh = w_phi1;
+            load_abh_with_ff(w_phi1);
 
             case (r_interrupt)
             INTERRUPT_RESET:
@@ -1354,8 +1325,7 @@ begin
                 o_db4_b = 1;
             end
 
-            // start next opcode
-            o_tcu = 0;
+            next_opcode();
         end
         default:
         begin
