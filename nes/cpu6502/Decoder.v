@@ -134,7 +134,9 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  CMP_a = 8'hCD,     CPX_a = 8'hEC,
                  CPY_a = 8'hCC,     ADC_a = 8'h6D,
                  SBC_a = 8'hED,     AND_a = 8'h2D,
-                 EOR_a = 8'h4D,     ORA_a = 8'h0D;
+                 EOR_a = 8'h4D,     ORA_a = 8'h0D,
+                 ASL_a = 8'h0E,     LSR_a = 8'h4E,
+                 ROL_a = 8'h2E,     ROR_a = 8'h6E;
 
 // RW pin
 localparam RW_READ = 1;
@@ -708,7 +710,8 @@ begin
         INC_a, DEC_a, JMP_indirect,
         CMP_a, CPX_a, CPY_a,
         ADC_a, SBC_a,
-        AND_a, EOR_a, ORA_a:
+        AND_a, EOR_a, ORA_a,
+        ASL_a, LSR_a, ROL_a, ROR_a:
         begin
             output_pch_on_abh(1);
             output_pcl_on_abl(1);
@@ -909,7 +912,8 @@ begin
         BIT_a, INC_a, DEC_a,
         CMP_a, CPX_a, CPY_a,
         ADC_a, SBC_a,
-        AND_a, EOR_a, ORA_a:
+        AND_a, EOR_a, ORA_a,
+        ASL_a, LSR_a, ROL_a, ROR_a:
         begin
             // PC + 2 = Fetch high order effective address byte            
             retain_pc(1);
@@ -1051,7 +1055,8 @@ begin
 
         LDA_a, LDX_a, LDY_a,
         STA_a, STX_a, STY_a,
-        BIT_a, INC_a, DEC_a:
+        BIT_a, INC_a, DEC_a,
+        ASL_a, LSR_a, ROL_a, ROR_a:
         begin
             // output absolute address ADH, ADL
 
@@ -1062,7 +1067,7 @@ begin
             output_dl_on_abh(1);
             
             case (w_ir)
-            INC_a, DEC_a: begin
+            INC_a, DEC_a, ASL_a, LSR_a, ROL_a, ROR_a: begin
                 load_add_from_dl(1);
             end
             LDA_a, LDX_a, LDY_a: begin
@@ -1118,7 +1123,7 @@ begin
             endcase
 
             case (w_ir)
-            INC_a, DEC_a: begin
+            INC_a, DEC_a, ASL_a, LSR_a, ROL_a, ROR_a: begin
             end
             default: begin
                 next_opcode();
@@ -1254,7 +1259,7 @@ begin
 
             load_s_from_dl(1);                  // stash PCL temporarily
         end
-        INC_a, DEC_a: 
+        INC_a, DEC_a, ASL_a, LSR_a, ROL_a, ROR_a: 
         begin
             retain_pc(1);
 
@@ -1281,8 +1286,37 @@ begin
                 o_sums = 1;
                 o_adl_add = 1;  // 0xFF from precharge mosfets
             end
+            LSR_a, ROR_a: begin
+                o_sb_add = 1;
+
+                o_srs = 1;
+
+                // load carry flag during the calculation
+                o_acr_c = 1;
+            end
+            ASL_a, ROL_a: begin
+                o_sb_add = 1;
+
+                // load accumulator into both A and B registers
+                o_db_add = 1;
+
+                // sum
+                o_sums = 1;
+
+                // load carry into status register
+                o_acr_c = 1;
+            end
             default:
             begin
+            end
+            endcase
+
+            case (w_ir)
+            ROR_a, ROL_a: begin
+                // use CARRY flag to drive CARRY_IN on accumulator
+                o_1_addc = i_p[C];
+            end
+            default: begin
             end
             endcase
         end
@@ -1371,7 +1405,7 @@ begin
 
             next_opcode();
         end
-        INC_a, DEC_a:
+        INC_a, DEC_a, ASL_a, LSR_a, ROL_a, ROR_a:
         begin
             retain_pc(1);
 

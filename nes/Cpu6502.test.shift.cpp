@@ -402,3 +402,276 @@ TEST_F(Cpu6502, ShouldImplementROLaccumulatorWithCarryInProcessorStatus) {
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
+
+TEST_F(Cpu6502, ShouldImplementLSRabsolute) {
+    const uint16_t kTestAddress = 0x5678;
+    const uint8_t kTestData = 0x93;
+
+    TestAbsolute<LSR> testAbsolute = {
+        .address = kTestAddress,
+        .data = kTestData,
+        .expected = kTestData >> 1
+    };
+
+    helperTestReadModifyWrite(testAbsolute);    
+}
+
+TEST_F(Cpu6502, ShouldImplementLSRabsoluteProcessorStatus) {
+    const std::map<uint8_t, uint8_t> testCases = {
+        {1, Z | C},
+        {2, 0},
+        {3, C},
+        {0, Z},
+        {0xFF, C}
+    };
+
+    for (auto& testCase : testCases) {
+        const uint8_t kTestData = testCase.first;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+            .LSR().absolute("data")
+            .NOP()
+        .org(0x2345)
+        .label("data")
+        .byte(kTestData)
+        .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(8);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementASLabsolute) {
+    const uint16_t kTestAddress = 0x5678;
+    const uint8_t kTestData = 0x93;
+
+    TestAbsolute<ASL> testAbsolute = {
+        .address = kTestAddress,
+        .data = kTestData,
+        .expected = (kTestData << 1) & 0xff
+    };
+
+    helperTestReadModifyWrite(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementASLabsoluteProcessorStatus) {
+    const std::map<uint8_t, uint8_t> testCases = {
+        {0, Z},
+        {1, 0},
+        {0x40, N},
+        {0xff, C|N},
+        {0x80, C|Z}
+    };
+
+    for (auto& testCase : testCases) {
+        const uint8_t kTestData = testCase.first;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+            .ASL().absolute("data")
+            .NOP()
+        .org(0x2345)
+        .label("data")
+        .byte(kTestData)
+        .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(8);
+
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementRORabsolute) {
+    const uint16_t kTestAddress = 0x5678;
+    const uint8_t kTestData = 0x93;
+
+    TestAbsolute<ROR> testAbsolute = {
+        .address = kTestAddress,
+        .data = kTestData,
+        .expected = kTestData >> 1
+    };
+
+    helperTestReadModifyWrite(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementRORabsoluteProcessorStatus) {
+    const std::map<uint8_t, uint8_t> testCases = {
+        {1, Z | C},
+        {2, 0},
+        {3, C},
+        {0, Z},
+        {0xFF, C}
+    };
+
+    for (auto& testCase : testCases) {
+        const uint8_t kTestData = testCase.first;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+            .ROR().absolute("data")
+            .NOP()
+        .org(0x2345)
+        .label("data")
+        .byte(kTestData)
+        .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(8);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementROLabsolute) {
+    const uint16_t kTestAddress = 0x5678;
+    const uint8_t kTestData = 0x93;
+
+    TestAbsolute<ROL> testAbsolute = {
+        .address = kTestAddress,
+        .data = kTestData,
+        .expected = (kTestData << 1) & 0xff
+    };
+
+    helperTestReadModifyWrite(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementROLabsoluteProcessorStatus) {
+    const std::map<uint8_t, uint8_t> testCases = {
+        {0, Z},
+        {1, 0},
+        {0x40, N},
+        {0xff, C|N},
+        {0x80, C|Z}
+    };
+
+    for (auto& testCase : testCases) {
+        const uint8_t kTestData = testCase.first;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+            .ROL().absolute("data")
+            .NOP()
+        .org(0x2345)
+        .label("data")
+        .byte(kTestData)
+        .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(8);
+
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementRORabsoluteWithCarryIn) {
+    const uint16_t kTestAddress = 0x5678;
+    const uint8_t kTestData = 0x93;
+
+    TestAbsolute<ROR> testAbsolute = {
+        .address = kTestAddress,
+        .data = kTestData,
+        .expected = 0x80 | (kTestData >> 1),
+
+        .presetCarry = true
+    };
+
+    helperTestReadModifyWrite(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementRORabsoluteWithCarryInProcessorStatus) {
+    const std::map<uint8_t, uint8_t> testCases = {
+        {1, C | N},
+        {2, N},
+        {3, C | N},
+        {0, N},
+        {0xFF, C | N}
+    };
+
+    for (auto& testCase : testCases) {
+        const uint8_t kTestData = testCase.first;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+            .SEC()
+            .ROR().absolute("data")
+            .NOP()
+        .org(0x2345)
+        .label("data")
+        .byte(kTestData)
+        .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(10);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementROLabsoluteWithCarryIn) {
+    const uint16_t kTestAddress = 0x5678;
+    const uint8_t kTestData = 0x93;
+
+    TestAbsolute<ROL> testAbsolute = {
+        .address = kTestAddress,
+        .data = kTestData,
+        .expected = ((kTestData << 1) + 1) & 0xff,
+
+        .presetCarry = true
+    };
+
+    helperTestReadModifyWrite(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementROLabsoluteWithCarryInProcessorStatus) {
+    const std::map<uint8_t, uint8_t> testCases = {
+        {0, 0},
+        {1, 0},
+        {0x40, N},
+        {0xff, C|N},
+        {0x80, C}
+    };
+
+    for (auto& testCase : testCases) {
+        const uint8_t kTestData = testCase.first;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+            .SEC()
+            .ROL().absolute("data")
+            .NOP()
+        .org(0x2345)
+        .label("data")
+        .byte(kTestData)
+        .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(10);
+
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}

@@ -29,7 +29,7 @@ public:
     Cpu6502TestBench testBench;
     SRAM sram;
 
-    template <class T>
+    template <class OPCODE>
     struct TestAbsolute {
         uint16_t address;
         uint8_t data;
@@ -43,13 +43,15 @@ public:
         uint8_t preloadValue;
     };
 
-    template <class T>
-    void helperTestInternalExecutionOnMemoryData(const TestAbsolute<T>& test);
+    template <class OPCODE>
+    void helperTestInternalExecutionOnMemoryData(const TestAbsolute<OPCODE>& test);
     
+    template <class OPCODE>
+    void helperTestReadModifyWrite(const TestAbsolute<OPCODE>& test);
 };
 
-template <class T>
-void Cpu6502::helperTestInternalExecutionOnMemoryData(const TestAbsolute<T>& test) {
+template <class OPCODE>
+void Cpu6502::helperTestInternalExecutionOnMemoryData(const TestAbsolute<OPCODE>& test) {
     sram.clear(0);
     
     Assembler assembler;
@@ -67,7 +69,7 @@ void Cpu6502::helperTestInternalExecutionOnMemoryData(const TestAbsolute<T>& tes
     }
 
     assembler
-        .addOpcode(std::make_unique<T>()).absolute(test.address)
+        .addOpcode(std::make_unique<OPCODE>()).absolute(test.address)
         .NOP()
         .compileTo(sram);
 
@@ -133,4 +135,69 @@ void Cpu6502::helperTestInternalExecutionOnMemoryData(const TestAbsolute<T>& tes
     Trace expected = traceBuilder;
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+template <class OPCODE>
+void Cpu6502::helperTestReadModifyWrite(const TestAbsolute<OPCODE>& test) {
+    sram.clear(0);
+
+    Assembler assembler;
+
+    if (test.presetCarry) {
+        assembler.SEC();
+    }
+
+    assembler
+            .addOpcode(std::make_unique<OPCODE>()).absolute(test.address)
+            .NOP()
+        .org(test.address)
+        .byte(test.data)
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    uint16_t pc = 0;
+
+    if (test.presetCarry) {
+        testBench.tick(2);
+    
+        pc += 1;
+    }
+
+    testBench.trace.clear();
+    testBench.tick(8);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(8)
+        .port(o_rw).signal("11110011")
+                    .repeatEachStep(2)
+        .port(o_sync).signal("10000010").repeatEachStep(2)
+        .port(o_data).signal({0}).repeat(9)
+                     .signal({test.data}).repeat(2)
+                     .signal({test.expected}).repeat(2)
+                     .signal({0}).repeat(3)
+        .port(o_address).signal({
+                            // <OPCODE>
+                            pc,
+                            pc + 1u,
+                            pc + 2u,
+                            test.address,
+                            test.address,
+                            test.address,
+                            // NOP
+                            pc + 3u,
+                            pc + 4u
+                        })
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({0xFF})
+                        .repeat(16)
+        .port(o_debug_x).signal({0xFF})
+                        .repeat(16)
+        .port(o_debug_y).signal({0xFF})
+                        .repeat(16);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+
+    EXPECT_EQ(test.expected, sram.read(test.address));
 }
