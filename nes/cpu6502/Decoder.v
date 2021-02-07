@@ -350,6 +350,29 @@ begin
 end
 endfunction
 
+function void load_z_n_from_db(input i_value);
+begin
+    o_db7_n = i_value;
+    o_dbz_z = i_value;
+end
+endfunction
+
+function void load_s_from_dl(input i_value);
+begin
+    o_dl_db = i_value;
+    o_sb_db = i_value;
+    o_sb_s = i_value;
+end
+endfunction
+
+function void load_ac_from_dl(input i_value);
+begin
+    o_dl_db = i_value;
+    o_sb_db = i_value;
+    o_sb_ac = i_value;
+end
+endfunction
+
 always @(*)
 begin
     // default TCU to increment at next clock tick
@@ -421,7 +444,6 @@ begin
     0:  // T0
     begin        
         // fetch
-
         output_pcl_on_abl(1);
         output_pch_on_abh(1);
         retain_pc(1);
@@ -455,10 +477,8 @@ begin
             end
             endcase
             
-            // load Z & N status flags from SB via DB
             o_sb_db = 1;
-            o_db7_n = 1;
-            o_dbz_z = 1;
+            load_z_n_from_db(1);
         end
         PHA, PHP: begin
             // store modified SP from ALU in S
@@ -596,9 +616,7 @@ begin
             end
             endcase
 
-            // load Z and N from DB
-            o_dbz_z = 1;
-            o_db7_n = 1;
+            load_z_n_from_db(1);
 
             next_opcode();
         end
@@ -728,8 +746,7 @@ begin
             if (w_ir != TXS)
             begin
                 o_sb_db = 1;
-                o_dbz_z = 1;
-                o_db7_n = 1;
+                load_z_n_from_db(1);
             end
             
             next_opcode();
@@ -769,6 +786,7 @@ begin
                 o_dl_db = 1;
                 o_sb_db = 1;
                 o_sb_add = 1;
+
             end
             else
             begin
@@ -967,9 +985,7 @@ begin
                 end
                 endcase
 
-                // load Z and N from DB
-                o_dbz_z = 1;
-                o_db7_n = 1;
+                load_z_n_from_db(1);
             end
             STA_a: begin
                 // write value from AC
@@ -1026,11 +1042,7 @@ begin
             next_opcode();
 
             if (w_ir == PLA) begin
-                // read DL into AC
-                o_dl_db = 1;
-                
-                o_sb_db = 1;
-                o_sb_ac = 1;
+                load_ac_from_dl(1);
             end
             else if (w_ir == PLP) begin
                 o_dl_db = 1;
@@ -1147,10 +1159,7 @@ begin
 
             load_add_from_adl_plus_1(1);        // SP + 3
 
-            // load PCL into SP temporarily    
-            o_dl_db = 1;
-            o_sb_db = 1;
-            o_sb_s = 1;
+            load_s_from_dl(1);                  // stash PCL temporarily
         end
         INC_a, DEC_a: 
         begin
@@ -1273,17 +1282,11 @@ begin
         begin
             retain_pc(1);
 
-            // note: the correct address is already buffered in ABL/ABH
-
             // write from ALU
             o_rw = RW_WRITE;
             output_add_on_sb(1);
             o_sb_db = 1;
-
-            // load Z and N from DB
-            o_dbz_z = 1;
-            o_db7_n = 1;
-
+            load_z_n_from_db(1);
             next_opcode();
         end
         default:
