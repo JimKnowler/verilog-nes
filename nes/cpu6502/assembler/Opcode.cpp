@@ -60,9 +60,34 @@ namespace cpu6502 { namespace assembler {
     }
 
     std::vector<uint8_t> Opcode::serialise() const {
-        assert(!"should be implemented by sub class");
+        assert(supportsAddressingMode());
 
-        return std::vector<uint8_t>();
+        auto it = m_addressingModes.find(m_addressingMode);
+        uint8_t opcode = it->second;
+
+        std::vector<uint8_t> bytes;
+        bytes.push_back(opcode);
+
+        switch (m_addressingMode) {
+            case kImplied:
+            case kAccumulator:
+                break;
+            case kImmediate:
+                bytes.push_back(m_immediate);
+                break;
+            case kAbsolute:
+            case kIndirect:
+                bytes.push_back(m_address.lo());
+                bytes.push_back(m_address.hi());
+                break;
+            case kRelative:
+                bytes.push_back(offset());
+                break;
+            default:
+                assert(!"unknown addressing mode");
+        }
+
+        return bytes;
     }
 
     Opcode::operator uint8_t() const {
@@ -91,6 +116,14 @@ namespace cpu6502 { namespace assembler {
 
     bool Opcode::isIndirect() const {
         return (m_addressingMode == kIndirect);
+    }
+
+    bool Opcode::supportsAddressingMode() const {
+        return m_addressingModes.find(m_addressingMode) != m_addressingModes.end();
+    }
+
+    void Opcode::addAddressingMode(uint32_t addressingMode, uint8_t opcode) {
+        m_addressingModes[addressingMode] = opcode;
     }
 
     uint16_t Opcode::setByteIndex(uint16_t byteIndex) {

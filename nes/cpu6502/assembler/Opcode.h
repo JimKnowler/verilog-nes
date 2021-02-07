@@ -2,18 +2,19 @@
 
 #include <vector>
 #include <cstdint>
+#include <map>
 
 #include "Address.h"
 
 #define OPCODE_DEFN(_opcode) \
     class _opcode : public Opcode { \
         public: \
-            std::vector<uint8_t> serialise() const override; \
+            _opcode(); \
     }
 
 #define OPCODE_IMPL(_opcode, _implementation) \
     namespace cpu6502 { namespace assembler { \
-        std::vector<uint8_t> _opcode::serialise() const \
+        _opcode::_opcode() \
         _implementation \
     }}
 
@@ -51,7 +52,6 @@ namespace cpu6502 {
             uint8_t offset() const;
 
             /// @brief Serialise the opcode to a byte stream
-            /// @note Must be implemented in sub-classes
             virtual std::vector<uint8_t> serialise() const;
 
             // cast to uint8_t opcode
@@ -77,6 +77,8 @@ namespace cpu6502 {
                 kIndirect = 1 << 4
             };
 
+            typedef std::map<uint32_t, uint8_t> AddressingModes;
+
             bool isImplied() const;
             bool isAccumulator() const;
             bool isImmediate() const;
@@ -84,7 +86,12 @@ namespace cpu6502 {
             bool isRelative() const;
             bool isIndirect() const;
 
+            bool supportsAddressingMode() const;
+            void addAddressingMode(uint32_t addressingMode, uint8_t opcode);
+
             uint32_t m_addressingMode;
+
+            AddressingModes m_addressingModes;
 
             uint8_t m_immediate;
             Address m_address;
