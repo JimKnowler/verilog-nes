@@ -202,3 +202,155 @@ TEST_F(Cpu6502, ShouldImplementORAimmediateProcessorStatus) {
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
+
+TEST_F(Cpu6502, ShouldImplementANDabsolute) {
+    const uint8_t kTestDataA = 0b10110011;
+    const uint8_t kTestDataM = 0b10010110;
+
+    TestAbsolute<AND> testAbsolute = {
+        .address = 0x5678,
+        .data = kTestDataM,
+        .port = o_debug_ac,
+        .expected = kTestDataA & kTestDataM,
+        .expectedTick = 5,
+
+        .preloadPort = &o_debug_ac,
+        .preloadValue = kTestDataA
+    };
+    
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementANDabsoluteProcessorStatus) {
+    const std::map<std::pair<uint8_t,uint8_t>, uint8_t> testCases = {
+        {{1, 0}, Z},
+        {{0x80, 0x80}, N},
+        {{1, 1}, 0}
+    };
+
+    for (auto& testCase : testCases) {
+        const uint8_t kTestDataA = testCase.first.first;
+        const uint8_t kTestDataM = testCase.first.second;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+            .LDA().immediate(kTestDataA)
+            .AND().absolute("M")
+            .NOP()
+            .org(0x678A)
+            .label("M")
+            .byte(kTestDataM)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(8);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementEORabsolute) {
+    const uint8_t kTestDataA = 0b10110011;
+    const uint8_t kTestDataM = 0b10010110;
+
+    TestAbsolute<EOR> testAbsolute = {
+        .address = 0x5678,
+        .data = kTestDataM,
+        .port = o_debug_ac,
+        .expected = kTestDataA ^ kTestDataM,
+        .expectedTick = 5,
+
+        .preloadPort = &o_debug_ac,
+        .preloadValue = kTestDataA
+    };
+
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementEORabsoluteProcessorStatus) {
+    const std::map<std::pair<uint8_t,uint8_t>, uint8_t> testCases = {
+        {{0, 0}, Z},
+        {{0xff, 0xff}, Z},
+        {{0x80, 0x40}, N},
+        {{0x0, 0x80}, N},
+        {{0x01, 0x02}, 0}
+    };
+
+    for (auto& testCase : testCases) {
+        const uint8_t kTestDataA = testCase.first.first;
+        const uint8_t kTestDataM = testCase.first.second;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+                .LDA().immediate(kTestDataA)
+                .EOR().absolute("M")
+                .NOP()
+            .org(0x678A)
+            .label("M")
+            .byte(kTestDataM)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(8);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementORAabsolute) {
+    const uint8_t kTestDataA = 0b10110011;
+    const uint8_t kTestDataM = 0b10010110;
+
+    TestAbsolute<ORA> testAbsolute = {
+        .address = 0x5678,
+        .data = kTestDataM,
+        .port = o_debug_ac,
+        .expected = kTestDataA | kTestDataM,
+        .expectedTick = 5,
+
+        .preloadPort = &o_debug_ac,
+        .preloadValue = kTestDataA
+    };
+
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementORAabsoluteProcessorStatus) {
+    const std::map<std::pair<uint8_t,uint8_t>, uint8_t> testCases = {
+        {{0, 0}, Z},
+        {{0xff, 0xff}, N},
+        {{0x80, 0x40}, N},
+        {{0x0, 0x80}, N},
+        {{0x01, 0x02}, 0},
+        {{0x00, 0x01}, 0}
+    };
+
+    for (auto& testCase : testCases) {
+        const uint8_t kTestDataA = testCase.first.first;
+        const uint8_t kTestDataM = testCase.first.second;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+                .LDA().immediate(kTestDataA)
+                .ORA().absolute("M")
+                .NOP()
+            .org(0x678A)
+            .label("M")
+            .byte(kTestDataM)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(8);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}

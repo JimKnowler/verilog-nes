@@ -244,3 +244,150 @@ TEST_F(Cpu6502, ShouldImplementBITabsoluteProcessorStatus) {
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
+
+TEST_F(Cpu6502, ShouldImplementCMPabsolute) {
+    const uint8_t A = 0x45;
+    const uint8_t M = 0x22;
+
+    TestAbsolute<CMP> testAbsolute = {
+        .address = 0x5678,
+        .data = M,
+        .port = o_debug_ac,
+        .expected = A,
+
+        .preloadPort = &o_debug_ac,
+        .preloadValue = A
+    };
+    
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementCMPabsoluteProcessorStatus) {
+    const std::map<std::pair<uint8_t, uint8_t>, uint8_t> testCases = {
+        {{0x00, 0x00}, C|Z},
+        {{0x01, 0x00}, C},
+        {{0x80, 0x00}, C|N},
+        {{0x00, 0x01}, N}
+    };
+
+    for (auto& testCase : testCases) {
+        const uint8_t A = testCase.first.first;
+        const uint8_t M = testCase.first.second;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+        
+        sram.clear(0);
+    
+        Assembler()
+                .LDA().immediate(A)
+                .CMP().absolute("compare_to")
+                .NOP()
+            .org(0x4567)
+            .label("compare_to")
+            .byte(M)    
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(8);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementCPXabsolute) {
+    const uint8_t X = 0x45;
+    const uint8_t M = 0x22;
+
+    TestAbsolute<CPX> testAbsolute = {
+        .address = 0x5678,
+        .data = M,
+        .port = o_debug_x,
+        .expected = X,
+
+        .preloadPort = &o_debug_x,
+        .preloadValue = X
+    };
+    
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementCPXabsoluteProcessorStatus) {
+    const std::map<std::pair<uint8_t, uint8_t>, uint8_t> testCases = {
+        {{0x00, 0x00}, C|Z},
+        {{0x01, 0x00}, C},
+        {{0x80, 0x00}, C|N},
+        {{0x00, 0x01}, N}
+    };
+
+    for (auto& testCase : testCases) {
+        const uint8_t X = testCase.first.first;
+        const uint8_t M = testCase.first.second;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+        
+        sram.clear(0);
+    
+        Assembler()
+                .LDX().immediate(X)
+                .CPX().absolute("compare_to")
+                .NOP()
+            .org(0x4567)
+            .label("compare_to")
+            .byte(M)    
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(8);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementCPYabsolute) {
+    const uint8_t Y = 0x45;
+    const uint8_t M = 0x22;
+
+    TestAbsolute<CPY> testAbsolute = {
+        .address = 0x5678,
+        .data = M,
+        .port = o_debug_y,
+        .expected = Y,
+
+        .preloadPort = &o_debug_y,
+        .preloadValue = Y
+    };
+    
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementCPYabsoluteProcessorStatus) {
+    const std::map<std::pair<uint8_t, uint8_t>, uint8_t> testCases = {
+        {{0x00, 0x00}, C|Z},
+        {{0x01, 0x00}, C},
+        {{0x80, 0x00}, C|N},
+        {{0x00, 0x01}, N}
+    };
+
+    for (auto& testCase : testCases) {
+        const uint8_t Y = testCase.first.first;
+        const uint8_t M = testCase.first.second;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+        
+        sram.clear(0);
+    
+        Assembler()
+                .LDY().immediate(Y)
+                .CPY().absolute("compare_to")
+                .NOP()
+            .org(0x4567)
+            .label("compare_to")
+            .byte(M)    
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(8);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}

@@ -35,7 +35,10 @@ public:
         uint8_t data;
         PortDescription port;
         uint8_t expected;
+        uint8_t expectedTick = 4;
         
+        bool presetCarry = false;
+
         PortDescription* preloadPort = nullptr;
         uint8_t preloadValue;
     };
@@ -59,6 +62,10 @@ void Cpu6502::helperTestInternalExecutionOnMemoryData(const TestAbsolute<T>& tes
         assembler.LDY().immediate(test.preloadValue);
     }
 
+    if (test.presetCarry) {
+        assembler.SEC();
+    }
+
     assembler
         .addOpcode(std::make_unique<T>()).absolute(test.address)
         .NOP()
@@ -72,11 +79,17 @@ void Cpu6502::helperTestInternalExecutionOnMemoryData(const TestAbsolute<T>& tes
 
     if (test.preloadPort != nullptr) {
         testBench.tick(2);
-        testBench.trace.clear();
-
-        pc = 2;
+    
+        pc += 2;
     }
 
+    if (test.presetCarry) {
+        testBench.tick(2);
+    
+        pc += 1;
+    }
+
+    testBench.trace.clear();
     testBench.tick(6);
 
     TraceBuilder traceBuilder;
@@ -102,20 +115,18 @@ void Cpu6502::helperTestInternalExecutionOnMemoryData(const TestAbsolute<T>& tes
     };
 
     for (auto& port: ports) {
+        const uint8_t preloadValue = (port == test.preloadPort) ? test.preloadValue : 0xFF;
+
         if (port->id() == test.port.id()) {
             traceBuilder
                 .port(*port)
-                    .signal({0xFF}).repeat(4)
-                    .signal({test.expected}).repeat(2)
+                    .signal({preloadValue}).repeat(test.expectedTick)
+                    .signal({test.expected}).repeat(6 - test.expectedTick)
                     .concat().repeatEachStep(2);
-        } else if (port == test.preloadPort) {
-            traceBuilder
-                .port(*port)
-                    .signal({test.preloadValue}).repeat(12);
         } else {
             traceBuilder
                 .port(*port)
-                    .signal({0xFF}).repeat(12);  
+                    .signal({preloadValue}).repeat(12);  
         }
     }
 

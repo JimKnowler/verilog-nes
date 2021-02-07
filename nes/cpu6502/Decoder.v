@@ -130,7 +130,11 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  STY_a = 8'h8C,     JSR_a = 8'h20,
                  RTS = 8'h60,       INC_a = 8'hEE,
                  DEC_a = 8'hCE,     RTI = 8'h40,
-                 JMP_indirect = 8'h6C;
+                 JMP_indirect = 8'h6C,
+                 CMP_a = 8'hCD,     CPX_a = 8'hEC,
+                 CPY_a = 8'hCC,     ADC_a = 8'h6D,
+                 SBC_a = 8'hED,     AND_a = 8'h2D,
+                 EOR_a = 8'h4D,     ORA_a = 8'h0D;
 
 // RW pin
 localparam RW_READ = 1;
@@ -149,7 +153,6 @@ end
 //    - set to RESET when reset 
 //    - set to IRQ / NMI later when they are used
 //    - reset to NONE when 
-
 
 localparam INTERRUPT_NONE = 0;
 localparam INTERRUPT_RESET = 1;
@@ -455,7 +458,11 @@ begin
         LSR_A, ASL_A, ROL_A, ROR_A,
         AND_i, EOR_i, ORA_i,
         ADC_i, SBC_i,
-        CMP_i, CPX_i, CPY_i: begin
+        CMP_i, CPX_i, CPY_i,
+        AND_a, EOR_a, ORA_a,
+        ADC_a, SBC_a,
+        CMP_a, CPX_a, CPY_a:
+        begin
             output_add_on_sb(1);
 
             // load from SB into register
@@ -470,7 +477,10 @@ begin
             ROL_A, ROR_A,
             AND_i, EOR_i, 
             ORA_i, ADC_i,
-            SBC_i: begin
+            SBC_i,
+            AND_a, EOR_a,
+            ORA_a, ADC_a,
+            SBC_a: begin
                 o_sb_ac = 1;
             end
             default: begin
@@ -695,7 +705,10 @@ begin
         LDA_a, LDX_a, LDY_a,
         STA_a, STX_a, STY_a,
         BIT_a, JMP_a, JSR_a,
-        INC_a, DEC_a, JMP_indirect:
+        INC_a, DEC_a, JMP_indirect,
+        CMP_a, CPX_a, CPY_a,
+        ADC_a, SBC_a,
+        AND_a, EOR_a, ORA_a:
         begin
             output_pch_on_abh(1);
             output_pcl_on_abl(1);
@@ -893,7 +906,10 @@ begin
         end
         LDA_a, LDX_a, LDY_a,
         STA_a, STX_a, STY_a,
-        BIT_a, INC_a, DEC_a:
+        BIT_a, INC_a, DEC_a,
+        CMP_a, CPX_a, CPY_a,
+        ADC_a, SBC_a,
+        AND_a, EOR_a, ORA_a:
         begin
             // PC + 2 = Fetch high order effective address byte            
             retain_pc(1);
@@ -956,6 +972,83 @@ begin
                 o_pcl_db = 1;
             end
         end
+
+        CMP_a, CPX_a, CPY_a,
+        ADC_a, SBC_a,
+        AND_a, EOR_a, ORA_a:
+        begin
+            // output absolute address ADH, ADL
+            retain_pc(1);
+            increment_pc(1);
+            
+            output_add_on_abl(1);
+            output_dl_on_abh(1);
+
+            // load immediate operand into ALU via DB from DL
+            o_dl_db = 1;
+
+            // load register into ALU via SB
+            case (w_ir)
+            CPX_a: o_x_sb = 1;
+            CPY_a: o_y_sb = 1;
+            default: o_ac_sb = 1;
+            endcase
+                
+            o_sb_add = 1;
+
+            case (w_ir)
+            AND_a: begin
+                o_db_add = 1;
+                o_ands = 1;
+            end
+            EOR_a: begin
+                o_db_add = 1;
+                o_eors = 1;
+            end
+            ORA_a: begin
+                o_db_add = 1;
+                o_ors = 1;
+            end
+            ADC_a: begin
+                o_db_add = 1;
+                o_sums = 1;
+
+                // carry in
+                o_1_addc = i_p[C];
+
+                // C + V flags
+                o_acr_c = 1;
+                o_avr_v = 1;
+            end
+            SBC_a: begin
+                o_db_n_add = 1;
+                o_sums = 1;
+                
+                // carry in
+                o_1_addc = ~i_p[C];
+
+                // C + V flags
+                o_acr_c = 1;
+                o_avr_v = 1;
+            end
+            CMP_a, CPX_a, CPY_a: begin
+                // subtraction as 2's complement addition
+                o_db_n_add = 1;
+                o_1_addc = 1;
+
+                o_sums = 1;
+
+                // C + V flags
+                o_acr_c = 1;
+                o_avr_v = 1;
+            end
+            default: begin
+            end
+            endcase
+
+            next_opcode();
+        end
+
         LDA_a, LDX_a, LDY_a,
         STA_a, STX_a, STY_a,
         BIT_a, INC_a, DEC_a:

@@ -362,3 +362,116 @@ TEST_F(Cpu6502, ShouldImplementDECabsoluteProcessorStatus) {
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
+
+TEST_F(Cpu6502, ShouldImplementSBCabsolute) {
+    const uint8_t kTestData1 = 0x45;
+    const uint8_t kTestData2 = 0x22;
+
+    TestAbsolute<SBC> testAbsolute = {
+        .address = 0x5678,
+        .data = kTestData2,
+        .port = o_debug_ac,
+        .expected = kTestData1 - kTestData2,
+        .expectedTick = 5,
+
+        .preloadPort = &o_debug_ac,
+        .preloadValue = kTestData1
+    };
+    
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementSBCabsoluteProcessorStatus) {
+    // TODO: compare these to a real 6502
+    const std::map<std::pair<uint8_t, uint8_t>, uint8_t> testCases = {
+        {{0x00, 0x00}, C|Z},
+        {{0x00, 0x01}, N},
+        {{0x7F, 0x01}, C},      
+        {{0x80, 0x00}, C|N},
+        {{0xFF, 0x01}, C|N},
+        {{0xFF, 0x80}, C}
+    };
+
+    for (auto& testCase : testCases) {
+        const uint8_t kTestData1 = testCase.first.first;
+        const uint8_t kTestData2 = testCase.first.second;
+        
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+                .LDA().immediate(kTestData1)
+                .SBC().absolute("decrement")
+                .NOP()
+            .org(0x678A)
+            .label("decrement")
+            .byte(kTestData2)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(8);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementSBCabsoluteWithCarryIn) {
+    const uint8_t kTestData1 = 0x22;
+    const uint8_t kTestData2 = 0x11;
+
+    TestAbsolute<SBC> testAbsolute = {
+        .address = 0x5678,
+        .data = kTestData2,
+        .port = o_debug_ac,
+        .expected = kTestData1 - kTestData2 - 1,
+        .expectedTick = 5,
+
+        .presetCarry = true,
+
+        .preloadPort = &o_debug_ac,
+        .preloadValue = kTestData1
+    };
+    
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementSBCabsoluteProcessorStatusWithCarryIn) {
+    // todo: compare this to real 6502
+    const std::map<std::pair<uint8_t, uint8_t>, uint8_t> testCases = {
+        {{0x00, 0x00}, N},
+        {{0x00, 0x01}, N},
+        {{0x7F, 0x00}, C},
+        {{0x80, 0x00}, C|V},
+        {{0xFF, 0x00}, C|N},
+        {{0xFF, 0x01}, C|N},
+        {{0xFF, 0x80}, C},
+        {{0xFF, 0x7F}, C|V}
+    };
+
+    for (auto& testCase : testCases) {
+        const uint8_t kTestData1 = testCase.first.first;
+        const uint8_t kTestData2 = testCase.first.second;
+        
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+            .LDA().immediate(kTestData1)
+                .SEC()
+                .SBC().absolute("decrement")
+                .NOP()
+            .org(0x4532)
+            .label("decrement")
+            .byte(kTestData2)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(10);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}

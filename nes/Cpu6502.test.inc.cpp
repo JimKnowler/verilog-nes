@@ -356,3 +356,114 @@ TEST_F(Cpu6502, ShouldImplementINCabsoluteProcessorStatus) {
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
+
+TEST_F(Cpu6502, ShouldImplementADCabsolute) {
+    const uint8_t kTestData1 = 0x42;
+    const uint8_t kTestData2 = 0x22;
+
+    TestAbsolute<ADC> testAbsolute = {
+        .address = 0x5678,
+        .data = kTestData1,
+        .port = o_debug_ac,
+        .expected = kTestData1 + kTestData2,
+        .expectedTick = 5,
+
+        .preloadPort = &o_debug_ac,
+        .preloadValue = kTestData2
+    };
+    
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementADCabsoluteProcessorStatus) {
+    const std::map<std::pair<uint8_t, uint8_t>, uint8_t> testCases = {
+        {{0x00, 0x00}, Z},
+        {{0x00, 0x01}, 0},
+        {{0x7F, 0x01}, N|V},
+        {{0x80, 0x00}, N},
+        {{0xFF, 0x01}, C|Z},
+        {{0xFF, 0x80}, C|V}
+    };
+
+    for (auto& testCase : testCases) {
+        const uint8_t kTestData1 = testCase.first.first;
+        const uint8_t kTestData2 = testCase.first.second;
+        
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+                .LDA().immediate(kTestData1)
+                .ADC().absolute("increment")
+                .NOP()
+            .org(0x678A)
+            .label("increment")
+            .byte(kTestData2)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(8);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementADCabsoluteWithCarryIn) {
+    const uint8_t kTestData1 = 0x22;
+    const uint8_t kTestData2 = 0x31;
+
+    TestAbsolute<ADC> testAbsolute = {
+        .address = 0x5678,
+        .data = kTestData1,
+        .port = o_debug_ac,
+        .expected = kTestData1 + kTestData2 + 1,
+        .expectedTick = 5,
+
+        .presetCarry = true,
+
+        .preloadPort = &o_debug_ac,
+        .preloadValue = kTestData2
+    };
+    
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementADCabsoluteProcessorStatusWithCarryIn) {
+    const std::map<std::pair<uint8_t, uint8_t>, uint8_t> testCases = {
+        {{0x00, 0x00}, 0},
+        {{0x00, 0x01}, 0},
+        {{0x7F, 0x00}, N|V},
+        {{0x80, 0x00}, N},
+        {{0xFF, 0x00}, C|Z},
+        {{0xFF, 0x01}, C},
+        {{0xFF, 0x80}, C|N},
+        {{0xFF, 0x7F}, C}
+    };
+
+    for (auto& testCase : testCases) {
+        const uint8_t kTestData1 = testCase.first.first;
+        const uint8_t kTestData2 = testCase.first.second;
+        
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+                .LDA().immediate(kTestData1)
+                .SEC()
+                .ADC().absolute("increment")
+                .NOP()
+            .org(0x4532)
+            .label("increment")
+            .byte(kTestData2)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(10);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
