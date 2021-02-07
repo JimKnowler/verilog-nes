@@ -21,6 +21,13 @@ namespace cpu6502 { namespace assembler {
 # include "OpcodeList.inl"
 #undef OPCODE
 
+    Assembler& Assembler::addOpcode(std::unique_ptr<Opcode>&& opcode) {
+        m_opcodes.push_back(std::move(opcode));
+        m_opcodes.back()->init(this);
+
+        return *this;
+    }
+
     Assembler& Assembler::label(const char* label) {
         addOpcode(std::make_unique<Label>(label));
 
@@ -154,12 +161,7 @@ namespace cpu6502 { namespace assembler {
 
         sram.write(0, program);
     }
-
-    void Assembler::addOpcode(std::unique_ptr<Opcode>&& opcode) {
-        m_opcodes.push_back(std::move(opcode));
-        m_opcodes.back()->init(this);
-    }
-
+    
     Opcode* Assembler::currentOpcode() {
         assert(!m_opcodes.empty());
 

@@ -21,6 +21,8 @@ namespace cpu6502 {
 # include "OpcodeList.inl"
 #undef OPCODE
 
+            Assembler& addOpcode(std::unique_ptr<Opcode>&& opcode);
+
             Assembler& label(const char* label);
             Assembler& org(uint16_t address);
             Assembler& word(const Address& address);
@@ -37,16 +39,12 @@ namespace cpu6502 {
 
             void registerAddress(const Address& address);
             void lookupAddress(Address& address);
-        
         private:
             Opcode* currentOpcode();
             void compileFirstPass();
             void compileSecondPassTo(memory::SRAM& sram);
 
-            void addOpcode(std::unique_ptr<Opcode>&& opcode);
-
             std::vector<std::unique_ptr<Opcode>> m_opcodes;
-
             std::map<const std::string, uint16_t> m_addressLookup;
         };
     }

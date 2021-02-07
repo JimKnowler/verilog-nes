@@ -195,48 +195,19 @@ TEST_F(Cpu6502, ShouldImplementCPYimmediateProcessorStatus) {
     }
 }
 
-TEST_F(Cpu6502, ShouldImplementBITabsolute) {
-    sram.clear(0);
-    
+TEST_F(Cpu6502, ShouldImplementBITabsolute) { 
     const uint8_t A = 0x23;
     const uint16_t ADDRESS = 0xAABB;
     const uint8_t M = 0x26;
 
-    sram.write(ADDRESS, M);
+    TestAbsolute<BIT> testAbsolute {
+        .address = ADDRESS,
+        .data = M,
+        .preloadPort = &o_debug_ac,
+        .preloadValue = A
+    };
 
-    Assembler()
-        .LDA().immediate(A)
-        .BIT().absolute(ADDRESS)
-        .NOP()
-        .compileTo(sram);
-
-    helperSkipResetVector();
-
-    // skip LDAimmediate
-    testBench.tick(2);
-    testBench.trace.clear();
-
-    // simulate BITabsolute + NOP
-    testBench.tick(6);
-
-    Trace expected = TraceBuilder()
-        .port(i_clk).signal("_-")
-                    .repeat(6)
-        .port(o_rw).signal("11")
-                    .repeat(6)
-        .port(o_sync).signal("100010").repeatEachStep(2)
-        .port(o_address).signal({2, 3, 4, ADDRESS, 5, 6})
-                        .repeatEachStep(2)
-        .port(o_debug_ac).signal({A}).repeat(12)
-        .port(o_debug_x).signal({0xFF}).repeat(12)
-        .port(o_debug_y).signal({0xFF}).repeat(12)
-        .port(o_debug_add)
-                        .signal({0}).repeat(4)
-                        .signal({ADDRESS & 0xff}).repeat(4)
-                        .signal({A & M}).repeat(2)
-                        .signal({0}).repeat(2);
-
-    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
 }
 
 TEST_F(Cpu6502, ShouldImplementBITabsoluteProcessorStatus) {

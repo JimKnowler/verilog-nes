@@ -57,37 +57,17 @@ TEST_F(Cpu6502, ShouldImplementLDAiProcessorStatus) {
 }
 
 TEST_F(Cpu6502, ShouldImplementLDAa) {
-    sram.clear(0);
-    
     const uint16_t kTestAddress = 0x5678;
     const uint8_t kTestData = 0x42;
 
-    Assembler()
-        .LDA().a(kTestAddress)
-        .NOP()
-        .compileTo(sram);
-
-    sram.write(kTestAddress, kTestData);
-
-    helperSkipResetVector();
-
-    testBench.tick(6);
-
-    Trace expected = TraceBuilder()
-        .port(i_clk).signal("_-").repeat(6)
-        .port(o_rw).signal("11").repeat(6)
-        .port(o_sync).signal("100010").repeatEachStep(2)
-        .port(o_address)
-            .signal({0, 1, 2, kTestAddress, 3, 4})
-            .repeatEachStep(2)
-        .port(o_debug_ac)
-            .signal({0xFF}).repeat(4)
-            .signal({kTestData}).repeat(2)
-            .concat().repeatEachStep(2)
-        .port(o_debug_x).signal({0xFF}).repeat(12)
-        .port(o_debug_y).signal({0xFF}).repeat(12);
-
-    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+    TestAbsolute<LDA> testAbsolute = {
+        .address = kTestAddress,
+        .data = kTestData,
+        .port = o_debug_ac,
+        .expected = kTestData
+    };
+    
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
 }
 
 TEST_F(Cpu6502, ShouldImplementLDAaProcessorStatus) {
