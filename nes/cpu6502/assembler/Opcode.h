@@ -48,6 +48,12 @@ namespace cpu6502 {
             /// @brief Indirect operand
             Opcode& indirect(const Address& indirect);
 
+            /// @brief mark as indexed by the X register
+            Opcode& x();
+
+            /// @brief mark as indexed by the Y register
+            Opcode& y();
+
             /// @brief retrieve relative address as offset to opcode's location in memory
             uint8_t offset() const;
 
@@ -74,7 +80,9 @@ namespace cpu6502 {
                 kAbsolute = 1 << 1,
                 kAccumulator = 1 << 2,
                 kRelative = 1 << 3,
-                kIndirect = 1 << 4
+                kIndirect = 1 << 4,
+                kIndexedWithX = 1 << 5,
+                kIndexedWithY = 1 << 6
             };
 
             typedef std::map<uint32_t, uint8_t> AddressingModes;

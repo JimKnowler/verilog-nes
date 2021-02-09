@@ -87,6 +87,18 @@ namespace cpu6502 { namespace assembler {
 
         return *this;
     }
+    
+    Assembler& Assembler::x() {
+        currentOpcode()->x();
+
+        return *this;
+    }
+
+    Assembler& Assembler::y() {
+        currentOpcode()->y();
+
+        return *this;
+    }
 
     void Assembler::compileTo(memory::SRAM& sram) {
         compileFirstPass();

@@ -53,6 +53,18 @@ namespace cpu6502 { namespace assembler {
         return *this;
     }
 
+    Opcode& Opcode::x() {
+        m_addressingMode |= kIndexedWithX;
+
+        return *this;
+    }
+
+    Opcode& Opcode::y() {
+        m_addressingMode |= kIndexedWithY;
+
+        return *this;
+    }
+
     uint8_t Opcode::offset() const {
         uint8_t offset = uint8_t(m_address.byteIndex() - (m_byteIndex + 2));
 
@@ -76,6 +88,8 @@ namespace cpu6502 { namespace assembler {
                 bytes.push_back(m_immediate);
                 break;
             case kAbsolute:
+            case kAbsolute|kIndexedWithX:
+            case kAbsolute|kIndexedWithY:
             case kIndirect:
                 bytes.push_back(m_address.lo());
                 bytes.push_back(m_address.hi());

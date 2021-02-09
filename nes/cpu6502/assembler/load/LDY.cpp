@@ -3,4 +3,5 @@
 OPCODE_IMPL(LDY, {
     addAddressingMode(kImmediate, 0xA0);
     addAddressingMode(kAbsolute, 0xAC);
+    addAddressingMode(kAbsolute|kIndexedWithX, 0xBC);
 });
