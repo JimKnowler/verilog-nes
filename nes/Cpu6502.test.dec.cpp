@@ -1,4 +1,4 @@
-#include "Cpu6502.fixture.h"
+#include "Cpu6502.fixture.hpp"
 
 TEST_F(Cpu6502, ShouldImplementDEX) {
     sram.clear(0);
@@ -333,7 +333,7 @@ TEST_F(Cpu6502, ShouldImplementSBCabsolute) {
         .expectedTick = 5,
 
         .preloadPort = &o_debug_ac,
-        .preloadValue = kTestData1
+        .preloadPortValue = kTestData1
     };
     
     helperTestInternalExecutionOnMemoryData(testAbsolute);
@@ -389,7 +389,7 @@ TEST_F(Cpu6502, ShouldImplementSBCabsoluteWithCarryIn) {
         .presetCarry = true,
 
         .preloadPort = &o_debug_ac,
-        .preloadValue = kTestData1
+        .preloadPortValue = kTestData1
     };
     
     helperTestInternalExecutionOnMemoryData(testAbsolute);

@@ -1,4 +1,4 @@
-#include "Cpu6502.fixture.h"
+#include "Cpu6502.fixture.hpp"
 
 // define CPU6502_VERBOSE to display CPU memory
 //   simulation in TTY

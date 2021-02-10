@@ -1,4 +1,4 @@
-#include "Cpu6502.fixture.h"
+#include "Cpu6502.fixture.hpp"
 
 TEST_F(Cpu6502, ShouldImplementBCCWhenCarrySet) {
     sram.clear(0);

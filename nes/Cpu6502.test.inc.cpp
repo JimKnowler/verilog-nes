@@ -1,4 +1,4 @@
-#include "Cpu6502.fixture.h"
+#include "Cpu6502.fixture.hpp"
 
 TEST_F(Cpu6502, ShouldImplementINX) {
     sram.clear(0);
@@ -327,7 +327,7 @@ TEST_F(Cpu6502, ShouldImplementADCabsolute) {
         .expectedTick = 5,
 
         .preloadPort = &o_debug_ac,
-        .preloadValue = kTestData2
+        .preloadPortValue = kTestData2
     };
     
     helperTestInternalExecutionOnMemoryData(testAbsolute);
@@ -382,7 +382,7 @@ TEST_F(Cpu6502, ShouldImplementADCabsoluteWithCarryIn) {
         .presetCarry = true,
 
         .preloadPort = &o_debug_ac,
-        .preloadValue = kTestData2
+        .preloadPortValue = kTestData2
     };
     
     helperTestInternalExecutionOnMemoryData(testAbsolute);

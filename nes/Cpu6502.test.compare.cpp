@@ -1,4 +1,4 @@
-#include "Cpu6502.fixture.h"
+#include "Cpu6502.fixture.hpp"
 
 TEST_F(Cpu6502, ShouldImplementCMPimmediate) {
     sram.clear(0);
@@ -204,7 +204,7 @@ TEST_F(Cpu6502, ShouldImplementBITabsolute) {
         .address = ADDRESS,
         .data = M,
         .preloadPort = &o_debug_ac,
-        .preloadValue = A
+        .preloadPortValue = A
     };
 
     helperTestInternalExecutionOnMemoryData(testAbsolute);
@@ -256,7 +256,7 @@ TEST_F(Cpu6502, ShouldImplementCMPabsolute) {
         .expected = A,
 
         .preloadPort = &o_debug_ac,
-        .preloadValue = A
+        .preloadPortValue = A
     };
     
     helperTestInternalExecutionOnMemoryData(testAbsolute);
@@ -305,7 +305,7 @@ TEST_F(Cpu6502, ShouldImplementCPXabsolute) {
         .expected = X,
 
         .preloadPort = &o_debug_x,
-        .preloadValue = X
+        .preloadPortValue = X
     };
     
     helperTestInternalExecutionOnMemoryData(testAbsolute);
@@ -354,7 +354,7 @@ TEST_F(Cpu6502, ShouldImplementCPYabsolute) {
         .expected = Y,
 
         .preloadPort = &o_debug_y,
-        .preloadValue = Y
+        .preloadPortValue = Y
     };
     
     helperTestInternalExecutionOnMemoryData(testAbsolute);

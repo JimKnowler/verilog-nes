@@ -1,4 +1,4 @@
-#include "Cpu6502.fixture.h"
+#include "Cpu6502.fixture.hpp"
 
 TEST_F(Cpu6502, ShouldImplementANDimmediate) {
     sram.clear(0);
@@ -215,7 +215,7 @@ TEST_F(Cpu6502, ShouldImplementANDabsolute) {
         .expectedTick = 5,
 
         .preloadPort = &o_debug_ac,
-        .preloadValue = kTestDataA
+        .preloadPortValue = kTestDataA
     };
     
     helperTestInternalExecutionOnMemoryData(testAbsolute);
@@ -264,7 +264,7 @@ TEST_F(Cpu6502, ShouldImplementEORabsolute) {
         .expectedTick = 5,
 
         .preloadPort = &o_debug_ac,
-        .preloadValue = kTestDataA
+        .preloadPortValue = kTestDataA
     };
 
     helperTestInternalExecutionOnMemoryData(testAbsolute);
@@ -315,7 +315,7 @@ TEST_F(Cpu6502, ShouldImplementORAabsolute) {
         .expectedTick = 5,
 
         .preloadPort = &o_debug_ac,
-        .preloadValue = kTestDataA
+        .preloadPortValue = kTestDataA
     };
 
     helperTestInternalExecutionOnMemoryData(testAbsolute);
