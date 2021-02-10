@@ -31,7 +31,6 @@ public:
 
     template <class OPCODE>
     struct TestAbsolute {
-    public:
         uint16_t address;
         uint8_t data;
         PortDescription port;
@@ -54,8 +53,7 @@ public:
     };
 
     template <class OPCODE>
-    struct TestAbsoluteIndexed: public TestAbsolute<OPCODE> {
-    public:
+    struct TestAbsoluteIndexed : public TestAbsolute<OPCODE> {
         IndexRegister   indexRegister;
         uint8_t         preloadIndexRegisterValue;
     };

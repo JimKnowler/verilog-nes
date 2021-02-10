@@ -1,5 +1,30 @@
 #include "Cpu6502.fixture.hpp"
 
+namespace {
+    const std::map<std::pair<uint8_t,uint8_t>, uint8_t> kTestCasesORA = {
+        {{0, 0}, Z},
+        {{0xff, 0xff}, N},
+        {{0x80, 0x40}, N},
+        {{0x0, 0x80}, N},
+        {{0x01, 0x02}, 0},
+        {{0x00, 0x01}, 0}
+    };
+
+    const std::map<std::pair<uint8_t,uint8_t>, uint8_t> kTestCasesAND = {
+        {{1, 0}, Z},
+        {{0x80, 0x80}, N},
+        {{1, 1}, 0}
+    };
+
+    const std::map<std::pair<uint8_t,uint8_t>, uint8_t> kTestCasesEOR = {
+        {{0, 0}, Z},
+        {{0xff, 0xff}, Z},
+        {{0x80, 0x40}, N},
+        {{0x0, 0x80}, N},
+        {{0x01, 0x02}, 0}
+    };
+}
+
 TEST_F(Cpu6502, ShouldImplementANDimmediate) {
     sram.clear(0);
     
@@ -39,13 +64,7 @@ TEST_F(Cpu6502, ShouldImplementANDimmediate) {
 }
 
 TEST_F(Cpu6502, ShouldImplementANDimmediateProcessorStatus) {
-    const std::map<std::pair<uint8_t,uint8_t>, uint8_t> testCases = {
-        {{1, 0}, Z},
-        {{0x80, 0x80}, N},
-        {{1, 1}, 0}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesAND) {
         const uint8_t kTestDataA = testCase.first.first;
         const uint8_t kTestDataI = testCase.first.second;
         const uint8_t kExpectedProcessorStatus = testCase.second;
@@ -105,15 +124,7 @@ TEST_F(Cpu6502, ShouldImplementEORimmediate) {
 }
 
 TEST_F(Cpu6502, ShouldImplementEORimmediateProcessorStatus) {
-    const std::map<std::pair<uint8_t,uint8_t>, uint8_t> testCases = {
-        {{0, 0}, Z},
-        {{0xff, 0xff}, Z},
-        {{0x80, 0x40}, N},
-        {{0x0, 0x80}, N},
-        {{0x01, 0x02}, 0}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesEOR) {
         const uint8_t kTestDataA = testCase.first.first;
         const uint8_t kTestDataI = testCase.first.second;
         const uint8_t kExpectedProcessorStatus = testCase.second;
@@ -173,16 +184,7 @@ TEST_F(Cpu6502, ShouldImplementORAimmediate) {
 }
 
 TEST_F(Cpu6502, ShouldImplementORAimmediateProcessorStatus) {
-    const std::map<std::pair<uint8_t,uint8_t>, uint8_t> testCases = {
-        {{0, 0}, Z},
-        {{0xff, 0xff}, N},
-        {{0x80, 0x40}, N},
-        {{0x0, 0x80}, N},
-        {{0x01, 0x02}, 0},
-        {{0x00, 0x01}, 0}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesORA) {
         const uint8_t kTestDataA = testCase.first.first;
         const uint8_t kTestDataI = testCase.first.second;
         const uint8_t kExpectedProcessorStatus = testCase.second;
@@ -222,13 +224,7 @@ TEST_F(Cpu6502, ShouldImplementANDabsolute) {
 }
 
 TEST_F(Cpu6502, ShouldImplementANDabsoluteProcessorStatus) {
-    const std::map<std::pair<uint8_t,uint8_t>, uint8_t> testCases = {
-        {{1, 0}, Z},
-        {{0x80, 0x80}, N},
-        {{1, 1}, 0}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesAND) {
         const uint8_t kTestDataA = testCase.first.first;
         const uint8_t kTestDataM = testCase.first.second;
         const uint8_t kExpectedProcessorStatus = testCase.second;
@@ -252,6 +248,214 @@ TEST_F(Cpu6502, ShouldImplementANDabsoluteProcessorStatus) {
     }
 }
 
+TEST_F(Cpu6502, ShouldImplementANDabsoluteIndexedWithXWithoutCarry) {
+    const uint8_t kTestDataA = 0b10110011;
+    const uint8_t kTestDataM = 0b10010110;
+
+    TestAbsoluteIndexed<AND> testAbsolute = {
+        {
+            .address = 0x5678,
+            .data = kTestDataM,
+            .port = o_debug_ac,
+            .expected = kTestDataA & kTestDataM,
+            .expectedTick = 5,
+
+            .preloadPort = &o_debug_ac,
+            .preloadPortValue = kTestDataA
+        },
+
+        .indexRegister = kX,
+        .preloadIndexRegisterValue = 5,
+    };
+
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementANDabsoluteIndexedWithXProcessorStatusWithoutCarry) {
+    for (auto& testCase : kTestCasesAND) {
+        const uint8_t kTestDataA = testCase.first.first;
+        const uint8_t kTestDataM = testCase.first.second;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        const uint8_t kX = 3;
+    
+        Assembler()
+                .LDA().immediate(kTestDataA)
+                .LDX().immediate(kX)
+                .AND().absolute("M").x()
+                .NOP()
+            .org(0x678A)
+            .label("M")
+            .org(0x678A + kX)
+            .byte(kTestDataM)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(10);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementANDabsoluteIndexedWithXWithCarry) {
+    const uint8_t kTestDataA = 0b10110011;
+    const uint8_t kTestDataM = 0b10010110;
+
+    TestAbsoluteIndexed<AND> testAbsolute = {
+        {
+            .address = 0x56FE,
+            .data = kTestDataM,
+            .port = o_debug_ac,
+            .expected = kTestDataA & kTestDataM,
+            .expectedTick = 5,
+
+            .preloadPort = &o_debug_ac,
+            .preloadPortValue = kTestDataA,
+        },
+
+        .indexRegister = kX,
+        .preloadIndexRegisterValue = 3
+    };
+
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementANDabsoluteIndexedWithXProcessorStatusWithCarry) {
+    for (auto& testCase : kTestCasesAND) {
+        const uint8_t kTestDataA = testCase.first.first;
+        const uint8_t kTestDataM = testCase.first.second;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+
+        const uint8_t kX = 4;
+        
+        Assembler()
+                .LDA().immediate(kTestDataA)
+                .LDX().immediate(kX)
+                .AND().absolute("M").x()
+                .NOP()
+            .org(0xCDFE)
+            .label("M")
+            .org(0xCDFE + kX)
+            .byte(kTestDataM)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(11);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementANDabsoluteIndexedWithYWithoutCarry) {
+    const uint8_t kTestDataA = 0b10110011;
+    const uint8_t kTestDataM = 0b10010110;
+
+    TestAbsoluteIndexed<AND> testAbsolute = {
+        {
+            .address = 0x5678,
+            .data = kTestDataM,
+            .port = o_debug_ac,
+            .expected = kTestDataA & kTestDataM,
+            .expectedTick = 5,
+
+            .preloadPort = &o_debug_ac,
+            .preloadPortValue = kTestDataA
+        },
+
+        .indexRegister = kY,
+        .preloadIndexRegisterValue = 5,
+    };
+
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementANDabsoluteIndexedWithYProcessorStatusWithoutCarry) {
+    for (auto& testCase : kTestCasesAND) {
+        const uint8_t kTestDataA = testCase.first.first;
+        const uint8_t kTestDataM = testCase.first.second;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        const uint8_t kY = 3;
+    
+        Assembler()
+                .LDA().immediate(kTestDataA)
+                .LDX().immediate(kY)
+                .AND().absolute("M").y()
+                .NOP()
+            .org(0x678A)
+            .label("M")
+            .org(0x678A + kY)
+            .byte(kTestDataM)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(10);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementANDabsoluteIndexedWithYWithCarry) {
+    const uint8_t kTestDataA = 0b10110011;
+    const uint8_t kTestDataM = 0b10010110;
+
+    TestAbsoluteIndexed<AND> testAbsolute = {
+        {
+            .address = 0x56FE,
+            .data = kTestDataM,
+            .port = o_debug_ac,
+            .expected = kTestDataA & kTestDataM,
+            .expectedTick = 5,
+
+            .preloadPort = &o_debug_ac,
+            .preloadPortValue = kTestDataA,
+        },
+
+        .indexRegister = kY,
+        .preloadIndexRegisterValue = 3
+    };
+
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementANDabsoluteIndexedWithYProcessorStatusWithCarry) {
+    for (auto& testCase : kTestCasesAND) {
+        const uint8_t kTestDataA = testCase.first.first;
+        const uint8_t kTestDataM = testCase.first.second;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+
+        const uint8_t kY = 4;
+        
+        Assembler()
+                .LDA().immediate(kTestDataA)
+                .LDY().immediate(kY)
+                .AND().absolute("M").y()
+                .NOP()
+            .org(0xCDFE)
+            .label("M")
+            .org(0xCDFE + kY)
+            .byte(kTestDataM)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(11);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
 TEST_F(Cpu6502, ShouldImplementEORabsolute) {
     const uint8_t kTestDataA = 0b10110011;
     const uint8_t kTestDataM = 0b10010110;
@@ -271,15 +475,7 @@ TEST_F(Cpu6502, ShouldImplementEORabsolute) {
 }
 
 TEST_F(Cpu6502, ShouldImplementEORabsoluteProcessorStatus) {
-    const std::map<std::pair<uint8_t,uint8_t>, uint8_t> testCases = {
-        {{0, 0}, Z},
-        {{0xff, 0xff}, Z},
-        {{0x80, 0x40}, N},
-        {{0x0, 0x80}, N},
-        {{0x01, 0x02}, 0}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesEOR) {
         const uint8_t kTestDataA = testCase.first.first;
         const uint8_t kTestDataM = testCase.first.second;
         const uint8_t kExpectedProcessorStatus = testCase.second;
@@ -303,6 +499,214 @@ TEST_F(Cpu6502, ShouldImplementEORabsoluteProcessorStatus) {
     }
 }
 
+TEST_F(Cpu6502, ShouldImplementEORabsoluteIndexedWithXWithoutCarry) {
+    const uint8_t kTestDataA = 0b10110011;
+    const uint8_t kTestDataM = 0b10010110;
+
+    TestAbsoluteIndexed<EOR> testAbsolute = {
+        {
+            .address = 0x5678,
+            .data = kTestDataM,
+            .port = o_debug_ac,
+            .expected = kTestDataA ^ kTestDataM,
+            .expectedTick = 5,
+
+            .preloadPort = &o_debug_ac,
+            .preloadPortValue = kTestDataA
+        },
+
+        .indexRegister = kX,
+        .preloadIndexRegisterValue = 5,
+    };
+
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementEORabsoluteIndexedWithXProcessorStatusWithoutCarry) {
+    for (auto& testCase : kTestCasesEOR) {
+        const uint8_t kTestDataA = testCase.first.first;
+        const uint8_t kTestDataM = testCase.first.second;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        const uint8_t kX = 3;
+    
+        Assembler()
+                .LDA().immediate(kTestDataA)
+                .LDX().immediate(kX)
+                .EOR().absolute("M").x()
+                .NOP()
+            .org(0x678A)
+            .label("M")
+            .org(0x678A + kX)
+            .byte(kTestDataM)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(10);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementEORabsoluteIndexedWithXWithCarry) {
+    const uint8_t kTestDataA = 0b10110011;
+    const uint8_t kTestDataM = 0b10010110;
+
+    TestAbsoluteIndexed<EOR> testAbsolute = {
+        {
+            .address = 0x56FE,
+            .data = kTestDataM,
+            .port = o_debug_ac,
+            .expected = kTestDataA ^ kTestDataM,
+            .expectedTick = 5,
+
+            .preloadPort = &o_debug_ac,
+            .preloadPortValue = kTestDataA,
+        },
+
+        .indexRegister = kX,
+        .preloadIndexRegisterValue = 3
+    };
+
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementEORabsoluteIndexedWithXProcessorStatusWithCarry) {
+    for (auto& testCase : kTestCasesEOR) {
+        const uint8_t kTestDataA = testCase.first.first;
+        const uint8_t kTestDataM = testCase.first.second;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+
+        const uint8_t kX = 4;
+        
+        Assembler()
+                .LDA().immediate(kTestDataA)
+                .LDX().immediate(kX)
+                .EOR().absolute("M").x()
+                .NOP()
+            .org(0xCDFE)
+            .label("M")
+            .org(0xCDFE + kX)
+            .byte(kTestDataM)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(11);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementEORabsoluteIndexedWithYWithoutCarry) {
+    const uint8_t kTestDataA = 0b10110011;
+    const uint8_t kTestDataM = 0b10010110;
+
+    TestAbsoluteIndexed<EOR> testAbsolute = {
+        {
+            .address = 0x5678,
+            .data = kTestDataM,
+            .port = o_debug_ac,
+            .expected = kTestDataA ^ kTestDataM,
+            .expectedTick = 5,
+
+            .preloadPort = &o_debug_ac,
+            .preloadPortValue = kTestDataA
+        },
+
+        .indexRegister = kY,
+        .preloadIndexRegisterValue = 5,
+    };
+
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementEORabsoluteIndexedWithYProcessorStatusWithoutCarry) {
+    for (auto& testCase : kTestCasesEOR) {
+        const uint8_t kTestDataA = testCase.first.first;
+        const uint8_t kTestDataM = testCase.first.second;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        const uint8_t kY = 3;
+    
+        Assembler()
+                .LDA().immediate(kTestDataA)
+                .LDX().immediate(kY)
+                .EOR().absolute("M").y()
+                .NOP()
+            .org(0x678A)
+            .label("M")
+            .org(0x678A + kY)
+            .byte(kTestDataM)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(10);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementEORabsoluteIndexedWithYWithCarry) {
+    const uint8_t kTestDataA = 0b10110011;
+    const uint8_t kTestDataM = 0b10010110;
+
+    TestAbsoluteIndexed<EOR> testAbsolute = {
+        {
+            .address = 0x56FE,
+            .data = kTestDataM,
+            .port = o_debug_ac,
+            .expected = kTestDataA ^ kTestDataM,
+            .expectedTick = 5,
+
+            .preloadPort = &o_debug_ac,
+            .preloadPortValue = kTestDataA,
+        },
+
+        .indexRegister = kY,
+        .preloadIndexRegisterValue = 3
+    };
+
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementEORabsoluteIndexedWithYProcessorStatusWithCarry) {
+    for (auto& testCase : kTestCasesEOR) {
+        const uint8_t kTestDataA = testCase.first.first;
+        const uint8_t kTestDataM = testCase.first.second;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+
+        const uint8_t kY = 4;
+        
+        Assembler()
+                .LDA().immediate(kTestDataA)
+                .LDY().immediate(kY)
+                .EOR().absolute("M").y()
+                .NOP()
+            .org(0xCDFE)
+            .label("M")
+            .org(0xCDFE + kY)
+            .byte(kTestDataM)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(11);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
 TEST_F(Cpu6502, ShouldImplementORAabsolute) {
     const uint8_t kTestDataA = 0b10110011;
     const uint8_t kTestDataM = 0b10010110;
@@ -322,16 +726,7 @@ TEST_F(Cpu6502, ShouldImplementORAabsolute) {
 }
 
 TEST_F(Cpu6502, ShouldImplementORAabsoluteProcessorStatus) {
-    const std::map<std::pair<uint8_t,uint8_t>, uint8_t> testCases = {
-        {{0, 0}, Z},
-        {{0xff, 0xff}, N},
-        {{0x80, 0x40}, N},
-        {{0x0, 0x80}, N},
-        {{0x01, 0x02}, 0},
-        {{0x00, 0x01}, 0}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesORA) {
         const uint8_t kTestDataA = testCase.first.first;
         const uint8_t kTestDataM = testCase.first.second;
         const uint8_t kExpectedProcessorStatus = testCase.second;
@@ -351,6 +746,215 @@ TEST_F(Cpu6502, ShouldImplementORAabsoluteProcessorStatus) {
         helperSkipResetVector();
 
         testBench.tick(8);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementORAabsoluteIndexedWithXWithoutCarry) {
+    const uint8_t kTestDataA = 0b10110011;
+    const uint8_t kTestDataM = 0b10010110;
+
+    TestAbsoluteIndexed<ORA> testAbsolute = {
+        {
+            .address = 0x5678,
+            .data = kTestDataM,
+            .port = o_debug_ac,
+            .expected = kTestDataA | kTestDataM,
+            .expectedTick = 5,
+
+            .preloadPort = &o_debug_ac,
+            .preloadPortValue = kTestDataA
+        },
+
+        .indexRegister = kX,
+        .preloadIndexRegisterValue = 5,
+    };
+
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementORAabsoluteIndexedWithXProcessorStatusWithoutCarry) {
+    for (auto& testCase : kTestCasesORA) {
+        const uint8_t kTestDataA = testCase.first.first;
+        const uint8_t kTestDataM = testCase.first.second;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        const uint8_t kX = 3;
+    
+        Assembler()
+                .LDA().immediate(kTestDataA)
+                .LDX().immediate(kX)
+                .ORA().absolute("M").x()
+                .NOP()
+            .org(0x678A)
+            .label("M")
+            .org(0x678A + kX)
+            .byte(kTestDataM)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(10);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+
+TEST_F(Cpu6502, ShouldImplementORAabsoluteIndexedWithXWithCarry) {
+    const uint8_t kTestDataA = 0b10110011;
+    const uint8_t kTestDataM = 0b10010110;
+
+    TestAbsoluteIndexed<ORA> testAbsolute = {
+        {
+            .address = 0x56FE,
+            .data = kTestDataM,
+            .port = o_debug_ac,
+            .expected = kTestDataA | kTestDataM,
+            .expectedTick = 5,
+
+            .preloadPort = &o_debug_ac,
+            .preloadPortValue = kTestDataA,
+        },
+
+        .indexRegister = kX,
+        .preloadIndexRegisterValue = 3
+    };
+
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementORAabsoluteIndexedWithXProcessorStatusWithCarry) {
+    for (auto& testCase : kTestCasesORA) {
+        const uint8_t kTestDataA = testCase.first.first;
+        const uint8_t kTestDataM = testCase.first.second;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+
+        const uint8_t kX = 4;
+        
+        Assembler()
+                .LDA().immediate(kTestDataA)
+                .LDX().immediate(kX)
+                .ORA().absolute("M").x()
+                .NOP()
+            .org(0xCDFE)
+            .label("M")
+            .org(0xCDFE + kX)
+            .byte(kTestDataM)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(11);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementORAabsoluteIndexedWithYWithoutCarry) {
+    const uint8_t kTestDataA = 0b10110011;
+    const uint8_t kTestDataM = 0b10010110;
+
+    TestAbsoluteIndexed<ORA> testAbsolute = {
+        {
+            .address = 0x5678,
+            .data = kTestDataM,
+            .port = o_debug_ac,
+            .expected = kTestDataA | kTestDataM,
+            .expectedTick = 5,
+
+            .preloadPort = &o_debug_ac,
+            .preloadPortValue = kTestDataA
+        },
+
+        .indexRegister = kY,
+        .preloadIndexRegisterValue = 5,
+    };
+
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementORAabsoluteIndexedWithYProcessorStatusWithoutCarry) {
+    for (auto& testCase : kTestCasesORA) {
+        const uint8_t kTestDataA = testCase.first.first;
+        const uint8_t kTestDataM = testCase.first.second;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        const uint8_t kY = 3;
+    
+        Assembler()
+                .LDA().immediate(kTestDataA)
+                .LDX().immediate(kY)
+                .ORA().absolute("M").y()
+                .NOP()
+            .org(0x678A)
+            .label("M")
+            .org(0x678A + kY)
+            .byte(kTestDataM)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(10);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementORAabsoluteIndexedWithYWithCarry) {
+    const uint8_t kTestDataA = 0b10110011;
+    const uint8_t kTestDataM = 0b10010110;
+
+    TestAbsoluteIndexed<ORA> testAbsolute = {
+        {
+            .address = 0x56FE,
+            .data = kTestDataM,
+            .port = o_debug_ac,
+            .expected = kTestDataA | kTestDataM,
+            .expectedTick = 5,
+
+            .preloadPort = &o_debug_ac,
+            .preloadPortValue = kTestDataA,
+        },
+
+        .indexRegister = kY,
+        .preloadIndexRegisterValue = 3
+    };
+
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementORAabsoluteIndexedWithYProcessorStatusWithCarry) {
+    for (auto& testCase : kTestCasesORA) {
+        const uint8_t kTestDataA = testCase.first.first;
+        const uint8_t kTestDataM = testCase.first.second;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+
+        const uint8_t kY = 4;
+        
+        Assembler()
+                .LDA().immediate(kTestDataA)
+                .LDY().immediate(kY)
+                .ORA().absolute("M").y()
+                .NOP()
+            .org(0xCDFE)
+            .label("M")
+            .org(0xCDFE + kY)
+            .byte(kTestDataM)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(11);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }

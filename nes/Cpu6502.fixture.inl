@@ -244,7 +244,7 @@ void Cpu6502::helperTestInternalExecutionOnMemoryData(const TestAbsoluteIndexed<
                 pc + 0u,
                 pc + 1u,
                 pc + 2u,
-                (test.address & 0xff00) + ((test.address + test.preloadIndexRegisterValue) & 0x00ff),
+                (test.address & 0xff00u) + ((test.address + test.preloadIndexRegisterValue) & 0x00ffu),
             })
             .repeatEachStep(2);
 
@@ -266,7 +266,7 @@ void Cpu6502::helperTestInternalExecutionOnMemoryData(const TestAbsoluteIndexed<
             .port(o_sync).signal("0").repeatEachStep(2)
             .port(o_address)
                 .signal({
-                    test.address + test.preloadIndexRegisterValue
+                    static_cast<uint32_t>(test.address + test.preloadIndexRegisterValue)
                 })
                 .repeatEachStep(2);
         
@@ -274,7 +274,7 @@ void Cpu6502::helperTestInternalExecutionOnMemoryData(const TestAbsoluteIndexed<
             const uint8_t preloadPortValue = (port == test.preloadPort) ? test.preloadPortValue : 0xFF;
 
             traceBuilderCarry
-                .port(*port).signal({preloadPortValue}).repeat(8); 
+                .port(*port).signal({preloadPortValue}).repeat(2); 
         }
         
         expectedCarry = traceBuilderCarry;
