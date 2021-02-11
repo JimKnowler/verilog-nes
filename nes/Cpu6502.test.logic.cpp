@@ -214,7 +214,6 @@ TEST_F(Cpu6502, ShouldImplementANDabsolute) {
         .data = kTestDataM,
         .port = o_debug_ac,
         .expected = kTestDataA & kTestDataM,
-        .expectedTick = 5,
 
         .preloadPort = &o_debug_ac,
         .preloadPortValue = kTestDataA
@@ -258,7 +257,6 @@ TEST_F(Cpu6502, ShouldImplementANDabsoluteIndexedWithXWithoutCarry) {
             .data = kTestDataM,
             .port = o_debug_ac,
             .expected = kTestDataA & kTestDataM,
-            .expectedTick = 5,
 
             .preloadPort = &o_debug_ac,
             .preloadPortValue = kTestDataA
@@ -310,7 +308,6 @@ TEST_F(Cpu6502, ShouldImplementANDabsoluteIndexedWithXWithCarry) {
             .data = kTestDataM,
             .port = o_debug_ac,
             .expected = kTestDataA & kTestDataM,
-            .expectedTick = 5,
 
             .preloadPort = &o_debug_ac,
             .preloadPortValue = kTestDataA,
@@ -362,7 +359,6 @@ TEST_F(Cpu6502, ShouldImplementANDabsoluteIndexedWithYWithoutCarry) {
             .data = kTestDataM,
             .port = o_debug_ac,
             .expected = kTestDataA & kTestDataM,
-            .expectedTick = 5,
 
             .preloadPort = &o_debug_ac,
             .preloadPortValue = kTestDataA
@@ -414,7 +410,6 @@ TEST_F(Cpu6502, ShouldImplementANDabsoluteIndexedWithYWithCarry) {
             .data = kTestDataM,
             .port = o_debug_ac,
             .expected = kTestDataA & kTestDataM,
-            .expectedTick = 5,
 
             .preloadPort = &o_debug_ac,
             .preloadPortValue = kTestDataA,
@@ -465,7 +460,6 @@ TEST_F(Cpu6502, ShouldImplementEORabsolute) {
         .data = kTestDataM,
         .port = o_debug_ac,
         .expected = kTestDataA ^ kTestDataM,
-        .expectedTick = 5,
 
         .preloadPort = &o_debug_ac,
         .preloadPortValue = kTestDataA
@@ -509,7 +503,6 @@ TEST_F(Cpu6502, ShouldImplementEORabsoluteIndexedWithXWithoutCarry) {
             .data = kTestDataM,
             .port = o_debug_ac,
             .expected = kTestDataA ^ kTestDataM,
-            .expectedTick = 5,
 
             .preloadPort = &o_debug_ac,
             .preloadPortValue = kTestDataA
@@ -561,7 +554,6 @@ TEST_F(Cpu6502, ShouldImplementEORabsoluteIndexedWithXWithCarry) {
             .data = kTestDataM,
             .port = o_debug_ac,
             .expected = kTestDataA ^ kTestDataM,
-            .expectedTick = 5,
 
             .preloadPort = &o_debug_ac,
             .preloadPortValue = kTestDataA,
@@ -613,7 +605,6 @@ TEST_F(Cpu6502, ShouldImplementEORabsoluteIndexedWithYWithoutCarry) {
             .data = kTestDataM,
             .port = o_debug_ac,
             .expected = kTestDataA ^ kTestDataM,
-            .expectedTick = 5,
 
             .preloadPort = &o_debug_ac,
             .preloadPortValue = kTestDataA
@@ -665,7 +656,6 @@ TEST_F(Cpu6502, ShouldImplementEORabsoluteIndexedWithYWithCarry) {
             .data = kTestDataM,
             .port = o_debug_ac,
             .expected = kTestDataA ^ kTestDataM,
-            .expectedTick = 5,
 
             .preloadPort = &o_debug_ac,
             .preloadPortValue = kTestDataA,
@@ -716,7 +706,6 @@ TEST_F(Cpu6502, ShouldImplementORAabsolute) {
         .data = kTestDataM,
         .port = o_debug_ac,
         .expected = kTestDataA | kTestDataM,
-        .expectedTick = 5,
 
         .preloadPort = &o_debug_ac,
         .preloadPortValue = kTestDataA
@@ -760,7 +749,6 @@ TEST_F(Cpu6502, ShouldImplementORAabsoluteIndexedWithXWithoutCarry) {
             .data = kTestDataM,
             .port = o_debug_ac,
             .expected = kTestDataA | kTestDataM,
-            .expectedTick = 5,
 
             .preloadPort = &o_debug_ac,
             .preloadPortValue = kTestDataA
@@ -813,7 +801,6 @@ TEST_F(Cpu6502, ShouldImplementORAabsoluteIndexedWithXWithCarry) {
             .data = kTestDataM,
             .port = o_debug_ac,
             .expected = kTestDataA | kTestDataM,
-            .expectedTick = 5,
 
             .preloadPort = &o_debug_ac,
             .preloadPortValue = kTestDataA,
@@ -865,7 +852,6 @@ TEST_F(Cpu6502, ShouldImplementORAabsoluteIndexedWithYWithoutCarry) {
             .data = kTestDataM,
             .port = o_debug_ac,
             .expected = kTestDataA | kTestDataM,
-            .expectedTick = 5,
 
             .preloadPort = &o_debug_ac,
             .preloadPortValue = kTestDataA
@@ -917,7 +903,6 @@ TEST_F(Cpu6502, ShouldImplementORAabsoluteIndexedWithYWithCarry) {
             .data = kTestDataM,
             .port = o_debug_ac,
             .expected = kTestDataA | kTestDataM,
-            .expectedTick = 5,
 
             .preloadPort = &o_debug_ac,
             .preloadPortValue = kTestDataA,

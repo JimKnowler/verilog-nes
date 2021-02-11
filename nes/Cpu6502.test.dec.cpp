@@ -330,7 +330,6 @@ TEST_F(Cpu6502, ShouldImplementSBCabsolute) {
         .data = kTestData2,
         .port = o_debug_ac,
         .expected = kTestData1 - kTestData2,
-        .expectedTick = 5,
 
         .preloadPort = &o_debug_ac,
         .preloadPortValue = kTestData1
@@ -384,7 +383,6 @@ TEST_F(Cpu6502, ShouldImplementSBCabsoluteWithCarryIn) {
         .data = kTestData2,
         .port = o_debug_ac,
         .expected = kTestData1 - kTestData2 - 1,
-        .expectedTick = 5,
 
         .presetCarry = true,
 

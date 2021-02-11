@@ -72,8 +72,8 @@ void Cpu6502::helperTestInternalExecutionOnMemoryData(const TestAbsolute<OPCODE>
         if (port->id() == test.port.id()) {
             traceBuilder
                 .port(*port)
-                    .signal({preloadPortValue}).repeat(test.expectedTick)
-                    .signal({test.expected}).repeat(6 - test.expectedTick)
+                    .signal({preloadPortValue}).repeat(5)
+                    .signal({test.expected}).repeat(1)
                     .concat().repeatEachStep(2);
         } else {
             traceBuilder

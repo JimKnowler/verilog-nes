@@ -94,7 +94,7 @@ TEST_F(Cpu6502, ShouldImplementLDAaProcessorStatus) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(5);
+        testBench.tick(6);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }

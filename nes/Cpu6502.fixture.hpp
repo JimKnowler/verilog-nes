@@ -35,12 +35,7 @@ public:
         uint8_t data;
         PortDescription port;
         uint8_t expected;                   // expected value in port at end of test
-        
-        int expectedTick = 4;               // tick when expected data should arrive
-                                            // in the port
-                                            // TODO: remove this when gtestverilog supports wildcards
-                                            //       or if verilog is standardised to 5 ticks..
-        
+
         bool presetCarry = false;
 
         PortDescription* preloadPort = nullptr;

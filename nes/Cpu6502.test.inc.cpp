@@ -324,7 +324,6 @@ TEST_F(Cpu6502, ShouldImplementADCabsolute) {
         .data = kTestData1,
         .port = o_debug_ac,
         .expected = kTestData1 + kTestData2,
-        .expectedTick = 5,
 
         .preloadPort = &o_debug_ac,
         .preloadPortValue = kTestData2
@@ -377,7 +376,6 @@ TEST_F(Cpu6502, ShouldImplementADCabsoluteWithCarryIn) {
         .data = kTestData1,
         .port = o_debug_ac,
         .expected = kTestData1 + kTestData2 + 1,
-        .expectedTick = 5,
 
         .presetCarry = true,
 

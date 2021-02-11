@@ -463,16 +463,17 @@ begin
         CMP_i, CPX_i, CPY_i,
         AND_a, EOR_a, ORA_a,
         ADC_a, SBC_a,
-        CMP_a, CPX_a, CPY_a:
+        CMP_a, CPX_a, CPY_a,
+        LDA_a, LDX_a, LDY_a:
         begin
             output_add_on_sb(1);
 
             // load from SB into register
             case (w_ir)
-            INX, DEX: begin
+            INX, DEX, LDX_a: begin
                 o_sb_x = 1;
             end
-            INY, DEY: begin
+            INY, DEY, LDY_a: begin
                 o_sb_y = 1;
             end
             LSR_A, ASL_A,
@@ -482,7 +483,7 @@ begin
             SBC_i,
             AND_a, EOR_a,
             ORA_a, ADC_a,
-            SBC_a: begin
+            SBC_a, LDA_a: begin
                 o_sb_ac = 1;
             end
             default: begin
@@ -1067,23 +1068,9 @@ begin
             output_dl_on_abh(1);
             
             case (w_ir)
-            INC_a, DEC_a, ASL_a, LSR_a, ROL_a, ROR_a: begin
-                load_add_from_dl(1);
-            end
+            INC_a, DEC_a, ASL_a, LSR_a, ROL_a, ROR_a,
             LDA_a, LDX_a, LDY_a: begin
-                // load value from DL into SB via DB
-                o_dl_db = 1;
-                o_sb_db = 1;
-
-                case (w_ir)
-                LDA_a: o_sb_ac = 1;
-                LDX_a: o_sb_x = 1;
-                LDY_a: o_sb_y = 1;
-                default: begin
-                end
-                endcase
-
-                load_z_n_from_db(1);
+                load_add_from_dl(1);
             end
             STA_a: begin
                 // write value from AC
