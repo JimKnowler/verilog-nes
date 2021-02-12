@@ -7,7 +7,6 @@ TEST_F(Cpu6502, ShouldImplementJSR) {
     //       has an interesting value with non-zero hi and lo bytes
     Assembler assembler;
     assembler
-        .label("start")
             .NOP()
         .org(0x3456)
         .label("start")
@@ -20,7 +19,7 @@ TEST_F(Cpu6502, ShouldImplementJSR) {
         .org(0x4567)
         .label("jmp_to")
             .NOP()
-        .org(0xfffc)
+        .org(0xFFFC)
         .word("start")
         .compileTo(sram);
 
@@ -82,8 +81,7 @@ TEST_F(Cpu6502, ShouldImplementRTS) {
     //       has an interesting value with non-zero hi and lo bytes
     Assembler assembler;
     assembler
-        .label("start")
-            .byte(0xfe)
+        .byte(0)
         .org(0x3456)
         .label("start")
             .NOP()
@@ -94,7 +92,7 @@ TEST_F(Cpu6502, ShouldImplementRTS) {
         .org(0x4567)
         .label("return_to")
             .NOP()
-        .org(0xfffc)
+        .org(0xFFFC)
         .word("start")
         .compileTo(sram);
 

@@ -18,7 +18,7 @@ TEST_F(Cpu6502, ShouldImplementBRK) {
         .org(0x3456)
         .label("interrupt")
             .NOP()
-        .org(0xfffc)                // RESET VECTOR
+        .org(0xFFFC)                // RESET VECTOR
         .word("init")
         .org(0xFFFE)                // INTERRUPT VECTOR
         .word("interrupt")
