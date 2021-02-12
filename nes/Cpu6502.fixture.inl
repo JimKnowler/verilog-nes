@@ -313,3 +313,106 @@ void Cpu6502::helperTestInternalExecutionOnMemoryData(const TestAbsoluteIndexed<
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
+
+template <class OPCODE>
+void Cpu6502::helperTestStore(const TestAbsoluteIndexed<OPCODE>& test) {
+    sram.clear(0);
+    
+    Assembler assembler;
+    uint16_t pc = 0;
+    int skipTicks = 0;
+
+    if (test.preloadPort != nullptr) {
+        pc += 2;
+        skipTicks += 2;
+        
+        if (test.preloadPort == &o_debug_ac) {
+            assembler.LDA().immediate(test.preloadPortValue);
+        } else if (test.preloadPort == &o_debug_x) {
+            assembler.LDX().immediate(test.preloadPortValue);
+        } else if (test.preloadPort == &o_debug_y) {
+            assembler.LDY().immediate(test.preloadPortValue);
+        }
+    }
+
+    switch (test.indexRegister) {
+        case kX:
+            assembler.LDX().immediate(test.preloadIndexRegisterValue);
+            break;
+        case kY:
+            assembler.LDY().immediate(test.preloadIndexRegisterValue);
+            break;
+        default:
+            assert(!"unknown index register");
+    }
+    pc += 2;
+    skipTicks += 2;
+
+    assembler
+        .addOpcode(std::make_unique<OPCODE>()).absolute(test.address);
+    
+    switch (test.indexRegister) {
+        case kX:
+            assembler.x();
+            break;
+        case kY:
+            assembler.y();
+            break;
+        default:
+            assert(!"unknown index register");
+    }
+
+    assembler
+        .NOP()
+        .org(test.address + test.preloadIndexRegisterValue)
+        .word(test.data)
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    testBench.tick(skipTicks);
+    testBench.trace.clear();
+
+    testBench.tick(7);
+
+    const uint16_t kStoreAddress = test.address + test.preloadIndexRegisterValue;
+
+    TraceBuilder traceBuilder;
+    traceBuilder
+        .port(i_clk).signal("_-").repeat(7)
+        .port(o_rw).signal("11").repeat(7)
+        .port(o_sync).signal("1000010").repeatEachStep(2)
+        .port(o_address)
+            .signal({
+                // store
+                pc + 0u,
+                pc + 1u,
+                pc + 2u,
+                kStoreAddress,
+                kStoreAddress,
+
+                // NOP
+                pc + 3u,
+                pc + 4u
+            })
+            .repeatEachStep(2); 
+
+    std::vector<PortDescription*> ports = { 
+        &o_debug_ac,
+        &o_debug_x,
+        &o_debug_y
+    };
+
+    for (auto& port: ports) {
+        const uint8_t preloadPortValue = (port == test.preloadPort) ? test.preloadPortValue : 0xFF;
+
+        traceBuilder
+            .port(*port)
+                .signal({preloadPortValue}).repeat(7);    
+    }
+
+    Trace expected = traceBuilder;
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+    EXPECT_EQ(test.data, sram.read(test.address));
+}

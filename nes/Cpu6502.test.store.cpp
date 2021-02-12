@@ -133,3 +133,86 @@ TEST_F(Cpu6502, ShouldImplementSTYa) {
     EXPECT_EQ(kTestData, sram.read(kTestAddress));
 }
 
+TEST_F(Cpu6502, ShouldImplementSTAabsoluteIndexedWithXwithoutCarry) {
+    const uint16_t kTestAddress = 0x5678;
+    const uint8_t kTestData = 0x42;
+
+    TestAbsoluteIndexed<STA> testAbsolute = {
+        {
+            .address = kTestAddress,
+            .data = kTestData,
+            .port = o_debug_ac,
+            .expected = kTestData,
+            .preloadPort = &o_debug_ac,
+            .preloadPortValue = kTestData
+        },
+
+        .indexRegister = kX,
+        .preloadIndexRegisterValue = 5,
+    };
+
+    helperTestStore(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementSTAabsoluteIndexedWithXwithCarry) {
+    const uint16_t kTestAddress = 0x56FE;
+    const uint8_t kTestData = 0x32;
+
+    TestAbsoluteIndexed<STA> testAbsolute = {
+        {
+            .address = kTestAddress,
+            .data = kTestData,
+            .port = o_debug_ac,
+            .expected = kTestData,
+            .preloadPort = &o_debug_ac,
+            .preloadPortValue = kTestData
+        },
+
+        .indexRegister = kX,
+        .preloadIndexRegisterValue = 3,
+    };
+
+    helperTestStore(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementSTAabsoluteIndexedWithYwithoutCarry) {
+    const uint16_t kTestAddress = 0x5678;
+    const uint8_t kTestData = 0x42;
+
+    TestAbsoluteIndexed<STA> testAbsolute = {
+        {
+            .address = kTestAddress,
+            .data = kTestData,
+            .port = o_debug_ac,
+            .expected = kTestData,
+            .preloadPort = &o_debug_ac,
+            .preloadPortValue = kTestData
+        },
+
+        .indexRegister = kY,
+        .preloadIndexRegisterValue = 5,
+    };
+
+    helperTestStore(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementSTAabsoluteIndexedWithYwithCarry) {
+    const uint16_t kTestAddress = 0x56FE;
+    const uint8_t kTestData = 0x32;
+
+    TestAbsoluteIndexed<STA> testAbsolute = {
+        {
+            .address = kTestAddress,
+            .data = kTestData,
+            .port = o_debug_ac,
+            .expected = kTestData,
+            .preloadPort = &o_debug_ac,
+            .preloadPortValue = kTestData
+        },
+
+        .indexRegister = kY,
+        .preloadIndexRegisterValue = 3,
+    };
+
+    helperTestStore(testAbsolute);
+}

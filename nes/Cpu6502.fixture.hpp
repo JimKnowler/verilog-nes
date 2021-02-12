@@ -61,6 +61,9 @@ public:
 
     template <class OPCODE>
     void helperTestInternalExecutionOnMemoryData(const TestAbsoluteIndexed<OPCODE>& test);
+
+    template <class OPCODE>
+    void helperTestStore(const TestAbsoluteIndexed<OPCODE>& test);
 };
 
 // inlined template implementations
