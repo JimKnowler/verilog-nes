@@ -1,5 +1,14 @@
 #include "Cpu6502.fixture.hpp"
 
+namespace {
+    const std::map<std::pair<uint8_t, uint8_t>, uint8_t> kTestCasesCMP = {
+        {{0x00, 0x00}, C|Z},
+        {{0x01, 0x00}, C},
+        {{0x80, 0x00}, C|N},
+        {{0x00, 0x01}, N}
+    };
+}
+
 TEST_F(Cpu6502, ShouldImplementCMPimmediate) {
     sram.clear(0);
     
@@ -167,14 +176,7 @@ TEST_F(Cpu6502, ShouldImplementCPYimmediate) {
 }
 
 TEST_F(Cpu6502, ShouldImplementCPYimmediateProcessorStatus) {
-    const std::map<std::pair<uint8_t, uint8_t>, uint8_t> testCases = {
-        {{0x00, 0x00}, C|Z},
-        {{0x01, 0x00}, C},
-        {{0x80, 0x00}, C|N},
-        {{0x00, 0x01}, N}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesCMP) {
         const uint8_t Y = testCase.first.first;
         const uint8_t M = testCase.first.second;
         const uint8_t kExpectedProcessorStatus = testCase.second;
@@ -263,14 +265,7 @@ TEST_F(Cpu6502, ShouldImplementCMPabsolute) {
 }
 
 TEST_F(Cpu6502, ShouldImplementCMPabsoluteProcessorStatus) {
-    const std::map<std::pair<uint8_t, uint8_t>, uint8_t> testCases = {
-        {{0x00, 0x00}, C|Z},
-        {{0x01, 0x00}, C},
-        {{0x80, 0x00}, C|N},
-        {{0x00, 0x01}, N}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesCMP) {
         const uint8_t A = testCase.first.first;
         const uint8_t M = testCase.first.second;
         const uint8_t kExpectedProcessorStatus = testCase.second;
@@ -279,10 +274,10 @@ TEST_F(Cpu6502, ShouldImplementCMPabsoluteProcessorStatus) {
     
         Assembler()
                 .LDA().immediate(A)
-                .CMP().absolute("compare_to")
+                .CMP().absolute("M")
                 .NOP()
             .org(0x4567)
-            .label("compare_to")
+            .label("M")
             .byte(M)    
             .compileTo(sram);
 
@@ -312,14 +307,7 @@ TEST_F(Cpu6502, ShouldImplementCPXabsolute) {
 }
 
 TEST_F(Cpu6502, ShouldImplementCPXabsoluteProcessorStatus) {
-    const std::map<std::pair<uint8_t, uint8_t>, uint8_t> testCases = {
-        {{0x00, 0x00}, C|Z},
-        {{0x01, 0x00}, C},
-        {{0x80, 0x00}, C|N},
-        {{0x00, 0x01}, N}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesCMP) {
         const uint8_t X = testCase.first.first;
         const uint8_t M = testCase.first.second;
         const uint8_t kExpectedProcessorStatus = testCase.second;
@@ -361,14 +349,7 @@ TEST_F(Cpu6502, ShouldImplementCPYabsolute) {
 }
 
 TEST_F(Cpu6502, ShouldImplementCPYabsoluteProcessorStatus) {
-    const std::map<std::pair<uint8_t, uint8_t>, uint8_t> testCases = {
-        {{0x00, 0x00}, C|Z},
-        {{0x01, 0x00}, C},
-        {{0x80, 0x00}, C|N},
-        {{0x00, 0x01}, N}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesCMP) {
         const uint8_t Y = testCase.first.first;
         const uint8_t M = testCase.first.second;
         const uint8_t kExpectedProcessorStatus = testCase.second;
@@ -388,6 +369,214 @@ TEST_F(Cpu6502, ShouldImplementCPYabsoluteProcessorStatus) {
         helperSkipResetVector();
 
         testBench.tick(8);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementCMPabsoluteIndexedWithXWithoutCarry) {
+    const uint16_t kTestAddress = 0x5678;
+    const uint8_t A = 0x45;
+    const uint8_t M = 0x22;
+
+    TestAbsoluteIndexed<CMP> testAbsolute = {
+        {
+            .address = kTestAddress,
+            .data = M,
+            .port = o_debug_ac,
+            .expected = A,
+
+            .preloadPort = &o_debug_ac,
+            .preloadPortValue = A
+        },
+
+        .indexRegister = kX,
+        .preloadIndexRegisterValue = 5,
+    };
+
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementCMPabsoluteIndexedWithXProcessorStatusWithoutCarry) {
+    for (auto& testCase : kTestCasesCMP) {
+        const uint8_t A = testCase.first.first;
+        const uint8_t M = testCase.first.second;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        const uint8_t kX = 3;
+    
+        Assembler()
+                .LDA().immediate(A)
+                .LDX().immediate(kX)
+                .CMP().a("M").x()
+                .NOP()
+            .org(0x678A)
+            .label("M")
+            .org(0x678A + kX)
+            .byte(M)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(10);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementCMPabsoluteIndexedWithXWithCarry) {
+    const uint16_t kTestAddress = 0x56FE;
+    const uint8_t A = 0x45;
+    const uint8_t M = 0x22; 
+
+    TestAbsoluteIndexed<CMP> testAbsolute = {
+        {
+            .address = kTestAddress,
+            .data = M,
+            .port = o_debug_ac,
+            .expected = A,
+
+            .preloadPort = &o_debug_ac,
+            .preloadPortValue = A
+        },
+
+        .indexRegister = kX,
+        .preloadIndexRegisterValue = 3,
+    };
+
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementCMPabsoluteIndexedWithXProcessorStatusWithCarry) {
+    for (auto& testCase : kTestCasesCMP) {
+        const uint8_t A = testCase.first.first;
+        const uint8_t M = testCase.first.second;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        const uint8_t kX = 4;
+    
+        Assembler()
+                .LDA().immediate(A)
+                .LDX().immediate(kX)
+                .CMP().a("M").x()
+                .NOP()
+            .org(0xCDFE)
+            .label("M")
+            .org(0xCDFE + kX)
+            .byte(M)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(11);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementCMPabsoluteIndexedWithYWithoutCarry) {
+    const uint16_t kTestAddress = 0x56FE;
+    const uint8_t A = 0x45;
+    const uint8_t M = 0x22;
+
+    TestAbsoluteIndexed<CMP> testAbsolute = {
+        {
+            .address = kTestAddress,
+            .data = M,
+            .port = o_debug_ac,
+            .expected = A,
+            
+            .preloadPort = &o_debug_ac,
+            .preloadPortValue = A
+        },
+
+        .indexRegister = kY,
+        .preloadIndexRegisterValue = 5,
+    };
+
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementCMPabsoluteIndexedWithYProcessorStatusWithoutCarry) {
+    for (auto& testCase : kTestCasesCMP) {
+        const uint8_t A = testCase.first.first;
+        const uint8_t M = testCase.first.second;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        const uint8_t kY = 3;
+    
+        Assembler()
+                .LDA().immediate(A)
+                .LDY().immediate(kY)
+                .CMP().a("M").y()
+                .NOP()
+            .org(0x678A)
+            .label("M")
+            .org(0x678A + kY)
+            .byte(M)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(10);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementCMPabsoluteIndexedWithYWithCarry) {
+    const uint16_t kTestAddress = 0x56FE;
+    const uint8_t A = 0x45;
+    const uint8_t M = 0x22;
+
+    TestAbsoluteIndexed<CMP> testAbsolute = {
+        {
+            .address = kTestAddress,
+            .data = M,
+            .port = o_debug_ac,
+            .expected = A,
+
+            .preloadPort = &o_debug_ac,
+            .preloadPortValue = A
+        },
+
+        .indexRegister = kY,
+        .preloadIndexRegisterValue = 3,
+    };
+
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementCMPabsoluteIndexedWithYProcessorStatusWithCarry) {
+    for (auto& testCase : kTestCasesCMP) {
+        const uint8_t A = testCase.first.first;
+        const uint8_t M = testCase.first.second;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        const uint8_t kY = 4;
+    
+        Assembler()
+                .LDA().immediate(A)
+                .LDY().immediate(kY)
+                .CMP().a("M").y()
+                .NOP()
+            .org(0xCDFE)
+            .label("M")
+            .org(0xCDFE + kY)
+            .byte(M)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(11);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
