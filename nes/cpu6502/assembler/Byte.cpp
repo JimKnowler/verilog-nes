@@ -1,5 +1,5 @@
-#include "Assembler.h"
-#include "Byte.h"
+#include "Assembler.hpp"
+#include "Byte.hpp"
 
 namespace cpu6502 { namespace assembler {
     Byte::Byte(uint8_t data) {

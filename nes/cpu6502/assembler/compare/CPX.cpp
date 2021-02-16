@@ -1,4 +1,4 @@
-#include "../Opcodes.h"
+#include "../Opcodes.hpp"
 
 OPCODE_IMPL(CPX, {
     addAddressingMode(kImmediate, 0xE0);

@@ -1,4 +1,4 @@
-#include "../Opcodes.h"
+#include "../Opcodes.hpp"
 
 OPCODE_IMPL(SBC, {
     addAddressingMode(kImmediate, 0xE9);

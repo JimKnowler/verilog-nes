@@ -7,7 +7,7 @@ using namespace gtestverilog;
 #include "nes/ProcessorStatusTestBench.h"
 using namespace processorstatustestbench;
 
-#include "ProcessorStatusFlags.h"
+#include "ProcessorStatusFlags.hpp"
 
 namespace {
     class ProcessorStatus : public ::testing::Test {

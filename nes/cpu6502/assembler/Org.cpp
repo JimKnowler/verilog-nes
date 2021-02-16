@@ -1,5 +1,5 @@
-#include "Assembler.h"
-#include "Org.h"
+#include "Assembler.hpp"
+#include "Org.hpp"
 
 namespace cpu6502 { namespace assembler {
     Org::Org(uint16_t address) {

@@ -1,4 +1,4 @@
-#include "../Opcodes.h"
+#include "../Opcodes.hpp"
 
 OPCODE_IMPL(LDX, {
     addAddressingMode(kImmediate, 0xA2);

@@ -1,4 +1,4 @@
-#include "../Opcodes.h"
+#include "../Opcodes.hpp"
 
 OPCODE_IMPL(BCC, {
     addAddressingMode(kRelative, 0x90);

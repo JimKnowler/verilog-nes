@@ -1,5 +1,5 @@
-#include "Assembler.h"
-#include "Label.h"
+#include "Assembler.hpp"
+#include "Label.hpp"
 
 namespace cpu6502 { namespace assembler {
     Label::Label(const char* label) {

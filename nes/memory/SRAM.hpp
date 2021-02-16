@@ -33,8 +33,6 @@ namespace memory {
         /// @param address byte offset from start of memory
         uint8_t read(size_t address) const;
 
-        /// @todo set a sequence of opcodes (which will serialise each of them in turn)
-        /// @todo handle loops / labels / etc
     private:
         std::vector<uint8_t> memory;
     };

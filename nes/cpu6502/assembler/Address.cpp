@@ -1,4 +1,4 @@
-#include "Address.h"
+#include "Address.hpp"
 
 namespace cpu6502 { namespace assembler {
     Address::Address() : m_byteIndex(0) {

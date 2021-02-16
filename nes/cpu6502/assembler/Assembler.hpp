@@ -4,8 +4,8 @@
 #include <memory>
 #include <map>
 
-#include "nes/memory/SRAM.h"
-#include "nes/cpu6502/assembler/Opcodes.h"
+#include "nes/memory/SRAM.hpp"
+#include "nes/cpu6502/assembler/Opcodes.hpp"
 
 #define OPCODE_ASM(_opcode) Assembler& _opcode();
 

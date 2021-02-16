@@ -1,4 +1,4 @@
-#include "../Opcodes.h"
+#include "../Opcodes.hpp"
 
 OPCODE_IMPL(DEC, {
     addAddressingMode(kAbsolute, 0xCE);

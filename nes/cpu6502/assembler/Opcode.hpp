@@ -4,12 +4,13 @@
 #include <cstdint>
 #include <map>
 
-#include "Address.h"
+#include "Address.hpp"
 
 #define OPCODE_DEFN(_opcode) \
     class _opcode : public Opcode { \
         public: \
             _opcode(); \
+            const char* label() { return #_opcode; } \
     }
 
 #define OPCODE_IMPL(_opcode, _implementation) \

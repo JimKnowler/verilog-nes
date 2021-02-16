@@ -1,5 +1,5 @@
-#include "Opcode.h"
-#include "Assembler.h"
+#include "Opcode.hpp"
+#include "Assembler.hpp"
 
 #include <cassert>
 

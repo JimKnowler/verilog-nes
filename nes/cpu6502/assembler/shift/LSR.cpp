@@ -1,4 +1,4 @@
-#include "../Opcodes.h"
+#include "../Opcodes.hpp"
 
 OPCODE_IMPL(LSR, {
     addAddressingMode(kAccumulator, 0x4A);

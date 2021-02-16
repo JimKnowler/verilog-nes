@@ -1,4 +1,4 @@
-#include "SRAM.h"
+#include "SRAM.hpp"
 
 namespace memory {
     SRAM::SRAM(size_t size) {

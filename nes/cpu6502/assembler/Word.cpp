@@ -1,5 +1,5 @@
-#include "Assembler.h"
-#include "Word.h"
+#include "Assembler.hpp"
+#include "Word.hpp"
 
 namespace cpu6502 { namespace assembler {
     Word::Word(const Address& address) {

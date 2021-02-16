@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Opcode.h"
+#include "Opcode.hpp"
 
 namespace cpu6502 {
     namespace assembler {

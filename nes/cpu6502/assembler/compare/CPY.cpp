@@ -1,4 +1,4 @@
-#include "../Opcodes.h"
+#include "../Opcodes.hpp"
 
 OPCODE_IMPL(CPY, {
     addAddressingMode(kImmediate, 0xC0);

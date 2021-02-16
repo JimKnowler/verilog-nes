@@ -1,4 +1,4 @@
-#include "../Opcodes.h"
+#include "../Opcodes.hpp"
 
 OPCODE_IMPL(ASL, {
     addAddressingMode(kAccumulator, 0x0A);

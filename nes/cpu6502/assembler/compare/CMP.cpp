@@ -1,4 +1,4 @@
-#include "../Opcodes.h"
+#include "../Opcodes.hpp"
 
 OPCODE_IMPL(CMP, {
     addAddressingMode(kImmediate, 0xC9);

@@ -1,4 +1,4 @@
-#include "../Opcodes.h"
+#include "../Opcodes.hpp"
 
 OPCODE_IMPL(EOR, {
     addAddressingMode(kImmediate, 0x49);

@@ -1,4 +1,4 @@
-#include "../Opcodes.h"
+#include "../Opcodes.hpp"
 
 OPCODE_IMPL(STA, {
     addAddressingMode(kAbsolute, 0x8D);

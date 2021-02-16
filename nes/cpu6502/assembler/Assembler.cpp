@@ -1,11 +1,11 @@
 #include <cassert>
 
-#include "nes/cpu6502/assembler/Assembler.h"
-#include "nes/cpu6502/assembler/Opcodes.h"
-#include "nes/cpu6502/assembler/Label.h"
-#include "nes/cpu6502/assembler/Org.h"
-#include "nes/cpu6502/assembler/Word.h"
-#include "nes/cpu6502/assembler/Byte.h"
+#include "nes/cpu6502/assembler/Assembler.hpp"
+#include "nes/cpu6502/assembler/Opcodes.hpp"
+#include "nes/cpu6502/assembler/Label.hpp"
+#include "nes/cpu6502/assembler/Org.hpp"
+#include "nes/cpu6502/assembler/Word.hpp"
+#include "nes/cpu6502/assembler/Byte.hpp"
 
 #define OPCODE_ASM_IMPL(_opcode) \
     Assembler& Assembler::_opcode() { \
