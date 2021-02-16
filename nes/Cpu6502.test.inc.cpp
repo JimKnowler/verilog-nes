@@ -1,5 +1,27 @@
 #include "Cpu6502.fixture.hpp"
 
+namespace {
+    const std::map<std::pair<uint8_t, uint8_t>, uint8_t> kTestCasesADCWithCarryIn = {
+        {{0x00, 0x00}, 0},
+        {{0x00, 0x01}, 0},
+        {{0x7F, 0x00}, N|V},
+        {{0x80, 0x00}, N},
+        {{0xFF, 0x00}, C|Z},
+        {{0xFF, 0x01}, C},
+        {{0xFF, 0x80}, C|N},
+        {{0xFF, 0x7F}, C}
+    };
+
+    const std::map<std::pair<uint8_t, uint8_t>, uint8_t> kTestCasesADCWithoutCarryIn = {
+        {{0x00, 0x00}, Z},
+        {{0x00, 0x01}, 0},
+        {{0x7F, 0x01}, N|V},
+        {{0x80, 0x00}, N},
+        {{0xFF, 0x01}, C|Z},
+        {{0xFF, 0x80}, C|V}
+    };
+}
+
 TEST_F(Cpu6502, ShouldImplementINX) {
     sram.clear(0);
     
@@ -167,16 +189,7 @@ TEST_F(Cpu6502, ShouldImplementADCimmediate) {
 }
 
 TEST_F(Cpu6502, ShouldImplementADCimmediateProcessorStatus) {
-    const std::map<std::pair<uint8_t, uint8_t>, uint8_t> testCases = {
-        {{0x00, 0x00}, Z},
-        {{0x00, 0x01}, 0},
-        {{0x7F, 0x01}, N|V},
-        {{0x80, 0x00}, N},
-        {{0xFF, 0x01}, C|Z},
-        {{0xFF, 0x80}, C|V}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesADCWithoutCarryIn) {
         const uint8_t kTestData1 = testCase.first.first;
         const uint8_t kTestData2 = testCase.first.second;
         
@@ -237,18 +250,7 @@ TEST_F(Cpu6502, ShouldImplementADCimmediateWithCarryIn) {
 }
 
 TEST_F(Cpu6502, ShouldImplementADCimmediateProcessorStatusWithCarryIn) {
-    const std::map<std::pair<uint8_t, uint8_t>, uint8_t> testCases = {
-        {{0x00, 0x00}, 0},
-        {{0x00, 0x01}, 0},
-        {{0x7F, 0x00}, N|V},
-        {{0x80, 0x00}, N},
-        {{0xFF, 0x00}, C|Z},
-        {{0xFF, 0x01}, C},
-        {{0xFF, 0x80}, C|N},
-        {{0xFF, 0x7F}, C}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesADCWithCarryIn) {
         const uint8_t kTestData1 = testCase.first.first;
         const uint8_t kTestData2 = testCase.first.second;
         
@@ -333,16 +335,7 @@ TEST_F(Cpu6502, ShouldImplementADCabsolute) {
 }
 
 TEST_F(Cpu6502, ShouldImplementADCabsoluteProcessorStatus) {
-    const std::map<std::pair<uint8_t, uint8_t>, uint8_t> testCases = {
-        {{0x00, 0x00}, Z},
-        {{0x00, 0x01}, 0},
-        {{0x7F, 0x01}, N|V},
-        {{0x80, 0x00}, N},
-        {{0xFF, 0x01}, C|Z},
-        {{0xFF, 0x80}, C|V}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesADCWithoutCarryIn) {
         const uint8_t kTestData1 = testCase.first.first;
         const uint8_t kTestData2 = testCase.first.second;
         
@@ -387,18 +380,7 @@ TEST_F(Cpu6502, ShouldImplementADCabsoluteWithCarryIn) {
 }
 
 TEST_F(Cpu6502, ShouldImplementADCabsoluteProcessorStatusWithCarryIn) {
-    const std::map<std::pair<uint8_t, uint8_t>, uint8_t> testCases = {
-        {{0x00, 0x00}, 0},
-        {{0x00, 0x01}, 0},
-        {{0x7F, 0x00}, N|V},
-        {{0x80, 0x00}, N},
-        {{0xFF, 0x00}, C|Z},
-        {{0xFF, 0x01}, C},
-        {{0xFF, 0x80}, C|N},
-        {{0xFF, 0x7F}, C}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesADCWithCarryIn) {
         const uint8_t kTestData1 = testCase.first.first;
         const uint8_t kTestData2 = testCase.first.second;
         
