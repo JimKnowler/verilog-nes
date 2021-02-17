@@ -5,12 +5,12 @@
 #include <map>
 
 #include "Address.hpp"
+#include "AddressingMode.hpp"
 
 #define OPCODE_DEFN(_opcode) \
     class _opcode : public Opcode { \
         public: \
             _opcode(); \
-            const char* label() { return #_opcode; } \
     }
 
 #define OPCODE_IMPL(_opcode, _implementation) \
@@ -74,20 +74,11 @@ namespace cpu6502 {
             // used by Assembler to lookup addresses that Opcode may require
             virtual void lookupAddresses();
 
-        protected:
-            enum AddressingMode : uint32_t {
-                kImplied = 0,
-                kImmediate = 1 << 0,
-                kAbsolute = 1 << 1,
-                kAccumulator = 1 << 2,
-                kRelative = 1 << 3,
-                kIndirect = 1 << 4,
-                kIndexedWithX = 1 << 5,
-                kIndexedWithY = 1 << 6
-            };
-
             typedef std::map<uint32_t, uint8_t> AddressingModes;
 
+            const AddressingModes addressingModes() const;
+
+        protected:
             bool isImplied() const;
             bool isAccumulator() const;
             bool isImmediate() const;

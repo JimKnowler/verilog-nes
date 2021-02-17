@@ -153,5 +153,9 @@ namespace cpu6502 { namespace assembler {
         m_assembler->lookupAddress(m_address);
     }
 
+    const Opcode::AddressingModes Opcode::addressingModes() const {
+        return m_addressingModes;
+    }
+
 } // assembler
 } // cpu6502
