@@ -143,7 +143,7 @@ namespace cpu6502 { namespace assembler {
     }
 
     bool Disassembler::parseOpcodeAbsolute(const ParseOpcodeInfo& info, DisassembledOpcode& outOpcode) {
-        uint16_t address = (info.sram.read(info.pc) << 8) | info.sram.read(info.pc + 1);
+        uint16_t address = (info.sram.read(info.pc + 2) << 8) | info.sram.read(info.pc + 1);
         
         char buffer[16];
         sprintf(buffer, "$0x%04X", address);
@@ -153,7 +153,7 @@ namespace cpu6502 { namespace assembler {
     }
 
     bool Disassembler::parseOpcodeAbsoluteIndexedIndirect(const ParseOpcodeInfo& info, DisassembledOpcode& outOpcode) {
-        uint16_t address = (info.sram.read(info.pc) << 8) | info.sram.read(info.pc + 1);
+        uint16_t address = (info.sram.read(info.pc + 2) << 8) | info.sram.read(info.pc + 1);
         
         char buffer[16];
         sprintf(buffer, "($0x%04X, x)", address);
@@ -163,7 +163,7 @@ namespace cpu6502 { namespace assembler {
     }
 
     bool Disassembler::parseOpcodeAbsoluteIndexedWithX(const ParseOpcodeInfo& info, DisassembledOpcode& outOpcode) {
-        uint16_t address = (info.sram.read(info.pc) << 8) | info.sram.read(info.pc + 1);
+        uint16_t address = (info.sram.read(info.pc + 2) << 8) | info.sram.read(info.pc + 1);
         
         char buffer[16];
         sprintf(buffer, "$0x%04X, x", address);
@@ -173,7 +173,7 @@ namespace cpu6502 { namespace assembler {
     }
 
     bool Disassembler::parseOpcodeAbsoluteIndexedWithY(const ParseOpcodeInfo& info, DisassembledOpcode& outOpcode) {
-        uint16_t address = (info.sram.read(info.pc) << 8) | info.sram.read(info.pc + 1);
+        uint16_t address = (info.sram.read(info.pc + 2) << 8) | info.sram.read(info.pc + 1);
         
         char buffer[16];
         sprintf(buffer, "$0x%4X, y", address);
@@ -183,7 +183,7 @@ namespace cpu6502 { namespace assembler {
     }
 
     bool Disassembler::parseOpcodeAbsoluteIndirect(const ParseOpcodeInfo& info, DisassembledOpcode& outOpcode) {
-        uint16_t address = (info.sram.read(info.pc) << 8) | info.sram.read(info.pc + 1);
+        uint16_t address = (info.sram.read(info.pc + 2) << 8) | info.sram.read(info.pc + 1);
         
         char buffer[16];
         sprintf(buffer, "($0x%04X)", address);
@@ -199,7 +199,7 @@ namespace cpu6502 { namespace assembler {
     }
 
     bool Disassembler::parseOpcodeImmediate(const ParseOpcodeInfo& info, DisassembledOpcode& outOpcode) {
-        uint8_t data = info.sram.read(info.pc);
+        uint8_t data = info.sram.read(info.pc + 1);
         
         char buffer[16];
         sprintf(buffer, "#$0x%02X", data);
@@ -213,7 +213,7 @@ namespace cpu6502 { namespace assembler {
     }
 
     bool Disassembler::parseOpcodeProgramCounterRelative(const ParseOpcodeInfo& info, DisassembledOpcode& outOpcode) {
-        uint8_t data = info.sram.read(info.pc);
+        uint8_t data = info.sram.read(info.pc + 1);
 
         // combine relative-offset with pc to create an address
         uint16_t address = info.pc + 2 + *(reinterpret_cast<int8_t*>(&data));
@@ -230,7 +230,7 @@ namespace cpu6502 { namespace assembler {
     }
 
     bool Disassembler::parseOpcodeZeroPage(const ParseOpcodeInfo& info, DisassembledOpcode& outOpcode) {
-        uint8_t address = info.sram.read(info.pc);
+        uint8_t address = info.sram.read(info.pc + 1);
         
         char buffer[16];
         sprintf(buffer, "$0x%02X", address);
@@ -240,7 +240,7 @@ namespace cpu6502 { namespace assembler {
     }
 
     bool Disassembler::parseOpcodeZeroPageIndexedIndirect(const ParseOpcodeInfo& info, DisassembledOpcode& outOpcode) {
-        uint8_t address = info.sram.read(info.pc);
+        uint8_t address = info.sram.read(info.pc + 1);
         
         char buffer[16];
         sprintf(buffer, "($0x%02X, x)", address);
@@ -250,7 +250,7 @@ namespace cpu6502 { namespace assembler {
     }
 
     bool Disassembler::parseOpcodeZeroPageIndexedWithX(const ParseOpcodeInfo& info, DisassembledOpcode& outOpcode) {
-        uint8_t address = info.sram.read(info.pc);
+        uint8_t address = info.sram.read(info.pc + 1);
         
         char buffer[16];
         sprintf(buffer, "$0x%02X, x", address);
@@ -260,7 +260,7 @@ namespace cpu6502 { namespace assembler {
     }
 
     bool Disassembler::parseOpcodeZeroPageIndexedWithY(const ParseOpcodeInfo& info, DisassembledOpcode& outOpcode) {
-        uint8_t address = info.sram.read(info.pc);
+        uint8_t address = info.sram.read(info.pc + 1);
         
         char buffer[16];
         sprintf(buffer, "$0x%02X, y", address);
@@ -270,7 +270,7 @@ namespace cpu6502 { namespace assembler {
     }
 
     bool Disassembler::parseOpcodeZeroPageIndirectIndexedWithY(const ParseOpcodeInfo& info, DisassembledOpcode& outOpcode) {
-        uint8_t address = info.sram.read(info.pc);
+        uint8_t address = info.sram.read(info.pc + 1);
         
         char buffer[16];
         sprintf(buffer, "($0x%02X), y", address);
