@@ -164,6 +164,9 @@ cc_test(
             "**/*.h",
             "**/*.hpp",
             "**/*.inl"
+        ],
+        exclude = [
+            "emulator/**/*"
         ]
     ) + [
         ":MasterClockTestBench",
@@ -199,4 +202,31 @@ cc_test(
         ":ALU",
         ":ProcessorStatus"
     ],
+)
+
+cc_binary(
+    name = "emulator",
+    srcs = glob(
+        include =[
+            "**/*.cpp",
+            "**/*.h",
+            "**/*.hpp",
+            "**/*.inl"
+        ],
+        exclude = [
+            "test/**/*",
+            "**/*.test.cpp"
+        ]
+    ) + [
+        ":Cpu6502TestBench"
+    ],
+    deps = [
+        #"@com_google_googletest//:gtest",
+        "@gtestverilog//gtestverilog:lib",
+        ":Cpu6502"
+    ],
+    linkopts = [
+        "-framework OpenGL",
+        "-framework GLUT"
+    ]
 )

@@ -9,13 +9,13 @@ using namespace gtestverilog;
 #include "nes/Cpu6502TestBench.h"
 using namespace cpu6502testbench;
 
-#include "memory/SRAM.hpp"
+#include "nes/memory/SRAM.hpp"
 using namespace memory;
 
-#include "cpu6502/assembler/Assembler.hpp"
+#include "nes/cpu6502/assembler/Assembler.hpp"
 using namespace cpu6502::assembler;
 
-#include "cpu6502/ProcessorStatusFlags.hpp"
+#include "nes/cpu6502/ProcessorStatusFlags.hpp"
 
 class Cpu6502 : public ::testing::Test {
 public:

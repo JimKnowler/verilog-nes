@@ -152,6 +152,16 @@ namespace cpu6502 { namespace assembler {
         return true;
     }
 
+    bool Disassembler::parseOpcodeAbsoluteIndexedIndirect(const ParseOpcodeInfo& info, DisassembledOpcode& outOpcode) {
+        uint16_t address = (info.sram.read(info.pc) << 8) | info.sram.read(info.pc + 1);
+        
+        char buffer[16];
+        sprintf(buffer, "($0x%04X, x)", address);
+        outOpcode.labelOperands = buffer;
+
+        return true;
+    }
+
     bool Disassembler::parseOpcodeAbsoluteIndexedWithX(const ParseOpcodeInfo& info, DisassembledOpcode& outOpcode) {
         uint16_t address = (info.sram.read(info.pc) << 8) | info.sram.read(info.pc + 1);
         
