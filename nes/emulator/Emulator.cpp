@@ -131,7 +131,7 @@ private:
         DrawDisassembly(200,40);
         //DrawMemory("HL", emulator.getState().hl, 10, 200);
         //DrawMemory("DE", emulator.getState().de, 10, 300);
-        //DrawStack(200, 200);
+        DrawStack(200, 200);
     }
 
     void simulateOpcode() {
@@ -162,7 +162,7 @@ private:
             PrepareString("  ac: 0x%02x", core.o_debug_ac),
             PrepareString("   x: 0x%02x", core.o_debug_x),
             PrepareString("   y: 0x%02x", core.o_debug_y),
-            PrepareString("   s: 0x01%02", core.o_debug_s),
+            PrepareString("   s: 0x01%02x", core.o_debug_s),
             PrepareString("  pc: 0x%02x%02x", core.o_debug_pch, core.o_debug_pcl),
             PrepareString(" p.C: %d", (p & C) ? 1 : 0),
             PrepareString(" p.Z: %d", (p & Z) ? 1 : 0),
@@ -216,45 +216,31 @@ private:
             }
         }
     }
+    */
 
     void DrawStack(int x, int y) {
-        DrawString({ x, y }, "Stack");
+        DrawString({ x, y }, "Stack", olc::RED);
 
-        const cpu::State& state = emulator.getState();
-        uint16_t sp = state.sp;
-        uint16_t address = sp & ~3;
+        const int kOffset = 3;
+
+        uint8_t s = testBench.core().o_debug_s;
+
+        s -= kOffset;
 
         y += 10;
         for (int i = 0; i < 10; i++) {
-			if (address >= memory.size()) {
-				break;
-			}
-            DrawString({ x + 10, y }, PrepareString("0x%04x %02x %02x %02x %02x", address, memory.read(address), memory.read(address + 1), memory.read(address + 2), memory.read(address + 3)));
+            uint16_t address = 0x0100 + s;
+			uint8_t data = sram.read(address);
+
+            DrawString({ x + 10, y }, PrepareString("0x%04x %02x", address, data), olc::BLACK);
+            if (i == kOffset) {
+                DrawString({ x, y}, ">", olc::RED);
+            }
 
             y += 10;
-            address += 4;
+            s += 1;
         }
     }
-
-	void DrawVideoRam(int x, int y) {
-		const uint16_t kVideoRamStart = 0x2400;
-
-		int i = 0;
-		const int kVideoRamWidth = 224;
-		const int kVideoRamHeight = 256;
-
-		for (int ix = 0; ix < kVideoRamWidth; ix++) {
-			for (int iy = 0; iy < kVideoRamHeight; iy +=8) {
-				uint8_t byte = memory.read(kVideoRamStart + i++);
-
-				for (int b = 0; b < 8; b++) {
-					FillRect({ x + ( ix << 1), y + ((kVideoRamHeight - (iy + b)) << 1) }, { 2,2 }, ((byte & 0x1) == 0x1) ? olc::WHITE : olc::BLACK);
-					byte >>= 1;
-				}
-			}
-		}
-	}
-    */
 
     std::string PrepareString(const char* format, ...) {        
         char buffer[256];
