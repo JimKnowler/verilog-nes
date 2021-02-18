@@ -126,12 +126,13 @@ private:
     void render() {			
         FillRect({ 0,0 }, { ScreenWidth(), ScreenHeight() }, olc::GREY);
 
-		//DrawString({ 10,10 }, PrepareString("Mode [%s]", (mode == Mode::Debugger) ? "DEBUGGER" : "RUN"));
+        DrawString({10,10}, "Nintendo ENTERTAINMENT SYSTEM fpga version", olc::RED);
+        DrawLine({10,20}, {10 + 42 * 8, 20}, olc::RED);
+
         DrawCPU(10,40);
         DrawDisassembly(200,40);
-        //DrawMemory("HL", emulator.getState().hl, 10, 200);
-        //DrawMemory("DE", emulator.getState().de, 10, 300);
         DrawStack(200, 200);
+        DrawTrace(400, 40);
     }
 
     void simulateOpcode() {
@@ -240,6 +241,28 @@ private:
             y += 10;
             s += 1;
         }
+    }
+
+    void DrawTrace(int x, int y) {
+        DrawString({ x, y }, "Trace", olc::RED);
+
+        const auto& trace = testBench.trace;
+
+        y += 10;
+
+        int numTicks = int(trace.getSteps().size() / 2);
+        DrawString({x, y}, PrepareString("%d clock cycles", numTicks), olc::BLACK);
+
+        std::ostringstream streamTrace;
+        streamTrace << testBench.trace;
+    
+        std::string strTrace = streamTrace.str();
+        
+        y+= 10;
+        DrawString({x, y}, strTrace, olc::BLACK);
+        DrawString({x+(4*8), y+(5*8)}, "X", olc::RED);      // each character is 8x8 pixels
+
+        // escape sequence is \e[<x>;<y>m]
     }
 
     std::string PrepareString(const char* format, ...) {        
