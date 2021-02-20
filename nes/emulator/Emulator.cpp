@@ -61,6 +61,14 @@ public:
         // skip reset
         simulateOpcode();
 
+        // fudge data for reset
+        traceOpcode.opcode = 0;
+        traceOpcode.addressingMode = 0;
+        traceOpcode.labelOpcode = "RESET";
+        traceOpcode.labelOperands = "";
+        traceOpcode.pc = 0xfffc;
+        traceOpcode.byteSize = 0;
+
         return true;
     }
 
@@ -78,6 +86,8 @@ private:
 
     Cpu6502TestBench testBench;
     SRAM sram;
+
+    Disassembler::DisassembledOpcode traceOpcode;
     
     void initSimulation() {
         testBench.setClockPolarity(0);
@@ -132,19 +142,29 @@ private:
         DrawCPU(10,40);
         DrawDisassembly(200,40);
         DrawStack(200, 200);
-        DrawTrace(400, 40);
+        DrawLastOpcodeTrace(400, 40);
     }
 
     void simulateOpcode() {
+        auto& core = testBench.core();
+
         // clear trace for the previous opcode
         testBench.trace.clear();
 
+        auto disassembledOpcodes = disassembler.disassemble(sram, (core.o_debug_pch << 8) | core.o_debug_pcl, 1);
+        if (disassembledOpcodes.empty()) {
+            printf("failed to simulateOpcode()");
+            return;
+        }
+
+        traceOpcode = disassembledOpcodes[0];
+        
         // simulate until next fetching next opcode, or max ticks
         const int kMaxTicks = 10;
 
         for (int i=0; i<kMaxTicks; i++) {
             testBench.tick();
-            if (testBench.core().o_sync == 1) {
+            if (core.o_sync == 1) {
                 // fetching next opcode
                 break;
             }
@@ -190,6 +210,9 @@ private:
         Disassembler::DisassembledOpcodes opcodes = disassembler.disassemble(sram, pc, 10);
 
         y += 10;
+
+        DrawString({ x, y}, ">", olc::RED);
+    
         for (auto& opcode: opcodes) {
 			
 			std::string strOpcode = opcode.labelOpcode + " " + opcode.labelOperands;
@@ -198,26 +221,6 @@ private:
             y += 10;
         }
     }
-
-    /*
-
-    void DrawMemory(const char* label, uint16_t address, int x, int y) {
-        DrawString({ x, y }, PrepareString("Memory (%s)", label));
-
-        // 4 byte alignment
-        address &= ~3;
-
-        if (address < memory.size()) {
-            y += 10;
-            for (int i = 0; i < 8; i++) {
-                DrawString({ x + 10, y }, PrepareString("0x%04x %02x %02x %02x %02x", address, memory.read(address), memory.read(address + 1), memory.read(address + 2), memory.read(address + 3)));
-
-                y += 10;
-                address += 4;
-            }
-        }
-    }
-    */
 
     void DrawStack(int x, int y) {
         DrawString({ x, y }, "Stack", olc::RED);
@@ -243,8 +246,8 @@ private:
         }
     }
 
-    void DrawTrace(int x, int y) {
-        DrawString({ x, y }, "Trace", olc::RED);
+    void DrawLastOpcodeTrace(int x, int y) {
+        DrawString({ x, y }, "Last Opcode", olc::RED);
 
         const auto& trace = testBench.trace;
 
@@ -252,13 +255,24 @@ private:
 
         int numTicks = int(trace.getSteps().size() / 2);
         DrawString({x, y}, PrepareString("%d clock cycles", numTicks), olc::BLACK);
+        y += 10;
+        DrawString({x, y}, PrepareString("0x%04x:  %s %6s    # 0x%02x, %d bytes", 
+                                        traceOpcode.pc,
+                                        traceOpcode.labelOpcode.c_str(),
+                                        traceOpcode.labelOperands.c_str(),
+                                        traceOpcode.opcode,
+                                        int(traceOpcode.byteSize)
+                                        ), olc::BLACK);
+        y+= 10;
 
         std::ostringstream streamTrace;
         streamTrace << testBench.trace;
-    
+
+        // note: each text character is 8x8 pixels
+
         std::string strTrace = streamTrace.str();
         
-        y+= 10;
+        
         DrawString({x, y}, strTrace, olc::BLACK);
         DrawString({x+(4*8), y+(5*8)}, "X", olc::RED);      // each character is 8x8 pixels
 
