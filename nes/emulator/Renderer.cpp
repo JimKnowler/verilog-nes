@@ -31,7 +31,7 @@ namespace {
     }
 
     const int kCharWidth = 8;
-    const int kRowHeight = 10;
+    const int kRowHeight = 11;
 
     const int kStepWidth = 16;
     const int kHalfStepWidth = kStepWidth / 2;
@@ -121,10 +121,9 @@ namespace emulator {
         int numTicks = int(trace.getSteps().size() / 2);
         engine.DrawString({x, y}, PrepareString("%d clock cycles", numTicks), olc::BLACK);
         y += kRowHeight;
-        engine.DrawString({x, y}, PrepareString("0x%04x:  %s %6s    # 0x%02x, %d bytes", 
+        engine.DrawString({x, y}, PrepareString("0x%04x:  %-16s # 0x%02x, %d bytes", 
                                         opcode.pc,
-                                        opcode.labelOpcode.c_str(),
-                                        opcode.labelOperands.c_str(),
+                                        (opcode.labelOpcode + " " + opcode.labelOperands).c_str(),
                                         opcode.opcode,
                                         int(opcode.byteSize)
                                         ), olc::BLACK);
