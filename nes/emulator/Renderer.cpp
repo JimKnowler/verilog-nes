@@ -15,23 +15,43 @@ namespace {
 
         return ret;
     }
+
+    const std::vector<olc::Pixel> kColours = {
+        olc::RED,
+        olc::GREEN,
+        olc::YELLOW,
+        olc::DARK_CYAN,
+        olc::MAGENTA,
+        olc::CYAN,
+        olc::WHITE
+    };
+
+    olc::Pixel getColourForPortId(uint32_t id) {
+        return kColours[ id % kColours.size() ];
+    }
+
+    const int kCharWidth = 8;
+    const int kRowHeight = 10;
+
+    const int kHalfCharWidth = kCharWidth / 2;
 }
 
 namespace emulator {
     void Renderer::drawTitle(olc::PixelGameEngine& engine, int x, int y) {
         engine.DrawString({x,y}, "Nintendo ENTERTAINMENT SYSTEM fpga version", olc::RED);
-        y += 10;
+        y += kRowHeight;
+
         engine.DrawLine({x, y}, {x + 42 * 8, y}, olc::RED);
     }
 
     void Renderer::drawCPU(olc::PixelGameEngine& engine, int x, int y, cpu6502testbench::Cpu6502TestBench& testBench) {
         engine.DrawString({ x, y }, "CPU State", olc::RED);
+        y += kRowHeight;
 
         auto& core = testBench.core();
-
         uint8_t p = core.o_debug_p;
 
-        std::vector<std::string> reports = {
+        std::vector<std::string> registers = {
             PrepareString("tick: %d", int(testBench.stepCount() / 2)),
             PrepareString("  ac: 0x%02x", core.o_debug_ac),
             PrepareString("   x: 0x%02x", core.o_debug_x),
@@ -47,17 +67,15 @@ namespace emulator {
             PrepareString(" p.N: %d", (p & N) ? 1 : 0)
         };
 
-        y += 10;
-        for (auto it = reports.begin(); it != reports.end(); it++) {
+        for (auto it = registers.begin(); it != registers.end(); it++) {
             engine.DrawString({ x + 10, y }, *it, olc::BLACK);
-            y += 10;
+            y += kRowHeight;
         }
     }
 
     void Renderer::drawDisassembly(olc::PixelGameEngine& engine, int x, int y, const cpu6502::assembler::Disassembler::DisassembledOpcodes& opcodes) {
         engine.DrawString({ x, y }, "Disassembly", olc::RED);
-        
-        y += 10;
+        y += kRowHeight;
 
         engine.DrawString({ x, y}, ">", olc::RED);
     
@@ -66,7 +84,7 @@ namespace emulator {
             std::string strOpcode = opcode.labelOpcode + " " + opcode.labelOperands;
             
             engine.DrawString({ x + 10, y }, PrepareString("0x%04x %s", opcode.pc, strOpcode.c_str()), olc::BLACK);
-            y += 10;
+            y += kRowHeight;
         }
     }
 
@@ -79,7 +97,7 @@ namespace emulator {
 
         s -= kOffset;
 
-        y += 10;
+        y += kRowHeight;
         for (int i = 0; i < 10; i++) {
             uint16_t address = 0x0100 + s;
             uint8_t data = sram.read(address);
@@ -89,7 +107,7 @@ namespace emulator {
                 engine.DrawString({ x, y}, ">", olc::RED);
             }
 
-            y += 10;
+            y += kRowHeight;
             s += 1;
         }
     }
@@ -97,11 +115,11 @@ namespace emulator {
     void Renderer::drawLastOpcodeTrace(olc::PixelGameEngine& engine, int x, int y, const gtestverilog::Trace& trace, const cpu6502::assembler::Disassembler::DisassembledOpcode& opcode) {
         engine.DrawString({ x, y }, "Last Opcode", olc::RED);
 
-        y += 10;
+        y += kRowHeight;
 
         int numTicks = int(trace.getSteps().size() / 2);
         engine.DrawString({x, y}, PrepareString("%d clock cycles", numTicks), olc::BLACK);
-        y += 10;
+        y += kRowHeight;
         engine.DrawString({x, y}, PrepareString("0x%04x:  %s %6s    # 0x%02x, %d bytes", 
                                         opcode.pc,
                                         opcode.labelOpcode.c_str(),
@@ -109,14 +127,139 @@ namespace emulator {
                                         opcode.opcode,
                                         int(opcode.byteSize)
                                         ), olc::BLACK);
-        y+= 10;
+        y+= (2 * kRowHeight);
 
-        //testBench.trace;
+        drawTrace(engine, x, y, trace);
+    }
 
-        // note: each text character is 8x8 pixels
+    
+    void Renderer::drawTrace(olc::PixelGameEngine& engine, int x, int y, const gtestverilog::Trace& trace) {
+        // note: each text character is 8x8 pixels       
+        // note: each Row is 10 pixels high
 
-        // todo: render it !
+        auto& steps = trace.getSteps();
         
-        
+        size_t maxPortLabelSize = trace.getMaxPortLabelSize();
+
+        drawTraceTimeline(engine, x, y, maxPortLabelSize + 11, steps.size());
+        y += kRowHeight;
+
+        for (uint32_t portId=0; portId<32; portId++) {
+            if (!trace.hasPort(portId)) {
+                continue;
+            }
+
+            const gtestverilog::PortDescription& portDesc = trace.getPortDescription(portId);
+
+            size_t numRows = drawTracePort(engine, x, y, maxPortLabelSize, portDesc, steps);
+            y += (numRows * kRowHeight);
+        }
+    }
+
+    void Renderer::drawTraceTimeline(olc::PixelGameEngine& engine, int x, int y, size_t offsetX, size_t numSteps) {
+        x += (offsetX * kCharWidth);
+
+        const int kDividerSize = 2;
+        int numDividers = (numSteps + kDividerSize - 1) / kDividerSize;
+
+        for (int i=0; i<numDividers;i++) {
+            engine.DrawLine({x,y}, {x,y+kRowHeight}, olc::BLACK);
+            engine.DrawString({x + 4,y}, PrepareString("%d", (i * kDividerSize) / 2), olc::BLACK);
+
+            x += (kDividerSize * kCharWidth);
+        }
+    }
+
+    size_t Renderer::drawTracePort(olc::PixelGameEngine& engine, int x, int y, size_t maxPortLabelSize, const gtestverilog::PortDescription& portDesc, const std::vector<gtestverilog::Step>& steps) {
+        size_t numRows = size_t(ceil(portDesc.width() / 4.0f));
+
+        // choose colour for the port
+        const olc::Pixel kColour = getColourForPortId(portDesc.id());
+
+        // print name of the row
+        engine.DrawString({x,y}, PrepareString("  %*s ", int(maxPortLabelSize), portDesc.label()), kColour);
+        x += ( (maxPortLabelSize + 3) * kCharWidth);
+
+        // print bit ranges for each row
+        for (size_t row=0; row < numRows; row++) {
+            if (portDesc.width() > 1) {
+                size_t nibbleIndex = numRows - row - 1;
+                engine.DrawString({x,y + int(row * kRowHeight)}, PrepareString("[%02lu:%02lu] ", ((nibbleIndex + 1) * 4) - 1, (nibbleIndex * 4)), kColour);                
+            } else {
+                engine.DrawString({x,y}, ".......", kColour);
+            }
+        }
+
+        x += ( 8 * kCharWidth);
+
+        if (steps.size() > 0) {
+            // draw logic analyser diagram
+
+            if (portDesc.width() == 1) {
+                // single bit
+                bool lastBit = std::get<bool>(steps[0].port(portDesc));
+
+                const int kLogicHeight = kRowHeight - 2;
+
+                for (size_t i=0; i<steps.size(); i++) {
+                    bool bit = std::get<bool>(steps[i].port(portDesc));
+
+                    int bitY = y + (bit ? 2 : kLogicHeight);
+
+                    if (bit != lastBit) {
+                        // render edge
+                        int lastBitY = y + (lastBit ? 2 : kLogicHeight);
+
+                        engine.DrawLine({x,lastBitY}, {x,bitY}, kColour);
+                    }
+
+                    engine.DrawLine({x,bitY}, {x+kCharWidth,bitY}, kColour);
+                    
+                    lastBit = bit;
+                    x += kCharWidth;
+                }
+            } else {
+                // multibit
+
+                size_t stepIndex = 0;
+                const int kPortHeight = numRows * kRowHeight;
+                const int kHalfPortHeight = kPortHeight / 2;
+                while (stepIndex < steps.size()) {
+                    uint32_t value = std::get<uint32_t>(steps[stepIndex].port(portDesc));
+
+                    size_t runLength = 1;
+                    stepIndex += 1;
+
+                    while ((stepIndex < steps.size()) && (value == std::get<uint32_t>(steps[stepIndex].port(portDesc)))) {
+                        runLength += 1;
+                        stepIndex += 1;
+                    }
+                    
+                    // open edge
+                    engine.FillTriangle({x,y + kHalfPortHeight}, {x + kHalfCharWidth, y+kPortHeight}, {x + kHalfCharWidth, y}, kColour);
+                    x += kHalfCharWidth;
+
+                    // filled area
+                    if (runLength > 1) {
+                        const int kFillWidth = int((runLength-1) * kCharWidth);
+                        engine.FillRect({x,y}, {kFillWidth, kPortHeight}, kColour);
+
+                        for (size_t row=0; row < numRows; row++) {
+                            size_t nibbleIndex = numRows - row - 1;
+                            
+                            uint8_t nibble = uint8_t( (value >> (nibbleIndex * 4)) & 0xf);
+                            engine.DrawString({1 + x, 1 + y + int(row * kRowHeight)}, PrepareString("%X", nibble), olc::BLACK);
+                        }
+                        x += kFillWidth;
+                    }
+                    
+                    // closing edge
+                    engine.FillTriangle({x + kHalfCharWidth,y + kHalfPortHeight}, {x, y+kPortHeight}, {x, y}, kColour);
+                    x += kHalfCharWidth; 
+                }
+            }
+        }
+
+        return numRows;
     }
 }
