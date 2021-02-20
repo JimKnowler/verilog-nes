@@ -65,12 +65,12 @@ namespace emulator {
             simulateOpcode();
 
             // fudge data for reset
-            traceOpcode.opcode = 0;
-            traceOpcode.addressingMode = 0;
-            traceOpcode.labelOpcode = "RESET";
-            traceOpcode.labelOperands = "";
-            traceOpcode.pc = 0xfffc;
-            traceOpcode.byteSize = 0;
+            lastOpcode.opcode = 0;
+            lastOpcode.addressingMode = 0;
+            lastOpcode.labelOpcode = "RESET";
+            lastOpcode.labelOperands = "";
+            lastOpcode.pc = 0xfffc;
+            lastOpcode.byteSize = 0;
 
             return true;
         }
@@ -90,7 +90,8 @@ namespace emulator {
         Cpu6502TestBench testBench;
         SRAM sram;
 
-        Disassembler::DisassembledOpcode traceOpcode;
+        Disassembler::DisassembledOpcode lastOpcode;
+        gtestverilog::Trace traceLastOpcode;
         
         Renderer renderer;
 
@@ -146,7 +147,7 @@ namespace emulator {
 
             renderer.drawDisassembly(*this, 200, 40, disassembledOpcodesAtPC());
             renderer.drawStack(*this, 200, 200, testBench, sram);
-            renderer.drawLastOpcodeTrace(*this, 400, 40, testBench.trace, traceOpcode);
+            renderer.drawLastOpcodeTrace(*this, 400, 40, traceLastOpcode, lastOpcode);
         }
 
         Disassembler::DisassembledOpcodes disassembledOpcodesAtPC() {
@@ -161,6 +162,7 @@ namespace emulator {
             auto& core = testBench.core();
 
             // clear trace for the previous opcode
+            gtestverilog::Trace lastTrace = testBench.trace;
             testBench.trace.clear();
 
             auto disassembledOpcodes = disassembler.disassemble(sram, (core.o_debug_pch << 8) | core.o_debug_pcl, 1);
@@ -169,7 +171,7 @@ namespace emulator {
                 return;
             }
 
-            traceOpcode = disassembledOpcodes[0];
+            lastOpcode = disassembledOpcodes[0];
             
             // simulate until next fetching next opcode, or max ticks
             const int kMaxTicks = 10;
@@ -181,6 +183,11 @@ namespace emulator {
                     break;
                 }
             }
+
+            // we've stopped half with through T0 of next opcode, so we need to 
+            // concatenate part of the last trace with the new trace in order
+            // to create a full trace for last opcode
+            traceLastOpcode = lastTrace.slice( lastTrace.getSteps().size() - 1, 1) + testBench.trace.slice(0, testBench.trace.getSteps().size()-1);
         }
     };
 }
