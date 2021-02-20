@@ -28,6 +28,8 @@ namespace emulator {
     public:
         Emulator() : sram(0xffff) {
             sAppName = "FGPA NES Emulator";
+
+            SetPixelMode(olc::Pixel::ALPHA);
         }
 
         /// @brief called once at start		

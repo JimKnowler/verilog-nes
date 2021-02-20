@@ -33,7 +33,8 @@ namespace {
     const int kCharWidth = 8;
     const int kRowHeight = 10;
 
-    const int kHalfCharWidth = kCharWidth / 2;
+    const int kStepWidth = 16;
+    const int kHalfStepWidth = kStepWidth / 2;
 }
 
 namespace emulator {
@@ -141,9 +142,12 @@ namespace emulator {
         
         size_t maxPortLabelSize = trace.getMaxPortLabelSize();
 
-        drawTraceTimeline(engine, x, y, maxPortLabelSize + 11, steps.size());
+        const int yTimeline = y;
         y += kRowHeight;
 
+        const int yStart = y;
+
+        int portIndex = 0;
         for (uint32_t portId=0; portId<32; portId++) {
             if (!trace.hasPort(portId)) {
                 continue;
@@ -151,12 +155,17 @@ namespace emulator {
 
             const gtestverilog::PortDescription& portDesc = trace.getPortDescription(portId);
 
-            size_t numRows = drawTracePort(engine, x, y, maxPortLabelSize, portDesc, steps);
+            size_t numRows = drawTracePort(engine, x, y, portIndex, maxPortLabelSize, portDesc, steps);
             y += (numRows * kRowHeight);
+            portIndex += 1;
         }
+
+        const int yEnd = y;
+
+        drawTraceTimeline(engine, x, yTimeline, maxPortLabelSize + 11, steps.size(), yStart, yEnd);
     }
 
-    void Renderer::drawTraceTimeline(olc::PixelGameEngine& engine, int x, int y, size_t offsetX, size_t numSteps) {
+    void Renderer::drawTraceTimeline(olc::PixelGameEngine& engine, int x, int y, size_t offsetX, size_t numSteps, int yTraceStart, int yTraceEnd) {
         x += (offsetX * kCharWidth);
 
         const int kDividerSize = 2;
@@ -166,15 +175,22 @@ namespace emulator {
             engine.DrawLine({x,y}, {x,y+kRowHeight}, olc::BLACK);
             engine.DrawString({x + 4,y}, PrepareString("%d", (i * kDividerSize) / 2), olc::BLACK);
 
-            x += (kDividerSize * kCharWidth);
+            engine.DrawLine({x,yTraceStart}, {x,yTraceEnd}, olc::Pixel(150,150,150,50));
+
+            x += (kDividerSize * kStepWidth);
         }
+
+        engine.DrawLine({x,yTraceStart}, {x,yTraceEnd}, olc::Pixel(150,150,150,50));
     }
 
-    size_t Renderer::drawTracePort(olc::PixelGameEngine& engine, int x, int y, size_t maxPortLabelSize, const gtestverilog::PortDescription& portDesc, const std::vector<gtestverilog::Step>& steps) {
+    size_t Renderer::drawTracePort(olc::PixelGameEngine& engine, int x, int y, int portIndex, size_t maxPortLabelSize, const gtestverilog::PortDescription& portDesc, const std::vector<gtestverilog::Step>& steps) {
         size_t numRows = size_t(ceil(portDesc.width() / 4.0f));
 
         // choose colour for the port
         const olc::Pixel kColour = getColourForPortId(portDesc.id());
+
+        // fill background for the port
+        engine.FillRect({x,y}, {x + 100, int(numRows * kRowHeight)}, ((portIndex % 2) == 1) ? olc::GREY : olc::Pixel(200, 200, 200));
 
         // print name of the row
         engine.DrawString({x,y}, PrepareString("  %*s ", int(maxPortLabelSize), portDesc.label()), kColour);
@@ -190,7 +206,7 @@ namespace emulator {
             }
         }
 
-        x += ( 8 * kCharWidth);
+        x += (8 * kCharWidth);
 
         if (steps.size() > 0) {
             // draw logic analyser diagram
@@ -213,10 +229,10 @@ namespace emulator {
                         engine.DrawLine({x,lastBitY}, {x,bitY}, kColour);
                     }
 
-                    engine.DrawLine({x,bitY}, {x+kCharWidth,bitY}, kColour);
+                    engine.DrawLine({x,bitY}, {x+kStepWidth,bitY}, kColour);
                     
                     lastBit = bit;
-                    x += kCharWidth;
+                    x += kStepWidth;
                 }
             } else {
                 // multibit
@@ -236,12 +252,12 @@ namespace emulator {
                     }
                     
                     // open edge
-                    engine.FillTriangle({x,y + kHalfPortHeight}, {x + kHalfCharWidth, y+kPortHeight}, {x + kHalfCharWidth, y}, kColour);
-                    x += kHalfCharWidth;
+                    engine.FillTriangle({x,y + kHalfPortHeight}, {x + kHalfStepWidth, y+kPortHeight}, {x + kHalfStepWidth, y}, kColour);
+                    x += kHalfStepWidth;
 
                     // filled area
                     if (runLength > 1) {
-                        const int kFillWidth = int((runLength-1) * kCharWidth);
+                        const int kFillWidth = int((runLength-1) * kStepWidth);
                         engine.FillRect({x,y}, {kFillWidth, kPortHeight}, kColour);
 
                         for (size_t row=0; row < numRows; row++) {
@@ -254,8 +270,8 @@ namespace emulator {
                     }
                     
                     // closing edge
-                    engine.FillTriangle({x + kHalfCharWidth,y + kHalfPortHeight}, {x, y+kPortHeight}, {x, y}, kColour);
-                    x += kHalfCharWidth; 
+                    engine.FillTriangle({x + kHalfStepWidth, y + kHalfPortHeight}, {x, y + kPortHeight}, {x, y}, kColour);
+                    x += kHalfStepWidth; 
                 }
             }
         }

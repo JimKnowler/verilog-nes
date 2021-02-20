@@ -17,8 +17,8 @@ namespace emulator {
 
     private:
         void drawTrace(olc::PixelGameEngine& engine, int x, int y, const gtestverilog::Trace& trace);
-        void drawTraceTimeline(olc::PixelGameEngine& engine, int x, int y, size_t offsetX, size_t numSteps);
-        size_t drawTracePort(olc::PixelGameEngine& engine, int x, int y, size_t maxPortLabelSize, const gtestverilog::PortDescription& portDesc, const std::vector<gtestverilog::Step>& steps);  
+        void drawTraceTimeline(olc::PixelGameEngine& engine, int x, int y, size_t offsetX, size_t numSteps, int yTraceStart, int yTraceEnd);
+        size_t drawTracePort(olc::PixelGameEngine& engine, int x, int y, int portIndex, size_t maxPortLabelSize, const gtestverilog::PortDescription& portDesc, const std::vector<gtestverilog::Step>& steps);  
     };
 
 }
