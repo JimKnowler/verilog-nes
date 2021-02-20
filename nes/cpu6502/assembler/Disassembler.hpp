@@ -1,3 +1,4 @@
+#pragma once 
 
 #include "nes/memory/SRAM.hpp"
 #include "nes/cpu6502/assembler/Opcode.hpp"

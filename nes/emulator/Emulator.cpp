@@ -5,9 +5,9 @@
 
 #include "nes/cpu6502/assembler/Assembler.hpp"
 #include "nes/cpu6502/assembler/Disassembler.hpp"
-#include "nes/cpu6502/ProcessorStatusFlags.hpp"
 #include "nes/memory/SRAM.hpp"
 #include "nes/Cpu6502TestBench.h"
+#include "nes/emulator/Renderer.hpp"
 
 #include <vector>
 #include <cassert>
@@ -22,279 +22,170 @@ namespace {
     const uint32_t kScreenHeight = 600;
 }
 
-class Emulator : public olc::PixelGameEngine
-{
-public:
-    Emulator() : sram(0xffff) {
-        sAppName = "FGPA NES Emulator";
-    }
+namespace emulator {
+    class Emulator : public olc::PixelGameEngine
+    {
+    public:
+        Emulator() : sram(0xffff) {
+            sAppName = "FGPA NES Emulator";
+        }
 
-	/// @brief called once at start		
-    bool OnUserCreate() override {
-        initSimulation();
+        /// @brief called once at start		
+        bool OnUserCreate() override {
+            initSimulation();
 
-        // create a simple program
+            // create a simple program
 
-        Assembler()
-                .NOP()
-            .org(0x3456)
-            .label("start")
-                .NOP()
-                .JSR().absolute("jmp_to")
-            .label("return_to")
-                .SEC()
-                .CLC()
-                .LDY().immediate(0x80)          // N
-                .LDX().immediate(0)             // Z
-                .TAX()
-                .TAY()
-                .CMP().immediate(0x42)
-            .org(0x4567)
-            .label("jmp_to")
-                .NOP()
-                .LDA().immediate(0x42)
-                .RTS()
-            .org(0xfffc)
-            .word("start")
-            .compileTo(sram);
+            Assembler()
+                    .NOP()
+                .org(0x3456)
+                .label("start")
+                    .NOP()
+                    .JSR().absolute("jmp_to")
+                .label("return_to")
+                    .SEC()
+                    .CLC()
+                    .LDY().immediate(0x80)          // N
+                    .LDX().immediate(0)             // Z
+                    .TAX()
+                    .TAY()
+                    .CMP().immediate(0x42)
+                .org(0x4567)
+                .label("jmp_to")
+                    .NOP()
+                    .LDA().immediate(0x42)
+                    .RTS()
+                .org(0xfffc)
+                .word("start")
+                .compileTo(sram);
 
-        // skip reset
-        simulateOpcode();
+            // skip reset
+            simulateOpcode();
 
-        // fudge data for reset
-        traceOpcode.opcode = 0;
-        traceOpcode.addressingMode = 0;
-        traceOpcode.labelOpcode = "RESET";
-        traceOpcode.labelOperands = "";
-        traceOpcode.pc = 0xfffc;
-        traceOpcode.byteSize = 0;
+            // fudge data for reset
+            traceOpcode.opcode = 0;
+            traceOpcode.addressingMode = 0;
+            traceOpcode.labelOpcode = "RESET";
+            traceOpcode.labelOperands = "";
+            traceOpcode.pc = 0xfffc;
+            traceOpcode.byteSize = 0;
 
-        return true;
-    }
+            return true;
+        }
 
-	/// @brief called every frame
-    bool OnUserUpdate(float fElapsedTime) override {
-        update();
+        /// @brief called every frame
+        bool OnUserUpdate(float fElapsedTime) override {
+            update();
 
-        render();
+            render();
 
-        return true;
-    }
-    
-private:
-    Disassembler disassembler;
+            return true;
+        }
+        
+    private:
+        Disassembler disassembler;
 
-    Cpu6502TestBench testBench;
-    SRAM sram;
+        Cpu6502TestBench testBench;
+        SRAM sram;
 
-    Disassembler::DisassembledOpcode traceOpcode;
-    
-    void initSimulation() {
-        testBench.setClockPolarity(0);
+        Disassembler::DisassembledOpcode traceOpcode;
+        
+        Renderer renderer;
 
-        sram.clear(0);
+        void initSimulation() {
+            testBench.setClockPolarity(0);
 
-        // simulation at the end of a clock phase, before
-        //   transition to other clock phase
-        testBench.setCallbackSimulateCombinatorial([this]{
-            auto& cpu = testBench.core();
+            sram.clear(0);
 
-            if (cpu.i_clk == 1) {
-                // clock: end of phi2
-                // R/W data is valid on the bus
-                if (cpu.o_rw == 0) {
-                    // write
-                    sram.write(cpu.o_address, cpu.o_data);
+            // simulation at the end of a clock phase, before
+            //   transition to other clock phase
+            testBench.setCallbackSimulateCombinatorial([this]{
+                auto& cpu = testBench.core();
+
+                if (cpu.i_clk == 1) {
+                    // clock: end of phi2
+                    // R/W data is valid on the bus
+                    if (cpu.o_rw == 0) {
+                        // write
+                        sram.write(cpu.o_address, cpu.o_data);
+                    } else {
+                        // read
+                        cpu.i_data = sram.read(cpu.o_address);
+                    }
+
+        #ifdef CPU6502_VERBOSE
+                    printf("Cpu6502: %s addr [0x%04x] data [0x%02x]\n", 
+                            (cpu.o_rw == 1) ? "R" : "W",
+                            cpu.o_address,
+                            sram.read(cpu.o_address));
+        #endif
                 } else {
-                    // read
-                    cpu.i_data = sram.read(cpu.o_address);
+                    // clock: end of phi 1
+                    // undefined data on the bus
+                    cpu.i_data = 0xFF;
                 }
+            });
 
-    #ifdef CPU6502_VERBOSE
-                printf("Cpu6502: %s addr [0x%04x] data [0x%02x]\n", 
-                        (cpu.o_rw == 1) ? "R" : "W",
-                        cpu.o_address,
-                        sram.read(cpu.o_address));
-    #endif
-            } else {
-                // clock: end of phi 1
-                // undefined data on the bus
-                cpu.i_data = 0xFF;
-            }
-        });
-
-        testBench.reset();
-        simulateOpcode();               // incorrectly reporting SYNC during RESET?
-    }
-
-    void update() {
-        if (GetKey(olc::SPACE).bReleased) {
-			simulateOpcode();
-		}
-    }
-
-    void render() {			
-        FillRect({ 0,0 }, { ScreenWidth(), ScreenHeight() }, olc::GREY);
-
-        DrawString({10,10}, "Nintendo ENTERTAINMENT SYSTEM fpga version", olc::RED);
-        DrawLine({10,20}, {10 + 42 * 8, 20}, olc::RED);
-
-        DrawCPU(10,40);
-        DrawDisassembly(200,40);
-        DrawStack(200, 200);
-        DrawLastOpcodeTrace(400, 40);
-    }
-
-    void simulateOpcode() {
-        auto& core = testBench.core();
-
-        // clear trace for the previous opcode
-        testBench.trace.clear();
-
-        auto disassembledOpcodes = disassembler.disassemble(sram, (core.o_debug_pch << 8) | core.o_debug_pcl, 1);
-        if (disassembledOpcodes.empty()) {
-            printf("failed to simulateOpcode()");
-            return;
+            testBench.reset();
+            simulateOpcode();               // incorrectly reporting SYNC during RESET?
         }
 
-        traceOpcode = disassembledOpcodes[0];
-        
-        // simulate until next fetching next opcode, or max ticks
-        const int kMaxTicks = 10;
-
-        for (int i=0; i<kMaxTicks; i++) {
-            testBench.tick();
-            if (core.o_sync == 1) {
-                // fetching next opcode
-                break;
+        void update() {
+            if (GetKey(olc::SPACE).bReleased) {
+                simulateOpcode();
             }
         }
-    }
 
-    void DrawCPU(int x, int y) {
-        DrawString({ x, y }, "CPU State", olc::RED);
+        void render() {			
+            FillRect({ 0,0 }, { ScreenWidth(), ScreenHeight() }, olc::GREY);
 
-        auto& core = testBench.core();
+            renderer.drawTitle(*this, 10, 10);
+            renderer.drawCPU(*this, 0, 40, testBench);
 
-        uint8_t p = core.o_debug_p;
-
-        std::vector<std::string> reports = {
-            PrepareString("tick: %d", int(testBench.stepCount() / 2)),
-            PrepareString("  ac: 0x%02x", core.o_debug_ac),
-            PrepareString("   x: 0x%02x", core.o_debug_x),
-            PrepareString("   y: 0x%02x", core.o_debug_y),
-            PrepareString("   s: 0x01%02x", core.o_debug_s),
-            PrepareString("  pc: 0x%02x%02x", core.o_debug_pch, core.o_debug_pcl),
-            PrepareString(" p.C: %d", (p & C) ? 1 : 0),
-            PrepareString(" p.Z: %d", (p & Z) ? 1 : 0),
-            PrepareString(" p.I: %d", (p & I) ? 1 : 0),
-            PrepareString(" p.D: %d", (p & D) ? 1 : 0),
-            PrepareString(" p.B: %d", (p & B) ? 1 : 0),
-            PrepareString(" p.V: %d", (p & V) ? 1 : 0),
-            PrepareString(" p.N: %d", (p & N) ? 1 : 0)
-        };
-
-        y += 10;
-        for (auto it = reports.begin(); it != reports.end(); it++) {
-            DrawString({ x + 10, y }, *it, olc::BLACK);
-            y += 10;
+            renderer.drawDisassembly(*this, 200, 40, disassembledOpcodesAtPC());
+            renderer.drawStack(*this, 200, 200, testBench, sram);
+            renderer.drawLastOpcodeTrace(*this, 400, 40, testBench.trace, traceOpcode);
         }
-    }
 
-    void DrawDisassembly(int x, int y) {
-        DrawString({ x, y }, "Disassembly", olc::RED);
-        
-        auto& core = testBench.core();
-        uint16_t pc = (core.o_debug_pch << 8) + core.o_debug_pcl;
+        Disassembler::DisassembledOpcodes disassembledOpcodesAtPC() {
+            auto& core = testBench.core();
+            uint16_t pc = (core.o_debug_pch << 8) + core.o_debug_pcl;
+            Disassembler::DisassembledOpcodes disassembledOpcodes = disassembler.disassemble(sram, pc, 10);
 
-        Disassembler::DisassembledOpcodes opcodes = disassembler.disassemble(sram, pc, 10);
+            return disassembledOpcodes;
+        }
 
-        y += 10;
+        void simulateOpcode() {
+            auto& core = testBench.core();
 
-        DrawString({ x, y}, ">", olc::RED);
-    
-        for (auto& opcode: opcodes) {
-			
-			std::string strOpcode = opcode.labelOpcode + " " + opcode.labelOperands;
+            // clear trace for the previous opcode
+            testBench.trace.clear();
+
+            auto disassembledOpcodes = disassembler.disassemble(sram, (core.o_debug_pch << 8) | core.o_debug_pcl, 1);
+            if (disassembledOpcodes.empty()) {
+                printf("failed to simulateOpcode()");
+                return;
+            }
+
+            traceOpcode = disassembledOpcodes[0];
             
-            DrawString({ x + 10, y }, PrepareString("0x%04x %s", opcode.pc, strOpcode.c_str()), olc::BLACK);
-            y += 10;
-        }
-    }
+            // simulate until next fetching next opcode, or max ticks
+            const int kMaxTicks = 10;
 
-    void DrawStack(int x, int y) {
-        DrawString({ x, y }, "Stack", olc::RED);
-
-        const int kOffset = 3;
-
-        uint8_t s = testBench.core().o_debug_s;
-
-        s -= kOffset;
-
-        y += 10;
-        for (int i = 0; i < 10; i++) {
-            uint16_t address = 0x0100 + s;
-			uint8_t data = sram.read(address);
-
-            DrawString({ x + 10, y }, PrepareString("0x%04x %02x", address, data), olc::BLACK);
-            if (i == kOffset) {
-                DrawString({ x, y}, ">", olc::RED);
+            for (int i=0; i<kMaxTicks; i++) {
+                testBench.tick();
+                if (core.o_sync == 1) {
+                    // fetching next opcode
+                    break;
+                }
             }
-
-            y += 10;
-            s += 1;
         }
-    }
-
-    void DrawLastOpcodeTrace(int x, int y) {
-        DrawString({ x, y }, "Last Opcode", olc::RED);
-
-        const auto& trace = testBench.trace;
-
-        y += 10;
-
-        int numTicks = int(trace.getSteps().size() / 2);
-        DrawString({x, y}, PrepareString("%d clock cycles", numTicks), olc::BLACK);
-        y += 10;
-        DrawString({x, y}, PrepareString("0x%04x:  %s %6s    # 0x%02x, %d bytes", 
-                                        traceOpcode.pc,
-                                        traceOpcode.labelOpcode.c_str(),
-                                        traceOpcode.labelOperands.c_str(),
-                                        traceOpcode.opcode,
-                                        int(traceOpcode.byteSize)
-                                        ), olc::BLACK);
-        y+= 10;
-
-        std::ostringstream streamTrace;
-        streamTrace << testBench.trace;
-
-        // note: each text character is 8x8 pixels
-
-        std::string strTrace = streamTrace.str();
-        
-        
-        DrawString({x, y}, strTrace, olc::BLACK);
-        DrawString({x+(4*8), y+(5*8)}, "X", olc::RED);      // each character is 8x8 pixels
-
-        // escape sequence is \e[<x>;<y>m]
-    }
-
-    std::string PrepareString(const char* format, ...) {        
-        char buffer[256];
-        va_list args;
-        va_start(args, format);
-        vsprintf(buffer, format, args);        
-        va_end(args);
-        
-        std::string ret = buffer;
-
-        return ret;
-    }
-};
+    };
+}
 
 int main()
 {
-    Emulator emulator;
+    emulator::Emulator emulator;
 
     if (emulator.Construct(kScreenWidth, kScreenHeight, 1, 1))
         emulator.Start();
