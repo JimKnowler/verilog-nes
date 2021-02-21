@@ -102,3 +102,54 @@ Aim: to play the original NES [Super Mario Bros](https://en.wikipedia.org/wiki/S
 # References
 - Vivado - [XDC Constraints](https://www.xilinx.com/support/documentation/sw_manuals/xilinx2014_1/ug903-vivado-using-constraints.pdf)
 - [Program CMOD A7](https://reference.digilentinc.com/learn/programmable-logic/tutorials/cmod-a7-programming-guide/start)
+
+# Games
+
+Information from .nes rom headers dumped with scripts/parse_ines.py
+
+- Super Mario World
+```
+PRG ROM 2 x 16 KB units
+CHR ROM 1 x 8 KB units
+mirroring:  horizontal
+has batter backed prg rom:  False
+has trainer:  False
+ignore mirroring control:  False
+mapper number:  0
+```
+- Super Mario World 2
+```
+PRG ROM 8 x 16 KB units
+CHR ROM 16 x 8 KB units
+mirroring:  vertical
+has batter backed prg rom:  False
+has trainer:  False
+ignore mirroring control:  False
+mapper number:  4
+```
+
+- Super Mario World 3
+```
+PRG ROM 16 x 16 KB units
+CHR ROM 16 x 8 KB units
+mirroring:  vertical
+has batter backed prg rom:  False
+has trainer:  False
+ignore mirroring control:  False
+mapper number:  4
+```
+- Kirby's Adventure
+'''
+PRG ROM 32 x 16 KB units
+CHR ROM 32 x 8 KB units
+mirroring:  vertical
+has batter backed prg rom:  True
+has trainer:  False
+ignore mirroring control:  False
+mapper number:  4
+'''
+
+# Mappers
+
+- Mapper number: 0 = [NROM](https://wiki.nesdev.com/w/index.php/NROM)
+- Mapper number: 4 = [MMC3](https://wiki.nesdev.com/w/index.php/MMC3)
