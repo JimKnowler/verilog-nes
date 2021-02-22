@@ -10,7 +10,8 @@ SIZE_CHR_ROM_BANK = 8 * 1024
 def parse_args():
     parser = argparse.ArgumentParser(description='parse iNes format ROM')
     parser.add_argument('--file', '-f', required=True, dest='file', help='filepath of .nes ROM file to parse')
-    parser.add_argument('--chr', '-c', dest='export_chr_rom', action='store_true', help='export character ROM as PNG files' )
+    parser.add_argument('--chr', '-c', dest='export_chr_rom', action='store_true', help='export character ROM banks as .png files' )
+    parser.add_argument('--prg', '-p', dest='export_prg_rom', action='store_true', help='export program ROM banks as .bin files')
     args = parser.parse_args()
 
     return args
@@ -99,13 +100,25 @@ def export_ines_chr_rom(data, header):
         bank_offset = offset_chr_rom + (i * SIZE_CHR_ROM_BANK)
         export_ines_chr_rom_bank(i, data[bank_offset: bank_offset + SIZE_CHR_ROM_BANK])
 
-def parse_ines(data, export_chr_rom):
+def export_ines_prg_rom(data, header):
+    offset_prg_rom = SIZE_INES_HEADER
+    size_prg_rom = header['size_prg_rom']
+    for i in range(size_prg_rom):
+        bank_offset = offset_prg_rom + (i * SIZE_PRG_ROM_BANK)
+        with open('prg_rom_bank_%d.6502.bin' % (i), 'wb') as file:
+            prg_data = data[bank_offset: bank_offset + SIZE_PRG_ROM_BANK]
+            file.write(prg_data)
+
+def parse_ines(data, export_chr_rom, export_prg_rom):
     header = parse_ines_header(data[0:SIZE_INES_HEADER])
     
     validate_ines(data, header)
 
     if export_chr_rom:
         export_ines_chr_rom(data, header)
+    
+    if export_prg_rom:
+        export_ines_prg_rom(data, header)
 
 def main():
     args = parse_args()
@@ -113,7 +126,7 @@ def main():
     with open(args.file, 'rb') as file:
         data = file.read()
 
-    parse_ines(data, args.export_chr_rom)
+    parse_ines(data, args.export_chr_rom, args.export_prg_rom)
 
 if __name__ == "__main__":
     main()
