@@ -172,7 +172,7 @@ namespace emulator {
             FillRect({ 0,0 }, { ScreenWidth(), ScreenHeight() }, olc::GREY);
 
             renderer.drawTitle(*this, 10, 10);
-            renderer.drawCPU(*this, 0, 40, testBench);
+            renderer.drawCPU(*this, 10, 40, testBench);
 
             renderer.drawDisassembly(*this, 200, 40, disassembledOpcodesAtPC());
             renderer.drawStack(*this, 200, 200, testBench, sram);
