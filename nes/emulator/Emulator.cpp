@@ -36,30 +36,8 @@ namespace emulator {
         bool OnUserCreate() override {
             initSimulation();
 
-            // create a simple program
-
-            Assembler()
-                    .NOP()
-                .org(0x3456)
-                .label("start")
-                    .NOP()
-                    .JSR().absolute("jmp_to")
-                .label("return_to")
-                    .SEC()
-                    .CLC()
-                    .LDY().immediate(0x80)          // N
-                    .LDX().immediate(0)             // Z
-                    .TAX()
-                    .TAY()
-                    .CMP().immediate(0x42)
-                .org(0x4567)
-                .label("jmp_to")
-                    .NOP()
-                    .LDA().immediate(0x42)
-                    .RTS()
-                .org(0xfffc)
-                .word("start")
-                .compileTo(sram);
+            //initSimpleProgram()
+            initMario();
 
             // skip reset
             simulateOpcode();
@@ -94,6 +72,57 @@ namespace emulator {
         gtestverilog::Trace traceLastOpcode;
         
         Renderer renderer;
+
+        void initMario() {
+            // load bank 0 -> 0x8000:0xBFFF
+            auto bank0 = loadBinaryFile("prg_rom_bank_0.6502.bin");
+            sram.write(0x8000, bank0);
+
+            // load bank 1 -> 0xC000:0xFFFF
+            auto bank1 = loadBinaryFile("prg_rom_bank_1.6502.bin");
+            sram.write(0xC000, bank1);
+        }
+
+        std::vector<uint8_t> loadBinaryFile(const char* filename) {
+            std::ifstream is;
+            is.open (filename, std::ios::binary );
+            is.seekg (0, std::ios::end);
+            int length = is.tellg();
+            is.seekg (0, std::ios::beg);
+            std::vector<uint8_t> buffer(length);
+            uint8_t* pBuffer = &(buffer.front());
+            is.read(reinterpret_cast<char*>(pBuffer), length);
+            is.close();
+
+            return buffer;
+        }
+
+        void initSimpleProgram() {
+            // create a simple program & compile it into SRAM
+
+            Assembler()
+                    .NOP()
+                .org(0x3456)
+                .label("start")
+                    .NOP()
+                    .JSR().absolute("jmp_to")
+                .label("return_to")
+                    .SEC()
+                    .CLC()
+                    .LDY().immediate(0x80)          // N
+                    .LDX().immediate(0)             // Z
+                    .TAX()
+                    .TAY()
+                    .CMP().immediate(0x42)
+                .org(0x4567)
+                .label("jmp_to")
+                    .NOP()
+                    .LDA().immediate(0x42)
+                    .RTS()
+                .org(0xfffc)
+                .word("start")
+                .compileTo(sram);
+        }
 
         void initSimulation() {
             testBench.setClockPolarity(0);
