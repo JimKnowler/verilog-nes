@@ -136,7 +136,6 @@ namespace emulator {
 
     void Renderer::drawLastOpcodeTrace(olc::PixelGameEngine& engine, int x, int y, const gtestverilog::Trace& trace, const cpu6502::assembler::Disassembler::DisassembledOpcode& opcode) {
         engine.DrawString({ x, y }, "Last Opcode", olc::RED);
-
         y += kRowHeight;
 
         int numTicks = int(trace.getSteps().size() / 2);
@@ -148,6 +147,12 @@ namespace emulator {
                                         opcode.opcode,
                                         int(opcode.byteSize)
                                         ), olc::BLACK);
+
+        y += kRowHeight;
+        for (size_t i=0; i < opcode.data.size(); i++) {
+            engine.DrawString({x + (9 * kCharWidth) + int(i * 5 * kCharWidth), y}, PrepareString("0x%02X", opcode.data[i]), olc::BLACK);
+        }
+
         y+= (2 * kRowHeight);
 
         drawTrace(engine, x, y, trace);

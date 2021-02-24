@@ -17,6 +17,7 @@ namespace cpu6502 {
                 std::string labelOperands;
                 uint16_t pc;
                 uint16_t byteSize;
+                std::vector<uint8_t> data;
             };
 
             typedef std::vector<DisassembledOpcode> DisassembledOpcodes;

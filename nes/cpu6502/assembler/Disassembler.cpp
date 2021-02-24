@@ -37,9 +37,12 @@ namespace cpu6502 { namespace assembler {
             bool success = true;
             
             if (opcodes.find(disassembledOpcode.opcode) == opcodes.end()) {
-                disassembledOpcode.labelOpcode = "unsupported";
+                char buffer[16];
+                sprintf(buffer, "0x%02X", disassembledOpcode.opcode);
+                disassembledOpcode.labelOpcode = std::string(buffer) + " ????";
                 disassembledOpcode.byteSize = 1;
                 disassembledOpcode.addressingMode = kUnknown;
+                disassembledOpcode.data.push_back(disassembledOpcode.opcode);
 
                 disassembledOpcodes.push_back(disassembledOpcode);
                 success = false;
@@ -57,8 +60,12 @@ namespace cpu6502 { namespace assembler {
             disassembledOpcode.addressingMode = opcodeInfo.addressingMode;
             uint16_t byteSize = kAddressingModeByteSizeLookup.at(opcodeInfo.addressingMode);
             disassembledOpcode.byteSize = byteSize;
-
+            
             if ( (pc + byteSize) <= sram.size() ) {
+                for (uint16_t i = 0; i<byteSize; i++) {
+                    disassembledOpcode.data.push_back(sram.read(pc + i));
+                }
+
                 switch (opcodeInfo.addressingMode) {
                     case kAbsolute:
                         success &= parseOpcodeAbsolute(parseOpcodeInfo, disassembledOpcode);
