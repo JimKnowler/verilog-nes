@@ -825,6 +825,9 @@ begin
 
             // report error
             o_error = 1;
+
+            // retain the PC
+            retain_pc(1);
         end
         endcase
     end
