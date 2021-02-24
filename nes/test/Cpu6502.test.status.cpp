@@ -169,3 +169,68 @@ TEST_F(Cpu6502, ShouldImplementCLV) {
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
+
+TEST_F(Cpu6502, ShouldImplementSED) {
+    sram.clear(0);
+
+    Assembler()
+        .SED()
+        .NOP()
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    // simulate SED and NOP
+    testBench.tick(4);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(4)
+        .port(o_rw).signal("11")
+                    .repeat(4)
+        .port(o_sync).signal("1010").repeatEachStep(2)
+        .port(o_address).signal({0, 1, 1, 2})
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({0xFF}).repeat(8)
+        .port(o_debug_x).signal({0xFF}).repeat(8)
+        .port(o_debug_y).signal({0xFF}).repeat(8)
+        .port(o_debug_p).signal({0}).repeat(4)
+                        .signal({D}).repeat(4);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldImplementCLD) {
+sram.clear(0);
+
+    Assembler()
+        .SED()
+        .CLD()
+        .NOP()
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    // skip SED
+    testBench.tick(2);
+    testBench.trace.clear();
+
+    // simulate CLD and NOP
+    testBench.tick(4);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(4)
+        .port(o_rw).signal("11")
+                    .repeat(4)
+        .port(o_sync).signal("1010").repeatEachStep(2)
+        .port(o_address).signal({1, 2, 2, 3})
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({0xFF}).repeat(8)
+        .port(o_debug_x).signal({0xFF}).repeat(8)
+        .port(o_debug_y).signal({0xFF}).repeat(8)
+        .port(o_debug_p).signal({D}).repeat(4)
+                        .signal({0}).repeat(4);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}

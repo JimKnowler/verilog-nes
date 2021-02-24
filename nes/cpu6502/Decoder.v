@@ -78,6 +78,7 @@ module Decoder(
     output reg o_acr_c,
     output reg o_ir5_c,
     output reg o_ir5_i,
+    output reg o_ir5_d,
     output reg o_avr_v
 );
 
@@ -115,6 +116,7 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  TXS = 8'h9A,       TYA = 8'h98,
                  LSR_A = 8'h4A,     ASL_A = 8'h0A,
                  CLC = 8'h18,       SEC = 8'h38,
+                 SED = 8'hF8,       CLD = 8'hD8,
                  SEI = 8'h78,       CLI = 8'h58,
                  CLV = 8'hb8,
                  ROL_A = 8'h2A,     ROR_A = 8'h6A,
@@ -448,6 +450,7 @@ begin
     o_acr_c = 0;
     o_ir5_c = 0;
     o_ir5_i = 0;
+    o_ir5_d = 0;
     o_avr_v = 0;
 
     case (i_tcu)
@@ -535,7 +538,7 @@ begin
             end
             endcase
         end
-        SEC, CLC, SEI, CLI, CLV:
+        SEC, CLC, SEI, CLI, CLV, SED, CLD:
         begin
             output_pch_on_abh(1);
             output_pcl_on_abl(1);
@@ -545,6 +548,7 @@ begin
             SEC, CLC: o_ir5_c = 1; // read C from IR5
             SEI, CLI: o_ir5_i = 1; // read I from IR5
             CLV: o_avr_v = 1; // read V from (0) avr
+            SED, CLD: o_ir5_d = 1; // read D from IR5
             default: begin
             end
             endcase

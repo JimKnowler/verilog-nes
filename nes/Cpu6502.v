@@ -135,6 +135,7 @@ wire w_db7_n;
 wire w_acr_c;
 wire w_ir5_c;
 wire w_ir5_i;
+wire w_ir5_d;
 wire w_avr_v;
 wire w_error;
 
@@ -207,6 +208,7 @@ Decoder decoder(
     .o_acr_c(w_acr_c),
     .o_ir5_c(w_ir5_c),
     .o_ir5_i(w_ir5_i),
+    .o_ir5_d(w_ir5_d),
     .o_avr_v(w_avr_v),
     .o_error(w_error)
 );
@@ -330,6 +332,7 @@ ProcessorStatus p(
     .i_ir5_c(w_ir5_c),
     .i_ir5(w_ir[5]),
     .i_ir5_i(w_ir5_i),
+    .i_ir5_d(w_ir5_d),
     .i_avr(w_avr),
     .i_avr_v(w_avr_v)
 );
