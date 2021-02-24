@@ -24,7 +24,10 @@ module Cpu6502(
     output [7:0] o_debug_ac,
     output [7:0] o_debug_x,
     output [7:0] o_debug_y,
-    output [7:0] o_debug_p
+    output [7:0] o_debug_p,
+
+    output o_debug_error                    // set to 1 if error occurs 
+                                            // (most likely unsupported opcode)
 
     // TODO defines: to turn on/off sections of debugging
 );
@@ -133,6 +136,7 @@ wire w_acr_c;
 wire w_ir5_c;
 wire w_ir5_i;
 wire w_avr_v;
+wire w_error;
 
 // Decoder
 // transform IR and TCU into control signals
@@ -203,7 +207,8 @@ Decoder decoder(
     .o_acr_c(w_acr_c),
     .o_ir5_c(w_ir5_c),
     .o_ir5_i(w_ir5_i),
-    .o_avr_v(w_avr_v)
+    .o_avr_v(w_avr_v),
+    .o_error(w_error)
 );
 
 // Input Data Latch
@@ -410,5 +415,6 @@ assign o_debug_ac = w_ac;
 assign o_debug_x = w_x;
 assign o_debug_y = w_y;
 assign o_debug_p = w_p;
+assign o_debug_error = w_error;
 
 endmodule

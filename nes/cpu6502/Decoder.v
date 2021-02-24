@@ -8,6 +8,8 @@
 module Decoder(
     input i_reset_n,
     input i_clk,
+
+    output reg o_error,             // 1 if an error has occurred
     
     input [7:0] i_ir,               // Instruction Register
     input [3:0] i_tcu,              // Opcode timing
@@ -382,6 +384,9 @@ always @(*)
 begin
     // default TCU to increment at next clock tick
     o_tcu = i_tcu + 1;
+
+    // default to no error
+    o_error = 0;
 
     // default all control signals
     o_rw = RW_READ;
@@ -813,7 +818,13 @@ begin
         end
         default:
         begin
-            
+            // unsupported opcode
+
+            // prevent tcu from increasing
+            o_tcu = i_tcu;
+
+            // report error
+            o_error = 1;
         end
         endcase
     end
