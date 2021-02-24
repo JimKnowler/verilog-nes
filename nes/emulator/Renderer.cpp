@@ -53,7 +53,6 @@ namespace emulator {
         uint8_t p = core.o_debug_p;
 
         std::vector<std::string> registers = {
-            PrepareString("tick: %d", int(testBench.stepCount() / 2)),
             PrepareString("  ac: 0x%02x", core.o_debug_ac),
             PrepareString("   x: 0x%02x", core.o_debug_x),
             PrepareString("   y: 0x%02x", core.o_debug_y),
@@ -66,6 +65,28 @@ namespace emulator {
             PrepareString(" p.B: %d", (p & B) ? 1 : 0),
             PrepareString(" p.V: %d", (p & V) ? 1 : 0),
             PrepareString(" p.N: %d", (p & N) ? 1 : 0)
+        };
+
+        for (auto it = registers.begin(); it != registers.end(); it++) {
+            engine.DrawString({ x + 10, y }, *it, olc::BLACK);
+            y += kRowHeight;
+        }
+    }
+
+    void Renderer::drawTestBench(olc::PixelGameEngine& engine, int x, int y, cpu6502testbench::Cpu6502TestBench& testBench, int numOpcodes) {
+        engine.DrawString({ x, y }, "TestBench", olc::RED);
+        y += kRowHeight;
+
+        auto& core = testBench.core();
+
+        bool hasErrored = (core.o_debug_error == 1);
+        engine.DrawString({ x + 10, y }, "   state: ", olc::BLACK);
+        engine.DrawString({x + 10 + (kCharWidth*10), y}, (hasErrored) ? "ERROR" : "OK", (hasErrored) ? olc::RED : olc::GREEN);
+        y += kRowHeight;
+
+        std::vector<std::string> registers = {
+            PrepareString("    tick: %d", int(testBench.stepCount() / 2)),
+            PrepareString(" opcodes: %d", numOpcodes)
         };
 
         for (auto it = registers.begin(); it != registers.end(); it++) {

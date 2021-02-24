@@ -73,6 +73,8 @@ namespace emulator {
         
         Renderer renderer;
 
+        int numOpcodes;
+
         void initMario() {
             // load bank 0 -> 0x8000:0xBFFF
             auto bank0 = loadBinaryFile("prg_rom_bank_0.6502.bin");
@@ -86,6 +88,8 @@ namespace emulator {
         std::vector<uint8_t> loadBinaryFile(const char* filename) {
             std::ifstream is;
             is.open (filename, std::ios::binary );
+            assert(is.is_open());
+
             is.seekg (0, std::ios::end);
             int length = is.tellg();
             is.seekg (0, std::ios::beg);
@@ -126,7 +130,6 @@ namespace emulator {
 
         void initSimulation() {
             testBench.setClockPolarity(0);
-
             sram.clear(0);
 
             // simulation at the end of a clock phase, before
@@ -160,6 +163,7 @@ namespace emulator {
 
             testBench.reset();
             simulateOpcode();               // incorrectly reporting SYNC during RESET?
+            numOpcodes = 0;
         }
 
         void update() {
@@ -172,6 +176,7 @@ namespace emulator {
             FillRect({ 0,0 }, { ScreenWidth(), ScreenHeight() }, olc::GREY);
 
             renderer.drawTitle(*this, 10, 10);
+            renderer.drawTestBench(*this, 10, 200, testBench, numOpcodes);
             renderer.drawCPU(*this, 10, 40, testBench);
 
             renderer.drawDisassembly(*this, 200, 40, disassembledOpcodesAtPC());
@@ -189,6 +194,11 @@ namespace emulator {
 
         void simulateOpcode() {
             auto& core = testBench.core();
+
+            if (core.o_debug_error == 1) {
+                // core has errored, so we can't simluate any further
+                return;
+            }
 
             // clear trace for the previous opcode
             gtestverilog::Trace lastTrace = testBench.trace;
@@ -208,7 +218,14 @@ namespace emulator {
             for (int i=0; i<kMaxTicks; i++) {
                 testBench.tick();
                 if (core.o_sync == 1) {
-                    // fetching next opcode
+                    // opcode has completed, and we are now fetching next opcode
+                    numOpcodes += 1;
+                    break;
+                }
+
+                if (core.o_debug_error == 1) {
+                    // core has errored.. so tick once more (for debug display) then stop
+                    testBench.tick();
                     break;
                 }
             }
