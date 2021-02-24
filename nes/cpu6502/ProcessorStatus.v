@@ -31,9 +31,7 @@ module ProcessorStatus(
 
     // DECIMAL control signals
     input i_db3_d,
-    /*
     input i_ir5_d,
-    */
 
     // BREAK control signals
     input i_db4_b,
@@ -106,7 +104,9 @@ begin
         r_d <= 0;
     else
     begin
-        if (i_db3_d)
+        if (i_ir5_d)
+            r_d <= i_ir5;
+        else if (i_db3_d)
             r_d <= i_db[D];
     end 
 end
