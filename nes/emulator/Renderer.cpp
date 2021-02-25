@@ -141,7 +141,7 @@ namespace emulator {
         int numTicks = int(trace.getSteps().size() / 2);
         engine.DrawString({x, y}, PrepareString("%d clock cycles", numTicks), olc::BLACK);
         y += kRowHeight;
-        engine.DrawString({x, y}, PrepareString("0x%04x:  %-16s # 0x%02x, %d bytes", 
+        engine.DrawString({x, y}, PrepareString("0x%04x:  %-16s # 0x%02X, %d bytes", 
                                         opcode.pc,
                                         (opcode.labelOpcode + " " + opcode.labelOperands).c_str(),
                                         opcode.opcode,
