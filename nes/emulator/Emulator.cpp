@@ -83,6 +83,11 @@ namespace emulator {
             // load bank 1 -> 0xC000:0xFFFF
             auto bank1 = loadBinaryFile("prg_rom_bank_1.6502.bin");
             sram.write(0xC000, bank1);
+
+            // simulate PPUSTATUS register
+            // https://wiki.nesdev.com/w/index.php/PPU_registers#Status_.28.242002.29_.3C_read
+            // note: simulating VBLANK has started
+            sram.write(0x2002, 0x80);
         }
 
         std::vector<uint8_t> loadBinaryFile(const char* filename) {
