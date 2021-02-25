@@ -18,8 +18,8 @@ namespace {
 
     const std::vector<olc::Pixel> kColours = {
         olc::RED,
-        olc::GREEN,
-        olc::YELLOW,
+        olc::DARK_GREEN,
+        olc::DARK_YELLOW,
         olc::DARK_CYAN,
         olc::MAGENTA,
         olc::CYAN,
@@ -81,7 +81,7 @@ namespace emulator {
 
         bool hasErrored = (core.o_debug_error == 1);
         engine.DrawString({ x + 10, y }, "   state: ", olc::BLACK);
-        engine.DrawString({x + 10 + (kCharWidth*10), y}, (hasErrored) ? "ERROR" : "OK", (hasErrored) ? olc::RED : olc::GREEN);
+        engine.DrawString({x + 10 + (kCharWidth*10), y}, (hasErrored) ? "ERROR" : "OK", (hasErrored) ? olc::RED : olc::DARK_GREEN);
         y += kRowHeight;
 
         std::vector<std::string> registers = {
