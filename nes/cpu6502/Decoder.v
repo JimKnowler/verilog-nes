@@ -15,6 +15,7 @@ module Decoder(
     input [3:0] i_tcu,              // Opcode timing
     input [7:0] i_p,                // Processor status register
     input i_acr,                    // ALU - carry out
+    input i_bus_db_n,                   // sign of current value on data bus (JK - cheating)
 
     output reg [3:0] o_tcu,         // value TCU at next phi2 clock tick
 
@@ -146,11 +147,14 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
 localparam RW_READ = 1;
 localparam RW_WRITE = 0;
 
-// cache acr (alu carry-out) from last cycle
-reg r_last_acr;
+// JK - sorry, cheating here until I can figure out a better way 
+//      to do this with 6502 internal components
+reg r_last_acr;                   // whether carry was set on last ALU sum
+reg r_last_bus_db_n;              // whether last value on db was negative
 always @(negedge i_clk)
 begin
     r_last_acr <= i_acr;
+    r_last_bus_db_n <= i_bus_db_n;
 end
 
 // distinguish between RESET interrupt and normal BRK 
@@ -808,11 +812,10 @@ begin
                 // + 1
                 o_1_addc = 1;
 
-                // + segment
+                // + relative
                 o_dl_db = 1;
                 o_sb_db = 1;
                 o_sb_add = 1;
-
             end
             else
             begin
@@ -847,20 +850,26 @@ begin
             // load PCL from ALU
             o_adl_pcl = 1;
 
-            if (r_last_acr == 1)
+            if ((r_last_acr != r_last_bus_db_n))
             begin
-                // use ALU to add 1 to ADH
+                // use ALU to add +/-1 to ADH
                 o_sums = 1;
 
                 // B INPUT = pch
                 o_pch_db = 1;
                 o_db_add = 1;
 
-                // + 1
-                o_1_addc = 1;
-
-                // A INPUT = 0
-                o_0_add = 1;
+                if (r_last_acr)
+                begin
+                    // + 1
+                    o_1_addc = 1;
+                    o_0_add = 1;
+                end
+                else
+                begin
+                    // - 1
+                    o_sb_add = 1;
+                end
             end
             else
             begin

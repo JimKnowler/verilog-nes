@@ -9,11 +9,11 @@ TEST_F(Cpu6502, ShouldImplementBCCWhenCarrySet) {
 
     Assembler()
             .SEC()
-            .BCC().relative("skip_nop")
+            .BCC().relative("target")
             .NOP()
             .NOP()
             .NOP()
-        .label("skip_nop")
+        .label("target")
             .NOP()    
         .compileTo(sram);
 
@@ -45,11 +45,11 @@ TEST_F(Cpu6502, ShouldImplementBCCWhenCarryClear) {
 
     Assembler()
             .CLC()
-            .BCC().relative("skip_nop")
+            .BCC().relative("target")
             .NOP()
             .NOP()
             .NOP()
-        .label("skip_nop")
+        .label("target")
             .NOP()
         .compileTo(sram);
 
@@ -72,7 +72,7 @@ TEST_F(Cpu6502, ShouldImplementBCCWhenCarryClear) {
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
-TEST_F(Cpu6502, ShouldImplementBCCWhenCarryClearAndNewPage) {
+TEST_F(Cpu6502, ShouldImplementBCCWhenCarryClearAndNextPage) {
      sram.clear(0);
 
     // BCC should branch while Carry is clear
@@ -80,15 +80,19 @@ TEST_F(Cpu6502, ShouldImplementBCCWhenCarryClearAndNewPage) {
     //     NOP at PC=0x0100
 
     Assembler()
+            .NOP()
+        .org(0x00f0)
         .label("start")
             .CLC()
-            .BCC().relative("skip_nop")
+            .BCC().relative("target")
             .NOP()
             .NOP()
             .NOP()
         .org(0x0100)
-        .label("skip_nop")
+        .label("target")
             .NOP()
+        .org(0xfffc)
+        .word("start")
         .compileTo(sram);
 
     helperSkipResetVector();
@@ -101,7 +105,16 @@ TEST_F(Cpu6502, ShouldImplementBCCWhenCarryClearAndNewPage) {
         .port(o_rw).signal("11")
                     .repeat(8)
         .port(o_sync).signal("10100010").repeatEachStep(2)
-        .port(o_address).signal({0, 1, 1, 2, 0, 0x100, 0x100, 0x101})
+        .port(o_address).signal({
+                            0x00f0,
+                            0x00f1,
+                            0x00f1,
+                            0x00f2,
+                            0x0000,
+                            0x0100,
+                            0x0100,
+                            0x0101
+                        })
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({0xFF}).repeat(16)
         .port(o_debug_x).signal({0xFF}).repeat(16)
@@ -119,11 +132,11 @@ TEST_F(Cpu6502, ShouldImplementBCSWhenCarryClear) {
 
     Assembler()
             .CLC()
-            .BCS().relative("skip_nop")
+            .BCS().relative("target")
             .NOP()
             .NOP()
             .NOP()
-        .label("skip_nop")
+        .label("target")
             .NOP()    
         .compileTo(sram);
 
@@ -155,11 +168,11 @@ TEST_F(Cpu6502, ShouldImplementBCSWhenCarrySet) {
 
     Assembler()
             .SEC()
-            .BCS().relative("skip_nop")
+            .BCS().relative("target")
             .NOP()
             .NOP()
             .NOP()
-        .label("skip_nop")
+        .label("target")
             .NOP()
         .compileTo(sram);
 
@@ -182,7 +195,7 @@ TEST_F(Cpu6502, ShouldImplementBCSWhenCarrySet) {
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
-TEST_F(Cpu6502, ShouldImplementBCSWhenCarrySetAndNewPage) {
+TEST_F(Cpu6502, ShouldImplementBCSWhenCarrySetAndNextPage) {
      sram.clear(0);
 
     // BCS should branch while Carry is set
@@ -190,15 +203,19 @@ TEST_F(Cpu6502, ShouldImplementBCSWhenCarrySetAndNewPage) {
     //     NOP at PC=0x0100
 
     Assembler()
+            .NOP()
+        .org(0x00f0)
         .label("start")
             .SEC()
-            .BCS().relative("skip_nop")
+            .BCS().relative("target")
             .NOP()
             .NOP()
             .NOP()
         .org(0x0100)
-        .label("skip_nop")
+        .label("target")
             .NOP()
+        .org(0xfffc)
+        .word("start")
         .compileTo(sram);
 
     helperSkipResetVector();
@@ -211,7 +228,16 @@ TEST_F(Cpu6502, ShouldImplementBCSWhenCarrySetAndNewPage) {
         .port(o_rw).signal("11")
                     .repeat(8)
         .port(o_sync).signal("10100010").repeatEachStep(2)
-        .port(o_address).signal({0, 1, 1, 2, 0, 0x100, 0x100, 0x101})
+        .port(o_address).signal({
+                            0x00f0,
+                            0x00f1,
+                            0x00f1,
+                            0x00f2,
+                            0x0000,
+                            0x0100,
+                            0x0100,
+                            0x0101
+                        })
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({0xFF}).repeat(16)
         .port(o_debug_x).signal({0xFF}).repeat(16)
@@ -229,11 +255,11 @@ TEST_F(Cpu6502, ShouldImplementBEQWhenZeroFlagClear) {
 
     Assembler()
             .LDA().immediate(1)
-            .BCS().relative("skip_nop")
+            .BCS().relative("target")
             .NOP()
             .NOP()
             .NOP()
-        .label("skip_nop")
+        .label("target")
             .NOP()    
         .compileTo(sram);
 
@@ -266,11 +292,11 @@ TEST_F(Cpu6502, ShouldImplementBEQWhenZeroFlagSet) {
 
     Assembler()
             .LDA().immediate(0x00)
-            .BEQ().relative("skip_nop")
+            .BEQ().relative("target")
             .NOP()
             .NOP()
             .NOP()
-        .label("skip_nop")
+        .label("target")
             .NOP()
         .compileTo(sram);
 
@@ -294,7 +320,7 @@ TEST_F(Cpu6502, ShouldImplementBEQWhenZeroFlagSet) {
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
-TEST_F(Cpu6502, ShouldImplementBEQWhenZeroFlagSetAndNewPage) {
+TEST_F(Cpu6502, ShouldImplementBEQWhenZeroFlagSetAndNextPage) {
      sram.clear(0);
 
     // BEQ should branch while Carry is set
@@ -302,15 +328,19 @@ TEST_F(Cpu6502, ShouldImplementBEQWhenZeroFlagSetAndNewPage) {
     //     NOP at PC=0x0100
 
     Assembler()
+            .NOP()
+        .org(0x00f0)
         .label("start")
             .LDA().immediate(0x00)
-            .BEQ().relative("skip_nop")
+            .BEQ().relative("target")
             .NOP()
             .NOP()
             .NOP()
         .org(0x0100)
-        .label("skip_nop")
+        .label("target")
             .NOP()
+        .org(0xfffc)
+        .word("start")
         .compileTo(sram);
 
     helperSkipResetVector();
@@ -323,7 +353,16 @@ TEST_F(Cpu6502, ShouldImplementBEQWhenZeroFlagSetAndNewPage) {
         .port(o_rw).signal("11")
                     .repeat(8)
         .port(o_sync).signal("10100010").repeatEachStep(2)
-        .port(o_address).signal({0, 1, 2, 3, 0, 0x100, 0x100, 0x101})
+        .port(o_address).signal({
+                            0x00f0,
+                            0x00f1,
+                            0x00f2,
+                            0x00f3,
+                            0x0000,
+                            0x0100,
+                            0x0100,
+                            0x0101
+                        })
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({0xFF}).repeat(4)
                          .signal({0x00}).repeat(12)
@@ -342,11 +381,11 @@ TEST_F(Cpu6502, ShouldImplementBNEWhenZeroFlagSet) {
 
     Assembler()
             .LDA().immediate(0)
-            .BNE().relative("skip_nop")
+            .BNE().relative("target")
             .NOP()
             .NOP()
             .NOP()
-        .label("skip_nop")
+        .label("target")
             .NOP()    
         .compileTo(sram);
 
@@ -379,11 +418,11 @@ TEST_F(Cpu6502, ShouldImplementBNEWhenZeroFlagClear) {
 
     Assembler()
             .LDA().immediate(0x01)
-            .BNE().relative("skip_nop")
+            .BNE().relative("target")
             .NOP()
             .NOP()
             .NOP()
-        .label("skip_nop")
+        .label("target")
             .NOP()
         .compileTo(sram);
 
@@ -407,7 +446,7 @@ TEST_F(Cpu6502, ShouldImplementBNEWhenZeroFlagClear) {
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
-TEST_F(Cpu6502, ShouldImplementBNEWhenZeroFlagClearAndNewPage) {
+TEST_F(Cpu6502, ShouldImplementBNEWhenZeroFlagClearAndNextPage) {
      sram.clear(0);
 
     // BNE should branch while Zero is clear
@@ -415,15 +454,19 @@ TEST_F(Cpu6502, ShouldImplementBNEWhenZeroFlagClearAndNewPage) {
     //     NOP at PC=0x0100
 
     Assembler()
+            .NOP()
+        .org(0x00f0)
         .label("start")
             .LDA().immediate(0x01)
-            .BNE().relative("skip_nop")
+            .BNE().relative("target")
             .NOP()
             .NOP()
             .NOP()
         .org(0x0100)
-        .label("skip_nop")
+        .label("target")
             .NOP()
+        .org(0xfffc)
+        .word("start")
         .compileTo(sram);
 
     helperSkipResetVector();
@@ -436,7 +479,16 @@ TEST_F(Cpu6502, ShouldImplementBNEWhenZeroFlagClearAndNewPage) {
         .port(o_rw).signal("11")
                     .repeat(8)
         .port(o_sync).signal("10100010").repeatEachStep(2)
-        .port(o_address).signal({0, 1, 2, 3, 0, 0x100, 0x100, 0x101})
+        .port(o_address).signal({
+                            0x00f0,
+                            0x00f1,
+                            0x00f2,
+                            0x00f3,
+                            0x0000,
+                            0x0100,
+                            0x0100,
+                            0x0101
+                        })
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({0xFF}).repeat(4)
                          .signal({0x01}).repeat(12)
@@ -455,11 +507,11 @@ TEST_F(Cpu6502, ShouldImplementBMIWhenNegativeFlagClear) {
 
     Assembler()
             .LDA().immediate(0x7F)
-            .BCS().relative("skip_nop")
+            .BCS().relative("target")
             .NOP()
             .NOP()
             .NOP()
-        .label("skip_nop")
+        .label("target")
             .NOP()    
         .compileTo(sram);
 
@@ -492,11 +544,11 @@ TEST_F(Cpu6502, ShouldImplementBMIWhenNegativeFlagSet) {
 
     Assembler()
             .LDA().immediate(0x80)
-            .BMI().relative("skip_nop")
+            .BMI().relative("target")
             .NOP()
             .NOP()
             .NOP()
-        .label("skip_nop")
+        .label("target")
             .NOP()
         .compileTo(sram);
 
@@ -520,7 +572,7 @@ TEST_F(Cpu6502, ShouldImplementBMIWhenNegativeFlagSet) {
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
-TEST_F(Cpu6502, ShouldImplementBMIWhenNegativeFlagSetAndNewPage) {
+TEST_F(Cpu6502, ShouldImplementBMIWhenNegativeFlagSetAndNextPage) {
      sram.clear(0);
 
     // BMI should branch while negative flag is set
@@ -528,15 +580,19 @@ TEST_F(Cpu6502, ShouldImplementBMIWhenNegativeFlagSetAndNewPage) {
     //     NOP at PC=0x0100
 
     Assembler()
+            .NOP()
+        .org(0x00f0)
         .label("start")
             .LDA().immediate(0x80)
-            .BMI().relative("skip_nop")
+            .BMI().relative("target")
             .NOP()
             .NOP()
             .NOP()
         .org(0x0100)
-        .label("skip_nop")
+        .label("target")
             .NOP()
+        .org(0xfffc)
+        .word("start")
         .compileTo(sram);
 
     helperSkipResetVector();
@@ -549,7 +605,16 @@ TEST_F(Cpu6502, ShouldImplementBMIWhenNegativeFlagSetAndNewPage) {
         .port(o_rw).signal("11")
                     .repeat(8)
         .port(o_sync).signal("10100010").repeatEachStep(2)
-        .port(o_address).signal({0, 1, 2, 3, 0, 0x100, 0x100, 0x101})
+        .port(o_address).signal({
+                            0x00f0,
+                            0x00f1,
+                            0x00f2,
+                            0x00f3,
+                            0x0000,
+                            0x0100,
+                            0x0100,
+                            0x0101
+                        })
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({0xFF}).repeat(4)
                          .signal({0x80}).repeat(12)
@@ -563,16 +628,16 @@ TEST_F(Cpu6502, ShouldImplementBPLWhenNegativeFlagSet) {
     sram.clear(0);
 
     // BPL should not branch while Negative Flag is set
-    // BPL should finish in two cycles and excute NOP
+    // BPL should finish in two cycles and execute NOP
     //     at PC=0x0004
 
     Assembler()
             .LDA().immediate(0x80)
-            .BPL().relative("skip_nop")
+            .BPL().relative("target")
             .NOP()
             .NOP()
             .NOP()
-        .label("skip_nop")
+        .label("target")
             .NOP()    
         .compileTo(sram);
 
@@ -605,11 +670,11 @@ TEST_F(Cpu6502, ShouldImplementBPLWhenNegativeFlagClear) {
 
     Assembler()
             .LDA().immediate(0x7F)
-            .BPL().relative("skip_nop")
+            .BPL().relative("target")
             .NOP()
             .NOP()
             .NOP()
-        .label("skip_nop")
+        .label("target")
             .NOP()
         .compileTo(sram);
 
@@ -633,7 +698,7 @@ TEST_F(Cpu6502, ShouldImplementBPLWhenNegativeFlagClear) {
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
-TEST_F(Cpu6502, ShouldImplementBPLWhenNegativeFlagClearAndNewPage) {
+TEST_F(Cpu6502, ShouldImplementBPLWhenNegativeFlagClearAndNextPage) {
      sram.clear(0);
 
     // BPL should branch while negative flag is clear
@@ -641,15 +706,19 @@ TEST_F(Cpu6502, ShouldImplementBPLWhenNegativeFlagClearAndNewPage) {
     //     NOP at PC=0x0100
 
     Assembler()
+            .NOP()
+        .org(0x00f0)
         .label("start")
             .LDA().immediate(0x7F)
-            .BPL().relative("skip_nop")
+            .BPL().relative("target")
             .NOP()
             .NOP()
             .NOP()
         .org(0x0100)
-        .label("skip_nop")
+        .label("target")
             .NOP()
+        .org(0xfffc)
+        .word("start")
         .compileTo(sram);
 
     helperSkipResetVector();
@@ -662,7 +731,109 @@ TEST_F(Cpu6502, ShouldImplementBPLWhenNegativeFlagClearAndNewPage) {
         .port(o_rw).signal("11")
                     .repeat(8)
         .port(o_sync).signal("10100010").repeatEachStep(2)
-        .port(o_address).signal({0, 1, 2, 3, 0, 0x100, 0x100, 0x101})
+        .port(o_address).signal({
+                            0x00f0,
+                            0x00f1,
+                            0x00f2,
+                            0x00f3,
+                            0x0000,
+                            0x0100,
+                            0x0100,
+                            0x0101
+                        })
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({0xFF}).repeat(4)
+                         .signal({0x7F}).repeat(12)
+        .port(o_debug_x).signal({0xFF}).repeat(16)
+        .port(o_debug_y).signal({0xFF}).repeat(16);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldImplementBPLWhenNegativeFlagClearAndBranchingBack) {
+    sram.clear(0);
+
+    // BPL should branch while negative flag is clear
+    // BPL should finish in three cycles and branch back to
+    //     NOP at PC=0x0000
+
+    Assembler()
+        .label("target")
+            .NOP()
+            .NOP()
+        .label("start")
+            .LDA().immediate(0x7F)
+            .BPL().relative("target")
+            .NOP()
+            .NOP()
+            .NOP()
+        .org(0xfffc)
+        .word("start")
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    testBench.tick(7);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(7)
+        .port(o_rw).signal("11")
+                    .repeat(7)
+        .port(o_sync).signal("1010010").repeatEachStep(2)
+        .port(o_address).signal({2, 3, 4, 5, 0, 0, 1})
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({0xFF}).repeat(4)
+                         .signal({0x7F}).repeat(10)
+        .port(o_debug_x).signal({0xFF}).repeat(14)
+        .port(o_debug_y).signal({0xFF}).repeat(14);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldImplementBPLWhenNegativeFlagClearAndPreviousPage) {
+     sram.clear(0);
+
+    // BPL should branch while negative flag is clear
+    // BPL should finish in four cycles and branch to
+    //     NOP at PC=0x00f0
+
+    Assembler()
+            .NOP()
+        .org(0x00f0)
+        .label("target")
+            .NOP()
+        .org(0x0100)
+        .label("start")
+            .LDA().immediate(0x7F)
+            .BPL().relative("target")
+            .NOP()
+            .NOP()
+            .NOP()
+        .org(0xfffc)
+        .word("start")
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    testBench.tick(8);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(8)
+        .port(o_rw).signal("11")
+                    .repeat(8)
+        .port(o_sync).signal("10100010").repeatEachStep(2)
+        .port(o_address).signal({
+                            0x0100,
+                            0x0101,
+                            0x0102,
+                            0x0103,
+                            0x01f0,
+                            0x00f0,
+                            0x00f0,
+                            0x00f1
+                        })
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({0xFF}).repeat(4)
                          .signal({0x7F}).repeat(12)
@@ -681,11 +852,11 @@ TEST_F(Cpu6502, ShouldImplementBVSWhenOverflowFlagClear) {
 
     Assembler()
             .CLV()
-            .BVS().relative("skip_nop")
+            .BVS().relative("target")
             .NOP()
             .NOP()
             .NOP()
-        .label("skip_nop")
+        .label("target")
             .NOP()    
         .compileTo(sram);
 
@@ -713,16 +884,16 @@ TEST_F(Cpu6502, ShouldImplementBVSWhenOverflowFlagSet) {
 
     // BVS should branch while overflow flag is set
     // BVS should finish in three cycles and branch to
-    //     NOP at skip_nop
+    //     NOP at target
 
     Assembler assembler;
     assembler
             .BIT().absolute("overflow_flag")
-            .BVS().relative("skip_nop")
+            .BVS().relative("target")
             .NOP()
             .NOP()
             .NOP()
-        .label("skip_nop")
+        .label("target")
             .NOP()
         .label("overflow_flag")
             .byte(0x40)
@@ -731,7 +902,7 @@ TEST_F(Cpu6502, ShouldImplementBVSWhenOverflowFlagSet) {
     cpu6502::assembler::Address overflowFlag("overflow_flag");
     assembler.lookupAddress(overflowFlag);
 
-    cpu6502::assembler::Address skipNop("skip_nop");
+    cpu6502::assembler::Address skipNop("target");
     assembler.lookupAddress(skipNop);
 
     helperSkipResetVector();
@@ -758,7 +929,7 @@ TEST_F(Cpu6502, ShouldImplementBVSWhenOverflowFlagSet) {
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
-TEST_F(Cpu6502, ShouldImplementBVSWhenOverflowFlagSetAndNewPage) {
+TEST_F(Cpu6502, ShouldImplementBVSWhenOverflowFlagSetAndNextPage) {
      sram.clear(0);
 
     // BVS should branch while overflow flag is set
@@ -767,17 +938,21 @@ TEST_F(Cpu6502, ShouldImplementBVSWhenOverflowFlagSetAndNewPage) {
 
     Assembler assembler;
     assembler
+            .NOP()
+        .org(0x00f0)
         .label("start")
             .BIT().absolute("overflow_flag")
-            .BVS().relative("skip_nop")
+            .BVS().relative("target")
             .NOP()
             .NOP()
             .NOP()
         .org(0x0100)
-        .label("skip_nop")
+        .label("target")
             .NOP()
         .label("overflow_flag")
             .byte(0x40)
+        .org(0xfffc)
+        .word("start")
         .compileTo(sram);
     
     cpu6502::assembler::Address overflowFlag("overflow_flag");
@@ -793,7 +968,18 @@ TEST_F(Cpu6502, ShouldImplementBVSWhenOverflowFlagSetAndNewPage) {
         .port(o_rw).signal("11")
                     .repeat(10)
         .port(o_sync).signal("1000100010").repeatEachStep(2)
-        .port(o_address).signal({0, 1, 2, overflowFlag.byteIndex(), 3, 4, 0, 0x100, 0x100, 0x101})
+        .port(o_address).signal({
+                            0x00f0,
+                            0x00f1,
+                            0x00f2,
+                            overflowFlag.byteIndex(),
+                            0x00f3,
+                            0x00f4,
+                            0x0000,
+                            0x0100,
+                            0x0100,
+                            0x0101
+                        })
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({0xFF}).repeat(20)
         .port(o_debug_x).signal({0xFF}).repeat(20)
@@ -812,11 +998,11 @@ TEST_F(Cpu6502, ShouldImplementBVCWhenOverflowFlagSet) {
     Assembler assembler;
     assembler
             .BIT().absolute("overflow_flag")
-            .BVC().relative("skip_nop")
+            .BVC().relative("target")
             .NOP()
             .NOP()
             .NOP()
-        .label("skip_nop")
+        .label("target")
             .NOP()    
         .label("overflow_flag")
             .byte(0x40)
@@ -849,20 +1035,20 @@ TEST_F(Cpu6502, ShouldImplementBVCWhenOverflowFlagClear) {
 
     // BCC should branch while overflow flag is clear
     // BCC should finish in three cycles and branch to
-    //     NOP at skip_nop
+    //     NOP at target
 
     Assembler assembler;
     assembler
             .CLV()
-            .BVC().relative("skip_nop")
+            .BVC().relative("target")
             .NOP()
             .NOP()
             .NOP()
-        .label("skip_nop")
+        .label("target")
             .NOP()
         .compileTo(sram);
 
-    cpu6502::assembler::Address skipNop("skip_nop");
+    cpu6502::assembler::Address skipNop("target");
     assembler.lookupAddress(skipNop);
 
     helperSkipResetVector();
@@ -887,7 +1073,7 @@ TEST_F(Cpu6502, ShouldImplementBVCWhenOverflowFlagClear) {
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
-TEST_F(Cpu6502, ShouldImplementBVCWhenOverflowFlagClearAndNewPage) {
+TEST_F(Cpu6502, ShouldImplementBVCWhenOverflowFlagClearAndNextPage) {
     sram.clear(0);
 
     // BVC should branch while overflow flag is clear
@@ -895,15 +1081,19 @@ TEST_F(Cpu6502, ShouldImplementBVCWhenOverflowFlagClearAndNewPage) {
     //     NOP at PC=0x0100
 
     Assembler()
+            .NOP()
+        .org(0x00f0)
         .label("start")
             .CLV()
-            .BVC().relative("skip_nop")
+            .BVC().relative("target")
             .NOP()
             .NOP()
             .NOP()
         .org(0x0100)
-        .label("skip_nop")
+        .label("target")
             .NOP()
+        .org(0xfffc)
+        .word("start")
         .compileTo(sram);
 
     helperSkipResetVector();
@@ -916,7 +1106,16 @@ TEST_F(Cpu6502, ShouldImplementBVCWhenOverflowFlagClearAndNewPage) {
         .port(o_rw).signal("11")
                     .repeat(8)
         .port(o_sync).signal("10100010").repeatEachStep(2)
-        .port(o_address).signal({0, 1, 1, 2, 0, 0x100, 0x100, 0x101})
+        .port(o_address).signal({
+                            0x00f0,
+                            0x00f1,
+                            0x00f1,
+                            0x00f2,
+                            0x0000,
+                            0x0100,
+                            0x0100,
+                            0x0101
+                        })
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({0xFF}).repeat(16)
         .port(o_debug_x).signal({0xFF}).repeat(16)
@@ -1012,3 +1211,6 @@ TEST_F(Cpu6502, ShouldImplementJMPindirect) {
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
+
+
+// todo: negative relative offsets for branches BCC, BEQ, BNE, BMI, BVS, BVC (currently tested only for BPL)
