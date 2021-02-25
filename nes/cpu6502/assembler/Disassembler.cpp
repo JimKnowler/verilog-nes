@@ -163,7 +163,7 @@ namespace cpu6502 { namespace assembler {
         uint16_t address = (info.sram.read(info.pc + 2) << 8) | info.sram.read(info.pc + 1);
         
         char buffer[16];
-        sprintf(buffer, "($0x%04X, x)", address);
+        sprintf(buffer, "($0x%04X,x)", address);
         outOpcode.labelOperands = buffer;
 
         return true;
@@ -173,7 +173,7 @@ namespace cpu6502 { namespace assembler {
         uint16_t address = (info.sram.read(info.pc + 2) << 8) | info.sram.read(info.pc + 1);
         
         char buffer[16];
-        sprintf(buffer, "$0x%04X, x", address);
+        sprintf(buffer, "$0x%04X,x", address);
         outOpcode.labelOperands = buffer;
 
         return true;
@@ -183,7 +183,7 @@ namespace cpu6502 { namespace assembler {
         uint16_t address = (info.sram.read(info.pc + 2) << 8) | info.sram.read(info.pc + 1);
         
         char buffer[16];
-        sprintf(buffer, "$0x%4X, y", address);
+        sprintf(buffer, "$0x%4X,y", address);
         outOpcode.labelOperands = buffer;
 
         return true;
@@ -250,7 +250,7 @@ namespace cpu6502 { namespace assembler {
         uint8_t address = info.sram.read(info.pc + 1);
         
         char buffer[16];
-        sprintf(buffer, "($0x%02X, x)", address);
+        sprintf(buffer, "($0x%02X,x)", address);
         outOpcode.labelOperands = buffer;
 
         return true;
@@ -260,7 +260,7 @@ namespace cpu6502 { namespace assembler {
         uint8_t address = info.sram.read(info.pc + 1);
         
         char buffer[16];
-        sprintf(buffer, "$0x%02X, x", address);
+        sprintf(buffer, "$0x%02X,x", address);
         outOpcode.labelOperands = buffer;
 
         return true;
@@ -270,7 +270,7 @@ namespace cpu6502 { namespace assembler {
         uint8_t address = info.sram.read(info.pc + 1);
         
         char buffer[16];
-        sprintf(buffer, "$0x%02X, y", address);
+        sprintf(buffer, "$0x%02X,y", address);
         outOpcode.labelOperands = buffer;
 
         return true;
@@ -280,7 +280,7 @@ namespace cpu6502 { namespace assembler {
         uint8_t address = info.sram.read(info.pc + 1);
         
         char buffer[16];
-        sprintf(buffer, "($0x%02X), y", address);
+        sprintf(buffer, "($0x%02X),y", address);
         outOpcode.labelOperands = buffer;
 
         return true;
