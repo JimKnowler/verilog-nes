@@ -188,7 +188,7 @@ TEST_F(Cpu6502, ShouldImplementLDAabsoluteIndexedWithXProcessorStatusWithCarry) 
 }
 
 TEST_F(Cpu6502, ShouldImplementLDAabsoluteIndexedWithYWithoutCarry) {
-    const uint16_t kTestAddress = 0x56Fe;
+    const uint16_t kTestAddress = 0x5678;
     const uint8_t kTestData = 0x32;
 
     TestAbsoluteIndexed<LDA> testAbsolute = {
