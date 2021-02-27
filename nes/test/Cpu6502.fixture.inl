@@ -228,10 +228,26 @@ void Cpu6502::helperTestInternalExecutionOnMemoryData(const TestAbsoluteIndexed<
         testBench.tick(1);
     }
 
-    std::vector<PortDescription*> ports = { 
-        &o_debug_ac,
-        &o_debug_x,
-        &o_debug_y
+    struct PreloadPort {
+        PortDescription* port;
+        uint8_t value;
+    };
+
+    auto getPreloadValue = [&](PortDescription* port) -> uint8_t {
+        uint8_t preloadValue = (test.preloadPort == &o_debug_ac) ? test.preloadPortValue : 0xFF;
+
+        if ( ((port == &o_debug_x) && (test.indexRegister == kX))
+            ||  ((port == &o_debug_y) && (test.indexRegister == kY)) ) {
+            preloadValue = test.preloadIndexRegisterValue;
+        }
+
+        return preloadValue;
+    };
+
+    const std::vector<PreloadPort> kPreloadPorts = { 
+        { &o_debug_ac, getPreloadValue(&o_debug_ac) },
+        { &o_debug_x, getPreloadValue(&o_debug_x) },
+        { &o_debug_y, getPreloadValue(&o_debug_y) }
     };
 
     TraceBuilder traceBuilderOpcode;
@@ -248,11 +264,9 @@ void Cpu6502::helperTestInternalExecutionOnMemoryData(const TestAbsoluteIndexed<
             })
             .repeatEachStep(2);
 
-    for (auto& port: ports) {
-        const uint8_t preloadPortValue = (port == test.preloadPort) ? test.preloadPortValue : 0xFF;
-
+    for (auto& preloadPort: kPreloadPorts) {
         traceBuilderOpcode
-            .port(*port).signal({preloadPortValue}).repeat(8); 
+            .port(*preloadPort.port).signal({preloadPort.value}).repeat(8); 
     }
     
     Trace expectedOpcode = traceBuilderOpcode;
@@ -270,11 +284,9 @@ void Cpu6502::helperTestInternalExecutionOnMemoryData(const TestAbsoluteIndexed<
                 })
                 .repeatEachStep(2);
         
-        for (auto& port: ports) {
-            const uint8_t preloadPortValue = (port == test.preloadPort) ? test.preloadPortValue : 0xFF;
-
+        for (auto& preloadPort: kPreloadPorts) {
             traceBuilderCarry
-                .port(*port).signal({preloadPortValue}).repeat(2); 
+                .port(*preloadPort.port).signal({preloadPort.value}).repeat(2); 
         }
         
         expectedCarry = traceBuilderCarry;
@@ -284,7 +296,7 @@ void Cpu6502::helperTestInternalExecutionOnMemoryData(const TestAbsoluteIndexed<
     traceBuilderNop
         .port(i_clk).signal("_-").repeat(2)
         .port(o_rw).signal("11").repeat(2)
-        .port(o_sync).signal("00").repeatEachStep(2)
+        .port(o_sync).signal("10").repeatEachStep(2)
         .port(o_address)
             .signal({
                 pc + 3u,
@@ -292,18 +304,16 @@ void Cpu6502::helperTestInternalExecutionOnMemoryData(const TestAbsoluteIndexed<
             })
             .repeatEachStep(2);
 
-    for (auto& port: ports) {
-        const uint8_t preloadPortValue = (port == test.preloadPort) ? test.preloadPortValue : 0xFF;
-
-        if (port->id() == test.port.id()) {
+    for (auto& preloadPort: kPreloadPorts) {
+        if (preloadPort.port->id() == test.port.id()) {
             traceBuilderNop
-                .port(*port)
-                    .signal({preloadPortValue}).repeat(2)
+                .port(*preloadPort.port)
+                    .signal({preloadPort.value}).repeat(2)
                     .signal({test.expected}).repeat(2);
         } else {
             traceBuilderNop
-                .port(*port)
-                    .signal({preloadPortValue}).repeat(4);  
+                .port(*preloadPort.port)
+                    .signal({preloadPort.value}).repeat(4);  
         }
     }
 
