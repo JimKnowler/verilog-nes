@@ -11,7 +11,7 @@ namespace {
     class ALU : public ::testing::Test {
     public:
         void SetUp() override {
-            testBench.setClockPolarity(0);
+            testBench.setClockPolarity(1);
         }
         
         void TearDown() override {
@@ -31,43 +31,51 @@ TEST_F(ALU, ShouldOutputDefaultValues) {
     EXPECT_EQ(0, core.o_acr);
 }
 
-TEST_F(ALU, ShouldNotPassThroughDuringPhi2) {
+TEST_F(ALU, ShouldNotPassThroughDuringPhi1) {
     auto& core = testBench.core();
 
-    core.i_clk = 1;
+    core.i_clk = 0;
     core.i_db = 0xDB;
     core.i_db_add = 1;
     core.i_0_add = 1;
     core.i_sums = 1;
     core.eval();
 
-    // latch in at falling edge of phi2
+    EXPECT_EQ(0, core.o_add);
+}
+
+TEST_F(ALU, ShouldNotPassThroughDuringPhi2) {
+    auto& core = testBench.core();
+
     core.i_clk = 0;
+    core.i_db = 0xDB;
+    core.i_db_add = 1;
+    core.i_0_add = 1;
+    core.i_sums = 1;
+    core.eval();
+
+    // latch in at rising edge of phi2
+    core.i_clk = 1;
     core.eval();
 
     // change input during phi2
-    core.i_clk = 1;
     core.i_db = 0xAF;
     core.eval();
     EXPECT_EQ(0xDB, core.o_add);
 }
 
-TEST_F(ALU, ShouldLatchAtFallingEdgeOfPhi2) {
+TEST_F(ALU, ShouldLatchAtRisingEdgeOfPhi2) {
     auto& core = testBench.core();
 
-    core.i_clk = 1;
+    core.i_clk = 0;    
     core.i_db = 0xAE;
     core.i_db_add = 1;
     core.i_0_add = 1;
     core.i_sums = 1;
     core.eval();
 
-    // falling edge of phi2
-    core.i_clk = 0;
-    core.eval();
-
-    // input changing during phi1
-    core.i_db = 0xFF;
+    // rising edge of phi2
+    core.i_clk = 1;
     core.eval();
     EXPECT_EQ(0xAE, core.o_add);
 }
@@ -355,4 +363,45 @@ TEST_F(ALU, ShouldOutputAVRDuringSumWithCarryIn) {
         testBench.tick();
         EXPECT_EQ(kExpectedAvr, core.o_avr);
     }
+}
+
+TEST_F(ALU, ShouldLatchAVRAtRisingEdgeOfPhi2) {
+    auto& core = testBench.core();
+    
+    const uint8_t kTestValue1 = 0x7F;
+    const uint8_t kTestValue2 = 0x01;
+        
+    core.i_sb = kTestValue1;
+    core.i_sb_add = 1;
+    core.i_db = kTestValue2;
+    core.i_db_add = 1;
+    core.i_sums = 1;
+    
+    core.i_clk = 0;
+    core.eval();
+    EXPECT_EQ(0, core.o_avr);
+    
+    core.i_clk = 1;
+    core.eval();
+    EXPECT_EQ(1, core.o_avr);
+}
+
+TEST_F(ALU, ShouldLatchACRAtRisingEdgeOfPhi2) {
+    auto& core = testBench.core();
+
+    const uint8_t kTestValue1 = 0x80;
+    const uint8_t kTestValue2 = 0xFF;
+
+    core.i_sb = kTestValue1;
+    core.i_sb_add = 1;
+    core.i_db = kTestValue2;
+    core.i_db_add = 1;
+    core.i_sums = 1;
+    core.i_clk = 0;
+    core.eval();
+    EXPECT_EQ(0, core.o_acr);
+
+    core.i_clk = 1;
+    core.eval();
+    EXPECT_EQ(1, core.o_acr);
 }
