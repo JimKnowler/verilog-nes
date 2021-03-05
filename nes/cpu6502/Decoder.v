@@ -15,7 +15,7 @@ module Decoder(
     input [3:0] i_tcu,              // Opcode timing
     input [7:0] i_p,                // Processor status register
     input i_acr,                    // ALU - carry out
-    input i_bus_db_n,                   // sign of current value on data bus (JK - cheating)
+    input i_bus_db_n,               // sign of current value on data bus (JK - cheating)
 
     output reg [3:0] o_tcu,         // value TCU at next phi2 clock tick
 
@@ -141,7 +141,8 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  SBC_a = 8'hED,     AND_a = 8'h2D,
                  EOR_a = 8'h4D,     ORA_a = 8'h0D,
                  ASL_a = 8'h0E,     LSR_a = 8'h4E,
-                 ROL_a = 8'h2E,     ROR_a = 8'h6E;
+                 ROL_a = 8'h2E,     ROR_a = 8'h6E,
+                 LDA_ax = 8'hBD,    LDA_ay = 8'hB9;
 
 // RW pin
 localparam RW_READ = 1;
@@ -149,12 +150,21 @@ localparam RW_WRITE = 0;
 
 // JK - sorry, cheating here until I can figure out a better way 
 //      to do this with 6502 internal components
-reg r_last_acr;                   // whether carry was set on last ALU sum
-reg r_last_bus_db_n;              // whether last value on db was negative
-always @(negedge i_clk)
+reg r_last_acr;                   // whether carry was set on ALU sum, on the last tick
+reg r_bus_db_n;                   // whether value on db was negative at end of last phi2
+
+always @(negedge i_clk or negedge i_reset_n)
 begin
-    r_last_acr <= i_acr;
-    r_last_bus_db_n <= i_bus_db_n;
+    if (!i_reset_n)
+    begin
+        r_last_acr <= 0;
+        r_bus_db_n <= 0;
+    end
+    else
+    begin
+        r_last_acr <= i_acr;
+        r_bus_db_n <= i_bus_db_n;
+    end
 end
 
 // distinguish between RESET interrupt and normal BRK 
@@ -195,8 +205,7 @@ end
 wire [7:0] w_ir;
 assign w_ir = (r_interrupt == INTERRUPT_NONE) ? i_ir : BRK;
 
-function void retain_pch;
-input i_value;
+function void retain_pch(input i_value);
 begin
     o_pch_pch = i_value;
 end
@@ -243,6 +252,14 @@ begin
 end
 endfunction
 
+function void output_add_on_abh(input i_value);
+begin
+    output_add_on_sb(i_value);
+    o_sb_adh = i_value;
+    o_adh_abh = i_value;
+end
+endfunction
+
 function void load_s_from_add(input i_value);
 begin
     output_add_on_sb(i_value);    
@@ -278,10 +295,10 @@ begin
 end
 endfunction
 
-function void output_dl_on_abh(input value);
+function void output_dl_on_abh(input i_value);
 begin
-    o_dl_adh = value;
-    o_adh_abh = value;
+    o_dl_adh = i_value;
+    o_adh_abh = i_value;
 end
 endfunction
 
@@ -468,54 +485,344 @@ begin
 
         // finish previous opcode
         case (w_ir)
-        INX, INY, DEX, DEY,
-        LSR_A, ASL_A, ROL_A, ROR_A,
-        AND_i, EOR_i, ORA_i,
+        AND_i, EOR_i, ORA_i, 
         ADC_i, SBC_i,
-        CMP_i, CPX_i, CPY_i,
-        AND_a, EOR_a, ORA_a,
-        ADC_a, SBC_a,
-        CMP_a, CPX_a, CPY_a,
+        CMP_i, CPX_i, CPY_i:
+        begin
+            if (w_phi1)
+            begin
+                // load immediate operand into ALU via DB from DL
+                o_dl_db = 1;
+
+                // load register into ALU via SB
+                case (w_ir)
+                CPX_i: o_x_sb = 1;
+                CPY_i: o_y_sb = 1;
+                default: o_ac_sb = 1;
+                endcase
+                    
+                o_sb_add = 1;
+
+                case (w_ir)
+                AND_i: begin
+                    o_db_add = 1;
+                    o_ands = 1;
+                end
+                EOR_i: begin
+                    o_db_add = 1;
+                    o_eors = 1;
+                end
+                ORA_i: begin
+                    o_db_add = 1;
+                    o_ors = 1;
+                end
+                ADC_i: begin
+                    o_db_add = 1;
+                    o_sums = 1;
+
+                    // carry in
+                    o_1_addc = i_p[C];
+
+                    // C + V flags
+                    o_acr_c = 1;
+                    o_avr_v = 1;
+                end
+                SBC_i: begin
+                    o_db_n_add = 1;
+                    o_sums = 1;
+                    
+                    // carry in
+                    o_1_addc = ~i_p[C];
+
+                    // C + V flags
+                    o_acr_c = 1;
+                    o_avr_v = 1;
+                end
+                CMP_i, CPX_i, CPY_i: begin
+                    // subtraction as 2's complement addition
+                    o_db_n_add = 1;
+                    o_1_addc = 1;
+
+                    o_sums = 1;
+
+                    // C + V flags
+                    o_acr_c = 1;
+                    o_avr_v = 1;
+                end
+                default: begin
+                end
+                endcase
+            end
+            else
+            begin
+                // PHI2
+                case (w_ir)
+                ADC_i, SBC_i, CMP_i, CPX_i, CPY_i: begin
+                    // C + V flags
+                    o_acr_c = 1;
+                    o_avr_v = 1;
+                end
+                default: begin
+                end
+                endcase
+
+                output_add_on_sb(1);
+                
+                case (w_ir)
+                AND_i, EOR_i, ORA_i, ADC_i, SBC_i: begin
+                    o_sb_ac = 1;
+                end
+                default: begin
+                end
+                endcase
+                
+                
+                o_sb_db = 1;
+                load_z_n_from_db(1);
+            end
+        end
         LDA_a, LDX_a, LDY_a:
         begin
-            output_add_on_sb(1);
+            if (w_phi1)
+            begin
+                load_add_from_dl(1);
+            end
+            else
+            begin
+                // phi2
+                output_add_on_sb(1);
 
-            // load from SB into register
+                case (w_ir)
+                LDA_a: o_sb_ac = 1;
+                LDX_a: o_sb_x = 1;
+                LDY_a: o_sb_y = 1;
+                default: begin
+                end
+                endcase
+                o_sb_db = 1;
+                load_z_n_from_db(1);
+            end
+        end
+        CMP_a, CPX_a, CPY_a,
+        ADC_a, SBC_a,
+        AND_a, EOR_a, ORA_a:
+        begin
+            if (w_phi1)
+            begin
+                // load operand into ALU via DB from DL
+                o_dl_db = 1;
+
+                // load register into ALU via SB
+                case (w_ir)
+                CPX_a: o_x_sb = 1;
+                CPY_a: o_y_sb = 1;
+                default: o_ac_sb = 1;
+                endcase
+                    
+                o_sb_add = 1;
+
+                case (w_ir)
+                AND_a: begin
+                    o_db_add = 1;
+                    o_ands = 1;
+                end
+                EOR_a: begin
+                    o_db_add = 1;
+                    o_eors = 1;
+                end
+                ORA_a: begin
+                    o_db_add = 1;
+                    o_ors = 1;
+                end
+                ADC_a: begin
+                    o_db_add = 1;
+                    o_sums = 1;
+
+                    // carry in
+                    o_1_addc = i_p[C];
+                end
+                SBC_a: begin
+                    o_db_n_add = 1;
+                    o_sums = 1;
+                    
+                    // carry in
+                    o_1_addc = ~i_p[C];
+                end
+                CMP_a, CPX_a, CPY_a: begin
+                    // subtraction as 2's complement addition
+                    o_db_n_add = 1;
+                    o_1_addc = 1;
+
+                    o_sums = 1;
+                end
+                default: begin
+                end
+                endcase
+            end
+            else
+            begin
+                // PHI2
+                output_add_on_sb(1);
+
+                // load Accumulator from SB
+                case (w_ir)
+                AND_a, EOR_a,
+                ORA_a, ADC_a,
+                SBC_a: begin
+                    o_sb_ac = 1;
+                end
+                default: begin
+                end
+                endcase
+
+                // load carry/overflow flags
+                case (w_ir)
+                ADC_a, SBC_a,
+                CMP_a, CPX_a, CPY_a: begin
+                    // C + V flags
+                    o_acr_c = 1;
+                    o_avr_v = 1;
+                end
+                default: begin
+                end
+                endcase 
+                
+                o_sb_db = 1;
+                load_z_n_from_db(1);
+            end
+        end
+        INX, INY, DEX, DEY,
+        LSR_A, ASL_A, ROL_A, ROR_A:
+        begin
+            if (w_phi1)
+            begin
+                // output register to input register A via SB
+                case (w_ir)
+                INX, DEX: o_x_sb = 1;
+                INY, DEY: o_y_sb = 1;
+                LSR_A, ASL_A, ROL_A, ROR_A: o_ac_sb = 1;
+                default: begin
+                end
+                endcase
+
+                o_sb_add = 1;
+
+                case (w_ir)
+                INX, INY: begin
+                    // load 0 as inverted 0xFF (from precharged mosfets)        
+                    o_db_n_add = 1;
+            
+                    // use carry-in to +1
+                    o_1_addc = 1;
+                    o_sums = 1;
+                end
+                DEX, DEY: begin
+                    // load -1 as 0xFF (from precharged mosfets)
+                    o_db_add = 1;
+                    o_sums = 1;
+                end
+                LSR_A, ROR_A: begin
+                    o_srs = 1;
+                end
+                ASL_A, ROL_A: begin
+                    // load accumulator into both A and B registers
+                    o_sb_db = 1;
+                    o_db_add = 1;
+
+                    // sum
+                    o_sums = 1;
+                end
+                default: begin
+                end
+                endcase
+
+                case (w_ir)
+                ROR_A, ROL_A: begin
+                    // use CARRY flag to drive CARRY_IN on accumulator
+                    o_1_addc = i_p[C];
+                end
+                default: begin
+                end
+                endcase
+            end
+            else
+            begin
+                // PHI2
+
+                output_add_on_sb(1);
+
+                // load from SB into register
+                case (w_ir)
+                INX, DEX: begin
+                    o_sb_x = 1;
+                end
+                INY, DEY: begin
+                    o_sb_y = 1;
+                end
+                LSR_A, ASL_A,
+                ROL_A, ROR_A: begin
+
+                    // load carry flag from result
+                    o_acr_c = 1;
+
+                    o_sb_ac = 1;
+                end
+                AND_a, EOR_a,
+                ORA_a, ADC_a,
+                SBC_a: begin
+                    o_sb_ac = 1;
+                end
+                default: begin
+                end
+                endcase
+                
+                o_sb_db = 1;
+                load_z_n_from_db(1);
+            end
+        end
+        LDA_ax, LDA_ay:
+        begin
+            // input DL into SB via DB
+            o_dl_db = 1;
+            o_sb_db = 1;
+
             case (w_ir)
-            INX, DEX, LDX_a: begin
-                o_sb_x = 1;
-            end
-            INY, DEY, LDY_a: begin
-                o_sb_y = 1;
-            end
-            LSR_A, ASL_A,
-            ROL_A, ROR_A,
-            AND_i, EOR_i, 
-            ORA_i, ADC_i,
-            SBC_i,
-            AND_a, EOR_a,
-            ORA_a, ADC_a,
-            SBC_a, LDA_a: begin
-                o_sb_ac = 1;
-            end
+            LDA_ax, LDA_ay, LDA_a: o_sb_ac = 1;             // TODO: clean up unused case entries here
+            LDX_a: o_sb_x = 1;
+            LDY_a: o_sb_y = 1;
             default: begin
             end
             endcase
-            
-            o_sb_db = 1;
+
             load_z_n_from_db(1);
         end
-        PHA, PHP: begin
-            // store modified SP from ALU in S
-            load_s_from_add(1);
-        end
         BIT_a: begin
-            // output AND result from ALU to DB via SB
-            output_add_on_sb(1);
-            o_sb_db = 1;
+            if (w_phi1)
+            begin
+                // load value from DL into ALU via DB
+                o_dl_db = 1;
+                o_db_add = 1;
 
-            // set Z if ALU result on DB is zero
-            o_dbz_z = 1;
+                // load value from AC into ALU
+                o_ac_sb = 1;
+                o_sb_add = 1;
+
+                // use ALU for AND
+                o_ands = 1;
+            end
+            else
+            begin
+                // phi 2
+                
+                // output AND result from ALU to DB via SB
+                output_add_on_sb(1);
+                o_sb_db = 1;
+
+                // set Z if ALU result on DB is zero
+                o_dbz_z = 1;
+            end
+
+            
         end
         default: begin
         end
@@ -526,6 +833,7 @@ begin
         case (w_ir)
         BRK, PHA, PHP, PLA, PLP, RTI: 
         begin
+            // PC + 1
             retain_pc(1);
             output_pch_on_abh(1);
             output_pcl_on_abl(1);
@@ -566,61 +874,6 @@ begin
             output_pcl_on_abl(1);
             retain_pc(1);
 
-            // output register to input register A via SB
-            case (w_ir)
-            INX, DEX: o_x_sb = 1;
-            INY, DEY: o_y_sb = 1;
-            LSR_A, ASL_A, ROL_A, ROR_A: o_ac_sb = 1;
-            default: begin
-            end
-            endcase
-
-            o_sb_add = 1;
-
-            case (w_ir)
-            INX, INY: begin
-                // load 0 as inverted 0xFF (from precharged mosfets)        
-                o_db_n_add = 1;
-        
-                // use carry-in to +1
-                o_1_addc = 1;
-                o_sums = 1;
-            end
-            DEX, DEY: begin
-                // load -1 as 0xFF (from precharged mosfets)
-                o_db_add = 1;
-                o_sums = 1;
-            end
-            LSR_A, ROR_A: begin
-                o_srs = 1;
-
-                // load carry flag during the calculation
-                o_acr_c = 1;
-            end
-            ASL_A, ROL_A: begin
-                // load accumulator into both A and B registers
-                o_sb_db = 1;
-                o_db_add = 1;
-
-                // sum
-                o_sums = 1;
-
-                // load carry into status register
-                o_acr_c = 1;
-            end
-            default: begin
-            end
-            endcase
-
-            case (w_ir)
-            ROR_A, ROL_A: begin
-                // use CARRY flag to drive CARRY_IN on accumulator
-                o_1_addc = i_p[C];
-            end
-            default: begin
-            end
-            endcase
-
             next_opcode();
         end
         LDA_i, LDX_i, LDY_i:
@@ -654,68 +907,6 @@ begin
             retain_pc(1);
             increment_pc(1);
 
-            // load immediate operand into ALU via DB from DL
-            o_dl_db = 1;
-
-            // load register into ALU via SB
-            case (w_ir)
-            CPX_i: o_x_sb = 1;
-            CPY_i: o_y_sb = 1;
-            default: o_ac_sb = 1;
-            endcase
-                
-            o_sb_add = 1;
-
-            case (w_ir)
-            AND_i: begin
-                o_db_add = 1;
-                o_ands = 1;
-            end
-            EOR_i: begin
-                o_db_add = 1;
-                o_eors = 1;
-            end
-            ORA_i: begin
-                o_db_add = 1;
-                o_ors = 1;
-            end
-            ADC_i: begin
-                o_db_add = 1;
-                o_sums = 1;
-
-                // carry in
-                o_1_addc = i_p[C];
-
-                // C + V flags
-                o_acr_c = 1;
-                o_avr_v = 1;
-            end
-            SBC_i: begin
-                o_db_n_add = 1;
-                o_sums = 1;
-                
-                // carry in
-                o_1_addc = ~i_p[C];
-
-                // C + V flags
-                o_acr_c = 1;
-                o_avr_v = 1;
-            end
-            CMP_i, CPX_i, CPY_i: begin
-                // subtraction as 2's complement addition
-                o_db_n_add = 1;
-                o_1_addc = 1;
-
-                o_sums = 1;
-
-                // C + V flags
-                o_acr_c = 1;
-                o_avr_v = 1;
-            end
-            default: begin
-            end
-            endcase
-
             next_opcode();
         end
         LDA_a, LDX_a, LDY_a,
@@ -725,14 +916,25 @@ begin
         CMP_a, CPX_a, CPY_a,
         ADC_a, SBC_a,
         AND_a, EOR_a, ORA_a,
-        ASL_a, LSR_a, ROL_a, ROR_a:
+        ASL_a, LSR_a, ROL_a, ROR_a,
+        LDA_ax, LDA_ay:
         begin
+            // Read PC+1
             output_pch_on_abh(1);
             output_pcl_on_abl(1);
             retain_pc(1);
             increment_pc(1);
 
-            load_add_from_dl(1);        // address lo
+            if (w_ir == JSR_a)
+            begin
+                // move stack pointer to alu
+                o_s_sb = w_phi1;
+                load_add_from_sb(w_phi1);
+
+                // stash target address lo in S
+                load_s_from_dl(w_phi2);
+
+            end
         end
         RTS: begin
             output_pch_on_abh(1);
@@ -790,9 +992,11 @@ begin
         end
         BCC, BCS, BEQ, BNE, BMI, BPL, BVC, BVS: 
         begin
+            // PC + 1 - fetch branch offset
             output_pch_on_abh(1);
             output_pcl_on_abl(1);
             retain_pc(1);
+            increment_pc(1);      
 
             if ( ((i_p[C] == 0) && (w_ir == BCC)) ||
                  ((i_p[C] == 1) && (w_ir == BCS)) ||
@@ -803,25 +1007,16 @@ begin
                  ((i_p[V] == 0) && (w_ir == BVC)) ||
                  ((i_p[V] == 1) && (w_ir == BVS)) )
             begin
-                // use ALU to add offset to PC
-                o_sums = 1;
+                // follow branch in T2
 
-                // PC + 1
-                o_adl_add = 1;
-
-                // + 1
-                o_1_addc = 1;
-
-                // + relative
+                // check if offset is negative with r_bus_db_n
                 o_dl_db = 1;
-                o_sb_db = 1;
-                o_sb_add = 1;
             end
             else
             begin
-                increment_pc(1);
+                // branch not taken
                 next_opcode();
-            end
+            end 
         end
         default:
         begin
@@ -843,49 +1038,53 @@ begin
         case (w_ir)
         BCC, BCS, BEQ, BNE, BMI, BPL, BVC, BVS:
         begin
+            // PC + 2
             output_pch_on_abh(1);
-            output_add_on_abl(1);
             retain_pch(1);
+            
+            // DL contains branch offset
 
-            // load PCL from ALU
-            o_adl_pcl = 1;
-
-            if ((r_last_acr != r_last_bus_db_n))
+            if (w_phi1)
             begin
-                // use ALU to add +/-1 to ADH
+                // phi1
+                o_dl_db = 1;
+
+                output_pcl_on_abl(1);
+
+                // use ALU to add relative offset to PC+2
                 o_sums = 1;
 
-                // B INPUT = pch
-                o_pch_db = 1;
-                o_db_add = 1;
+                // PC+2 (lo)
+                o_adl_add = 1;
 
-                if (r_last_acr)
-                begin
-                    // + 1
-                    o_1_addc = 1;
-                    o_0_add = 1;
-                end
-                else
-                begin
-                    // - 1
-                    o_sb_add = 1;
-                end
-            end
+                // + relative
+                o_sb_db = 1;
+                o_sb_add = 1;
+            end 
             else
             begin
-                next_opcode();
+                // phi2
+
+                // write result of ALU to PCL
+                o_add_adl = 1;
+                o_adl_pcl = 1;
+                
+                if (i_acr == r_bus_db_n)
+                begin
+                    // we don't need to carry, so transition to next
+                    // T0 where ADD should be output to PCL / ABL
+
+                    next_opcode();
+                end
             end
         end
         JSR_a:
         begin
             retain_pc(1);           // PC + 2
 
-            output_s_on_abl(1);
+            output_add_on_abl(1);   // output SP on address
             output_1_on_abh(1);
-
-            load_add_from_adl(1);   // SP
-
-            load_s_from_add(1);
+            load_add_from_adl(1);   // retain SP in ADD
         end
         RTS, RTI:
         begin
@@ -897,22 +1096,24 @@ begin
         begin
             retain_pc(1);
 
-            output_s_on_abl(1);
-            output_1_on_abh(1);
+            output_s_on_abl(w_phi1);
+            output_1_on_abh(w_phi1);
 
-            load_add_from_adl_minus_1(1);       // SP - 1
+            load_add_from_adl_minus_1(w_phi1);       // SP - 1
 
             if (w_ir == PHA)
             begin
                 o_rw = RW_WRITE;
                 o_ac_db = 1;
                 next_opcode();
+                load_s_from_add(w_phi2);
             end
             else if (w_ir == PHP)
             begin
                 o_rw = RW_WRITE;
                 o_p_db = 1;
                 next_opcode();
+                load_s_from_add(w_phi2);
             end
             else if (w_ir == BRK)
             begin
@@ -941,28 +1142,54 @@ begin
         CMP_a, CPX_a, CPY_a,
         ADC_a, SBC_a,
         AND_a, EOR_a, ORA_a,
-        ASL_a, LSR_a, ROL_a, ROR_a:
+        ASL_a, LSR_a, ROL_a, ROR_a,
+        LDA_ax, LDA_ay:
         begin
             // PC + 2 = Fetch high order effective address byte            
             retain_pc(1);
             output_pcl_on_abl(1);
             output_pch_on_abh(1);
 
-            // keep value cached in ADD
-            output_add_on_sb(1);
-            load_add_from_sb(1);
+            // load BASE ADDRESS LO from DL into ALU
+            load_add_from_dl(1);
+
+            case (w_ir)
+            LDA_ax:
+            begin
+                // add index register
+                o_0_add = 0;                // cancel this signal set in load_add_from_dl
+                o_sb_add = 1;
+                o_x_sb = 1;
+            end
+            LDA_ay:
+            begin
+                // add index register
+                o_0_add = 0;                // cancel this signal set in load_add_from_dl
+                o_sb_add = 1;
+                o_y_sb = 1;
+            end
+            default:
+            begin
+            end
+            endcase
         end
         JMP_a, JMP_indirect:
         begin
             // PC + 2 = Fetch high order effective address byte
 
-            // phase 1
-            output_pch_on_abh(w_phi1);
-            output_pcl_on_abl(w_phi1);
-        
-            // phase 2
-            load_pcl_from_add(w_phi2);            
-            load_pch_from_dl(w_phi2);
+            if (w_phi1)
+            begin
+                output_pch_on_abh(1);
+                output_pcl_on_abl(1);
+
+                // load address lo from DL
+                load_add_from_dl(1);
+            end
+            else
+            begin
+                load_pcl_from_add(1);       
+                load_pch_from_dl(1);
+            end
 
             if (w_ir == JMP_a)
             begin
@@ -979,15 +1206,40 @@ begin
         case (w_ir)
         BCC, BCS, BEQ, BNE, BMI, BPL, BVC, BVS:
         begin
-            output_pch_on_abh(1);
-            output_pcl_on_abl(1);
             retain_pcl(1);
 
-            // load PCH from ALU
-            output_add_on_sb(1);
-            o_sb_adh = 1;
-            o_adh_pch = 1;
-        
+            if (w_phi1)
+            begin
+                output_pch_on_abh(1);
+                output_pcl_on_abl(1);
+
+                // use ALU to add +/-1 to ADH
+                o_sums = 1;
+
+                // B INPUT = pch
+                o_pch_db = 1;
+                o_db_add = 1;
+
+                if (r_last_acr)
+                begin
+                    // + 1
+                    o_1_addc = 1;
+                    o_0_add = 1;
+                end
+                else
+                begin
+                    // - 1
+                    o_sb_add = 1;
+                end
+            end
+            else
+            begin
+                // write add to PCH
+                output_add_on_sb(1);
+                o_sb_adh = 1;
+                o_adh_pch = 1;
+            end
+
             next_opcode();
         end
         BRK:
@@ -1009,74 +1261,12 @@ begin
         ADC_a, SBC_a,
         AND_a, EOR_a, ORA_a:
         begin
-            // output absolute address ADH, ADL
+            // output absolute address ADH, ADL, fetch data
             retain_pc(1);
             increment_pc(1);
             
             output_add_on_abl(1);
             output_dl_on_abh(1);
-
-            // load immediate operand into ALU via DB from DL
-            o_dl_db = 1;
-
-            // load register into ALU via SB
-            case (w_ir)
-            CPX_a: o_x_sb = 1;
-            CPY_a: o_y_sb = 1;
-            default: o_ac_sb = 1;
-            endcase
-                
-            o_sb_add = 1;
-
-            case (w_ir)
-            AND_a: begin
-                o_db_add = 1;
-                o_ands = 1;
-            end
-            EOR_a: begin
-                o_db_add = 1;
-                o_eors = 1;
-            end
-            ORA_a: begin
-                o_db_add = 1;
-                o_ors = 1;
-            end
-            ADC_a: begin
-                o_db_add = 1;
-                o_sums = 1;
-
-                // carry in
-                o_1_addc = i_p[C];
-
-                // C + V flags
-                o_acr_c = 1;
-                o_avr_v = 1;
-            end
-            SBC_a: begin
-                o_db_n_add = 1;
-                o_sums = 1;
-                
-                // carry in
-                o_1_addc = ~i_p[C];
-
-                // C + V flags
-                o_acr_c = 1;
-                o_avr_v = 1;
-            end
-            CMP_a, CPX_a, CPY_a: begin
-                // subtraction as 2's complement addition
-                o_db_n_add = 1;
-                o_1_addc = 1;
-
-                o_sums = 1;
-
-                // C + V flags
-                o_acr_c = 1;
-                o_avr_v = 1;
-            end
-            default: begin
-            end
-            endcase
 
             next_opcode();
         end
@@ -1087,18 +1277,13 @@ begin
         ASL_a, LSR_a, ROL_a, ROR_a:
         begin
             // output absolute address ADH, ADL
-
             retain_pc(1);
             increment_pc(1);
 
-            output_add_on_abl(1);
-            output_dl_on_abh(1);
+            output_add_on_abl(w_phi1);
+            output_dl_on_abh(w_phi1);
             
             case (w_ir)
-            INC_a, DEC_a, ASL_a, LSR_a, ROL_a, ROR_a,
-            LDA_a, LDX_a, LDY_a: begin
-                load_add_from_dl(1);
-            end
             STA_a: begin
                 // write value from AC
                 o_ac_db = 1;
@@ -1117,16 +1302,7 @@ begin
                 o_rw = RW_WRITE;
             end
             BIT_a: begin
-                // load value from DL into ALU via DB
                 o_dl_db = 1;
-                o_db_add = 1;
-
-                // load value from AC into ALU
-                o_ac_sb = 1;
-                o_sb_add = 1;
-
-                // use ALU for AND
-                o_ands = 1;
 
                 // load V and N from DB
                 o_db6_v = 1;
@@ -1144,14 +1320,34 @@ begin
             end
             endcase
         end
+        LDA_ax, LDA_ay: begin
+            output_dl_on_abh(1);        // BAH
+            output_add_on_abl(1);
+                        
+            retain_pc(1);
+            increment_pc(1);
+
+            if (r_last_acr == 1)
+            begin
+                // use ALU to add +1 to Base address high (BAH)
+
+                // B INPUT = (BAH)
+                load_add_from_dl(1);
+
+                // + 1
+                o_1_addc = 1;
+            end
+            else
+            begin
+                next_opcode();
+            end
+        end
         PLA, PLP: begin
             retain_pc(1);
 
             // output SP+1
-            output_add_on_abl(1);
+            output_s_on_abl(1);
             output_1_on_abh(1);
-
-            next_opcode();
 
             if (w_ir == PLA) begin
                 load_ac_from_dl(1);
@@ -1160,12 +1356,14 @@ begin
                 o_dl_db = 1;
                 load_p_from_db(1);
             end
+        
+            next_opcode();
         end
         JSR_a:
         begin
             retain_pc(1);       // PC + 2
 
-            // output S
+            // output S on address bus
             output_add_on_abl(1);
             output_1_on_abh(1);
             
@@ -1209,8 +1407,6 @@ begin
             output_pcl_on_abl(1);
             retain_pc(1);
             increment_pc(1);
-
-            load_add_from_dl(1);        // address lo
         end
         default:
         begin
@@ -1223,10 +1419,12 @@ begin
         BRK:
         begin
             // output S-2
-            output_add_on_abl(1);
+            output_add_on_abl(w_phi1);
             output_1_on_abh(1);
 
-            load_add_from_adl_minus_1(1);      // S-3
+            load_add_from_adl_minus_1(w_phi1);      // S-3
+
+            load_s_from_add(w_phi2);     // SP - 3
         
             if (r_interrupt != INTERRUPT_RESET)
             begin
@@ -1236,6 +1434,7 @@ begin
         end
         JSR_a:
         begin
+            // T4
             retain_pc(1);
 
             // output S-1
@@ -1250,18 +1449,23 @@ begin
         end
         RTS:
         begin
-            // phi 1
-        
-            // output S+2
-            output_add_on_abl(w_phi1);
-            output_1_on_abh(w_phi1);
-        
-            // phi 2
-            load_pcl_from_s(w_phi2);        // return address lo
-            load_pch_from_dl(w_phi2);       // return address hi
-        
-            // read S+2 into SP from ALU
-            load_s_from_add(1);
+            if (w_phi1)
+            begin
+                // output S+2
+                output_add_on_abl(1);
+                output_1_on_abh(1);
+
+                // retain s+2
+                load_add_from_adl(1);
+            end
+            else
+            begin
+                load_pcl_from_s(1);        // return address lo
+                load_pch_from_dl(1);       // return address hi
+            
+                // read S+2 into SP from ALU
+                load_s_from_add(1);
+            end
         end
         RTI:
         begin
@@ -1279,72 +1483,99 @@ begin
 
             // note: the correct address is already buffered in ABL/ABH
 
-            // write from ALU
             o_rw = RW_WRITE;
-            output_add_on_sb(1);
-            o_sb_db = 1;
 
-            case (w_ir)
-            INC_a: 
+            if (w_phi1)
             begin
-                // increment ALU
-                o_db_add = 1;
-                o_1_addc = 1;
-                o_sums = 1;
-                o_0_add = 1; 
+                o_dl_db = 1;
+
+                case (w_ir)
+                INC_a: 
+                begin
+                    // increment ALU
+                    o_db_add = 1;
+                    o_1_addc = 1;
+                    o_sums = 1;
+                    o_0_add = 1; 
+                end
+                DEC_a:
+                begin
+                    // decrement ALU 
+                    o_sb_db = 1;
+                    o_sb_add = 1;
+                    o_sums = 1;
+                    o_adl_add = 1;  // 0xFF from precharge mosfets
+                end
+                LSR_a, ROR_a: begin
+                    o_sb_db = 1;
+                    o_sb_add = 1;
+
+                    o_srs = 1;
+                end
+                ASL_a, ROL_a: begin
+                    o_sb_db = 1;
+                    o_sb_add = 1;
+
+                    // load accumulator into both A and B registers
+                    o_db_add = 1;
+
+                    // sum
+                    o_sums = 1;
+                end
+                default:
+                begin
+                end
+                endcase
+
+                case (w_ir)
+                ROR_a, ROL_a: begin
+                    // use CARRY flag to drive CARRY_IN on ALU
+                    o_1_addc = i_p[C];
+                end
+                default: begin
+                end
+                endcase
             end
-            DEC_a:
+            else
             begin
-                // decrement ALU 
-                o_sb_add = 1;
-                o_sums = 1;
-                o_adl_add = 1;  // 0xFF from precharge mosfets
-            end
-            LSR_a, ROR_a: begin
-                o_sb_add = 1;
+                output_add_on_sb(1);
+                o_sb_db = 1;
+                load_z_n_from_db(1);
 
-                o_srs = 1;
-
-                // load carry flag during the calculation
-                o_acr_c = 1;
+                case (w_ir)
+                ASL_a, ROL_a, LSR_a, ROR_a:
+                begin
+                    // load carry into status register
+                    o_acr_c = 1;
+                end
+                default:
+                begin
+                end
+                endcase
             end
-            ASL_a, ROL_a: begin
-                o_sb_add = 1;
-
-                // load accumulator into both A and B registers
-                o_db_add = 1;
-
-                // sum
-                o_sums = 1;
-
-                // load carry into status register
-                o_acr_c = 1;
-            end
-            default:
-            begin
-            end
-            endcase
-
-            case (w_ir)
-            ROR_a, ROL_a: begin
-                // use CARRY flag to drive CARRY_IN on accumulator
-                o_1_addc = i_p[C];
-            end
-            default: begin
-            end
-            endcase
         end
         JMP_indirect:
         begin
             // indirect address high - load high order byte of jump address
 
-            // phase 1
-            output_pch_on_abh(w_phi1);
-            output_pcl_on_abl(w_phi1);
+            if (w_phi1)
+            begin
+                output_pch_on_abh(w_phi1);
+                output_pcl_on_abl(w_phi1);
+                load_add_from_dl(1);        // address lo
+            end
+            else
+            begin
+                load_pcl_from_add(w_phi2);
+                load_pch_from_dl(w_phi2);
+            end
 
-            // phase 2
-            load_pcl_from_add(w_phi2);
-            load_pch_from_dl(w_phi2);
+            next_opcode();
+        end
+        LDA_ax, LDA_ay:
+        begin
+            retain_pc(1);
+            output_add_on_abh(1);
 
             next_opcode();
         end
@@ -1357,9 +1588,7 @@ begin
     begin
         case (w_ir)
         BRK:
-        begin           
-            load_s_from_add(1);     // SP - 3
-
+        begin
             // address of interrupt vector low byte
             load_abh_with_ff(1);
             
@@ -1378,36 +1607,47 @@ begin
             endcase
 
             o_adl_abl = 1;
-
-            load_add_from_dl(1);        // reset vector lo
         end
         RTI:
         begin
-            // phi 1 - output SP + 3
-            output_add_on_abl(w_phi1);
-            output_1_on_abh(w_phi1);
+            if (w_phi1)
+            begin
+                // output SP + 3
+                output_add_on_abl(1);
+                output_1_on_abh(1);
 
-            // phi 2
-            load_pcl_from_s(w_phi2);     // return address lo
-            load_pch_from_dl(w_phi2);    // return address hi
+                load_add_from_adl(1);
+            end
+            else
+            begin
+                load_pcl_from_s(1);     // return address lo
+                load_pch_from_dl(1);    // return address hi
 
-            // read S+3 into SP from ALU
-            load_s_from_add(1);
+                // read S+3 into SP from ALU
+                load_s_from_add(1);
+            end
 
             next_opcode();
         end
         JSR_a:
         begin
-            // phi 1 - output PC + 2 on address
-            retain_pc(w_phi1);
+            // output PC + 2 on address
             output_pch_on_abh(w_phi1);
             output_pcl_on_abl(w_phi1);
-                
-            // phi 2
-            load_pcl_from_s(w_phi2);
-            load_pch_from_dl(w_phi2);
-            load_s_from_add(w_phi2);           // SP-2
 
+            if (w_phi1)
+            begin
+                // retain add (sp-2)
+                output_add_on_sb(1);
+                load_add_from_sb(1);
+            end
+            else
+            begin
+                // phi 2
+                load_pcl_from_s(1);
+                load_pch_from_dl(1);
+                load_s_from_add(1);
+            end
             next_opcode();
         end
         RTS:
@@ -1425,9 +1665,9 @@ begin
 
             // write from ALU
             o_rw = RW_WRITE;
-            output_add_on_sb(1);
-            o_sb_db = 1;
-            load_z_n_from_db(1);
+            output_add_on_sb(w_phi1);
+            o_sb_db = w_phi1;
+
             next_opcode();
         end
         default:
@@ -1441,8 +1681,9 @@ begin
         case (w_ir)
         BRK:
         begin
-            // phase 1
-            load_abh_with_ff(w_phi1);
+            // output address for reset vector hi
+
+            load_abh_with_ff(1);
 
             case (r_interrupt)
             INTERRUPT_RESET:
@@ -1459,9 +1700,14 @@ begin
             
             o_adl_abl = w_phi1;
             
-            // phase 2
-            load_pch_from_dl(w_phi2);           // reset vector hi
-            load_pcl_from_add(w_phi2);          // reset vector lo
+            // load value of reset vector lo into the ALU
+            load_add_from_dl(w_phi1);
+
+            // load reset vector lo from ADD into the PCL
+            load_pcl_from_add(w_phi2);
+
+            // load reset vector hi from DL straight into PCH
+            load_pch_from_dl(w_phi2);
         
             if (r_interrupt == INTERRUPT_NONE)
             begin

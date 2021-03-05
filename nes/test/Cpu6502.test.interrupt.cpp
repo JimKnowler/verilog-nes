@@ -71,8 +71,8 @@ TEST_F(Cpu6502, ShouldImplementBRK) {
                 interrupt.byteIndex() + 1u
             }).repeatEachStep(2)
         .port(o_debug_s)
-            .signal({sp}).repeat(6)
-            .signal({sp - 3u}).repeat(3)
+            .signal({sp}).repeat(5)
+            .signal({sp - 3u}).repeat(4)
             .concat().repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));

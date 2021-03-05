@@ -1,5 +1,10 @@
 #include "Cpu6502.fixture.hpp"
 
+// BRANCH OPCODES
+// note: There is a peculiarity documented here around how branch opcodes can mask nmi/irq in certain circumstances
+//       due to skipping T0 of next opcode and going directly to T1
+//       I have gone for retaining T0 of next opcode, so that SYNC pin works as expected for debugging
+
 TEST_F(Cpu6502, ShouldImplementBCCWhenCarrySet) {
     sram.clear(0);
 
@@ -49,6 +54,7 @@ TEST_F(Cpu6502, ShouldImplementBCCWhenCarryClear) {
             .NOP()
             .NOP()
             .NOP()
+            .NOP()
         .label("target")
             .NOP()
         .compileTo(sram);
@@ -63,7 +69,17 @@ TEST_F(Cpu6502, ShouldImplementBCCWhenCarryClear) {
         .port(o_rw).signal("11")
                     .repeat(7)
         .port(o_sync).signal("1010010").repeatEachStep(2)
-        .port(o_address).signal({0, 1, 1, 2, 6, 6, 7})
+        .port(o_address).signal({
+                                // CLC
+                                0, 
+                                1, 
+                                // BCC (branch taken)
+                                1,      // PC
+                                2,      // PC + 1
+                                3,      // PC + 2
+                                // NOP
+                                7,      // PC + 2 + relative
+                                8})
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({0xFF}).repeat(14)
         .port(o_debug_x).signal({0xFF}).repeat(14)
@@ -106,13 +122,16 @@ TEST_F(Cpu6502, ShouldImplementBCCWhenCarryClearAndNextPage) {
                     .repeat(8)
         .port(o_sync).signal("10100010").repeatEachStep(2)
         .port(o_address).signal({
+                            // CLC
                             0x00f0,
                             0x00f1,
-                            0x00f1,
-                            0x00f2,
-                            0x0000,
-                            0x0100,
-                            0x0100,
+                            // BCC
+                            0x00f1,         // PC
+                            0x00f2,         // PC + 1
+                            0x00f3,         // PC + 2
+                            0x0000,         // PC + offset (w/o carry)
+                            // NOP 
+                            0x0100,         // PC + offset (w/ carry)
                             0x0101
                         })
                         .repeatEachStep(2)
@@ -186,7 +205,17 @@ TEST_F(Cpu6502, ShouldImplementBCSWhenCarrySet) {
         .port(o_rw).signal("11")
                     .repeat(7)
         .port(o_sync).signal("1010010").repeatEachStep(2)
-        .port(o_address).signal({0, 1, 1, 2, 6, 6, 7})
+        .port(o_address).signal({
+                        // SEC
+                        0, 
+                        1, 
+                        // BCS (branch taken)
+                        1,      // PC
+                        2,      // PC + 1
+                        3,      // PC + 2
+                        // NOP
+                        6,      // PC + 2 + relative
+                        7})
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({0xFF}).repeat(14)
         .port(o_debug_x).signal({0xFF}).repeat(14)
@@ -229,13 +258,16 @@ TEST_F(Cpu6502, ShouldImplementBCSWhenCarrySetAndNextPage) {
                     .repeat(8)
         .port(o_sync).signal("10100010").repeatEachStep(2)
         .port(o_address).signal({
+                            // SEC
                             0x00f0,
                             0x00f1,
-                            0x00f1,
-                            0x00f2,
-                            0x0000,
-                            0x0100,
-                            0x0100,
+                            // BCS
+                            0x00f1,         // PC
+                            0x00f2,         // PC + 1
+                            0x00f3,         // PC + 2
+                            0x0000,         // PC + offset (w/o carry)
+                            // NOP 
+                            0x0100,         // PC + offset (w/ carry)
                             0x0101
                         })
                         .repeatEachStep(2)
@@ -310,7 +342,17 @@ TEST_F(Cpu6502, ShouldImplementBEQWhenZeroFlagSet) {
         .port(o_rw).signal("11")
                     .repeat(7)
         .port(o_sync).signal("1010010").repeatEachStep(2)
-        .port(o_address).signal({0, 1, 2, 3, 7, 7, 8})
+        .port(o_address).signal({
+                            // LDA
+                            0, 
+                            1, 
+                            // BEQ (branch taken)
+                            2,      // PC
+                            3,      // PC + 1
+                            4,      // PC + 2
+                            // NOP
+                            7,      // PC + 2 + relative
+                            8})
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({0xFF}).repeat(4)
                          .signal({0x00}).repeat(10)
@@ -354,13 +396,16 @@ TEST_F(Cpu6502, ShouldImplementBEQWhenZeroFlagSetAndNextPage) {
                     .repeat(8)
         .port(o_sync).signal("10100010").repeatEachStep(2)
         .port(o_address).signal({
+                            // LDA
                             0x00f0,
                             0x00f1,
-                            0x00f2,
-                            0x00f3,
-                            0x0000,
-                            0x0100,
-                            0x0100,
+                            // BEQ
+                            0x00f2,         // PC
+                            0x00f3,         // PC + 1
+                            0x00f4,         // PC + 2
+                            0x0000,         // PC + offset (w/o carry)
+                            // NOP 
+                            0x0100,         // PC + offset (w/ carry)
                             0x0101
                         })
                         .repeatEachStep(2)
@@ -436,7 +481,17 @@ TEST_F(Cpu6502, ShouldImplementBNEWhenZeroFlagClear) {
         .port(o_rw).signal("11")
                     .repeat(7)
         .port(o_sync).signal("1010010").repeatEachStep(2)
-        .port(o_address).signal({0, 1, 2, 3, 7, 7, 8})
+        .port(o_address).signal({
+                            // LDA
+                            0, 
+                            1, 
+                            // BNE (branch taken)
+                            2,      // PC
+                            3,      // PC + 1
+                            4,      // PC + 2
+                            // NOP
+                            7,      // PC + 2 + relative
+                            8})
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({0xFF}).repeat(4)
                          .signal({0x01}).repeat(10)
@@ -480,13 +535,16 @@ TEST_F(Cpu6502, ShouldImplementBNEWhenZeroFlagClearAndNextPage) {
                     .repeat(8)
         .port(o_sync).signal("10100010").repeatEachStep(2)
         .port(o_address).signal({
+                            // LDA
                             0x00f0,
                             0x00f1,
-                            0x00f2,
-                            0x00f3,
-                            0x0000,
-                            0x0100,
-                            0x0100,
+                            // BNE
+                            0x00f2,         // PC
+                            0x00f3,         // PC + 1
+                            0x00f4,         // PC + 2
+                            0x0000,         // PC + offset (w/o carry)
+                            // NOP 
+                            0x0100,         // PC + offset (w/ carry)
                             0x0101
                         })
                         .repeatEachStep(2)
@@ -562,7 +620,17 @@ TEST_F(Cpu6502, ShouldImplementBMIWhenNegativeFlagSet) {
         .port(o_rw).signal("11")
                     .repeat(7)
         .port(o_sync).signal("1010010").repeatEachStep(2)
-        .port(o_address).signal({0, 1, 2, 3, 7, 7, 8})
+        .port(o_address).signal({
+                            // LDA
+                            0, 
+                            1, 
+                            // BMI (branch taken)
+                            2,      // PC
+                            3,      // PC + 1
+                            4,      // PC + 2
+                            // NOP
+                            7,      // PC + 2 + relative
+                            8})
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({0xFF}).repeat(4)
                          .signal({0x80}).repeat(10)
@@ -606,13 +674,16 @@ TEST_F(Cpu6502, ShouldImplementBMIWhenNegativeFlagSetAndNextPage) {
                     .repeat(8)
         .port(o_sync).signal("10100010").repeatEachStep(2)
         .port(o_address).signal({
+                            // LDA
                             0x00f0,
                             0x00f1,
-                            0x00f2,
-                            0x00f3,
-                            0x0000,
-                            0x0100,
-                            0x0100,
+                            // BMI
+                            0x00f2,         // PC
+                            0x00f3,         // PC + 1
+                            0x00f4,         // PC + 2
+                            0x0000,         // PC + offset (w/o carry)
+                            // NOP 
+                            0x0100,         // PC + offset (w/ carry)
                             0x0101
                         })
                         .repeatEachStep(2)
@@ -688,7 +759,17 @@ TEST_F(Cpu6502, ShouldImplementBPLWhenNegativeFlagClear) {
         .port(o_rw).signal("11")
                     .repeat(7)
         .port(o_sync).signal("1010010").repeatEachStep(2)
-        .port(o_address).signal({0, 1, 2, 3, 7, 7, 8})
+        .port(o_address).signal({
+                            // LDA
+                            0, 
+                            1, 
+                            // BPL (branch taken)
+                            2,      // PC
+                            3,      // PC + 1
+                            4,      // PC + 2
+                            // NOP
+                            7,      // PC + 2 + relative
+                            8})
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({0xFF}).repeat(4)
                          .signal({0x7F}).repeat(10)
@@ -732,13 +813,16 @@ TEST_F(Cpu6502, ShouldImplementBPLWhenNegativeFlagClearAndNextPage) {
                     .repeat(8)
         .port(o_sync).signal("10100010").repeatEachStep(2)
         .port(o_address).signal({
+                            // LDA
                             0x00f0,
                             0x00f1,
-                            0x00f2,
-                            0x00f3,
-                            0x0000,
-                            0x0100,
-                            0x0100,
+                            // BPL
+                            0x00f2,         // PC
+                            0x00f3,         // PC + 1
+                            0x00f4,         // PC + 2
+                            0x0000,         // PC + offset (w/o carry)
+                            // NOP 
+                            0x0100,         // PC + offset (w/ carry)
                             0x0101
                         })
                         .repeatEachStep(2)
@@ -781,7 +865,18 @@ TEST_F(Cpu6502, ShouldImplementBPLWhenNegativeFlagClearAndBranchingBack) {
         .port(o_rw).signal("11")
                     .repeat(7)
         .port(o_sync).signal("1010010").repeatEachStep(2)
-        .port(o_address).signal({2, 3, 4, 5, 0, 0, 1})
+        .port(o_address).signal({
+                                // LDA
+                                2,
+                                3,
+                                // BPL
+                                4,
+                                5,
+                                6,
+                                // NOP (target)
+                                0,
+                                1
+                                })
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({0xFF}).repeat(4)
                          .signal({0x7F}).repeat(10)
@@ -825,13 +920,16 @@ TEST_F(Cpu6502, ShouldImplementBPLWhenNegativeFlagClearAndPreviousPage) {
                     .repeat(8)
         .port(o_sync).signal("10100010").repeatEachStep(2)
         .port(o_address).signal({
+                            // LDA
                             0x0100,
                             0x0101,
-                            0x0102,
-                            0x0103,
-                            0x01f0,
-                            0x00f0,
-                            0x00f0,
+                            // BPL
+                            0x0102,         // PC
+                            0x0103,         // PC + 1
+                            0x0104,         // PC + 2
+                            0x01f0,         // PC + offset (w/o carry)
+                            // NOP 
+                            0x00f0,         // PC + offset (w/ carry)
                             0x00f1
                         })
                         .repeatEachStep(2)
@@ -893,6 +991,7 @@ TEST_F(Cpu6502, ShouldImplementBVSWhenOverflowFlagSet) {
             .NOP()
             .NOP()
             .NOP()
+            .NOP()
         .label("target")
             .NOP()
         .label("overflow_flag")
@@ -902,8 +1001,8 @@ TEST_F(Cpu6502, ShouldImplementBVSWhenOverflowFlagSet) {
     cpu6502::assembler::Address overflowFlag("overflow_flag");
     assembler.lookupAddress(overflowFlag);
 
-    cpu6502::assembler::Address skipNop("target");
-    assembler.lookupAddress(skipNop);
+    cpu6502::assembler::Address target("target");
+    assembler.lookupAddress(target);
 
     helperSkipResetVector();
 
@@ -915,12 +1014,17 @@ TEST_F(Cpu6502, ShouldImplementBVSWhenOverflowFlagSet) {
         .port(o_rw).signal("11")
                     .repeat(9)
         .port(o_sync).signal("100010010").repeatEachStep(2)
-        .port(o_address).signal({0, 1, 2, 
+        .port(o_address).signal({
+                                // BIT
+                                0, 1, 2, 
                                 overflowFlag.byteIndex(), 
-                                3, 4, 
-                                skipNop.byteIndex(),
-                                skipNop.byteIndex(),
-                                uint32_t(skipNop.byteIndex()) + 1})
+                                // BVS
+                                3,      // PC
+                                4,      // PC + 1
+                                5,      // PC + 2
+                                // NOP
+                                target.byteIndex(),
+                                uint32_t(target.byteIndex()) + 1})
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({0xFF}).repeat(18)
         .port(o_debug_x).signal({0xFF}).repeat(18)
@@ -969,14 +1073,17 @@ TEST_F(Cpu6502, ShouldImplementBVSWhenOverflowFlagSetAndNextPage) {
                     .repeat(10)
         .port(o_sync).signal("1000100010").repeatEachStep(2)
         .port(o_address).signal({
+                            // BIT
                             0x00f0,
                             0x00f1,
                             0x00f2,
                             overflowFlag.byteIndex(),
+                            // BVS
                             0x00f3,
                             0x00f4,
+                            0x00f5,
                             0x0000,
-                            0x0100,
+                            // NOP (target)
                             0x0100,
                             0x0101
                         })
@@ -1048,8 +1155,8 @@ TEST_F(Cpu6502, ShouldImplementBVCWhenOverflowFlagClear) {
             .NOP()
         .compileTo(sram);
 
-    cpu6502::assembler::Address skipNop("target");
-    assembler.lookupAddress(skipNop);
+    cpu6502::assembler::Address target("target");
+    assembler.lookupAddress(target);
 
     helperSkipResetVector();
 
@@ -1061,10 +1168,14 @@ TEST_F(Cpu6502, ShouldImplementBVCWhenOverflowFlagClear) {
         .port(o_rw).signal("11")
                     .repeat(7)
         .port(o_sync).signal("1010010").repeatEachStep(2)
-        .port(o_address).signal({0, 1, 1, 2,
-                                skipNop.byteIndex(),
-                                skipNop.byteIndex(),
-                                uint32_t(skipNop.byteIndex()) + 1})
+        .port(o_address).signal({
+                                // NOP
+                                0, 1,
+                                // BVC
+                                1, 2, 3,
+                                // NOP @ target
+                                target.byteIndex(),
+                                uint32_t(target.byteIndex()) + 1})
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({0xFF}).repeat(14)
         .port(o_debug_x).signal({0xFF}).repeat(14)
@@ -1107,12 +1218,15 @@ TEST_F(Cpu6502, ShouldImplementBVCWhenOverflowFlagClearAndNextPage) {
                     .repeat(8)
         .port(o_sync).signal("10100010").repeatEachStep(2)
         .port(o_address).signal({
+                            // CLV
                             0x00f0,
                             0x00f1,
+                            // BVC
                             0x00f1,
                             0x00f2,
+                            0x00f3,
                             0x0000,
-                            0x0100,
+                            // NOP (target)
                             0x0100,
                             0x0101
                         })

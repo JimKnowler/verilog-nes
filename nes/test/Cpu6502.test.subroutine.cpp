@@ -59,8 +59,8 @@ TEST_F(Cpu6502, ShouldImplementJSR) {
                                 jmpTo.byteIndex() + 1u
                                 })
                         .repeatEachStep(2)
-        .port(o_debug_s).signal({sp}).repeat(5)         
-                        .signal({jmpTo.lo()}).repeat(3) // TODO: we're not worried about value of SP during execution
+        .port(o_debug_s).signal({sp}).repeat(4)         
+                        .signal({jmpTo.lo()}).repeat(4) // TODO: we're not worried about value of SP during execution
                         .signal({sp - 2u}).repeat(2)    // TODO: but we are interested in what it ends with
                         .concat().repeatEachStep(2)
         .port(o_debug_ac).signal({0xFF}).repeat(20)

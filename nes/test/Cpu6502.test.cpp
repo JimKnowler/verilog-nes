@@ -18,7 +18,7 @@ TEST_F(Cpu6502, ShouldImplementResetVector) {
     sram.clear(NOP());
 
     // write address for reset vector
-    sram.write(0xFFFC, 0x02);               // low byte of 16bit address
+    sram.write(0xFFFC, 0x12);               // low byte of 16bit address
     sram.write(0xFFFD, 0x80);               // high byte of 16bit address
 
     testBench.tick(9);
@@ -32,12 +32,12 @@ TEST_F(Cpu6502, ShouldImplementResetVector) {
                 0x0000, 0x0001,             // PC, PC + 1
                 0x01FF, 0x01FE, 0x01FD,     // SP, SP-1, SP-2
                 0xFFFC, 0xFFFD,             // Reset Vector (low byte), Reset Vector (high byte)
-                0x8002,                     // The reset vector (pointing at NOP)
-                0x8003,                     // NOP incrememting PC
+                0x8012,                     // The reset vector (pointing at NOP)
+                0x8013,                     // NOP incrememting PC
             }).repeatEachStep(2)
         .port(o_debug_s)
-            .signal({0xFF}).repeat(6)
-            .signal({0xFC}).repeat(3)       // store SP-3 after 3rd push
+            .signal({0xFF}).repeat(5)
+            .signal({0xFC}).repeat(4)       // store SP-3 after 3rd push
             .concat().repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
