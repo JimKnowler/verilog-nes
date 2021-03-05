@@ -1,6 +1,7 @@
 // Input Data Latch
 //
-// Implemented as Latch, controlled by phi2
+// Implemented as Transparent Latch, controlled by phi2
+// - pass through while clock is HI
 // - latch value on FALLING EDGE
 
 module DL(
@@ -21,7 +22,7 @@ begin
     r_data <= i_data;
 end
 
-assign o_data = r_data;
+assign o_data = (i_clk) ? i_data : r_data;
 
 endmodule
 

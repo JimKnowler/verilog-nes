@@ -39,13 +39,13 @@ TEST_F(DL, ShouldNotPassThroughDuringPhi1) {
     EXPECT_EQ(0x00, core.o_data);
 }
 
-TEST_F(DL, ShouldNotPassThroughDuringPhi2) {
+TEST_F(DL, ShouldPassThroughDuringPhi2) {
     auto& core = testBench.core();
 
     core.i_clk = 1;
     core.i_data = 0x42;
     core.eval();
-    EXPECT_EQ(0x0, core.o_data);
+    EXPECT_EQ(0x42, core.o_data);
 }
 
 TEST_F(DL, ShouldLoadAtEndOfPhi2) {
