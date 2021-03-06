@@ -629,7 +629,7 @@ TEST_F(Cpu6502, ShouldImplementEORabsoluteIndexedWithYProcessorStatusWithoutCarr
     
         Assembler()
                 .LDA().immediate(kTestDataA)
-                .LDX().immediate(kY)
+                .LDY().immediate(kY)
                 .EOR().absolute("M").y()
                 .NOP()
             .org(0x678A)
@@ -876,7 +876,7 @@ TEST_F(Cpu6502, ShouldImplementORAabsoluteIndexedWithYProcessorStatusWithoutCarr
     
         Assembler()
                 .LDA().immediate(kTestDataA)
-                .LDX().immediate(kY)
+                .LDY().immediate(kY)
                 .ORA().absolute("M").y()
                 .NOP()
             .org(0x678A)

@@ -145,7 +145,9 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  LDA_ax = 8'hBD,    LDA_ay = 8'hB9,
                  CMP_ax = 8'hDD,    CMP_ay = 8'hD9,
                  LDX_ay = 8'hBE,    LDY_ax = 8'hBC,
-                 AND_ax = 8'h3D,    AND_ay = 8'h39;
+                 AND_ax = 8'h3D,    AND_ay = 8'h39,
+                 ORA_ax = 8'h1D,    ORA_ay = 8'h19,
+                 EOR_ax = 8'h5D,    EOR_ay = 8'h59;
 
 // RW pin
 localparam RW_READ = 1;
@@ -610,7 +612,9 @@ begin
         ADC_a, SBC_a,
         AND_a, EOR_a, ORA_a,
         CMP_ax, CMP_ay,
-        AND_ax, AND_ay:
+        AND_ax, AND_ay,
+        ORA_ax, ORA_ay,
+        EOR_ax, EOR_ay:
         begin
             if (w_phi1)
             begin
@@ -631,11 +635,11 @@ begin
                     o_db_add = 1;
                     o_ands = 1;
                 end
-                EOR_a: begin
+                EOR_a, EOR_ax, EOR_ay: begin
                     o_db_add = 1;
                     o_eors = 1;
                 end
-                ORA_a: begin
+                ORA_a, ORA_ax, ORA_ay: begin
                     o_db_add = 1;
                     o_ors = 1;
                 end
@@ -672,8 +676,9 @@ begin
                 // load Accumulator from SB
                 case (w_ir)
                 AND_a, AND_ax, AND_ay,
-                EOR_a,
-                ORA_a, ADC_a,
+                EOR_a, EOR_ax, EOR_ay,
+                ORA_a, ORA_ax, ORA_ay,
+                ADC_a,
                 SBC_a: begin
                     o_sb_ac = 1;
                 end
@@ -936,7 +941,9 @@ begin
         ASL_a, LSR_a, ROL_a, ROR_a,
         LDA_ax, LDA_ay, LDX_ay, LDY_ax,
         CMP_ax, CMP_ay,
-        AND_ax, AND_ay:
+        AND_ax, AND_ay,
+        ORA_ax, ORA_ay,
+        EOR_ax, EOR_ay:
         begin
             // Read PC+1
             output_pch_on_abh(1);
@@ -1162,7 +1169,9 @@ begin
         AND_a, EOR_a, ORA_a,
         ASL_a, LSR_a, ROL_a, ROR_a,
         LDA_ax, LDA_ay, LDX_ay, LDY_ax,
-        CMP_ax, CMP_ay, AND_ax, AND_ay:
+        CMP_ax, CMP_ay, AND_ax, AND_ay,
+        ORA_ax, ORA_ay,
+        EOR_ax, EOR_ay:
         begin
             // PC + 2 = Fetch high order effective address byte            
             retain_pc(1);
@@ -1173,14 +1182,14 @@ begin
             load_add_from_dl(1);
 
             case (w_ir)
-            LDA_ax, CMP_ax, LDY_ax, AND_ax:
+            LDA_ax, CMP_ax, LDY_ax, AND_ax, ORA_ax, EOR_ax:
             begin
                 // add index register
                 o_0_add = 0;                // cancel this signal set in load_add_from_dl
                 o_sb_add = 1;
                 o_x_sb = 1;
             end
-            LDA_ay, CMP_ay, LDX_ay, AND_ay:
+            LDA_ay, CMP_ay, LDX_ay, AND_ay, ORA_ay, EOR_ay:
             begin
                 // add index register
                 o_0_add = 0;                // cancel this signal set in load_add_from_dl
@@ -1339,7 +1348,9 @@ begin
             end
             endcase
         end
-        LDA_ax, LDA_ay, CMP_ax, CMP_ay, LDX_ay, LDY_ax, AND_ax, AND_ay: begin
+        LDA_ax, LDA_ay, CMP_ax, CMP_ay, LDX_ay, LDY_ax, AND_ax, AND_ay,
+        ORA_ax, ORA_ay,
+        EOR_ax, EOR_ay: begin
             output_dl_on_abh(1);        // BAH
             output_add_on_abl(1);
                         
@@ -1591,7 +1602,9 @@ begin
 
             next_opcode();
         end
-        LDA_ax, LDA_ay, CMP_ax, CMP_ay, LDX_ay, LDY_ax, AND_ax, AND_ay:
+        LDA_ax, LDA_ay, CMP_ax, CMP_ay, LDX_ay, LDY_ax, AND_ax, AND_ay,
+        ORA_ax, ORA_ay,
+        EOR_ax, EOR_ay:
         begin
             retain_pc(1);
             output_add_on_abh(1);
