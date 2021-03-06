@@ -234,7 +234,7 @@ void Cpu6502::helperTestInternalExecutionOnMemoryData(const TestAbsoluteIndexed<
     };
 
     auto getPreloadValue = [&](PortDescription* port) -> uint8_t {
-        uint8_t preloadValue = (test.preloadPort == &o_debug_ac) ? test.preloadPortValue : 0xFF;
+        uint8_t preloadValue = (port == test.preloadPort) ? test.preloadPortValue : 0xFF;
 
         if ( ((port == &o_debug_x) && (test.indexRegister == kX))
             ||  ((port == &o_debug_y) && (test.indexRegister == kY)) ) {

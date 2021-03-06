@@ -142,7 +142,9 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  EOR_a = 8'h4D,     ORA_a = 8'h0D,
                  ASL_a = 8'h0E,     LSR_a = 8'h4E,
                  ROL_a = 8'h2E,     ROR_a = 8'h6E,
-                 LDA_ax = 8'hBD,    LDA_ay = 8'hB9;
+                 LDA_ax = 8'hBD,    LDA_ay = 8'hB9,
+                 CMP_ax = 8'hDD,    CMP_ay = 8'hD9,
+                 LDX_ay = 8'hBE,    LDY_ax = 8'hBC;
 
 // RW pin
 localparam RW_READ = 1;
@@ -605,7 +607,8 @@ begin
         end
         CMP_a, CPX_a, CPY_a,
         ADC_a, SBC_a,
-        AND_a, EOR_a, ORA_a:
+        AND_a, EOR_a, ORA_a,
+        CMP_ax, CMP_ay:
         begin
             if (w_phi1)
             begin
@@ -648,7 +651,7 @@ begin
                     // carry in
                     o_1_addc = ~i_p[C];
                 end
-                CMP_a, CPX_a, CPY_a: begin
+                CMP_a, CPX_a, CPY_a, CMP_ax, CMP_ay: begin
                     // subtraction as 2's complement addition
                     o_db_n_add = 1;
                     o_1_addc = 1;
@@ -677,8 +680,13 @@ begin
 
                 // load carry/overflow flags
                 case (w_ir)
-                ADC_a, SBC_a,
-                CMP_a, CPX_a, CPY_a: begin
+                CMP_a, CPX_a, CPY_a, CMP_ax, CMP_ay:
+                begin
+                    // C flag
+                    o_acr_c = 1;
+                end
+                ADC_a, SBC_a: 
+                begin
                     // C + V flags
                     o_acr_c = 1;
                     o_avr_v = 1;
@@ -780,21 +788,29 @@ begin
                 load_z_n_from_db(1);
             end
         end
-        LDA_ax, LDA_ay:
+        LDA_ax, LDA_ay, LDX_ay, LDY_ax:
         begin
-            // input DL into SB via DB
-            o_dl_db = 1;
-            o_sb_db = 1;
-
-            case (w_ir)
-            LDA_ax, LDA_ay, LDA_a: o_sb_ac = 1;             // TODO: clean up unused case entries here
-            LDX_a: o_sb_x = 1;
-            LDY_a: o_sb_y = 1;
-            default: begin
+            if (w_phi1)
+            begin
+                load_add_from_dl(1);
             end
-            endcase
+            else
+            begin
+                output_add_on_sb(1);
+                o_sb_db = 1;
 
-            load_z_n_from_db(1);
+                case (w_ir)
+                LDA_ax, LDA_ay: o_sb_ac = 1;
+                LDX_ay: o_sb_x = 1;
+                LDY_ax: o_sb_y = 1;
+                default: begin
+                end
+                endcase
+
+                load_z_n_from_db(1);
+
+            end
+
         end
         BIT_a: begin
             if (w_phi1)
@@ -821,8 +837,6 @@ begin
                 // set Z if ALU result on DB is zero
                 o_dbz_z = 1;
             end
-
-            
         end
         default: begin
         end
@@ -917,7 +931,8 @@ begin
         ADC_a, SBC_a,
         AND_a, EOR_a, ORA_a,
         ASL_a, LSR_a, ROL_a, ROR_a,
-        LDA_ax, LDA_ay:
+        LDA_ax, LDA_ay, LDX_ay, LDY_ax,
+        CMP_ax, CMP_ay:
         begin
             // Read PC+1
             output_pch_on_abh(1);
@@ -933,7 +948,6 @@ begin
 
                 // stash target address lo in S
                 load_s_from_dl(w_phi2);
-
             end
         end
         RTS: begin
@@ -1143,7 +1157,8 @@ begin
         ADC_a, SBC_a,
         AND_a, EOR_a, ORA_a,
         ASL_a, LSR_a, ROL_a, ROR_a,
-        LDA_ax, LDA_ay:
+        LDA_ax, LDA_ay, LDX_ay, LDY_ax,
+        CMP_ax, CMP_ay:
         begin
             // PC + 2 = Fetch high order effective address byte            
             retain_pc(1);
@@ -1154,14 +1169,14 @@ begin
             load_add_from_dl(1);
 
             case (w_ir)
-            LDA_ax:
+            LDA_ax, CMP_ax, LDY_ax:
             begin
                 // add index register
                 o_0_add = 0;                // cancel this signal set in load_add_from_dl
                 o_sb_add = 1;
                 o_x_sb = 1;
             end
-            LDA_ay:
+            LDA_ay, CMP_ay, LDX_ay:
             begin
                 // add index register
                 o_0_add = 0;                // cancel this signal set in load_add_from_dl
@@ -1320,7 +1335,7 @@ begin
             end
             endcase
         end
-        LDA_ax, LDA_ay: begin
+        LDA_ax, LDA_ay, CMP_ax, CMP_ay, LDX_ay, LDY_ax: begin
             output_dl_on_abh(1);        // BAH
             output_add_on_abl(1);
                         
@@ -1572,7 +1587,7 @@ begin
 
             next_opcode();
         end
-        LDA_ax, LDA_ay:
+        LDA_ax, LDA_ay, CMP_ax, CMP_ay, LDX_ay, LDY_ax:
         begin
             retain_pc(1);
             output_add_on_abh(1);
