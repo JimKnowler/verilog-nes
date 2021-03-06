@@ -29,6 +29,8 @@ namespace emulator {
         Emulator() : sram(0xffff) {
             sAppName = "FGPA NES Emulator";
 
+            mode = kSingleStep;
+
             SetPixelMode(olc::Pixel::ALPHA);
         }
 
@@ -74,6 +76,13 @@ namespace emulator {
         Renderer renderer;
 
         int numOpcodes;
+
+        enum Mode {
+            kSingleStep,
+            kRun
+        };
+
+        Mode mode;
 
         void initMario() {
             // load bank 0 -> 0x8000:0xBFFF
@@ -172,8 +181,38 @@ namespace emulator {
         }
 
         void update() {
-            if (GetKey(olc::SPACE).bReleased) {
-                simulateOpcode();
+            if(GetKey(olc::R).bReleased) {
+                if (mode == kRun) {
+                    mode = kSingleStep;
+                } else {
+                    mode = kRun;
+                }
+            }
+
+            switch (mode) {
+                case kSingleStep:
+                if (GetKey(olc::SPACE).bReleased) {
+                    simulateOpcode();
+                }
+                break;
+                case kRun:
+                {
+                    const int kNumOpcodesPerFrame = 100;
+                    
+                    for (int i=0; i < kNumOpcodesPerFrame; i++) {
+                        if (hasCoreErrored())
+                        {
+                            mode = kSingleStep;
+                            break;
+                        } else {
+                            simulateOpcode();
+                        }
+                    }
+                
+                    break;
+                }
+                default:
+                break;
             }
         }
 
@@ -197,10 +236,20 @@ namespace emulator {
             return disassembledOpcodes;
         }
 
-        void simulateOpcode() {
+        bool hasCoreErrored() {
             auto& core = testBench.core();
 
-            if (core.o_debug_error == 1) {
+            return core.o_debug_error == 1;
+        }
+
+        uint16_t getCorePC() {
+            auto& core = testBench.core();
+            
+            return (core.o_debug_pch << 8) | core.o_debug_pcl;
+        }
+
+        void simulateOpcode() {
+            if (hasCoreErrored()) {
                 // core has errored, so we can't simluate any further
                 return;
             }
@@ -209,7 +258,8 @@ namespace emulator {
             gtestverilog::Trace lastTrace = testBench.trace;
             testBench.trace.clear();
 
-            auto disassembledOpcodes = disassembler.disassemble(sram, (core.o_debug_pch << 8) | core.o_debug_pcl, 1);
+            uint16_t pc = getCorePC();
+            auto disassembledOpcodes = disassembler.disassemble(sram, pc, 1);
             if (disassembledOpcodes.empty()) {
                 printf("failed to simulateOpcode()");
                 return;
@@ -220,6 +270,8 @@ namespace emulator {
             // simulate until next fetching next opcode, or max ticks
             const int kMaxTicks = 10;
 
+            auto& core = testBench.core();
+
             for (int i=0; i<kMaxTicks; i++) {
                 testBench.tick();
                 if (core.o_sync == 1) {
@@ -228,7 +280,7 @@ namespace emulator {
                     break;
                 }
 
-                if (core.o_debug_error == 1) {
+                if (hasCoreErrored()) {
                     // core has errored.. so tick once more (for debug display) then stop
                     testBench.tick();
                     break;
