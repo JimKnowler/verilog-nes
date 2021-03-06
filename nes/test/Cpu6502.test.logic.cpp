@@ -383,7 +383,7 @@ TEST_F(Cpu6502, ShouldImplementANDabsoluteIndexedWithYProcessorStatusWithoutCarr
     
         Assembler()
                 .LDA().immediate(kTestDataA)
-                .LDX().immediate(kY)
+                .LDY().immediate(kY)
                 .AND().absolute("M").y()
                 .NOP()
             .org(0x678A)
