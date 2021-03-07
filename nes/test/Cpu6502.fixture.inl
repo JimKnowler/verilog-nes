@@ -390,7 +390,7 @@ void Cpu6502::helperTestStore(const TestAbsoluteIndexed<OPCODE>& test) {
     TraceBuilder traceBuilder;
     traceBuilder
         .port(i_clk).signal("_-").repeat(7)
-        .port(o_rw).signal("11").repeat(7)
+        .port(o_rw).signal("1111011").repeatEachStep(2)
         .port(o_sync).signal("1000010").repeatEachStep(2)
         .port(o_address)
             .signal({
@@ -398,8 +398,8 @@ void Cpu6502::helperTestStore(const TestAbsoluteIndexed<OPCODE>& test) {
                 pc + 0u,
                 pc + 1u,
                 pc + 2u,
-                kStoreAddress,
-                kStoreAddress,
+                (test.address & 0xff00u) + (kStoreAddress & 0x00ffu),     // lo incremented, hi without cary
+                kStoreAddress,                                          // lo incremented, hi with carry
 
                 // NOP
                 pc + 3u,
@@ -414,15 +414,20 @@ void Cpu6502::helperTestStore(const TestAbsoluteIndexed<OPCODE>& test) {
     };
 
     for (auto& port: ports) {
-        const uint8_t preloadPortValue = (port == test.preloadPort) ? test.preloadPortValue : 0xFF;
+        uint8_t preloadValue = (port == test.preloadPort) ? test.preloadPortValue : 0xFF;
+
+        if ( ((port == &o_debug_x) && (test.indexRegister == kX))
+            ||  ((port == &o_debug_y) && (test.indexRegister == kY)) ) {
+            preloadValue = test.preloadIndexRegisterValue;
+        }
 
         traceBuilder
             .port(*port)
-                .signal({preloadPortValue}).repeat(7);    
+                .signal({preloadValue}).repeat(14);    
     }
 
     Trace expected = traceBuilder;
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
-    EXPECT_EQ(test.data, sram.read(test.address));
+    EXPECT_EQ(test.data, sram.read(kStoreAddress));
 }

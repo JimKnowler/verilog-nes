@@ -147,7 +147,8 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  LDX_ay = 8'hBE,    LDY_ax = 8'hBC,
                  AND_ax = 8'h3D,    AND_ay = 8'h39,
                  ORA_ax = 8'h1D,    ORA_ay = 8'h19,
-                 EOR_ax = 8'h5D,    EOR_ay = 8'h59;
+                 EOR_ax = 8'h5D,    EOR_ay = 8'h59,
+                 STA_ax = 8'h9D,    STA_ay = 8'h99;
 
 // RW pin
 localparam RW_READ = 1;
@@ -943,7 +944,8 @@ begin
         CMP_ax, CMP_ay,
         AND_ax, AND_ay,
         ORA_ax, ORA_ay,
-        EOR_ax, EOR_ay:
+        EOR_ax, EOR_ay,
+        STA_ax, STA_ay:
         begin
             // Read PC+1
             output_pch_on_abh(1);
@@ -1171,7 +1173,8 @@ begin
         LDA_ax, LDA_ay, LDX_ay, LDY_ax,
         CMP_ax, CMP_ay, AND_ax, AND_ay,
         ORA_ax, ORA_ay,
-        EOR_ax, EOR_ay:
+        EOR_ax, EOR_ay,
+        STA_ax, STA_ay:
         begin
             // PC + 2 = Fetch high order effective address byte            
             retain_pc(1);
@@ -1182,14 +1185,14 @@ begin
             load_add_from_dl(1);
 
             case (w_ir)
-            LDA_ax, CMP_ax, LDY_ax, AND_ax, ORA_ax, EOR_ax:
+            LDA_ax, CMP_ax, LDY_ax, AND_ax, ORA_ax, EOR_ax, STA_ax:
             begin
                 // add index register
                 o_0_add = 0;                // cancel this signal set in load_add_from_dl
                 o_sb_add = 1;
                 o_x_sb = 1;
             end
-            LDA_ay, CMP_ay, LDX_ay, AND_ay, ORA_ay, EOR_ay:
+            LDA_ay, CMP_ay, LDX_ay, AND_ay, ORA_ay, EOR_ay, STA_ay:
             begin
                 // add index register
                 o_0_add = 0;                // cancel this signal set in load_add_from_dl
@@ -1350,7 +1353,8 @@ begin
         end
         LDA_ax, LDA_ay, CMP_ax, CMP_ay, LDX_ay, LDY_ax, AND_ax, AND_ay,
         ORA_ax, ORA_ay,
-        EOR_ax, EOR_ay: begin
+        EOR_ax, EOR_ay,
+        STA_ax, STA_ay: begin
             output_dl_on_abh(1);        // BAH
             output_add_on_abl(1);
                         
@@ -1369,7 +1373,17 @@ begin
             end
             else
             begin
-                next_opcode();
+                case (w_ir)
+                STA_ax, STA_ay:
+                begin
+                    // continue to T4
+                    load_add_from_dl(1);
+                end
+                default:
+                begin
+                    next_opcode();
+                end
+                endcase
             end
         end
         PLA, PLP: begin
@@ -1604,10 +1618,22 @@ begin
         end
         LDA_ax, LDA_ay, CMP_ax, CMP_ay, LDX_ay, LDY_ax, AND_ax, AND_ay,
         ORA_ax, ORA_ay,
-        EOR_ax, EOR_ay:
+        EOR_ax, EOR_ay,
+        STA_ax, STA_ay:
         begin
             retain_pc(1);
             output_add_on_abh(1);
+
+            case (w_ir)
+            STA_ax, STA_ay:
+            begin
+                o_rw = RW_WRITE;
+                o_ac_db = 1;
+            end
+            default:
+            begin
+            end
+            endcase
 
             next_opcode();
         end
