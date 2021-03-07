@@ -6,12 +6,25 @@ Building a [Nintendo Entertainment System](https://en.wikipedia.org/wiki/Nintend
 
 Aim: to play the original NES [Super Mario Bros](https://en.wikipedia.org/wiki/Super_Mario_Bros.) ROM.
 
-# Building
+# Building Unit Tests
 
 > bazel build //nes:test
 
 > ./bazel-bin/nes/test
 
+# Building Emulator
+
+> bazel build //nes:emulator
+
+> ./bazel-bin/nes/emulator
+
+# Emulator Controls
+
+| Key           | Action        |
+| ------------: | ------------- |
+| Z             | Reset Simulation |
+| R             | Switch between single step and run mode    |
+| SPACE         | Step through a single Opcode (in single step mode)      |
 # Components
 
 - FPGA
@@ -153,3 +166,9 @@ mapper number:  4
 
 - Mapper number: 0 = [NROM](https://wiki.nesdev.com/w/index.php/NROM)
 - Mapper number: 4 = [MMC3](https://wiki.nesdev.com/w/index.php/MMC3)
+
+# Disassembly
+
+- [Super Mario Disassembly](https://gist.github.com/1wErt3r/4048722) - useful for stepping through code
+   - NOTE: infinite loop at 0x8057 appears to be label "EndlessLoop"
+   - perhaps we can step through code from 'start' to see what needs to be emulated so far
