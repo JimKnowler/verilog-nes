@@ -72,6 +72,13 @@ namespace cpu6502 { namespace assembler {
         return *this;
     }
 
+    Opcode& Opcode::zpIndirect(const Address& address) {
+        m_addressingMode |= kZeroPage | kIndirect;
+        m_address = address;
+
+        return *this;
+    }
+
     uint8_t Opcode::offset() const {
         uint8_t offset = uint8_t(m_address.byteIndex() - (m_byteIndex + 2));
 
@@ -105,6 +112,8 @@ namespace cpu6502 { namespace assembler {
                 bytes.push_back(offset());
                 break;
             case kZeroPage:
+            case kZeroPage|kIndirect|kIndexedWithY:
+            case kZeroPage|kIndirect|kIndexedWithX:
                 assert(0 == m_address.hi());
                 bytes.push_back(m_address.lo());
                 break;

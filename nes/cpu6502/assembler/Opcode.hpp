@@ -58,6 +58,9 @@ namespace cpu6502 {
             /// @brief mark as zero page
             Opcode& zp(const Address& address);
 
+            /// @brief mark as zero page indirect
+            Opcode& zpIndirect(const Address& address);
+
             /// @brief retrieve relative address as offset to opcode's location in memory
             uint8_t offset() const;
 
