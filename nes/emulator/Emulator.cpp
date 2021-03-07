@@ -29,8 +29,6 @@ namespace emulator {
         Emulator() : sram(0xffff) {
             sAppName = "FGPA NES Emulator";
 
-            mode = kSingleStep;
-
             SetPixelMode(olc::Pixel::ALPHA);
         }
 
@@ -41,16 +39,9 @@ namespace emulator {
             //initSimpleProgram()
             initMario();
 
-            // skip reset
-            simulateOpcode();
+            mode = kSingleStep;
 
-            // fudge data for reset
-            lastOpcode.opcode = 0;
-            lastOpcode.addressingMode = 0;
-            lastOpcode.labelOpcode = "RESET";
-            lastOpcode.labelOperands = "";
-            lastOpcode.pc = 0xfffc;
-            lastOpcode.byteSize = 0;
+            reset();
 
             return true;
         }
@@ -83,6 +74,27 @@ namespace emulator {
         };
 
         Mode mode;
+
+        void reset() {
+            testBench.reset();
+
+            // todo: reset testBench step count
+            
+            simulateOpcode();               // skip SYNC incorrectly reported during RESET
+            
+            // skip reset
+            simulateOpcode();
+
+            // fudge data for reset
+            lastOpcode.opcode = 0;
+            lastOpcode.addressingMode = 0;
+            lastOpcode.labelOpcode = "RESET";
+            lastOpcode.labelOperands = "";
+            lastOpcode.pc = 0xfffc;
+            lastOpcode.byteSize = 0;
+
+            numOpcodes = 0;
+        }
 
         void initMario() {
             // load bank 0 -> 0x8000:0xBFFF
@@ -174,13 +186,14 @@ namespace emulator {
                     cpu.i_data = 0xFF;
                 }
             });
-
-            testBench.reset();
-            simulateOpcode();               // incorrectly reporting SYNC during RESET?
-            numOpcodes = 0;
         }
 
         void update() {
+            if(GetKey(olc::Z).bReleased) {
+                mode = kSingleStep;
+                reset();
+            }
+
             if(GetKey(olc::R).bReleased) {
                 if (mode == kRun) {
                     mode = kSingleStep;
