@@ -149,7 +149,8 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  ORA_ax = 8'h1D,    ORA_ay = 8'h19,
                  EOR_ax = 8'h5D,    EOR_ay = 8'h59,
                  STA_ax = 8'h9D,    STA_ay = 8'h99,
-                 STA_zp = 8'h85,    STX_zp = 8'h86,     STY_zp = 8'h84;
+                 STA_zp = 8'h85,    STX_zp = 8'h86,     STY_zp = 8'h84,
+                 STA_zp_ind_y = 8'h91;
 
 // RW pin
 localparam RW_READ = 1;
@@ -962,7 +963,8 @@ begin
         ORA_ax, ORA_ay,
         EOR_ax, EOR_ay,
         STA_ax, STA_ay,
-        STA_zp, STX_zp, STY_zp:
+        STA_zp, STX_zp, STY_zp,
+        STA_zp_ind_y:
         begin
             // Read PC+1
             output_pch_on_abh(1);
@@ -1197,6 +1199,16 @@ begin
             o_sb_db = 1;
 
             next_opcode();
+        end
+        STA_zp_ind_y:
+        begin
+            retain_pc(1);
+
+            output_0_on_abh(1);
+            output_dl_on_abl(1);
+
+            load_add_from_dl(1);
+            o_1_addc = 1;
         end
         LDA_a, LDX_a, LDY_a,
         STA_a, STX_a, STY_a,
@@ -1487,6 +1499,20 @@ begin
             retain_pc(1);
             increment_pc(1);
         end
+        STA_zp_ind_y:
+        begin
+            retain_pc(1);
+
+            output_0_on_abh(1);
+            output_add_on_abl(1);
+
+            // add address.lo to Y index register
+            o_dl_db = 1;
+            o_db_add = 1;
+            o_y_sb = 1;
+            o_sb_add = 1;
+            o_sums = 1;
+        end
         default:
         begin
         end
@@ -1672,6 +1698,17 @@ begin
 
             next_opcode();
         end
+        STA_zp_ind_y:
+        begin
+            retain_pc(1);
+
+            output_dl_on_abh(1);
+            output_add_on_abl(1);
+
+            load_add_from_dl(1);
+
+            o_1_addc = r_last_acr;
+        end
         default:
         begin
         end
@@ -1762,6 +1799,17 @@ begin
             o_sb_db = w_phi1;
 
             next_opcode();
+        end
+        STA_zp_ind_y:
+        begin
+            retain_pc(1);
+
+            output_add_on_abh(1);
+
+            o_rw = RW_WRITE;
+            o_ac_db = 1;
+
+            next_opcode();            
         end
         default:
         begin
