@@ -100,6 +100,12 @@ namespace cpu6502 { namespace assembler {
         return *this;
     }
 
+    Assembler& Assembler::zp(const Address& address) {
+        currentOpcode()->zp(address);
+
+        return *this;
+    }
+
     void Assembler::compileTo(memory::SRAM& sram) {
         compileFirstPass();
 
