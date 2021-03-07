@@ -148,7 +148,8 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  AND_ax = 8'h3D,    AND_ay = 8'h39,
                  ORA_ax = 8'h1D,    ORA_ay = 8'h19,
                  EOR_ax = 8'h5D,    EOR_ay = 8'h59,
-                 STA_ax = 8'h9D,    STA_ay = 8'h99;
+                 STA_ax = 8'h9D,    STA_ay = 8'h99,
+                 STA_zp = 8'h85,    STX_zp = 8'h86,     STY_zp = 8'h84;
 
 // RW pin
 localparam RW_READ = 1;
@@ -291,6 +292,21 @@ function void output_1_on_abh(input i_value);
 begin
     o_0_adh1_7 = i_value;
     o_adh_abh = i_value;
+end
+endfunction
+
+function void output_0_on_abh(input i_value);
+begin
+    o_0_adh1_7 = i_value;
+    o_0_adh0 = i_value;
+    o_adh_abh = i_value;
+end
+endfunction
+
+function void output_dl_on_abl(input i_value);
+begin
+    o_dl_adl = i_value;
+    o_adl_abl = i_value;
 end
 endfunction
 
@@ -945,7 +961,8 @@ begin
         AND_ax, AND_ay,
         ORA_ax, ORA_ay,
         EOR_ax, EOR_ay,
-        STA_ax, STA_ay:
+        STA_ax, STA_ay,
+        STA_zp, STX_zp, STY_zp:
         begin
             // Read PC+1
             output_pch_on_abh(1);
@@ -1162,6 +1179,24 @@ begin
 
             // retain the value in ADD
             load_add_from_sb(1);
+        end
+        STA_zp, STX_zp, STY_zp:
+        begin
+            retain_pc(1);
+            output_0_on_abh(1);
+            output_dl_on_abl(1);
+
+            o_rw = RW_WRITE;
+
+            case (i_ir)
+            STX_zp: o_x_sb = 1;
+            STY_zp: o_y_sb = 1;
+            default: o_ac_sb = 1;
+            endcase
+
+            o_sb_db = 1;
+
+            next_opcode();
         end
         LDA_a, LDX_a, LDY_a,
         STA_a, STX_a, STY_a,

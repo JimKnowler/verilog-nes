@@ -216,3 +216,132 @@ TEST_F(Cpu6502, ShouldImplementSTAabsoluteIndexedWithYwithCarry) {
 
     helperTestStore(testAbsolute);
 }
+
+TEST_F(Cpu6502, ShouldImplementSTAzeropage) {
+    sram.clear(0);
+    
+    const uint16_t kTestAddress = 0x0034;
+    const uint8_t kTestData = 0x42;
+
+    Assembler()
+        .LDA().immediate(kTestData)
+        .STA().zp(kTestAddress)
+        .NOP()
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    // skip LDAi
+    testBench.tick(2);
+    testBench.trace.clear();
+
+    // test STAa (then NOP)
+    testBench.tick(5);
+
+    // note: o_data has valid data for step before and after
+    //       write data should be valid at end of phi 2
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(5)
+        .port(o_sync).signal("10010").repeatEachStep(2)
+        .port(o_rw).signal("11").repeat(2)      // READ (STA)
+                    .signal("00")               // WRITE (STA)
+                    .signal("11").repeat(2)     // READ (NOP)
+        .port(o_data).signal({0}).repeatEachStep(2).repeat(2)
+                     .signal({0, kTestData, kTestData, 0})
+                     .signal({0}).repeatEachStep(2)
+        .port(o_address).signal({2, 3, kTestAddress})    // STA
+                        .signal({4, 5 })                 // NOP
+                        .concat().repeatEachStep(2)
+        .port(o_debug_ac).signal({kTestData}).repeat(5)
+                         .repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+    EXPECT_EQ(kTestData, sram.read(kTestAddress));
+}
+
+TEST_F(Cpu6502, ShouldImplementSTXzeropage) {
+    sram.clear(0);
+    
+    const uint16_t kTestAddress = 0x0034;
+    const uint8_t kTestData = 0x42;
+
+    Assembler()
+        .LDX().immediate(kTestData)
+        .STX().zp(kTestAddress)
+        .NOP()
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    // skip LDXi
+    testBench.tick(2);
+    testBench.trace.clear();
+
+    // test STAa (then NOP)
+    testBench.tick(5);
+
+    // note: o_data has valid data for step before and after
+    //       write data should be valid at end of phi 2
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(5)
+        .port(o_sync).signal("10010").repeatEachStep(2)
+        .port(o_rw).signal("11").repeat(2)      // READ (STX)
+                    .signal("00")               // WRITE (STX)
+                    .signal("11").repeat(2)     // READ (NOP)
+        .port(o_data).signal({0}).repeatEachStep(2).repeat(2)
+                     .signal({0, kTestData, kTestData, 0})
+                     .signal({0}).repeatEachStep(2)
+        .port(o_address).signal({2, 3, kTestAddress})    // STX
+                        .signal({4, 5 })                 // NOP
+                        .concat().repeatEachStep(2)
+        .port(o_debug_x).signal({kTestData}).repeat(5)
+                         .repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+    EXPECT_EQ(kTestData, sram.read(kTestAddress));
+}
+
+TEST_F(Cpu6502, ShouldImplementSTYzeropage) {
+    sram.clear(0);
+    
+    const uint16_t kTestAddress = 0x0034;
+    const uint8_t kTestData = 0x42;
+
+    Assembler()
+        .LDY().immediate(kTestData)
+        .STY().zp(kTestAddress)
+        .NOP()
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    // skip LDYi
+    testBench.tick(2);
+    testBench.trace.clear();
+
+    // test STAa (then NOP)
+    testBench.tick(5);
+
+    // note: o_data has valid data for step before and after
+    //       write data should be valid at end of phi 2
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(5)
+        .port(o_sync).signal("10010").repeatEachStep(2)
+        .port(o_rw).signal("11").repeat(2)      // READ (STY)
+                    .signal("00")               // WRITE (STY)
+                    .signal("11").repeat(2)     // READ (NOP)
+        .port(o_data).signal({0}).repeatEachStep(2).repeat(2)
+                     .signal({0, kTestData, kTestData, 0})
+                     .signal({0}).repeatEachStep(2)
+        .port(o_address).signal({2, 3, kTestAddress})    // STY
+                        .signal({4, 5 })                 // NOP
+                        .concat().repeatEachStep(2)
+        .port(o_debug_y).signal({kTestData}).repeat(5)
+                         .repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+    EXPECT_EQ(kTestData, sram.read(kTestAddress));
+}
