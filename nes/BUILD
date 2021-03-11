@@ -157,7 +157,7 @@ gtest_verilog_testbench(
 )
 
 cc_test(
-    name = "test",
+    name = "test-cpu6502",
     srcs = glob(
         include =[
             "**/*.cpp",

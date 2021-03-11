@@ -6,11 +6,11 @@ Building a [Nintendo Entertainment System](https://en.wikipedia.org/wiki/Nintend
 
 Aim: to play the original NES [Super Mario Bros](https://en.wikipedia.org/wiki/Super_Mario_Bros.) ROM.
 
-# Building Unit Tests
+# Building Unit Tests for 6502 cpu
 
-> bazel build //nes:test
+> bazel build //nes:test-cpu6502
 
-> ./bazel-bin/nes/test
+> ./bazel-bin/nes/test-cpu6502
 
 # Building Emulator
 
