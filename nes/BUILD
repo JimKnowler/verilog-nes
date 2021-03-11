@@ -166,7 +166,8 @@ cc_test(
             "**/*.inl"
         ],
         exclude = [
-            "emulator/**/*"
+            "emulator/**/*",
+            "ppu/**/*"
         ]
     ) + [
         ":MasterClockTestBench",
@@ -201,6 +202,29 @@ cc_test(
         ":IR",
         ":ALU",
         ":ProcessorStatus"
+    ],
+)
+
+cc_test(
+    name = "test-ppu",
+    srcs = glob(
+        include =[
+            "**/*.cpp",
+            "**/*.h",
+            "**/*.hpp",
+            "**/*.inl"
+        ],
+        exclude = [
+            "emulator/**/*",
+            "cpu6502/**/*"
+        ]
+    ) + [
+        ":PaletteLookupRGBTestBench"
+    ],
+    deps = [
+        "@com_google_googletest//:gtest",
+        "@gtestverilog//gtestverilog:lib",
+        ":PaletteLookupRGB"
     ],
 )
 
