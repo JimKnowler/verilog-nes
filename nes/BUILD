@@ -205,6 +205,16 @@ cc_test(
     ],
 )
 
+verilator_cc_library(
+    name = "PaletteLookupRGB",
+    srcs = ["ppu/PaletteLookupRGB.v"],
+)
+
+gtest_verilog_testbench(
+    name = "PaletteLookupRGBTestBench",
+    deps = [":PaletteLookupRGB"]
+)
+
 cc_test(
     name = "test-ppu",
     srcs = glob(
@@ -238,7 +248,7 @@ cc_binary(
             "**/*.inl"
         ],
         exclude = [
-            "test/**/*",
+            "**/test/**/*",
             "**/*.test.cpp"
         ]
     ) + [

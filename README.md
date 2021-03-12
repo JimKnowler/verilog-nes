@@ -6,19 +6,35 @@ Building a [Nintendo Entertainment System](https://en.wikipedia.org/wiki/Nintend
 
 Aim: to play the original NES [Super Mario Bros](https://en.wikipedia.org/wiki/Super_Mario_Bros.) ROM.
 
-# Building Unit Tests for 6502 cpu
+# 6502 cpu
 
+## Build Unit Tests
 > bazel build //nes:test-cpu6502
 
+## Run Unit Tests
 > ./bazel-bin/nes/test-cpu6502
 
-# Building Emulator
+# NES PPU (Picture Processing Unit)
 
+## Build Unit Tests
+> bazel build //nes:test-ppu 
+
+## Run Unit Tests
+> ./bazel-bin/nes/test-ppu
+
+# Emulator
+
+Currently supported on MacOSX.
+
+Implemented with the [OneLoneCoder Pixel Game Engine](https://github.com/OneLoneCoder/olcPixelGameEngine).
+
+## Build 
 > bazel build //nes:emulator
 
+## Run
 > ./bazel-bin/nes/emulator
 
-# Emulator Controls
+## Keyboard Controls
 
 | Key           | Action        |
 | ------------: | ------------- |
