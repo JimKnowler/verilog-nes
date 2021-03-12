@@ -98,11 +98,11 @@ namespace emulator {
 
         void initMario() {
             // load bank 0 -> 0x8000:0xBFFF
-            auto bank0 = loadBinaryFile("prg_rom_bank_0.6502.bin");
+            auto bank0 = loadBinaryFile("roms/supermario/prg_rom_bank_0.6502.bin");
             sram.write(0x8000, bank0);
 
             // load bank 1 -> 0xC000:0xFFFF
-            auto bank1 = loadBinaryFile("prg_rom_bank_1.6502.bin");
+            auto bank1 = loadBinaryFile("roms/supermario/prg_rom_bank_1.6502.bin");
             sram.write(0xC000, bank1);
 
             // simulate PPUSTATUS register
