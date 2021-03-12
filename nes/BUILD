@@ -215,6 +215,16 @@ gtest_verilog_testbench(
     deps = [":PaletteLookupRGB"]
 )
 
+verilator_cc_library(
+    name = "PPU",
+    srcs = ["ppu/PPU.v"],
+)
+
+gtest_verilog_testbench(
+    name = "PPUTestBench",
+    deps = [":PPU"]
+)
+
 cc_test(
     name = "test-ppu",
     srcs = glob(
@@ -229,12 +239,14 @@ cc_test(
             "cpu6502/**/*"
         ]
     ) + [
-        ":PaletteLookupRGBTestBench"
+        ":PaletteLookupRGBTestBench",
+        ":PPUTestBench"
     ],
     deps = [
         "@com_google_googletest//:gtest",
         "@gtestverilog//gtestverilog:lib",
-        ":PaletteLookupRGB"
+        ":PaletteLookupRGB",
+        ":PPU"
     ],
 )
 
