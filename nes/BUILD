@@ -235,6 +235,26 @@ gtest_verilog_testbench(
     deps = [":Shift16"]
 )
 
+# Generate instance of VGAGenerator for
+#  a smaller screen (easier to test!)
+verilator_cc_library(
+    name = "VGAGenerator3x2",
+    mtop = "VGAGenerator",
+    srcs = ["ppu/VGAGenerator.v"],
+    vopts = [
+        "-Wall",
+        "-GWIDTH=11'd6",                # note: specifying bit-width of constants
+        "-GHEIGHT=11'd3",
+        "-GWIDTH_VISIBLE=11'd3",
+        "-GHEIGHT_VISIBLE=11'd2"
+    ]
+)
+
+gtest_verilog_testbench(
+    name = "VGAGenerator3x2TestBench",
+    deps = [":VGAGenerator3x2"]
+)
+
 cc_test(
     name = "test-ppu",
     srcs = glob(
@@ -251,14 +271,16 @@ cc_test(
     ) + [
         ":PaletteLookupRGBTestBench",
         ":PPUTestBench",
-        ":Shift16TestBench"
+        ":Shift16TestBench",
+        ":VGAGenerator3x2TestBench"
     ],
     deps = [
         "@com_google_googletest//:gtest",
         "@gtestverilog//gtestverilog:lib",
         ":PaletteLookupRGB",
         ":PPU",
-        ":Shift16"
+        ":Shift16",
+        ":VGAGenerator3x2"
     ],
 )
 
