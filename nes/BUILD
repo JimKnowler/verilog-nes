@@ -225,6 +225,16 @@ gtest_verilog_testbench(
     deps = [":PPU"]
 )
 
+verilator_cc_library(
+    name = "Shift16",
+    srcs = ["ppu/Shift16.v"],
+)
+
+gtest_verilog_testbench(
+    name = "Shift16TestBench",
+    deps = [":Shift16"]
+)
+
 cc_test(
     name = "test-ppu",
     srcs = glob(
@@ -240,13 +250,15 @@ cc_test(
         ]
     ) + [
         ":PaletteLookupRGBTestBench",
-        ":PPUTestBench"
+        ":PPUTestBench",
+        ":Shift16TestBench"
     ],
     deps = [
         "@com_google_googletest//:gtest",
         "@gtestverilog//gtestverilog:lib",
         ":PaletteLookupRGB",
-        ":PPU"
+        ":PPU",
+        ":Shift16"
     ],
 )
 
