@@ -32,6 +32,6 @@ TEST_F(PPU, ShouldInitialiseWithDefaultOutputs) {
     auto& core = testBench.core();
 
     EXPECT_EQ(1, core.o_int_n);
-    EXPECT_EQ(1, core.o_we_n);
-    EXPECT_EQ(1, core.o_rd_n);
+    EXPECT_EQ(1, core.o_v_we_n);
+    EXPECT_EQ(1, core.o_v_rd_n);
 }

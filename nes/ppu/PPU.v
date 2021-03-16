@@ -15,11 +15,11 @@ module PPU(
     input i_rw,                     // Read/~Write for CPU data bus
 
     // VIDEO interface    
-    output o_rd_n,                  // ~Read from VIDEO data bus
-    output o_we_n,                  // ~Write to VIDEO data bus
-    output [13:0] o_vaddress,       // address for 
-    output [7:0] o_vdata,
-    input [7:0] i_vdata,
+    output o_v_rd_n,                  // ~Read from VIDEO data bus
+    output o_v_we_n,                  // ~Write to VIDEO data bus
+    output [13:0] o_v_address,       // address for 
+    output [7:0] o_v_data,
+    input [7:0] i_v_data,
 
     // VGA output
     output [7:0] o_vga_red,
@@ -34,18 +34,18 @@ module PPU(
 );
 
 reg r_int_n;
-reg r_rd_n;
-reg r_we_n;
+reg r_v_rd_n;
+reg r_v_we_n;
 
 always @(*)
 begin
     r_int_n = 1;
-    r_rd_n = 1;
-    r_we_n = 1;
+    r_v_rd_n = 1;
+    r_v_we_n = 1;
 end
 
 assign o_int_n = r_int_n;
-assign o_rd_n = r_rd_n;
-assign o_we_n = r_we_n;
+assign o_v_rd_n = r_v_rd_n;
+assign o_v_we_n = r_v_we_n;
 
 endmodule
