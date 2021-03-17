@@ -11,18 +11,18 @@ module VGAGenerator
     parameter WIDTH_VISIBLE = 640,
     parameter HEIGHT_VISIBLE = 480,
 
-    parameter BIT_DEPTH = 11
+    parameter PIXEL_BITWIDTH = 11
 )
 (
     input i_clk,
     input i_reset_n,
 
-    output [BIT_DEPTH-1:0] o_x,
-    output [BIT_DEPTH-1:0] o_y,
+    output [PIXEL_BITWIDTH-1:0] o_x,
+    output [PIXEL_BITWIDTH-1:0] o_y,
     output o_visible
 );
-    reg [BIT_DEPTH-1:0] r_x;
-    reg [BIT_DEPTH-1:0] r_y;
+    reg [PIXEL_BITWIDTH-1:0] r_x;
+    reg [PIXEL_BITWIDTH-1:0] r_y;
     
     always @(negedge i_reset_n or posedge i_clk)
         begin

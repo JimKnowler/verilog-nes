@@ -7,6 +7,8 @@ using namespace gtestverilog;
 #include "nes/VGAGenerator3x2TestBench.h"
 using namespace vgagenerator3x2testbench;
 
+#include <numeric>
+
 namespace {
     const uint32_t kWidth = 6;
     const uint32_t kHeight = 3;
@@ -27,6 +29,13 @@ namespace {
 
         VGAGenerator3x2TestBench testBench;
     };
+
+    std::vector<uint32_t> range(uint32_t end) {
+        std::vector<uint32_t> values(end);
+        std::iota(std::begin(values), std::end(values), 0);
+
+        return values;
+    }
 }
 
 TEST_F(VGAGenerator, ShouldConstruct) {
@@ -45,16 +54,6 @@ TEST_F(VGAGenerator, ShouldReset) {
 
     EXPECT_EQ(core.o_x, 0);
     EXPECT_EQ(core.o_y, 0);  
-}
-
-std::vector<uint32_t> range(uint32_t end) {
-    std::vector<uint32_t> values;
-
-    for (uint32_t i=0; i<end; i++) {
-        values.push_back(i);
-    }
-
-    return values;
 }
 
 TEST_F(VGAGenerator, ShouldGenerateSignal) {

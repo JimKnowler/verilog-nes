@@ -255,6 +255,30 @@ gtest_verilog_testbench(
     deps = [":VGAGenerator3x2"]
 )
 
+# Generate instance of VGAOutput for
+#  a smaller screen (easier to test!)
+verilator_cc_library(
+    name = "VGAOutput3x2",
+    mtop = "VGAOutput",
+    srcs = ["ppu/VGAOutput.v"],
+    vopts = [
+        "-Wall",
+        "-GWIDTH=11'd7",                # note: specifying bit-width of constants
+        "-GHEIGHT=11'd5",
+        "-GWIDTH_VISIBLE=11'd3",
+        "-GHEIGHT_VISIBLE=11'd2",
+        "-GFRONT_PORCH_X=11'd1",
+        "-GBACK_PORCH_X=11'd1",
+        "-GFRONT_PORCH_Y=11'd1",
+        "-GBACK_PORCH_Y=11'd1",
+    ]
+)
+
+gtest_verilog_testbench(
+    name = "VGAOutput3x2TestBench",
+    deps = [":VGAOutput3x2"]
+)
+
 cc_test(
     name = "test-ppu",
     srcs = glob(
@@ -272,7 +296,8 @@ cc_test(
         ":PaletteLookupRGBTestBench",
         ":PPUTestBench",
         ":Shift16TestBench",
-        ":VGAGenerator3x2TestBench"
+        ":VGAGenerator3x2TestBench",
+        ":VGAOutput3x2TestBench"
     ],
     deps = [
         "@com_google_googletest//:gtest",
@@ -280,7 +305,8 @@ cc_test(
         ":PaletteLookupRGB",
         ":PPU",
         ":Shift16",
-        ":VGAGenerator3x2"
+        ":VGAGenerator3x2",
+        ":VGAOutput3x2"
     ],
 )
 
