@@ -76,9 +76,6 @@ TEST_F(VGAOutput, ShouldNotPassThroughColourWhenNotVisible) {
 TEST_F(VGAOutput, ShouldGenerateSync) {
     const uint32_t kNumTicks = kWidth * kHeight;
 
-    // todo: input: visible, x, y
-    // todo: test vga outputs: hsync, vsync
-
     auto& core = testBench.core();
 
     for (int y = 0; y < kHeight; y++) {
