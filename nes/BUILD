@@ -240,7 +240,7 @@ gtest_verilog_testbench(
 verilator_cc_library(
     name = "VGAGenerator3x2",
     mtop = "VGAGenerator",
-    srcs = ["ppu/VGAGenerator.v"],
+    srcs = ["ppu/vga/VGAGenerator.v"],
     vopts = [
         "-Wall",
         "-GWIDTH=11'd6",                # note: specifying bit-width of constants
@@ -260,7 +260,7 @@ gtest_verilog_testbench(
 verilator_cc_library(
     name = "VGAOutput3x2",
     mtop = "VGAOutput",
-    srcs = ["ppu/VGAOutput.v"],
+    srcs = ["ppu/vga/VGAOutput.v"],
     vopts = [
         "-Wall",
         "-GWIDTH=11'd7",                # note: specifying bit-width of constants
@@ -321,15 +321,57 @@ cc_binary(
         ],
         exclude = [
             "**/test/**/*",
-            "**/*.test.cpp"
+            "**/*.test.cpp",
+            "emulator/EmulatorVGA.cpp"
         ]
     ) + [
         ":Cpu6502TestBench"
     ],
     deps = [
-        #"@com_google_googletest//:gtest",
         "@gtestverilog//gtestverilog:lib",
         ":Cpu6502"
+    ],
+    linkopts = [
+        "-framework OpenGL",
+        "-framework GLUT"
+    ]
+)
+
+verilator_cc_library(
+    name = "VGAExample",
+    srcs = [
+        "ppu/vga/VGAExample.v",
+        "ppu/vga/VGAOutput.v",
+        "ppu/vga/VGAGenerator.v"
+    ]
+)
+
+gtest_verilog_testbench(
+    name = "VGAExampleTestBench",
+    deps = [":VGAExample"]
+)
+
+cc_binary(
+    name = "emulator-vga",
+    srcs = glob(
+        include =[
+            "**/*.cpp",
+            "**/*.h",
+            "**/*.hpp",
+            "**/*.inl"
+        ],
+        exclude = [
+            "**/test/**/*",
+            "**/*.test.cpp",
+            "emulator/Emulator.cpp",
+            "emulator/Renderer.cpp"
+        ]
+    ) + [
+        ":VGAExampleTestBench",
+    ],
+    deps = [
+        "@gtestverilog//gtestverilog:lib",
+        ":VGAExample",
     ],
     linkopts = [
         "-framework OpenGL",
