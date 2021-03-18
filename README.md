@@ -22,7 +22,21 @@ Aim: to play the original NES [Super Mario Bros](https://en.wikipedia.org/wiki/S
 ## Run Unit Tests
 > ./bazel-bin/nes/test-ppu
 
-# Emulator
+# VGA Output Emulator
+
+Currently supported on MacOSX.
+
+Implemented with the [OneLoneCoder Pixel Game Engine](https://github.com/OneLoneCoder/olcPixelGameEngine).
+
+Test the VGA output module.
+
+## Build 
+> bazel build //nes:emulator-vga
+
+## Run
+> ./bazel-bin/nes/emulator-vga
+
+# NES Emulator
 
 Currently supported on MacOSX.
 
