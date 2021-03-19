@@ -1,5 +1,5 @@
 module MemoryController(
-    input i_clk,
+    input i_clk,                    // pixel clock
     input i_reset_n
 
     // cpu r/w
@@ -16,7 +16,10 @@ begin
     else
     begin
         // - check active request lines
-        // - prioritise requests
+        // - prioritise requests 
+        //    1. PPU
+        //    2. CPU
+        //    3. DEBUG
         // - execute the currently active request
     end
 end

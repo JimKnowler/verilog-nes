@@ -2,26 +2,6 @@ load("@rules_verilator//verilator:defs.bzl", "verilator_cc_library")
 load("@gtestverilog//gtestverilog:defs.bzl", "gtest_verilog_testbench")
 
 verilator_cc_library(
-    name = "MasterClock",
-    srcs = ["MasterClock.v"],
-)
-
-gtest_verilog_testbench(
-    name = "MasterClockTestBench",
-    deps = [":MasterClock"]
-)
-
-verilator_cc_library(
-    name = "MemoryController",
-    srcs = ["MemoryController.v"],
-)
-
-gtest_verilog_testbench(
-    name = "MemoryControllerTestBench",
-    deps = [":MemoryController"]
-)
-
-verilator_cc_library(
     name = "Cpu6502",
     srcs = [
         "cpu6502/Cpu6502.v", 
@@ -167,11 +147,10 @@ cc_test(
         ],
         exclude = [
             "emulator/**/*",
-            "ppu/**/*"
+            "ppu/**/*",
+            "nes/**/*"
         ]
     ) + [
-        ":MasterClockTestBench",
-        ":MemoryControllerTestBench",
         ":Cpu6502TestBench",
         ":PCHTestBench",
         ":PCLTestBench",
@@ -188,8 +167,6 @@ cc_test(
     deps = [
         "@com_google_googletest//:gtest",
         "@gtestverilog//gtestverilog:lib",
-        ":MasterClock",
-        ":MemoryController",
         ":Cpu6502",
         ":PCH",
         ":PCL",
@@ -290,7 +267,8 @@ cc_test(
         ],
         exclude = [
             "emulator/**/*",
-            "cpu6502/**/*"
+            "cpu6502/**/*",
+            "nes/**/*"
         ]
     ) + [
         ":PaletteLookupRGBTestBench",
@@ -307,6 +285,52 @@ cc_test(
         ":Shift16",
         ":VGAGenerator3x2",
         ":VGAOutput3x2"
+    ],
+)
+
+verilator_cc_library(
+    name = "MasterClock",
+    srcs = ["nes/MasterClock.v"],
+)
+
+gtest_verilog_testbench(
+    name = "MasterClockTestBench",
+    deps = [":MasterClock"]
+)
+
+verilator_cc_library(
+    name = "MemoryController",
+    srcs = ["nes/MemoryController.v"],
+)
+
+gtest_verilog_testbench(
+    name = "MemoryControllerTestBench",
+    deps = [":MemoryController"]
+)
+
+cc_test(
+    name = "test-nes",
+    srcs = glob(
+        include =[
+            "**/*.cpp",
+            "**/*.h",
+            "**/*.hpp",
+            "**/*.inl"
+        ],
+        exclude = [
+            "emulator/**/*",
+            "cpu6502/**/*",
+            "ppu/**/*"
+        ]
+    ) + [
+        ":MasterClockTestBench",
+        ":MemoryControllerTestBench",
+    ],
+    deps = [
+        "@com_google_googletest//:gtest",
+        "@gtestverilog//gtestverilog:lib",
+        ":MasterClock",
+        ":MemoryController",
     ],
 )
 
