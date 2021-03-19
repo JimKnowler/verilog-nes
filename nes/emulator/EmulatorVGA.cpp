@@ -58,13 +58,17 @@ namespace emulator {
         void reset() {
             testBench.reset();
 
-            resetPixels();
             resetRect();
+            resetPixels();            
         }
 
         void resetPixels() {
+            // reset pixel buffer
             pixels.resize( kVGAWidth * kVGAHeight );
             std::fill(pixels.begin(), pixels.end(), olc::YELLOW);
+
+            // fill current pixel
+            writeCurrentPixel();
         }
 
         void resetRect() {
@@ -75,6 +79,7 @@ namespace emulator {
             core.i_rect_y = 15;
             core.i_rect_width = 80;
             core.i_rect_height = 66;
+            core.eval();
         }
 
         void update() {
@@ -114,7 +119,12 @@ namespace emulator {
         void simulateTick() {
             testBench.tick();
 
-            auto& core = testBench.core();
+            writeCurrentPixel();
+        }
+
+        void writeCurrentPixel() {
+            auto& core = testBench.core();  
+
             int x = core.o_vga_x;
             int y = core.o_vga_y;
             int red = core.o_vga_red;
