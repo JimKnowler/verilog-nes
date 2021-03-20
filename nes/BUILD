@@ -289,13 +289,13 @@ cc_test(
 )
 
 verilator_cc_library(
-    name = "MasterClock",
-    srcs = ["nes/MasterClock.v"],
+    name = "ClockDivider",
+    srcs = ["nes/ClockDivider.v"],
 )
 
 gtest_verilog_testbench(
-    name = "MasterClockTestBench",
-    deps = [":MasterClock"]
+    name = "ClockDividerTestBench",
+    deps = [":ClockDivider"]
 )
 
 verilator_cc_library(
@@ -323,13 +323,13 @@ cc_test(
             "ppu/**/*"
         ]
     ) + [
-        ":MasterClockTestBench",
+        ":ClockDividerTestBench",
         ":MemoryControllerTestBench",
     ],
     deps = [
         "@com_google_googletest//:gtest",
         "@gtestverilog//gtestverilog:lib",
-        ":MasterClock",
+        ":ClockDivider",
         ":MemoryController",
     ],
 )
