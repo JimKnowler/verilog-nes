@@ -1,9 +1,9 @@
 module VGAExample
 #(
-    parameter WIDTH = 200,   
-    parameter HEIGHT = 150,
-    parameter WIDTH_VISIBLE = 150,
-    parameter HEIGHT_VISIBLE = 100,
+    parameter WIDTH = 360,   
+    parameter HEIGHT = 260,
+    parameter WIDTH_VISIBLE = 320,
+    parameter HEIGHT_VISIBLE = 240,
     parameter FRONT_PORCH_X = 20,
     parameter BACK_PORCH_X = 12,
     parameter FRONT_PORCH_Y = 10,

@@ -50,8 +50,8 @@ namespace emulator {
     private:
         VGAExampleTestBench testBench;
 
-        const int kVGAHeight = 150;
-        const int kVGAWidth = 200;
+        const int kVGAWidth = 360;
+        const int kVGAHeight = 260;
 
         std::vector<olc::Pixel> pixels;
 
@@ -83,7 +83,7 @@ namespace emulator {
         }
 
         void update() {
-            const int kNumTicksPerFrame = 40;       // todo: replace by 30fps timer
+            const int kNumTicksPerFrame = 2000;       // todo: replace by 30fps timer
             for (int i=0; i<kNumTicksPerFrame; i++) {
                 simulateTick();
             }
