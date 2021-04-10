@@ -6,3 +6,8 @@ build --cxxopt='-std=c++2a'
 build:debug -c dbg
 build:debug --cxxopt="-g"
 build:debug --strip="never"
+
+# "bazel build --config release"
+build:release --copt -O3
+build:release -c opt
+build:release --cxxopt -O3
