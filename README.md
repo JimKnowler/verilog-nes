@@ -109,14 +109,12 @@ Implemented with the [OneLoneCoder Pixel Game Engine](https://github.com/OneLone
     - memory requests pass through directly to Memory Controller
   - handle 'memory mapper' logic of the currently loaded cartridge
     - intercept memory access from CPU that writes to cartridge's bank switcher or timer / interrupt generator
-- Build Master Clock
-  - run Memory Controller at 100MHz
+- Build Clock Controller
   - run PPU at 5MHz
   - run CPU at 1.66MHz
   - run VGA at 25 MHz
   - implmentation
-    - clock divider? - easy to write, but issues with timings? need to edit XDC manually
-    - Vivado clock generator? - need to use vivado wizard but it handles timings for us
+    - clock gating - run clock at 25MHz, and then use chip-enable signals to enable 
 - Build 6502 soft core
   - cycle timings are documented in [Synertek hardware manual](http://archive.6502.org/datasheets/synertek_hardware_manual.pdf) in appendix A
   - [6502 opcode reference](http://www.obelisk.me.uk/6502/reference.html)
