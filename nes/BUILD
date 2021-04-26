@@ -289,13 +289,13 @@ cc_test(
 )
 
 verilator_cc_library(
-    name = "ClockDivider",
-    srcs = ["nes/ClockDivider.v"],
+    name = "ClockEnable",
+    srcs = ["nes/ClockEnable.v"],
 )
 
 gtest_verilog_testbench(
-    name = "ClockDividerTestBench",
-    deps = [":ClockDivider"]
+    name = "ClockEnableTestBench",
+    deps = [":ClockEnable"]
 )
 
 verilator_cc_library(
@@ -323,13 +323,13 @@ cc_test(
             "ppu/**/*"
         ]
     ) + [
-        ":ClockDividerTestBench",
+        ":ClockEnableTestBench",
         ":MemoryControllerTestBench",
     ],
     deps = [
         "@com_google_googletest//:gtest",
         "@gtestverilog//gtestverilog:lib",
-        ":ClockDivider",
+        ":ClockEnable",
         ":MemoryController",
     ],
 )
