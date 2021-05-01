@@ -6,6 +6,8 @@ module ProcessorStatus(
     input i_clk,
     input i_reset_n,
 
+    input i_ce,                         // clock enable
+
     output [7:0] o_p,
 
     // bus input
@@ -72,7 +74,7 @@ begin
     begin
         r_c <= 0;
     end
-    else
+    else if (i_ce)
     begin
         if (i_acr_c)
             r_c <= i_acr;
@@ -88,7 +90,7 @@ always @(negedge i_reset_n or negedge i_clk)
 begin
     if (!i_reset_n)
         r_z <= 0;
-    else
+    else if (i_ce)
     begin
         if (i_dbz_z)
             r_z <= w_dbz;
@@ -102,7 +104,7 @@ always @(negedge i_reset_n or negedge i_clk)
 begin
     if (!i_reset_n)
         r_d <= 0;
-    else
+    else if (i_ce)
     begin
         if (i_ir5_d)
             r_d <= i_ir5;
@@ -116,7 +118,7 @@ always @(negedge i_reset_n or negedge i_clk)
 begin
     if (!i_reset_n)
         r_i <= 0;
-    else
+    else if (i_ce)
     begin
         if (i_ir5_i)
             r_i <= i_ir5;
@@ -130,7 +132,7 @@ always @(negedge i_reset_n or negedge i_clk)
 begin
     if (!i_reset_n)
         r_b <= 0;
-    else
+    else if (i_ce)
     begin
         if (i_db4_b)
             r_b <= i_db[B];
@@ -142,7 +144,7 @@ always @(negedge i_reset_n or negedge i_clk)
 begin
     if (!i_reset_n)
         r_v <= 0;
-    else
+    else if (i_ce)
     begin
         if (i_db6_v)
             r_v <= i_db[V];
@@ -156,7 +158,7 @@ always @(negedge i_reset_n or negedge i_clk)
 begin
     if (!i_reset_n)
         r_n <= 0;
-    else 
+    else if (i_ce)
     begin
         if (i_db7_n)
             r_n <= i_db[N];

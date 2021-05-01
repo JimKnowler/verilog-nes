@@ -18,6 +18,8 @@ module Register
     input i_clk,
     input i_reset_n,
 
+    input i_ce,
+
     input [7:0] i_data,         // input from data bus
     input i_load,               // control signal to load
     output [7:0] o_data         // value stored in register
@@ -29,7 +31,7 @@ always @(negedge i_reset_n or negedge i_clk)
 begin
     if (!i_reset_n)
         r_data <= DEFAULT_VALUE;
-    else if (i_load)
+    else if (i_load && i_ce)
         r_data <= i_data;
 end
 

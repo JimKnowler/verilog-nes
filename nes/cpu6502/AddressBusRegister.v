@@ -5,9 +5,9 @@
 
 module AddressBusRegister(
     input i_clk,
-    /* verilator lint_off UNUSED */
     input i_reset_n,
-    /* verilator lint_off UNUSED */
+
+    input i_ce,             // clock enable
 
     input [7:0] i_address,
     input i_load,
@@ -16,15 +16,15 @@ module AddressBusRegister(
 
 reg [7:0] r_address;
 
-always @(posedge i_clk)
+always @(posedge i_clk or negedge i_reset_n)
 begin
-    if (i_load)
+    if (i_load && i_ce)
     begin
         r_address <= i_address;
     end
 end
 
-wire w_enabled = (i_clk == 0) && (i_load);
+wire w_enabled = (i_clk == 0) && i_load && i_ce;
 
 assign o_address = w_enabled ? i_address : r_address;
 

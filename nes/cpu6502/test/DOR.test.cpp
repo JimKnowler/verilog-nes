@@ -12,6 +12,7 @@ namespace {
     public:
         void SetUp() override {
             testBench.setClockPolarity(1);
+            testBench.core().i_ce = 1;
             testBench.reset();
         }
         
@@ -84,6 +85,27 @@ TEST_F(DOR, ShouldClearDataWhenReset) {
     core.i_reset_n = 1;
 
     core.i_rw = RW_WRITE;
+    core.eval();
+    EXPECT_EQ(0, core.o_data);
+}
+
+TEST_F(DOR, ShouldNotLoadWhileClockDisabled) {
+    auto& core = testBench.core();
+    core.i_ce = 0;
+
+    // clock in data with tristate disabled
+    core.i_rw = RW_READ;
+    core.i_data = 0x56;
+    testBench.tick();
+
+    // should not enable on falling edge
+    core.i_rw = RW_WRITE;
+    core.i_clk = 0;
+    core.eval();
+    EXPECT_EQ(0, core.o_data);
+
+    // would normally enable on rising edge
+    core.i_clk = 1;
     core.eval();
     EXPECT_EQ(0, core.o_data);
 }

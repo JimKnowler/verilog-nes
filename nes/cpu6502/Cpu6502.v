@@ -2,6 +2,8 @@ module Cpu6502(
     input i_clk,
     input i_reset_n,
 
+    input i_ce,                             // clock enable
+
     output o_rw,                            // Read / Write - where 1 = READ, 0 = WRITE
     output [15:0] o_address,
     input [7:0] i_data,                     // 8 bit data - used for READ
@@ -61,6 +63,7 @@ wire w_sync;
 TCU tcu(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
+    .i_ce(i_ce),
     .i_tcu_next(w_tcu_next),
     .o_tcu(w_tcu),
     .o_sync(w_sync)
@@ -70,6 +73,7 @@ TCU tcu(
 IR ir(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
+    .i_ce(i_ce),
     .i_data(i_data),
     .i_tcu_next(w_tcu_next),
     .o_ir(w_ir)
@@ -218,6 +222,7 @@ Decoder decoder(
 DL dl(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
+    .i_ce(i_ce),
     .i_data(i_data),
     .o_data(w_dl)
 );
@@ -227,6 +232,7 @@ DL dl(
 DOR dor(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
+    .i_ce(i_ce),
     .i_rw(w_rw),
     .i_data(w_bus_db),
     .o_data(o_data)
@@ -236,6 +242,7 @@ DOR dor(
 PCL pcl(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
+    .i_ce(i_ce),
     .i_pcl_pcl(w_pcl_pcl),
     .i_adl_pcl(w_adl_pcl),
     .i_adl(w_bus_adl),
@@ -248,6 +255,7 @@ PCL pcl(
 PCH pch(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
+    .i_ce(i_ce),
     .i_pch_pch(w_pch_pch),
     .i_adh_pch(w_adh_pch),
     .i_adh(w_bus_adh),
@@ -259,6 +267,7 @@ PCH pch(
 Register x(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
+    .i_ce(i_ce),
     .i_data(w_bus_sb),
     .i_load(w_sb_x),
     .o_data(w_x)
@@ -268,6 +277,7 @@ Register x(
 Register y(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
+    .i_ce(i_ce),
     .i_data(w_bus_sb),
     .i_load(w_sb_y),
     .o_data(w_y)
@@ -277,6 +287,7 @@ Register y(
 Register ac(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
+    .i_ce(i_ce),
     .i_data(w_bus_sb),
     .i_load(w_sb_ac),
     .o_data(w_ac)
@@ -286,6 +297,7 @@ Register ac(
 Register s(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
+    .i_ce(i_ce),
     .i_data(w_bus_sb),
     .i_load(w_sb_s),
     .o_data(w_s)
@@ -295,6 +307,7 @@ Register s(
 ALU alu(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
+    .i_ce(i_ce),
     .i_db(w_bus_db),
     .i_db_n_add(w_db_n_add),
     .i_db_add(w_db_add),
@@ -318,6 +331,7 @@ ALU alu(
 ProcessorStatus p(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
+    .i_ce(i_ce),
     .o_p(w_p),
     .i_db(w_bus_db),
     .i_dbz_z(w_dbz_z),
@@ -342,6 +356,7 @@ ProcessorStatus p(
 AddressBusRegister abh(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
+    .i_ce(i_ce),
     .i_address(w_bus_adh),
     .i_load(w_adh_abh),
     .o_address(w_abh)
@@ -351,6 +366,7 @@ AddressBusRegister abh(
 AddressBusRegister abl(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
+    .i_ce(i_ce),
     .i_address(w_bus_adl),
     .i_load(w_adl_abl),
     .o_address(w_abl)

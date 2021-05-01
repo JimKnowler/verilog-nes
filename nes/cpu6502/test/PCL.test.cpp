@@ -11,6 +11,8 @@ namespace {
     class PCL : public ::testing::Test {
     public:
         void SetUp() override {
+            testBench.core().i_ce = 1;
+            testBench.reset();
         }
         
         void TearDown() override {
@@ -184,5 +186,16 @@ TEST_F(PCL, ShouldNotLatchAtEndOfPhi1) {
     core.i_clk = 1;
     core.eval();
 
+    EXPECT_EQ(0, core.o_pcl);
+}
+
+TEST_F(PCL, ShouldNotLoadWhileClockDisabled) {
+    auto& core = testBench.core();
+    core.i_ce = 0;
+
+    // load value into PCL
+    core.i_adl = 0xEA;
+    core.i_adl_pcl = 1;
+    testBench.tick();
     EXPECT_EQ(0, core.o_pcl);
 }

@@ -6,9 +6,9 @@
 
 module DL(
     input i_clk,
-    /* verilator lint_off UNUSED */
     input i_reset_n,
-    /* verilator lint_on UNUSED */
+    
+    input i_ce,             // clock enable
 
     input [7:0] i_data,
     output [7:0] o_data
@@ -16,13 +16,19 @@ module DL(
 
 reg [7:0] r_data;
 
-
-always @(negedge i_clk)
+always @(negedge i_clk or negedge i_reset_n)
 begin
-    r_data <= i_data;
+    if (!i_reset_n)
+    begin
+        r_data <= 0;
+    end
+    else if (i_ce)
+    begin
+        r_data <= i_data;
+    end
 end
 
-assign o_data = (i_clk) ? i_data : r_data;
+assign o_data = (i_clk && i_ce) ? i_data : r_data;
 
 endmodule
 

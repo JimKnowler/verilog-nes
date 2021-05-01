@@ -11,6 +11,7 @@ namespace {
     class AddressBusRegister : public ::testing::Test {
     public:
         void SetUp() override {
+            testBench.core().i_ce = 1;
         }
         
         void TearDown() override {
@@ -139,5 +140,20 @@ TEST_F(AddressBusRegister, ShouldNotLatchAtFallingEdgeOfPhi1WithoutLoadSignal) {
     // should not latch on falling edge of phi1
     core.i_clk = 1;
     core.eval();
+    EXPECT_EQ(0x00, core.o_address);
+}
+
+TEST_F(AddressBusRegister, ShouldNotLatchOrPassThoughWhileClockDisabled) {
+    auto& core = testBench.core();
+    core.i_ce = 0;
+
+    // test during passthrough
+    core.i_load = 1;
+    core.i_address = 0x42;
+    core.eval();
+    EXPECT_EQ(0x00, core.o_address);
+
+    // test latch on clock
+    testBench.tick();
     EXPECT_EQ(0x00, core.o_address);
 }

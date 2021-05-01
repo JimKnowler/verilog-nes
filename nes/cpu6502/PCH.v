@@ -9,10 +9,9 @@
 
 module PCH(
     input i_clk,
+    input i_reset_n,
 
-    /* verilator lint_off UNUSED */
-    input i_reset_n,        // required for gtestverilog
-    /* verilator lint_on UNUSED */
+    input i_ce,             // clock enable
 
     // program counter high select register
     input i_pch_pch,        // control signal - input from PCH
@@ -48,9 +47,12 @@ begin
 end
 
 // Program counter High Register
-always @(negedge i_clk)
+always @(negedge i_clk or negedge i_reset_n)
 begin
-    r_pch <= r_pchs_inc;
+    if (!i_reset_n)
+        r_pch <= 0;
+    else if (i_ce)
+        r_pch <= r_pchs_inc;
 end
 
 assign o_pch =  r_pch;

@@ -12,6 +12,7 @@ namespace {
     public:
         void SetUp() override {
             testBench.setClockPolarity(1);
+            testBench.core().i_ce = 1;
         }
         
         void TearDown() override {
@@ -404,4 +405,54 @@ TEST_F(ALU, ShouldLatchACRAtRisingEdgeOfPhi2) {
     core.i_clk = 1;
     core.eval();
     EXPECT_EQ(1, core.o_acr);
+}
+
+TEST_F(ALU, ShouldNotLatchACRWhenClockDisabled) {
+    auto& core = testBench.core();
+    core.i_ce = 0;
+
+    const uint8_t kTestValue1 = 0x80;
+    const uint8_t kTestValue2 = 0xFF;
+
+    core.i_sb = kTestValue1;
+    core.i_sb_add = 1;
+    core.i_db = kTestValue2;
+    core.i_db_add = 1;
+    core.i_sums = 1;
+    
+    testBench.tick(2);
+
+    EXPECT_EQ(0, core.o_acr);
+}
+
+TEST_F(ALU, ShouldNotLatchAVRWhenClockDisabled) {
+    auto& core = testBench.core();
+    core.i_ce = 0;
+    
+    const uint8_t kTestValue1 = 0x7F;
+    const uint8_t kTestValue2 = 0x01;
+        
+    core.i_sb = kTestValue1;
+    core.i_sb_add = 1;
+    core.i_db = kTestValue2;
+    core.i_db_add = 1;
+    core.i_sums = 1;
+    
+    testBench.tick(2);
+    EXPECT_EQ(0, core.o_avr);
+}
+
+TEST_F(ALU, ShouldNotModifyAddWhenClockDisabled) {
+    auto& core = testBench.core();
+    core.i_ce = 0;
+    
+    core.i_adl = 0x11;
+    core.i_adl_add = 1;
+    core.i_sb = 0x32;
+    core.i_sb_add = 1;
+    core.i_sums = 1;
+    core.i_1_addc = 1;
+    
+    testBench.tick();
+    EXPECT_EQ(0, core.o_add);
 }

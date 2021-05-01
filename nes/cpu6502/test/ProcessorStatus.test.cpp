@@ -14,6 +14,7 @@ namespace {
     public:
         void SetUp() override {
             testBench.setClockPolarity(1);
+            testBench.core().i_ce = 1;
             testBench.reset();
             testBench.trace.clear();
         }
@@ -561,4 +562,22 @@ TEST_F(ProcessorStatus, ShouldClearVFromAVR) {
         .port(o_p).signal({0,V,0,0}).repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(ProcessorStatus, ShouldNotLoadWhenClockDisabled) {
+    auto& core = testBench.core();
+    core.i_ce = 0;
+
+    core.i_db = 0xff;
+    core.i_db0_c = 1;
+    core.i_db1_z = 1;
+    core.i_db2_i = 1;
+    core.i_db3_d = 1;
+    core.i_db4_b = 1;
+    core.i_db6_v = 1;
+    core.i_db7_n = 1;
+
+    testBench.tick();
+
+    EXPECT_EQ(0, core.o_p);
 }

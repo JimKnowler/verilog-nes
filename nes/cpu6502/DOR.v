@@ -8,6 +8,8 @@ module DOR(
     input i_clk,
     input i_reset_n,
 
+    input i_ce,                 // clock enable
+
     input [7:0] i_data,         // data input from DB bus
     input i_rw,                 // external read/write pin 
                                 // (read = HIGH, write = LOW)
@@ -24,7 +26,7 @@ begin
         r_data <= 8'h00;
         r_tristate_enable <= 0;
     end
-    else if (i_clk)
+    else if (i_clk && i_ce)
     begin
         // phi2 rising edge
         r_tristate_enable <= !i_rw;

@@ -11,6 +11,8 @@ namespace {
     class PCH : public ::testing::Test {
     public:
         void SetUp() override {
+            testBench.core().i_ce = 1;
+            testBench.reset();
         }
         
         void TearDown() override {
@@ -148,5 +150,17 @@ TEST_F(PCH, ShouldNotLatchAtEndOfPhi1) {
     core.i_clk = 1;
     core.eval();
 
+    EXPECT_EQ(0, core.o_pch);
+}
+
+TEST_F(PCH, ShouldNotLoadWhileClockDisabled) {
+    auto& core = testBench.core();
+    core.i_ce = 0;
+
+    // load value into PCH
+    core.i_adh = 0xEA;
+    core.i_adh_pch = 1;
+    testBench.tick();
+    
     EXPECT_EQ(0, core.o_pch);
 }

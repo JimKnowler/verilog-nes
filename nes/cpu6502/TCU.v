@@ -3,6 +3,9 @@
 module TCU(
     input i_clk,
     input i_reset_n,
+
+    input i_ce,
+
     input [3:0] i_tcu_next,
     output [3:0] o_tcu,
     output o_sync
@@ -17,7 +20,7 @@ begin
         // start at -1, so TCU starts at 0 on first tick
         r_tcu <= 4'b1111;
     end
-    else
+    else if (i_ce)
     begin
         r_tcu <= i_tcu_next;
     end

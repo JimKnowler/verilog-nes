@@ -12,6 +12,7 @@ namespace {
     public:
         void SetUp() override {
             testBench.setClockPolarity(1);
+            testBench.core().i_ce = 1;
             testBench.reset();
             testBench.trace.clear();
         }
@@ -70,6 +71,21 @@ TEST_F(Register, ShouldLoadOnFallingEdgeOfClkWhileLoadIsHigh) {
 
     Trace expected = TraceBuilder()
         .port(o_data).signal({0xFF,0xFF,0xAF,0xAF}).repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Register, ShouldNotLoadOnFallingEdgeOfClkWhileLoadIsHighAndClockDisabled) {
+    auto& core = testBench.core();
+
+    core.i_data = 0;
+    core.i_load = 1;
+    core.i_data = 0xAF;
+    core.i_ce = 0;
+    testBench.tick();
+
+    Trace expected = TraceBuilder()
+        .port(o_data).signal({0xFF}).repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }

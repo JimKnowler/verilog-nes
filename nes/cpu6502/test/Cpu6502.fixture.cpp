@@ -9,6 +9,7 @@ Cpu6502::Cpu6502() : sram(64 * 1024) {
 
 void Cpu6502::SetUp() {
     testBench.setClockPolarity(1);
+    testBench.core().i_ce = 1;
     sram.clear(0);
 
     // simulation at the end of a clock phase, before

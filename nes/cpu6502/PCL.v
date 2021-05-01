@@ -9,10 +9,9 @@
 
 module PCL(
     input i_clk,
+    input i_reset_n,
 
-    /* verilator lint_off UNUSED */
-    input i_reset_n,        // required for gtestverilog
-    /* verilator lint_on UNUSED */
+    input i_ce,             // clock enable
 
     // program counter low select register
     input i_pcl_pcl,        // Control Signal - input from PCL
@@ -62,7 +61,7 @@ always @(negedge i_clk or negedge i_reset_n)
 begin
     if (!i_reset_n)
         r_pcl <= 0;
-    else
+    else if (i_ce)
         r_pcl <= w_pcls_inc_output;
 end
 

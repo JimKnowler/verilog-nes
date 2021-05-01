@@ -11,6 +11,8 @@ namespace {
     class DL : public ::testing::Test {
     public:
         void SetUp() override {
+            testBench.core().i_ce = 1;
+            testBench.reset();
         }
         
         void TearDown() override {
@@ -63,4 +65,24 @@ TEST_F(DL, ShouldLoadAtEndOfPhi2) {
     core.i_clk = 0;
     core.eval();
     EXPECT_EQ(0x42, core.o_data);
+}
+
+TEST_F(DL, ShouldNotLoadOrPassThroughWhileClockDisabled) {
+    auto& core = testBench.core();
+    core.i_ce = 0;
+
+    core.i_clk = 0;
+    core.i_data = 0x42;
+    core.eval();
+    EXPECT_EQ(0, core.o_data);
+    
+    // RISING EDGE
+    core.i_clk = 1;
+    core.eval();
+    EXPECT_EQ(0, core.o_data);
+
+    // FALLING EDGE
+    core.i_clk = 0;
+    core.eval();
+    EXPECT_EQ(0, core.o_data);
 }
