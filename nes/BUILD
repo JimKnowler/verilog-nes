@@ -207,6 +207,11 @@ verilator_cc_library(
     srcs = ["ppu/PPUChipEnable.v"]
 )
 
+gtest_verilog_testbench(
+    name = "PPUChipEnableTestBench",
+    deps = [":PPUChipEnable"]
+)
+
 verilator_cc_library(
     name = "Shift16",
     srcs = ["ppu/Shift16.v"],
@@ -278,6 +283,7 @@ cc_test(
     ) + [
         ":PaletteLookupRGBTestBench",
         ":PPUTestBench",
+        ":PPUChipEnableTestBench",
         ":Shift16TestBench",
         ":VGAGenerator3x2TestBench",
         ":VGAOutput3x2TestBench"

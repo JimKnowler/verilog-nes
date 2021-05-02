@@ -6,11 +6,9 @@ module PaletteLookupRGB(
     /* verilator lint_off UNUSED */
     input i_clk,
     input i_reset_n,
-    
+    /* verilator lint_on UNUSED */
 
     input [5:0] i_index,    
-    /* verilator lint_on UNUSED */
-    
     output [7:0] o_red,
     output [7:0] o_green,
     output [7:0] o_blue
