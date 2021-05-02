@@ -12,7 +12,7 @@ namespace {
     public:
         void SetUp() override {
             testBench.setClockPolarity(1);
-            testBench.core().i_ce = 1;
+            testBench.core().i_clk_en = 1;
             testBench.reset();
             testBench.trace.clear();
         }
@@ -81,7 +81,7 @@ TEST_F(Register, ShouldNotLoadOnFallingEdgeOfClkWhileLoadIsHighAndClockDisabled)
     core.i_data = 0;
     core.i_load = 1;
     core.i_data = 0xAF;
-    core.i_ce = 0;
+    core.i_clk_en = 0;
     testBench.tick();
 
     Trace expected = TraceBuilder()

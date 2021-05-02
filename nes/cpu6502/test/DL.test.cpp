@@ -11,7 +11,7 @@ namespace {
     class DL : public ::testing::Test {
     public:
         void SetUp() override {
-            testBench.core().i_ce = 1;
+            testBench.core().i_clk_en = 1;
             testBench.reset();
         }
         
@@ -69,7 +69,7 @@ TEST_F(DL, ShouldLoadAtEndOfPhi2) {
 
 TEST_F(DL, ShouldNotLoadOrPassThroughWhileClockDisabled) {
     auto& core = testBench.core();
-    core.i_ce = 0;
+    core.i_clk_en = 0;
 
     core.i_clk = 0;
     core.i_data = 0x42;

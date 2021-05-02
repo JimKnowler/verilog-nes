@@ -11,7 +11,7 @@ namespace {
     class PCL : public ::testing::Test {
     public:
         void SetUp() override {
-            testBench.core().i_ce = 1;
+            testBench.core().i_clk_en = 1;
             testBench.reset();
         }
         
@@ -191,7 +191,7 @@ TEST_F(PCL, ShouldNotLatchAtEndOfPhi1) {
 
 TEST_F(PCL, ShouldNotLoadWhileClockDisabled) {
     auto& core = testBench.core();
-    core.i_ce = 0;
+    core.i_clk_en = 0;
 
     // load value into PCL
     core.i_adl = 0xEA;

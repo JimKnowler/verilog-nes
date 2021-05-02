@@ -5,7 +5,7 @@ module IR(
     input i_clk,
     input i_reset_n,
 
-    input i_ce,                 // clock enable
+    input i_clk_en,                 // clock enable
 
     input [7:0] i_data,         // input data bus
     input [3:0] i_tcu_next,     // next microcode step
@@ -26,7 +26,7 @@ begin
         r_ir <= OPCODE_BRK;
         r_is_interrupt <= 1;
     end
-    else if (i_ce)
+    else if (i_clk_en)
     begin
         // end of phi 2 - clock into IR
         if (i_tcu_next == 1)

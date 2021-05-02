@@ -15,7 +15,7 @@ namespace {
     public:
         void SetUp() override {
             testBench.setClockPolarity(1);
-            testBench.core().i_ce = 1;
+            testBench.core().i_clk_en = 1;
 
             testBench.setCallbackSimulateCombinatorial([this]{
                 auto& core = testBench.core();
@@ -90,15 +90,15 @@ TEST_F(TCU, ShouldEmitSyncDuringT0) {
 TEST_F(TCU, ShouldNotIncrementWhenClockDisabled) {
     testBench.tick();
 
-    testBench.core().i_ce = 0;
+    testBench.core().i_clk_en = 0;
     testBench.tick(2);
 
-    testBench.core().i_ce = 1;
+    testBench.core().i_clk_en = 1;
     testBench.tick();
 
     Trace expected = TraceBuilder()
         .port(i_clk).signal("_-").repeat(4)
-        .port(i_ce).signal("-__-").repeatEachStep(2)
+        .port(i_clk_en).signal("-__-").repeatEachStep(2)
         .port(o_tcu).signal({0, 0, 0, 1}).repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));

@@ -7,7 +7,7 @@ module AddressBusRegister(
     input i_clk,
     input i_reset_n,
 
-    input i_ce,             // clock enable
+    input i_clk_en,             // clock enable
 
     input [7:0] i_address,
     input i_load,
@@ -18,13 +18,13 @@ reg [7:0] r_address;
 
 always @(posedge i_clk or negedge i_reset_n)
 begin
-    if (i_load && i_ce)
+    if (i_load && i_clk_en)
     begin
         r_address <= i_address;
     end
 end
 
-wire w_enabled = (i_clk == 0) && i_load && i_ce;
+wire w_enabled = (i_clk == 0) && i_load && i_clk_en;
 
 assign o_address = w_enabled ? i_address : r_address;
 

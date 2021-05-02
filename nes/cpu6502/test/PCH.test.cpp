@@ -11,7 +11,7 @@ namespace {
     class PCH : public ::testing::Test {
     public:
         void SetUp() override {
-            testBench.core().i_ce = 1;
+            testBench.core().i_clk_en = 1;
             testBench.reset();
         }
         
@@ -155,7 +155,7 @@ TEST_F(PCH, ShouldNotLatchAtEndOfPhi1) {
 
 TEST_F(PCH, ShouldNotLoadWhileClockDisabled) {
     auto& core = testBench.core();
-    core.i_ce = 0;
+    core.i_clk_en = 0;
 
     // load value into PCH
     core.i_adh = 0xEA;

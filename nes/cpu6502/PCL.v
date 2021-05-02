@@ -11,7 +11,7 @@ module PCL(
     input i_clk,
     input i_reset_n,
 
-    input i_ce,             // clock enable
+    input i_clk_en,             // clock enable
 
     // program counter low select register
     input i_pcl_pcl,        // Control Signal - input from PCL
@@ -61,7 +61,7 @@ always @(negedge i_clk or negedge i_reset_n)
 begin
     if (!i_reset_n)
         r_pcl <= 0;
-    else if (i_ce)
+    else if (i_clk_en)
         r_pcl <= w_pcls_inc_output;
 end
 

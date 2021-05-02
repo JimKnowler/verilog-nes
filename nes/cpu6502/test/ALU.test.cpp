@@ -12,7 +12,7 @@ namespace {
     public:
         void SetUp() override {
             testBench.setClockPolarity(1);
-            testBench.core().i_ce = 1;
+            testBench.core().i_clk_en = 1;
         }
         
         void TearDown() override {
@@ -409,7 +409,7 @@ TEST_F(ALU, ShouldLatchACRAtRisingEdgeOfPhi2) {
 
 TEST_F(ALU, ShouldNotLatchACRWhenClockDisabled) {
     auto& core = testBench.core();
-    core.i_ce = 0;
+    core.i_clk_en = 0;
 
     const uint8_t kTestValue1 = 0x80;
     const uint8_t kTestValue2 = 0xFF;
@@ -427,7 +427,7 @@ TEST_F(ALU, ShouldNotLatchACRWhenClockDisabled) {
 
 TEST_F(ALU, ShouldNotLatchAVRWhenClockDisabled) {
     auto& core = testBench.core();
-    core.i_ce = 0;
+    core.i_clk_en = 0;
     
     const uint8_t kTestValue1 = 0x7F;
     const uint8_t kTestValue2 = 0x01;
@@ -444,7 +444,7 @@ TEST_F(ALU, ShouldNotLatchAVRWhenClockDisabled) {
 
 TEST_F(ALU, ShouldNotModifyAddWhenClockDisabled) {
     auto& core = testBench.core();
-    core.i_ce = 0;
+    core.i_clk_en = 0;
     
     core.i_adl = 0x11;
     core.i_adl_add = 1;

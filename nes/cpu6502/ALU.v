@@ -17,7 +17,7 @@ module ALU(
     input i_clk,
     input i_reset_n,
 
-    input i_ce,             // clock enable
+    input i_clk_en,             // clock enable
 
     // B Input Register
     input [7:0] i_db,
@@ -129,7 +129,7 @@ end
 always @(posedge i_clk or negedge i_reset_n) begin
     if (!i_reset_n)
         r_add <= 0;
-    else if (i_ce)
+    else if (i_clk_en)
         r_add <= r_alu;
 end
 
@@ -143,7 +143,7 @@ always @(posedge i_clk or negedge i_reset_n) begin
         r_acr_out <= 0;
         r_avr_out <= 0;
     end
-    else if (i_ce)
+    else if (i_clk_en)
     begin
         r_acr_out <= r_acr;
         r_avr_out <= r_avr;

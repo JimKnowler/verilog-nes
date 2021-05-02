@@ -15,7 +15,7 @@ namespace {
     public:
         void SetUp() override {
             testBench.setClockPolarity(1);
-            testBench.core().i_ce = 1;
+            testBench.core().i_clk_en = 1;
             testBench.reset();
             testBench.trace.clear();
         }
@@ -98,7 +98,7 @@ TEST_F(IR, ShouldNotLoadWhenClockDisabled) {
 
     auto& core = testBench.core();
     core.i_data = OPCODE_NOP;
-    core.i_ce = 0;
+    core.i_clk_en = 0;
 
     // start phi2 (T0 - BRK)
     core.i_tcu_next = 1;

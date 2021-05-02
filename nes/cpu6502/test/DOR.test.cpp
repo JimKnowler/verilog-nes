@@ -12,7 +12,7 @@ namespace {
     public:
         void SetUp() override {
             testBench.setClockPolarity(1);
-            testBench.core().i_ce = 1;
+            testBench.core().i_clk_en = 1;
             testBench.reset();
         }
         
@@ -91,7 +91,7 @@ TEST_F(DOR, ShouldClearDataWhenReset) {
 
 TEST_F(DOR, ShouldNotLoadWhileClockDisabled) {
     auto& core = testBench.core();
-    core.i_ce = 0;
+    core.i_clk_en = 0;
 
     // clock in data with tristate disabled
     core.i_rw = RW_READ;
