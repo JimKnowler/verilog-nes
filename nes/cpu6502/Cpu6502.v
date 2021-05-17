@@ -2,12 +2,15 @@ module Cpu6502(
     input i_clk,
     input i_reset_n,
 
-    input i_clk_en,                             // clock enable
+    input i_clk_en,                         // clock enable
 
     output o_rw,                            // Read / Write - where 1 = READ, 0 = WRITE
     output [15:0] o_address,
     input [7:0] i_data,                     // 8 bit data - used for READ
     output [7:0] o_data,                    // 8 bit data - used for WRITE
+
+    input i_irq_n,                          // Interrupt Request
+    input i_nmi_n,                          // Non Maskable Interrupt
 
     output o_sync,                          // 1 for clock cycle where opcode is loaded
 
@@ -153,6 +156,8 @@ Decoder decoder(
     .i_p(w_p),
     .i_acr(w_acr),
     .i_bus_db_n(w_bus_db[7]),
+    .i_irq_n(i_irq_n),
+    .i_nmi_n(i_nmi_n),
     .o_tcu(w_tcu_next),
     .o_rw(w_rw),
     .o_dl_db(w_dl_db),

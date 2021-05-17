@@ -29,7 +29,7 @@ TEST_F(Cpu6502, ShouldImplementResetVector) {
         .port(o_sync).signal("100000010").repeatEachStep(2)
         .port(o_address)
             .signal({
-                0x0000, 0x0001,             // PC, PC + 1
+                0x0000, 0x0000,             // PC, PC
                 0x01FF, 0x01FE, 0x01FD,     // SP, SP-1, SP-2
                 0xFFFC, 0xFFFD,             // Reset Vector (low byte), Reset Vector (high byte)
                 0x8012,                     // The reset vector (pointing at NOP)

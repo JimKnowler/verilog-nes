@@ -2,9 +2,6 @@
 // -> combinatorial logic mapping (IR, TCU, P) => control lines
 //
 
-// TODO: use 'functions' to enapsulate repeated combinatorial flags
-//       simplify code, and self-document! 
-
 module Decoder(
     input i_reset_n,
     input i_clk,
@@ -16,6 +13,11 @@ module Decoder(
     input [7:0] i_p,                // Processor status register
     input i_acr,                    // ALU - carry out
     input i_bus_db_n,               // sign of current value on data bus (JK - cheating)
+
+    input i_irq_n,                  // Interrupt Request
+    /* verilator lint_off UNUSED */
+    input i_nmi_n,                  // Non Maskable Interrupt
+    /* verilator lint_on UNUSED */
 
     output reg [3:0] o_tcu,         // value TCU at next phi2 clock tick
 
@@ -175,43 +177,54 @@ begin
     end
 end
 
-// distinguish between RESET interrupt and normal BRK 
-// .. and IRQ and NMI
-// -> local reg storing interrupt type
+// distinguish between HW interrupts and BRK opcode interrupt and normal BRK 
+// use r_hw_interrupt as local reg storing interrupt type
 //    - set to RESET when reset 
-//    - set to IRQ / NMI later when they are used
-//    - reset to NONE when 
+//    - set to IRQ while i_irq_n is low
+//    - set to NMI when i_nmi_n has falling edge
+//    - reset to NONE when executing opcodes (including BRK)
 
-localparam INTERRUPT_NONE = 0;
-localparam INTERRUPT_RESET = 1;
-localparam INTERRUPT_IRQ = 2;
-localparam INTERRUPT_NMI = 3;
+localparam HW_INTERRUPT_NONE = 0;
+localparam HW_INTERRUPT_NMI = 1;           // FFFA, FFFB
+localparam HW_INTERRUPT_RESET = 2;         // FFFC, FFFD
+localparam HW_INTERRUPT_IRQ = 3;           // FFFE, FFFF
 
-reg [1:0] r_interrupt;
+reg r_irq_n;
+reg [1:0] r_hw_interrupt;
 
 always @(negedge i_reset_n or negedge i_clk)
 begin
     if (!i_reset_n)
     begin
-        r_interrupt <= INTERRUPT_RESET;
+        r_hw_interrupt <= HW_INTERRUPT_RESET;
+        r_irq_n <= 1;
     end
     else
     begin
-        if (i_tcu == 6)
+        r_irq_n <= i_irq_n;
+        
+        if (r_hw_interrupt != HW_INTERRUPT_NONE)
         begin
-            // end of T6 for interrupt handling
-            r_interrupt <= INTERRUPT_NONE;
+            if (i_tcu == 6)
+            begin
+                r_hw_interrupt <= HW_INTERRUPT_NONE;
+            end
         end
-
-        // todo: at start of phi1 for T0, 
-        //       check for NMI or IRQ lines
+        else if (o_tcu == 0)
+        begin
+            if (r_irq_n == 0)
+            begin
+                // todo: ignore if I processor status bit is set
+                r_hw_interrupt <= HW_INTERRUPT_IRQ;
+            end
+        end
     end
 end
 
-// w_ir => will usually pass through i_ir, but will report
-//         BRK while handling an interrupt
+// w_ir => instruction register will usually pass through i_ir, but will report
+//         BRK while handling any type of hardware interrupt
 wire [7:0] w_ir;
-assign w_ir = (r_interrupt == INTERRUPT_NONE) ? i_ir : BRK;
+assign w_ir =  (r_hw_interrupt == HW_INTERRUPT_NONE) ? i_ir : BRK;
 
 function void retain_pch(input i_value);
 begin
@@ -504,7 +517,11 @@ begin
         output_pcl_on_abl(1);
         output_pch_on_abh(1);
         retain_pc(1);
-        increment_pc(1);
+
+        if (r_hw_interrupt == HW_INTERRUPT_NONE)
+        begin
+            increment_pc(1);
+        end
 
         // finish previous opcode
         case (w_ir)
@@ -1163,7 +1180,7 @@ begin
             end
             else if (w_ir == BRK)
             begin
-                if (r_interrupt != INTERRUPT_RESET)
+                if (r_hw_interrupt != HW_INTERRUPT_RESET)
                 begin
                     o_rw = RW_WRITE;
                     o_pch_db = 1;
@@ -1328,7 +1345,7 @@ begin
 
             load_add_from_adl_minus_1(1);       // SP -1
 
-            if (r_interrupt != INTERRUPT_RESET)
+            if (r_hw_interrupt != HW_INTERRUPT_RESET)
             begin
                 o_rw = RW_WRITE;
                 o_pcl_db = 1;
@@ -1531,7 +1548,7 @@ begin
 
             load_s_from_add(w_phi2);     // SP - 3
         
-            if (r_interrupt != INTERRUPT_RESET)
+            if (r_hw_interrupt != HW_INTERRUPT_RESET)
             begin
                 o_rw = RW_WRITE;
                 o_p_db = 1;
@@ -1722,8 +1739,8 @@ begin
             // address of interrupt vector low byte
             load_abh_with_ff(1);
             
-            case (r_interrupt)
-            INTERRUPT_RESET:
+            case (r_hw_interrupt)
+            HW_INTERRUPT_RESET:
             begin
                 // ABL = 0xfc
                 o_0_adl0 = 1;
@@ -1826,8 +1843,8 @@ begin
 
             load_abh_with_ff(1);
 
-            case (r_interrupt)
-            INTERRUPT_RESET:
+            case (r_hw_interrupt)
+            HW_INTERRUPT_RESET:
             begin
                 // ABL = 0xfd
                 o_0_adl1 = w_phi1;
@@ -1850,11 +1867,21 @@ begin
             // load reset vector hi from DL straight into PCH
             load_pch_from_dl(w_phi2);
         
-            if (r_interrupt == INTERRUPT_NONE)
+            case (r_hw_interrupt)
+            HW_INTERRUPT_NONE:
             begin
                 // using a BRK instruction
                 o_db4_b = 1;
             end
+            HW_INTERRUPT_IRQ:
+            begin
+                // hardware interrupt
+                o_db2_i = 1;
+            end
+            default: 
+            begin
+            end
+            endcase
 
             next_opcode();
         end
