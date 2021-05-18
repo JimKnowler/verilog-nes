@@ -15,9 +15,7 @@ module Decoder(
     input i_bus_db_n,               // sign of current value on data bus (JK - cheating)
 
     input i_irq_n,                  // Interrupt Request
-    /* verilator lint_off UNUSED */
     input i_nmi_n,                  // Non Maskable Interrupt
-    /* verilator lint_on UNUSED */
 
     output reg [3:0] o_tcu,         // value TCU at next phi2 clock tick
 
@@ -190,7 +188,10 @@ localparam HW_INTERRUPT_NMI = 1;           // FFFA, FFFB
 localparam HW_INTERRUPT_RESET = 2;         // FFFC, FFFD
 localparam HW_INTERRUPT_IRQ = 3;           // FFFE, FFFF
 
-reg r_irq_n;
+reg r_irq_n;                    // buffer IRQ input
+reg r_nmi_n;                    // buffer NMI input
+reg r_nmi_n_last;               // history of NMI input
+reg r_nmi_falling_edge;         // set to 1 when falling edge is detected
 reg [1:0] r_hw_interrupt;
 
 always @(negedge i_reset_n or negedge i_clk)
@@ -199,10 +200,19 @@ begin
     begin
         r_hw_interrupt <= HW_INTERRUPT_RESET;
         r_irq_n <= 1;
+        r_nmi_n <= 1;
+        r_nmi_falling_edge <= 0;
     end
     else
     begin
         r_irq_n <= i_irq_n;
+        r_nmi_n_last <= r_nmi_n;
+        r_nmi_n <= i_nmi_n;
+
+        if (r_nmi_n_last && !r_nmi_n)
+        begin
+            r_nmi_falling_edge <= 1;
+        end
         
         if (r_hw_interrupt != HW_INTERRUPT_NONE)
         begin
@@ -213,7 +223,12 @@ begin
         end
         else if (o_tcu == 0)
         begin
-            if ((r_irq_n == 0) && (i_p[I] == 0))
+            if ((r_nmi_falling_edge == 1))
+            begin
+                r_hw_interrupt <= HW_INTERRUPT_NMI;
+                r_nmi_falling_edge <= 0;
+            end
+            else if ((r_irq_n == 0) && (i_p[I] == 0))
             begin
                 r_hw_interrupt <= HW_INTERRUPT_IRQ;
             end
@@ -1746,6 +1761,12 @@ begin
                 o_0_adl0 = 1;
                 o_0_adl1 = 1;
             end
+            HW_INTERRUPT_NMI:
+            begin
+                // ABL = 0xfa
+                o_0_adl0 = 1;
+                o_0_adl2 = 1;
+            end
             default:
             begin
                 // ABL = 0xFE
@@ -1849,6 +1870,11 @@ begin
                 // ABL = 0xfd
                 o_0_adl1 = w_phi1;
             end
+            HW_INTERRUPT_NMI:
+            begin
+                // ABL = 0xfb
+                o_0_adl2 = w_phi1;
+            end
             default:
             begin
                 // ABL = 0xFF
@@ -1873,7 +1899,7 @@ begin
                 // using a BRK instruction
                 o_db4_b = 1;
             end
-            HW_INTERRUPT_IRQ:
+            HW_INTERRUPT_IRQ, HW_INTERRUPT_NMI:
             begin
                 // hardware interrupt
                 o_db2_i = 1;
