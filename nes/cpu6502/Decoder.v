@@ -88,6 +88,7 @@ module Decoder(
 // Processor Status Register bitfields
 localparam C = 0;       // Carry
 localparam Z = 1;       // Zero
+localparam I = 2;       // Interrupt Mask
 localparam N = 7;       // Negative
 localparam V = 6;       // Overflow
 
@@ -212,9 +213,8 @@ begin
         end
         else if (o_tcu == 0)
         begin
-            if (r_irq_n == 0)
+            if ((r_irq_n == 0) && (i_p[I] == 0))
             begin
-                // todo: ignore if I processor status bit is set
                 r_hw_interrupt <= HW_INTERRUPT_IRQ;
             end
         end

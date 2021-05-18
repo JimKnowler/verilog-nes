@@ -264,6 +264,75 @@ TEST_F(Cpu6502, ShouldImplementIRQ) {
     EXPECT_EQ(p | I, core.o_debug_p);
 }
 
+TEST_F(Cpu6502, ShouldIgnoreIRQWhenProcessorStatusHasI) {
+    auto& core = testBench.core();
+
+    sram.clear(0);
+
+    Assembler assembler;
+    assembler
+            .NOP()
+        .org(0x1234)
+        .label("init")
+            .SEI()                  // Ignore interrupts
+        .label("start")
+            .NOP()
+            .NOP()
+            .NOP()
+            .NOP()
+        .org(0x3456)
+        .label("interrupt")
+            .NOP()
+        .org(0xFFFC)                // RESET VECTOR
+        .word("init")
+        .org(0xFFFE)                // INTERRUPT VECTOR
+        .word("interrupt")
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    // skip init section
+    testBench.tick(2);
+    testBench.trace.clear();
+
+    // capture information from the assembler / simulated core
+    cpu6502::assembler::Address start("start");
+    assembler.lookupAddress(start);
+
+    const uint8_t sp = core.o_debug_s;
+
+    // activate the IRQ
+    testBench.tick(1);
+    core.i_irq_n = 0;
+    testBench.tick(5);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-").repeat(6)
+        .port(o_rw).signal("111111").repeatEachStep(2)
+        .port(o_sync).signal("101010").repeatEachStep(2)
+        .port(o_address)
+            .signal({
+                // 1st NOP - at 'start'
+                start.byteIndex(),
+                start.byteIndex() + 1u,
+
+                // 2nd NOP
+                start.byteIndex() + 1u,
+                start.byteIndex() + 2u,
+
+                // 3rd NOP
+                start.byteIndex() + 2u,
+                start.byteIndex() + 3u,
+            }).repeatEachStep(2)
+        .port(o_debug_s)
+            .signal({sp}).repeat(6)
+            .repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+
+    EXPECT_EQ(I, core.o_debug_p);
+}
+
 
 // DONE: (should default simulation to 1)
 // DONE: should handle IRQ - i_irq_n = 0, set I flag during interrupt
