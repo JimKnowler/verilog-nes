@@ -764,13 +764,104 @@ TEST_F(Cpu6502, ShouldPrioritiseNMIoverIRQ) {
     EXPECT_EQ(p | I, core.o_debug_p);
 }
 
-// DONE: IRQ - should default simulation to 1
-// DONE: should handle IRQ - i_irq_n = 0, set I flag during interrupt
-// DONE: should ignore i_irq_n = 0, while I flag is set - then use it when the flag is cleared
-// DONE: NMI - should default simulation to 1
-// DONE: should handle NMI - i_nmi_n = 0 for 2 cycles after falling from 1 
-// DONE: should not ignore i_nmi_n = 0, when I flag is set
-// DONE: should not ingore i_irq_n = 0, when returning from interrupt handler
-// DONE: should ignore i_nmi_n = 0 after returning from NMI, until it goes high+low again
-// DONE: IRQ and NMI at the same time - prefer NMI, and then IRQ
-// re-trigger NMI by re-doing the step
+TEST_F(Cpu6502, ShouldRetriggerNMIafterReturningFromNMI) {
+    auto& core = testBench.core();
+
+    sram.clear(0);
+
+    Assembler assembler;
+    assembler
+            .NOP()
+        .org(0x1234)
+        .label("init")
+            .SEC()                  // non-zero Processor Status (P)
+            .SED()
+        .label("start")
+            .NOP()
+        .label("return_to")
+            .NOP()
+            .NOP()
+            .NOP()
+            .NOP()
+        .org(0x3456)
+        .label("non_maskable_interrupt")
+            .NOP()
+            .RTI()
+        .org(0xFFFA)                // INTERRUPT VECTOR
+        .word("non_maskable_interrupt")
+        .org(0xFFFC)                // RESET VECTOR
+        .word("init")
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    // skip init section
+    testBench.tick(4);
+    testBench.trace.clear();
+
+    // capture information from the assembler / simulated core
+    cpu6502::assembler::Address start("start");
+    assembler.lookupAddress(start);
+
+    cpu6502::assembler::Address nonMaskableInterrupt("non_maskable_interrupt");
+    assembler.lookupAddress(nonMaskableInterrupt);
+
+    cpu6502::assembler::Address returnTo("return_to");
+    assembler.lookupAddress(returnTo);
+
+    const uint8_t p = C | D;
+
+    // activate the NMI
+    core.i_nmi_n = 0;
+    testBench.tick(11);
+
+    // simulate RTI
+    testBench.tick(6);
+    
+    // Retrigger NMI while executing NOPs at returnTo
+    core.i_nmi_n = 1;
+    testBench.tick(2);
+    core.i_nmi_n = 0;
+    testBench.tick(2);
+
+    const uint8_t sp = core.o_debug_s;
+
+    // execute NMI
+    testBench.trace.clear();
+    testBench.tick(9);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-").repeat(9)
+        .port(o_rw).signal("110001111").repeatEachStep(2)
+        .port(o_sync).signal("100000010").repeatEachStep(2)
+        .port(o_data)
+            .signal({0}).repeat(5)
+            .signal({returnTo.hi()}).repeat(2)
+            .signal({returnTo.lo() + 2u}).repeat(2)
+            .signal({p}).repeat(2)
+            .signal({0}).repeat(7)
+        .port(o_address)
+            .signal({
+                // IRQ
+                returnTo.byteIndex() + 2u,
+                returnTo.byteIndex() + 2u,
+                0x0100u + sp,
+                0x0100u + sp - 1u,
+                0x0100u + sp - 2u,
+                0xFFFA,                     // Non Maskable Interrupt Vector (low byte)
+                0xFFFB,                     // Non Maskable Interrupt Vector (high byte)
+
+                // NOP (at interrupt vector)
+                nonMaskableInterrupt.byteIndex(),
+                nonMaskableInterrupt.byteIndex() + 1u
+            }).repeatEachStep(2)
+        .port(o_debug_s)
+            .signal({sp}).repeat(5)
+            .signal({sp - 3u}).repeat(4)
+            .concat().repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+
+    // processor flags should be augmented with I=Interrupt
+    EXPECT_EQ(p | I, core.o_debug_p);
+}
