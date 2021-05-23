@@ -36,10 +36,12 @@ module PPU(
     /* verilator lint_on UNUSED */
 
     // debug ports
-    output [7:0] o_debug_ppuctrl
+    output [7:0] o_debug_ppuctrl,
+    output [7:0] o_debug_ppumask
 );
 
 localparam [2:0] RS_PPUCTRL = 0;
+localparam [2:0] RS_PPUMASK = 1;
 localparam [2:0] RS_PPUSTATUS = 2;
 localparam RW_READ = 1;
 localparam RW_WRITE = 0;
@@ -50,6 +52,7 @@ reg r_video_we_n;
 
 reg [7:0] r_data;
 reg [7:0] r_ppuctrl;
+reg [7:0] r_ppumask;
 reg [7:0] r_ppustatus;
 
 /* verilator lint_off UNUSED */
@@ -98,6 +101,7 @@ begin
     if (i_reset_n == 0)
     begin
         r_ppuctrl <= 0;
+        r_ppumask <= 0;
         r_ppustatus <= 0;
     end
     else if (i_cs_n == 0)
@@ -107,6 +111,9 @@ begin
             case (i_rs)
             RS_PPUCTRL: begin
                 r_ppuctrl <= i_data;
+            end
+            RS_PPUMASK: begin
+                r_ppumask <= i_data;
             end
             default: begin
             end
@@ -120,5 +127,6 @@ assign o_video_rd_n = r_video_rd_n;
 assign o_video_we_n = r_video_we_n;
 assign o_data = r_data;
 assign o_debug_ppuctrl = r_ppuctrl;
+assign o_debug_ppumask = r_ppumask;
 
 endmodule

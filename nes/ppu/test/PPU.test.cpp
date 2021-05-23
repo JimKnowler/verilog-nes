@@ -67,11 +67,29 @@ TEST_F(PPU, ShouldWriteToPPUCTRL) {
     
     testBench.tick(1);
     EXPECT_EQ(0xFF, core.o_debug_ppuctrl);
+
+    // should not affect other registers
+    EXPECT_EQ(0, core.o_debug_ppumask);
+}
+
+TEST_F(PPU, ShouldWriteToPPUMASK) {
+    auto& core = testBench.core();
+
+    core.i_rs = RS_PPUMASK;
+    core.i_rw = RW_WRITE;
+    core.i_data = 0xFF;
+    core.eval();
+    EXPECT_EQ(0, core.o_debug_ppumask);
+    
+    testBench.tick(1);
+    EXPECT_EQ(0xFF, core.o_debug_ppumask);
+
+    // should not affect other registers
+    EXPECT_EQ(0, core.o_debug_ppuctrl);
 }
 
 // - TODO: o_nmi_n for vblank start/stop + repeats
 //         - when ppuctrl.v == 1 (not when 0)
-// - TODO: write ppumask - verify by reading from o_debug_ppumask
 // - TODO: read ppustatus
 //         - at startup - vblank clear
 //         - when nmi - vlank set + clear vblank
