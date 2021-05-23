@@ -32,12 +32,6 @@ http_archive(
     url = "https://github.com/kkiningh/rules_verilator/archive/v0.1-rc4.zip",
 )
 
-http_archive(
-    name = "gtestverilog",
-    strip_prefix = "gtestverilog-0.1-rc8",
-    url="https://github.com/JimKnowler/gtestverilog/archive/v0.1-rc8.zip"
-)
-
 load(
     "@rules_verilator//verilator:repositories.bzl",
     "rules_verilator_dependencies",
@@ -56,3 +50,12 @@ flex_register_toolchains()
 
 load("@rules_bison//bison:bison.bzl", "bison_register_toolchains")
 bison_register_toolchains()
+
+######################################################################
+# gtest-verilog
+
+http_archive(
+    name = "gtestverilog",
+    strip_prefix = "gtestverilog-0.1-rc8",
+    url="https://github.com/JimKnowler/gtestverilog/archive/v0.1-rc8.zip"
+)
