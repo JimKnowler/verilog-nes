@@ -88,10 +88,12 @@ TEST_F(PPU, ShouldWriteToPPUMASK) {
     EXPECT_EQ(0, core.o_debug_ppuctrl);
 }
 
+// - TODO: o_video_x/y - should always increment as expected
+//          - (whether rendering is enabled or not)
 // - TODO: o_nmi_n for vblank start/stop + repeats
 //         - when ppuctrl.v == 1 (not when 0)
 // - TODO: read ppustatus
-//         - at startup - vblank clear
+//         - DONE: at startup - vblank clear
 //         - when nmi - vlank set + clear vblank
 // - TODO: write oamaddr - verify by reading from o_debug_oamaddr
 // - TODO: write oamdata - verify o_debug_oamaddr
@@ -108,4 +110,3 @@ TEST_F(PPU, ShouldWriteToPPUMASK) {
 //          - autoincrement ppuaddr
 // - TODO: read ppudata
 //          - autoincrement ppuaddr
-
