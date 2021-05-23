@@ -333,6 +333,104 @@ TEST_F(Cpu6502, ShouldIgnoreIRQWhenProcessorStatusHasI) {
     EXPECT_EQ(I, core.o_debug_p);
 }
 
+TEST_F(Cpu6502, ShouldNotIgnoreIRQWhenReturningFromIRQ) {
+    auto& core = testBench.core();
+
+    sram.clear(0);
+
+    Assembler assembler;
+    assembler
+            .NOP()
+        .org(0x1234)
+        .label("init")
+            .SEC()                  // non-zero Processor Status (P)
+            .SED()
+        .label("start")
+            .NOP()
+        .label("return_to")
+            .NOP()
+            .NOP()
+            .NOP()
+        .org(0x3456)
+        .label("interrupt")
+            .NOP()
+            .RTI()
+        .org(0xFFFC)                // RESET VECTOR
+        .word("init")
+        .org(0xFFFE)                // INTERRUPT VECTOR
+        .word("interrupt")
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    // skip init section
+    testBench.tick(4);
+    testBench.trace.clear();
+
+    // capture information from the assembler / simulated core
+    cpu6502::assembler::Address start("start");
+    assembler.lookupAddress(start);
+
+    cpu6502::assembler::Address interrupt("interrupt");
+    assembler.lookupAddress(interrupt);
+
+    cpu6502::assembler::Address returnTo("return_to");
+    assembler.lookupAddress(returnTo);
+
+    const uint8_t sp = core.o_debug_s;
+    const uint8_t p = C | D;
+
+    // activate and simulate IRQ
+    testBench.tick(1);
+    core.i_irq_n = 0;
+    testBench.tick(10);
+    ASSERT_EQ(interrupt.byteIndex() + 1, core.o_address);
+
+    // simulate RTI
+    testBench.trace.clear();
+    testBench.tick(6);
+    // 'I' should have been removed from processor flags
+    EXPECT_EQ(p, core.o_debug_p);
+    
+    // simulate IRQ (again!)
+    testBench.trace.clear();
+    testBench.tick(9);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-").repeat(9)
+        .port(o_rw).signal("110001111").repeatEachStep(2)
+        .port(o_sync).signal("100000010").repeatEachStep(2)
+        .port(o_data)
+            .signal({0}).repeat(5)
+            .signal({returnTo.hi()}).repeat(2)
+            .signal({returnTo.lo()}).repeat(2)
+            .signal({p}).repeat(2)
+            .signal({0}).repeat(7)
+        .port(o_address)
+            .signal({
+                returnTo.byteIndex(),
+                returnTo.byteIndex(),
+                0x0100u + sp,
+                0x0100u + sp - 1u,
+                0x0100u + sp - 2u,
+                0xFFFE,                     // Interrupt Vector (low byte)
+                0xFFFF,                     // Interrupt Vector (high byte)
+
+                // NOP (at interrupt vector)
+                interrupt.byteIndex(),
+                interrupt.byteIndex() + 1u
+            }).repeatEachStep(2)
+        .port(o_debug_s)
+            .signal({sp}).repeat(5)
+            .signal({sp - 3u}).repeat(4)
+            .concat().repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+
+    // processor flags should be augmented with I=Interrupt
+    EXPECT_EQ(p | I, core.o_debug_p);
+}
+
 TEST_F(Cpu6502, ShouldImplementNMI) {
     auto& core = testBench.core();
 
@@ -518,7 +616,7 @@ TEST_F(Cpu6502, ShouldNotIgnoreNMIWhenProcessorStatusHasI) {
 // DONE: NMI - should default simulation to 1
 // DONE: should handle NMI - i_nmi_n = 0 for 2 cycles after falling from 1 
 // DONE: should not ignore i_nmi_n = 0, when I flag is set
-
-// should not ingore i_irq_n = 0, when returning from interrupt handler
+// DONE should not ingore i_irq_n = 0, when returning from interrupt handler
 // should ignore i_nmi_n = 0 after returning from NMI, until it goes high+low again
 // IRQ and NMI at the same time - prefer NMI, and then IRQ
+// re-trigger NMI by re-doing the step
