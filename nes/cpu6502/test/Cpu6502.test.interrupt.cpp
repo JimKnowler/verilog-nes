@@ -610,13 +610,76 @@ TEST_F(Cpu6502, ShouldNotIgnoreNMIWhenProcessorStatusHasI) {
     EXPECT_EQ(p | I, core.o_debug_p);
 }
 
+TEST_F(Cpu6502, ShouldIgnoreNMIStillLowWhenReturningFromNMI) {
+    auto& core = testBench.core();
+
+    sram.clear(0);
+
+    Assembler assembler;
+    assembler
+            .NOP()
+        .org(0x1234)
+        .label("init")
+            .SEC()                  // non-zero Processor Status (P)
+            .SED()
+        .label("start")
+            .NOP()
+        .label("return_to")
+            .NOP()
+            .NOP()
+            .NOP()
+            .NOP()
+        .org(0x3456)
+        .label("non_maskable_interrupt")
+            .NOP()
+            .RTI()
+        .org(0xFFFA)                // INTERRUPT VECTOR
+        .word("non_maskable_interrupt")
+        .org(0xFFFC)                // RESET VECTOR
+        .word("init")
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    // skip init section
+    testBench.tick(4);
+    testBench.trace.clear();
+
+    // capture information from the assembler / simulated core
+    cpu6502::assembler::Address start("start");
+    assembler.lookupAddress(start);
+
+    cpu6502::assembler::Address nonMaskableInterrupt("non_maskable_interrupt");
+    assembler.lookupAddress(nonMaskableInterrupt);
+
+    cpu6502::assembler::Address returnTo("return_to");
+    assembler.lookupAddress(returnTo);
+
+    const uint8_t p = C | D;
+
+    // activate the NMI
+    core.i_nmi_n = 0;
+    testBench.tick(11);
+    ASSERT_EQ(nonMaskableInterrupt.byteIndex() + 1, core.o_address);
+
+    // simulate RTI
+    testBench.tick(6);
+    // 'I' should have been removed from processor flags
+    EXPECT_EQ(p, core.o_debug_p);
+    
+    // NMI Should not execute
+    // (simulate executing 2 NOPs at returnTo)
+    testBench.tick(4);
+    ASSERT_EQ(returnTo.byteIndex() + 2, core.o_address);
+}
+
 // DONE: IRQ - should default simulation to 1
 // DONE: should handle IRQ - i_irq_n = 0, set I flag during interrupt
 // DONE: should ignore i_irq_n = 0, while I flag is set - then use it when the flag is cleared
 // DONE: NMI - should default simulation to 1
 // DONE: should handle NMI - i_nmi_n = 0 for 2 cycles after falling from 1 
 // DONE: should not ignore i_nmi_n = 0, when I flag is set
-// DONE should not ingore i_irq_n = 0, when returning from interrupt handler
-// should ignore i_nmi_n = 0 after returning from NMI, until it goes high+low again
+// DONE: should not ingore i_irq_n = 0, when returning from interrupt handler
+// DONE: should ignore i_nmi_n = 0 after returning from NMI, until it goes high+low again
 // IRQ and NMI at the same time - prefer NMI, and then IRQ
 // re-trigger NMI by re-doing the step
