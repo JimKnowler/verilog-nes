@@ -15,8 +15,8 @@ module PPU(
     output [7:0] o_data,            // Write to CPU data bus
     input i_rw,                     // Read/~Write for CPU data bus
 
-    /* verilator lint_off UNUSED */
-    /* verilator lint_off UNDRIVEN */
+/* verilator lint_off UNUSED */
+/* verilator lint_off UNDRIVEN */
 
     // VIDEO interface    
     output o_video_rd_n,                // ~Read from VIDEO data bus
@@ -29,20 +29,31 @@ module PPU(
     output [7:0] o_video_red,
     output [7:0] o_video_green,
     output [7:0] o_video_blue,
-    output o_video_x,
-    output o_video_y,
 
-    /* verilator lint_on UNDRIVEN */
-    /* verilator lint_on UNUSED */
+/* verilator lint_on UNDRIVEN */
+/* verilator lint_on UNUSED */
+
+    output [8:0] o_video_x,             // pixel clock - x co-ord of current pixel
+    output [8:0] o_video_y,             // pixel clock - y co-ord of current pixel
+    output o_video_visible,              // pixel clock - visibility of the current pixel
 
     // debug ports
     output [7:0] o_debug_ppuctrl,
     output [7:0] o_debug_ppumask
 );
 
+// Screen Constants
+localparam [8:0] SCREEN_WIDTH = 341;
+localparam [8:0] SCREEN_HEIGHT = 262;
+localparam [8:0] SCREEN_VISIBLE_WIDTH = 256;
+localparam [8:0] SCREEN_VISIBLE_HEIGHT = 240;
+
+// RS - register select options
 localparam [2:0] RS_PPUCTRL = 0;
 localparam [2:0] RS_PPUMASK = 1;
 localparam [2:0] RS_PPUSTATUS = 2;
+
+// RW - read / write options
 localparam RW_READ = 1;
 localparam RW_WRITE = 0;
 
@@ -54,6 +65,10 @@ reg [7:0] r_data;
 reg [7:0] r_ppuctrl;
 reg [7:0] r_ppumask;
 reg [7:0] r_ppustatus;
+
+reg [8:0] r_video_x;
+reg [8:0] r_video_y;
+wire w_video_visible;
 
 /* verilator lint_off UNUSED */
 
@@ -73,12 +88,18 @@ reg r_nmi_output;
 
 /* verilator lint_on UNUSED */
 
+//
+// READ - PPU/OAM Registers
+//
+
 always @(*)
 begin
     r_int_n = 1;
     r_video_rd_n = 1;
     r_video_we_n = 1;
     
+    // todo: chip select
+
     if (i_rw == RW_READ)
     begin
         case (i_rs)
@@ -95,6 +116,10 @@ begin
         r_data = 0;
     end
 end
+
+//
+// WRITE - PPU/OAM Registers
+//
 
 always @(negedge i_reset_n or negedge i_clk)
 begin
@@ -122,10 +147,56 @@ begin
     end
 end
 
+//
+// Pixel Clock
+//
+
+always @(negedge i_reset_n or negedge i_clk)
+begin
+    if (i_reset_n == 0)
+    begin
+        r_video_x <= -1;
+        r_video_y <= 0;        
+    end
+    else
+    begin
+        if (r_video_x != (SCREEN_WIDTH-1))
+        begin
+            r_video_x <= r_video_x + 1;
+        end
+        else
+        begin
+            r_video_x <= 0;
+
+            if (r_video_y != (SCREEN_HEIGHT-1))
+            begin
+                r_video_y <= r_video_y + 1;
+            end
+            else
+            begin
+                r_video_y <= 0;
+            end
+        end
+
+
+    end
+end
+
+assign w_video_visible = (r_video_x < 256) && (r_video_y < 240);
+
+//
+// drive outputs
+//
+
 assign o_int_n = r_int_n;
+assign o_data = r_data;
+
 assign o_video_rd_n = r_video_rd_n;
 assign o_video_we_n = r_video_we_n;
-assign o_data = r_data;
+assign o_video_x = r_video_x;
+assign o_video_y = r_video_y;
+assign o_video_visible = w_video_visible;
+
 assign o_debug_ppuctrl = r_ppuctrl;
 assign o_debug_ppumask = r_ppumask;
 

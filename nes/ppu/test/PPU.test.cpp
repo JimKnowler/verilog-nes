@@ -1,3 +1,5 @@
+#include <numeric>
+
 #include <gtest/gtest.h>
 using namespace testing;
 
@@ -18,6 +20,11 @@ const int RS_PPUDATA   = 7;
 
 const int RW_READ = 1;
 const int RW_WRITE = 0;
+
+const int SCREEN_WIDTH = 341;
+const int SCREEN_HEIGHT = 262;
+const int SCREEN_VISIBLE_WIDTH = 256;
+const int SCREEN_VISIBLE_HEIGHT = 240;
 
 namespace {
     class PPU : public ::testing::Test {
@@ -86,6 +93,35 @@ TEST_F(PPU, ShouldWriteToPPUMASK) {
 
     // should not affect other registers
     EXPECT_EQ(0, core.o_debug_ppuctrl);
+}
+
+TEST_F(PPU, ShouldImplementPixelClock) {
+    testBench.tick(SCREEN_WIDTH * SCREEN_HEIGHT);
+
+    std::vector<uint32_t> pixelClockX(SCREEN_WIDTH);
+    std::iota(std::begin(pixelClockX), std::end(pixelClockX), 0);
+
+    std::vector<uint32_t> pixelClockY(SCREEN_HEIGHT);
+    std::iota(std::begin(pixelClockY), std::end(pixelClockY), 0);
+
+    Trace expected = TraceBuilder()
+        .port(o_video_visible)
+            .signal("1").repeat(SCREEN_VISIBLE_WIDTH)
+            .signal("0").repeat(SCREEN_WIDTH - SCREEN_VISIBLE_WIDTH)
+                .concat()
+                .repeat(SCREEN_VISIBLE_HEIGHT)
+            .signal("0").repeat(SCREEN_WIDTH)
+                .repeat(SCREEN_HEIGHT - SCREEN_VISIBLE_HEIGHT)
+            .concat()
+            .repeatEachStep(2)
+        .port(o_video_x)
+            .signal(pixelClockX).repeat(SCREEN_HEIGHT)
+            .repeatEachStep(2)
+        .port(o_video_y)
+            .signal(pixelClockY).repeatEachStep(SCREEN_WIDTH)
+            .repeatEachStep(2);
+    
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
 // - TODO: o_video_x/y - should always increment as expected
