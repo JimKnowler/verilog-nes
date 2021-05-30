@@ -26,6 +26,8 @@ const int SCREEN_HEIGHT = 262;
 const int SCREEN_VISIBLE_WIDTH = 256;
 const int SCREEN_VISIBLE_HEIGHT = 240;
 
+const int PPUCTRL_V = 1<<7;             // V - NMI enable
+
 namespace {
     class PPU : public ::testing::Test {
     public:
@@ -124,13 +126,33 @@ TEST_F(PPU, ShouldImplementPixelClock) {
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
-// - TODO: o_video_x/y - should always increment as expected
-//          - (whether rendering is enabled or not)
+TEST_F(PPU, ShouldInvokeNonMaskableInterruptDuringVBlank) {
+    auto& core = testBench.core();
+
+    core.i_rs = RS_PPUCTRL;
+    core.i_rw = RW_WRITE;
+    core.i_data = PPUCTRL_V;        // enable NMI
+    core.eval();
+
+    testBench.tick(SCREEN_WIDTH * SCREEN_HEIGHT * 2);
+
+    Trace expected = TraceBuilder()
+        .port(o_int_n)
+            .signal("1").repeat((SCREEN_WIDTH * 242) + 1)
+            .signal("0").repeat((SCREEN_WIDTH * 20) - 1)           // NMI set on 2nd tick of 242nd line
+            .concat()
+            .repeatEachStep(2)
+            .repeat(2);
+
+    
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
 // - TODO: o_nmi_n for vblank start/stop + repeats
 //         - when ppuctrl.v == 1 (not when 0)
 // - TODO: read ppustatus
 //         - DONE: at startup - vblank clear
-//         - when nmi - vlank set + clear vblank
+//         - when nmi - read vblank as set + clear vblank
 // - TODO: write oamaddr - verify by reading from o_debug_oamaddr
 // - TODO: write oamdata - verify o_debug_oamaddr
 //          - auto increment oamaddr

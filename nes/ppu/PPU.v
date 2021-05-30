@@ -94,7 +94,6 @@ reg r_nmi_output;
 
 always @(*)
 begin
-    r_int_n = 1;
     r_video_rd_n = 1;
     r_video_we_n = 1;
     
@@ -145,6 +144,37 @@ begin
             endcase
         end
     end
+end
+
+//
+// NMI for vblank
+//
+
+always @(negedge i_reset_n or negedge i_clk)
+begin
+    if (i_reset_n == 0)
+    begin
+        r_nmi_occurred <= 0;
+    end
+    else
+    begin
+        if ((r_video_x == 0) && (r_video_y == 242))
+        begin
+            // start of vblank
+            r_nmi_occurred <= 1;
+        end
+        else if ((r_video_x == (SCREEN_WIDTH-1)) && (r_video_y == (SCREEN_HEIGHT-1)))
+        begin
+            // end of vblank
+            r_nmi_occurred <= 0;
+        end
+
+    end
+end
+
+always @(*)
+begin
+    r_int_n = !r_nmi_occurred;
 end
 
 //
