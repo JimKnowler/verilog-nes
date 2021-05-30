@@ -148,6 +148,25 @@ TEST_F(PPU, ShouldInvokeNonMaskableInterruptDuringVBlank) {
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
+TEST_F(PPU, ShouldNotInvokeNonMaskableInterruptDuringVBlankWhenDisabledOnPPUCTRL) {
+    auto& core = testBench.core();
+
+    core.i_rs = RS_PPUCTRL;
+    core.i_rw = RW_WRITE;
+    core.i_data = 0;        // disable NMI
+    core.eval();
+
+    testBench.tick(SCREEN_WIDTH * SCREEN_HEIGHT);
+
+    Trace expected = TraceBuilder()
+        .port(o_int_n)
+            .signal("1").repeat(SCREEN_WIDTH * SCREEN_HEIGHT)
+            .repeatEachStep(2);
+
+    
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
 // - TODO: o_nmi_n for vblank start/stop + repeats
 //         - when ppuctrl.v == 1 (not when 0)
 // - TODO: read ppustatus

@@ -83,8 +83,8 @@ reg r_nmi_occurred;
 
 // NMI_Output
 // - PPU pulls o_nmi_n low when nmi_occurred && nmi_output
-// - set by writes to ppuctrl[7]
-reg r_nmi_output;
+wire w_nmi_output;
+assign w_nmi_output = r_ppuctrl[7];
 
 /* verilator lint_on UNUSED */
 
@@ -174,7 +174,7 @@ end
 
 always @(*)
 begin
-    r_int_n = !r_nmi_occurred;
+    r_int_n = !(r_nmi_occurred & w_nmi_output);
 end
 
 //
