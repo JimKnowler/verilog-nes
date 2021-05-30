@@ -64,7 +64,7 @@ reg r_video_we_n;
 reg [7:0] r_data;
 reg [7:0] r_ppuctrl;
 reg [7:0] r_ppumask;
-reg [7:0] r_ppustatus;
+reg [6:0] r_ppustatus;          // note: bit 7 is provided by r_nmi_occurred
 
 reg [8:0] r_video_x;
 reg [8:0] r_video_y;
@@ -103,7 +103,7 @@ begin
     begin
         case (i_rs)
         RS_PPUSTATUS: begin
-            r_data = r_ppustatus;
+            r_data = { r_nmi_occurred, r_ppustatus[6:0] };
         end
         default: begin
             r_data = 0;
@@ -158,6 +158,10 @@ begin
     end
     else
     begin
+        if ((i_rw == RW_READ) && (i_rs == RS_PPUSTATUS))
+        begin
+            r_nmi_occurred <= 0;
+        end
         if ((r_video_x == 0) && (r_video_y == 242))
         begin
             // start of vblank
@@ -168,7 +172,6 @@ begin
             // end of vblank
             r_nmi_occurred <= 0;
         end
-
     end
 end
 

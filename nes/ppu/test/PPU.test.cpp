@@ -26,7 +26,8 @@ const int SCREEN_HEIGHT = 262;
 const int SCREEN_VISIBLE_WIDTH = 256;
 const int SCREEN_VISIBLE_HEIGHT = 240;
 
-const int PPUCTRL_V = 1<<7;             // V - NMI enable
+const int PPUCTRL_V = 1<<7;             // V - NMI enable for VBlank
+const int PPUSTATUS_V = 1<<7;           // V - Currently in VBlank
 
 namespace {
     class PPU : public ::testing::Test {
@@ -167,11 +168,33 @@ TEST_F(PPU, ShouldNotInvokeNonMaskableInterruptDuringVBlankWhenDisabledOnPPUCTRL
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
-// - TODO: o_nmi_n for vblank start/stop + repeats
-//         - when ppuctrl.v == 1 (not when 0)
+TEST_F(PPU, ShouldClearVBlankNonMaskableInterruptWhenReadingPPUSTATUS) {
+    auto& core = testBench.core();
+
+    core.i_rs = RS_PPUCTRL;
+    core.i_rw = RW_WRITE;
+    core.i_data = PPUCTRL_V;        // enable NMI
+    core.eval();
+
+    // skip to pixel during vblank
+    testBench.tick(SCREEN_WIDTH * 243);
+    EXPECT_EQ(0, core.o_int_n);
+
+    // read from PPUSTATUS
+    core.i_rs = RS_PPUSTATUS;
+    core.i_rw = RW_READ;
+    core.eval();
+    EXPECT_EQ(PPUSTATUS_V, core.o_data & PPUSTATUS_V);
+
+    // tick the clock, to clear the vblank bit in ppustatus
+    testBench.tick();
+    EXPECT_EQ(0, core.o_data & PPUSTATUS_V);
+}
+
 // - TODO: read ppustatus
 //         - DONE: at startup - vblank clear
-//         - when nmi - read vblank as set + clear vblank
+//         - DONE: when nmi - read vblank as set + clear vblank
+//         - continuously - never get vblank
 // - TODO: write oamaddr - verify by reading from o_debug_oamaddr
 // - TODO: write oamdata - verify o_debug_oamaddr
 //          - auto increment oamaddr
