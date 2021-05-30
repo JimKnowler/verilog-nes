@@ -162,7 +162,7 @@ begin
         begin
             r_nmi_occurred <= 0;
         end
-        if ((r_video_x == 0) && (r_video_y == 242))
+        else if ((r_video_x == 0) && (r_video_y == 242))
         begin
             // start of vblank
             r_nmi_occurred <= 1;

@@ -133,7 +133,8 @@ TEST_F(PPU, ShouldInvokeNonMaskableInterruptDuringVBlank) {
     core.i_rs = RS_PPUCTRL;
     core.i_rw = RW_WRITE;
     core.i_data = PPUCTRL_V;        // enable NMI
-    core.eval();
+    testBench.tick();
+    testBench.trace.clear();
 
     testBench.tick(SCREEN_WIDTH * SCREEN_HEIGHT * 2);
 
@@ -155,7 +156,8 @@ TEST_F(PPU, ShouldNotInvokeNonMaskableInterruptDuringVBlankWhenDisabledOnPPUCTRL
     core.i_rs = RS_PPUCTRL;
     core.i_rw = RW_WRITE;
     core.i_data = 0;        // disable NMI
-    core.eval();
+    testBench.tick();
+    testBench.trace.clear();
 
     testBench.tick(SCREEN_WIDTH * SCREEN_HEIGHT);
 
@@ -174,7 +176,8 @@ TEST_F(PPU, ShouldClearVBlankNonMaskableInterruptWhenReadingPPUSTATUS) {
     core.i_rs = RS_PPUCTRL;
     core.i_rw = RW_WRITE;
     core.i_data = PPUCTRL_V;        // enable NMI
-    core.eval();
+    testBench.tick();
+    testBench.trace.clear();
 
     // skip to pixel during vblank
     testBench.tick(SCREEN_WIDTH * 243);
@@ -191,10 +194,30 @@ TEST_F(PPU, ShouldClearVBlankNonMaskableInterruptWhenReadingPPUSTATUS) {
     EXPECT_EQ(0, core.o_data & PPUSTATUS_V);
 }
 
-// - TODO: read ppustatus
-//         - DONE: at startup - vblank clear
-//         - DONE: when nmi - read vblank as set + clear vblank
-//         - continuously - never get vblank
+//
+
+TEST_F(PPU, ShouldNotInvokeNonMaskableInterruptDuringVBlankWhileReadingPPUSTATUS) {
+    auto& core = testBench.core();
+
+    core.i_rs = RS_PPUCTRL;
+    core.i_rw = RW_WRITE;
+    core.i_data = PPUCTRL_V;        // enable NMI
+    testBench.tick();
+    testBench.trace.clear();
+
+    core.i_rs = RS_PPUSTATUS;
+    core.i_rw = RW_READ;
+
+    testBench.tick(SCREEN_WIDTH * SCREEN_HEIGHT);
+
+    Trace expected = TraceBuilder()
+        .port(o_int_n)
+            .signal("1").repeat(SCREEN_WIDTH * SCREEN_HEIGHT)
+            .repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
 // - TODO: write oamaddr - verify by reading from o_debug_oamaddr
 // - TODO: write oamdata - verify o_debug_oamaddr
 //          - auto increment oamaddr
