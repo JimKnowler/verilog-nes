@@ -17,7 +17,6 @@ module PPU(
 
 /* verilator lint_off UNUSED */
 /* verilator lint_off UNDRIVEN */
-
     // VIDEO interface    
     output o_video_rd_n,                // ~Read from VIDEO data bus
     output o_video_we_n,                // ~Write to VIDEO data bus
@@ -29,7 +28,6 @@ module PPU(
     output [7:0] o_video_red,
     output [7:0] o_video_green,
     output [7:0] o_video_blue,
-
 /* verilator lint_on UNDRIVEN */
 /* verilator lint_on UNUSED */
 
@@ -58,6 +56,7 @@ localparam [2:0] RS_PPUMASK = 1;
 localparam [2:0] RS_PPUSTATUS = 2;
 localparam [2:0] RS_PPUSCROLL = 5;
 localparam [2:0] RS_PPUADDR = 6;
+localparam [2:0] RS_PPUDATA = 7;
 
 // RW - read / write options
 localparam RW_READ = 1;
@@ -82,10 +81,13 @@ reg [7:0] r_ppuscroll_y;
 
 reg r_w;
 
-/* verilator lint_off UNUSED */
+// Palette entries for sprites + background
+reg [7:0] r_palette [31:0];
 
+/* verilator lint_off UNUSED */
 // OAM sprite data
 reg [7:0] r_oam [255:0];
+/* verilator lint_on UNUSED */
 
 // NMI_Occurred
 // - set true when vblank starts
@@ -97,8 +99,6 @@ reg r_nmi_occurred;
 // - PPU pulls o_nmi_n low when nmi_occurred && nmi_output
 wire w_nmi_output;
 assign w_nmi_output = r_ppuctrl[7];
-
-/* verilator lint_on UNUSED */
 
 //
 // READ - PPU/OAM Registers
@@ -116,6 +116,12 @@ begin
         case (i_rs)
         RS_PPUSTATUS: begin
             r_data = { r_nmi_occurred, r_ppustatus[6:0] };
+        end
+        RS_PPUDATA: begin
+            if ((r_ppuaddr >= 16'h3F00) && (r_ppuaddr <= 16'h3FFF)) 
+            begin
+                r_data = r_palette[r_ppuaddr[4:0]];
+            end
         end
         default: begin
             r_data = 0;
@@ -142,6 +148,8 @@ begin
     end
     else if (i_cs_n == 0)
     begin
+        // todo: chip select
+
         if (i_rw == RW_WRITE)
         begin
             case (i_rs)
@@ -150,6 +158,12 @@ begin
             end
             RS_PPUMASK: begin
                 r_ppumask <= i_data;
+            end
+            RS_PPUDATA: begin
+                if ((r_ppuaddr >= 16'h3F00) && (r_ppuaddr <= 16'h3FFF)) 
+                begin
+                    r_palette[r_ppuaddr[4:0]] <= i_data;
+                end
             end
             default: begin
             end
@@ -170,6 +184,8 @@ begin
     end
     else
     begin
+        // todo: chip select
+
         if ((i_rw == RW_READ) && (i_rs == RS_PPUSTATUS))
         begin
             r_nmi_occurred <= 0;
@@ -240,6 +256,8 @@ begin
     end
     else if ((i_rw == RW_WRITE) && (i_rs == RS_PPUSCROLL))
     begin
+        // todo: CHIP SELECT
+
         if (r_w == 0)
         begin
             r_ppuscroll_x <= i_data;
@@ -263,6 +281,8 @@ begin
     end
     else if ((i_rw == RW_WRITE) && (i_rs == RS_PPUADDR))
     begin
+        // todo: chip select
+
         if (r_w == 0)
         begin
             r_ppuaddr[15:8] <= i_data;
@@ -271,6 +291,10 @@ begin
         begin
             r_ppuaddr[7:0] <= i_data;
         end
+    end
+    else if (i_rs == RS_PPUDATA)
+    begin
+        r_ppuaddr <= r_ppuaddr + 1;
     end
 end
 
@@ -286,10 +310,13 @@ begin
     end
     else if ((i_rw == RW_READ) && (i_rs == RS_PPUSTATUS))
     begin
+        // todo: chip select
         r_w <= 0;
     end
     else if (i_rw == RW_WRITE)
     begin
+        // todo: chip select
+
         case (i_rs)
         RS_PPUSCROLL, RS_PPUADDR:
         begin
@@ -302,6 +329,8 @@ begin
         
     end
 end
+
+
 
 //
 // drive outputs

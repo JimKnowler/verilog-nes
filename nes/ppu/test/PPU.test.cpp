@@ -47,6 +47,8 @@ namespace {
             // enable chip select
             core.i_cs_n = 0;
 
+            vram.clear(0);
+
             // simulate vram access
             testBench.setCallbackSimulateCombinatorial([this, &core]{
                 if (core.i_clk == 1) {
@@ -328,19 +330,154 @@ TEST_F(PPU, ShouldWritePPUADDR) {
     EXPECT_EQ(0, core.o_debug_ppumask);
 }
 
+TEST_F(PPU, ShouldAccessPaletteDataViaPPUDATA) {
+    auto& core = testBench.core();
+
+    const int kNumPaletteEntries = 0x20;
+
+    // todo: disable rendering, or wait for vblank?
+
+    // write to palette data
+    core.i_rs = RS_PPUADDR;
+    core.i_rw = RW_WRITE;
+    core.i_data = 0x3F;
+    testBench.tick();
+    core.i_data = 0x00;
+    testBench.tick();
+
+    core.i_rs = RS_PPUDATA;
+    for (int i=0; i<kNumPaletteEntries; i++) {
+        core.i_data = i;
+        testBench.tick();
+    }
+
+    // should not have modified VRAM
+    for (size_t i=0; i<vram.size(); i++) {
+        EXPECT_EQ(0, vram.read(i));
+    }
+
+    // read from palette data
+    core.i_rs = RS_PPUADDR;
+    core.i_rw = RW_WRITE;
+    core.i_data = 0x3F;
+    testBench.tick();
+    core.i_data = 0x00;
+    testBench.tick();
+
+    core.i_rs = RS_PPUDATA;
+    core.i_rw = RW_READ;
+    core.eval();
+    for (int i=0; i<kNumPaletteEntries; i++) {
+        EXPECT_EQ(i, core.o_data);
+        testBench.tick();
+    }
+}
+
+TEST_F(PPU, ShouldWriteMirroredPaletteDataViaPPUDATA) {
+    auto& core = testBench.core();
+
+    const int kNumPaletteEntries = 0x20;
+
+    // todo: disable rendering, or wait for vblank?
+
+    for (int mirror = 0x20; mirror < 0xff; mirror += 0x20) {
+        vram.clear(0);
+
+        // write to palette data
+        core.i_rs = RS_PPUADDR;
+        core.i_rw = RW_WRITE;
+        core.i_data = 0x3F;
+        testBench.tick();
+        core.i_data = mirror;
+        testBench.tick();
+
+        core.i_rs = RS_PPUDATA;
+        for (int i=0; i<kNumPaletteEntries; i++) {
+            core.i_data = i;
+            testBench.tick();
+        }
+
+        // should not have modified VRAM
+        for (size_t i=0; i<vram.size(); i++) {
+            EXPECT_EQ(0, vram.read(i));
+        }
+
+        // read from palette data
+        core.i_rs = RS_PPUADDR;
+        core.i_rw = RW_WRITE;
+        core.i_data = 0x3F;
+        testBench.tick();
+        core.i_data = 0x00;
+        testBench.tick();
+
+        core.i_rs = RS_PPUDATA;
+        core.i_rw = RW_READ;
+        core.eval();
+        for (int i=0; i<kNumPaletteEntries; i++) {
+            EXPECT_EQ(i, core.o_data);
+            testBench.tick();
+        }
+    }
+}
+
+TEST_F(PPU, ShouldReadMirroredPaletteDataViaPPUDATA) {
+    auto& core = testBench.core();
+
+    const int kNumPaletteEntries = 0x20;
+
+    // todo: disable rendering, or wait for vblank?
+
+    // write to palette data
+    core.i_rs = RS_PPUADDR;
+    core.i_rw = RW_WRITE;
+    core.i_data = 0x3F;
+    testBench.tick();
+    core.i_data = 0;
+    testBench.tick();
+
+    core.i_rs = RS_PPUDATA;
+    for (int i=0; i<kNumPaletteEntries; i++) {
+        core.i_data = i;
+        testBench.tick();
+    }
+
+    for (int mirror = 0x20; mirror < 0xff; mirror += 0x20) {
+        // read from palette data
+        core.i_rs = RS_PPUADDR;
+        core.i_rw = RW_WRITE;
+        core.i_data = 0x3F;
+        testBench.tick();
+        core.i_data = mirror;
+        testBench.tick();
+
+        core.i_rs = RS_PPUDATA;
+        core.i_rw = RW_READ;
+        core.eval();
+        for (int i=0; i<kNumPaletteEntries; i++) {
+            EXPECT_EQ(i, core.o_data);
+            testBench.tick();
+        }
+    }
+}
+
+
 //
 // ppudata
 //
 // palette
-// - write and read palette data $3F00->$3F1F
-// - palette data mirrored in $3F20->$3FFF
 // - reading
-//    - data available on bus immediately
-//    - internal buffer is filled with data from elsewhere in VRAM (PPU_ADDR - 0x1000)
+//    - internal buffer is filled with data read from elsewhere in VRAM (PPU_ADDR - 0x1000)
+//      todo: write test to prime internal buffer like this, and then read it as part of non-palette ppudata read
+//
 // non-palette
 // - 1st read requires dummy read, to prime internal buffer
 //   - internal buffer contains value of last address that was read
 
+
+// VRAM read/write circuit
+//  - used by PPUDATA read/write
+//  - used by rasterizer
+//  - 2 cycles per read/write (to simulate multiplexing PPU bus)
 
 //
 // tiles
