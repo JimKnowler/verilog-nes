@@ -218,14 +218,47 @@ TEST_F(PPU, ShouldNotInvokeNonMaskableInterruptDuringVBlankWhileReadingPPUSTATUS
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
-// - TODO: write oamaddr - verify by reading from o_debug_oamaddr
-// - TODO: write oamdata - verify o_debug_oamaddr
-//          - auto increment oamaddr
-// - TODO: read oamdata
-//          - does NOT auto increment oamaddr
-// - TODO: write ppuscroll - verify by reading from o_debug_scroll_x, 
-//                           o_debug_scroll_y, w
-//         - 2 x writes (x, y)
+TEST_F(PPU, ShouldWritePPUSCROLL) {
+    auto& core = testBench.core();
+
+    const uint kTestX = 42;
+    const uint kTestY = 87;
+
+    core.i_rs = RS_PPUSCROLL;
+    core.i_rw = RW_WRITE;
+    
+    // should only write X on clock tick
+    core.i_data = kTestX;
+    core.eval();
+    EXPECT_EQ(0, core.o_debug_ppuscroll_x);
+    EXPECT_EQ(0, core.o_debug_ppuscroll_y);
+    EXPECT_EQ(0, core.o_debug_w);
+    
+    testBench.tick(1);
+    EXPECT_EQ(kTestX, core.o_debug_ppuscroll_x);
+    EXPECT_EQ(0, core.o_debug_ppuscroll_y);
+    EXPECT_EQ(1, core.o_debug_w);
+
+    // should only write Y on clock tick
+    core.i_data = kTestY;
+    core.eval();
+    EXPECT_EQ(kTestX, core.o_debug_ppuscroll_x);
+    EXPECT_EQ(0, core.o_debug_ppuscroll_y);
+    EXPECT_EQ(1, core.o_debug_w);
+    
+    testBench.tick(1);
+    EXPECT_EQ(kTestX, core.o_debug_ppuscroll_x);
+    EXPECT_EQ(kTestY, core.o_debug_ppuscroll_y);
+    EXPECT_EQ(0, core.o_debug_w);
+
+    // should not affect other registers
+    EXPECT_EQ(0, core.o_debug_ppuctrl);
+    EXPECT_EQ(0, core.o_debug_ppumask);
+}
+
+//
+// tiles
+//
 // - TODO: reset w - write ppuscroll x 1, read ppustatus
 // - TODO: write ppuaddr - verify by reading from o_debug_ppuaddr, w
 //         - 2 x writes (mxb, lsb)
@@ -233,3 +266,12 @@ TEST_F(PPU, ShouldNotInvokeNonMaskableInterruptDuringVBlankWhileReadingPPUSTATUS
 //          - autoincrement ppuaddr
 // - TODO: read ppudata
 //          - autoincrement ppuaddr
+
+//
+// sprites
+//
+// - TODO: write oamaddr - verify by reading from o_debug_oamaddr
+// - TODO: write oamdata - verify o_debug_oamaddr
+//          - auto increment oamaddr
+// - TODO: read oamdata
+//          - does NOT auto increment oamaddr

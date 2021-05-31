@@ -39,7 +39,10 @@ module PPU(
 
     // debug ports
     output [7:0] o_debug_ppuctrl,
-    output [7:0] o_debug_ppumask
+    output [7:0] o_debug_ppumask,
+    output [7:0] o_debug_ppuscroll_x,
+    output [7:0] o_debug_ppuscroll_y,
+    output o_debug_w                    // write register (for ppuscroll and ppuaddr)
 );
 
 // Screen Constants
@@ -52,6 +55,7 @@ localparam [8:0] SCREEN_VISIBLE_HEIGHT = 240;
 localparam [2:0] RS_PPUCTRL = 0;
 localparam [2:0] RS_PPUMASK = 1;
 localparam [2:0] RS_PPUSTATUS = 2;
+localparam [2:0] RS_PPUSCROLL = 5;
 
 // RW - read / write options
 localparam RW_READ = 1;
@@ -69,6 +73,11 @@ reg [6:0] r_ppustatus;          // note: bit 7 is provided by r_nmi_occurred
 reg [8:0] r_video_x;
 reg [8:0] r_video_y;
 wire w_video_visible;
+
+reg [7:0] r_ppuscroll_x;
+reg [7:0] r_ppuscroll_y;
+
+reg r_w;
 
 /* verilator lint_off UNUSED */
 
@@ -210,12 +219,50 @@ begin
                 r_video_y <= 0;
             end
         end
-
-
     end
 end
 
 assign w_video_visible = (r_video_x < 256) && (r_video_y < 240);
+
+//
+// ppuscroll
+//
+
+always @(negedge i_reset_n or negedge i_clk)
+begin
+    if (!i_reset_n)
+    begin
+        r_ppuscroll_x <= 0;
+        r_ppuscroll_y <= 0;
+    end
+    else if ((i_rw == RW_WRITE) && (i_rs == RS_PPUSCROLL))
+    begin
+        if (r_w == 0)
+        begin
+            r_ppuscroll_x <= i_data;
+        end
+        else
+        begin
+            r_ppuscroll_y <= i_data;
+        end
+    end
+end
+
+//
+// w
+//
+
+always @(negedge i_reset_n or negedge i_clk)
+begin
+    if (!i_reset_n)
+    begin
+        r_w <= 0;
+    end
+    else if ((i_rw == RW_WRITE) && (i_rs == RS_PPUSCROLL))
+    begin
+        r_w <= !r_w;
+    end
+end
 
 //
 // drive outputs
@@ -232,5 +279,8 @@ assign o_video_visible = w_video_visible;
 
 assign o_debug_ppuctrl = r_ppuctrl;
 assign o_debug_ppumask = r_ppumask;
+assign o_debug_ppuscroll_x = r_ppuscroll_x;
+assign o_debug_ppuscroll_y = r_ppuscroll_y;
+assign o_debug_w = r_w;
 
 endmodule
