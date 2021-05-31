@@ -269,12 +269,43 @@ TEST_F(PPU, ShouldResetWregWhenReadingFromPPUSTATUS) {
     EXPECT_EQ(0, core.o_debug_w);
 }
 
+TEST_F(PPU, ShouldWritePPUADDR) {
+    auto& core = testBench.core();
+
+    const uint kTestAddress = 0xabcd;
+
+    core.i_rs = RS_PPUADDR;
+    core.i_rw = RW_WRITE;
+    
+    // should only write hi-byte on clock tick
+    core.i_data = (kTestAddress >> 8) & 0xff;
+    core.eval();
+    EXPECT_EQ(0, core.o_debug_ppuaddr);
+    EXPECT_EQ(0, core.o_debug_w);
+    
+    testBench.tick();
+    EXPECT_EQ(kTestAddress & 0xff00, core.o_debug_ppuaddr);
+    EXPECT_EQ(1, core.o_debug_w);
+
+    // should only write lo-byte on clock tick
+    core.i_data = kTestAddress & 0xff;
+    core.eval();
+    EXPECT_EQ(kTestAddress & 0xff00, core.o_debug_ppuaddr);
+    EXPECT_EQ(1, core.o_debug_w);
+    
+    testBench.tick();
+    EXPECT_EQ(kTestAddress, core.o_debug_ppuaddr);
+    EXPECT_EQ(0, core.o_debug_w);
+
+    // should not affect other registers
+    EXPECT_EQ(0, core.o_debug_ppuctrl);
+    EXPECT_EQ(0, core.o_debug_ppumask);
+}
+
+
 //
 // tiles
 //
-// - TODO: reset w - write ppuscroll x 1, read ppustatus
-// - TODO: write ppuaddr - verify by reading from o_debug_ppuaddr, w
-//         - 2 x writes (mxb, lsb)
 // - TODO: write ppudata
 //          - autoincrement ppuaddr
 // - TODO: read ppudata

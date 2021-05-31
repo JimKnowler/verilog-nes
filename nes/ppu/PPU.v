@@ -42,6 +42,7 @@ module PPU(
     output [7:0] o_debug_ppumask,
     output [7:0] o_debug_ppuscroll_x,
     output [7:0] o_debug_ppuscroll_y,
+    output [15:0] o_debug_ppuaddr,
     output o_debug_w                    // write register (for ppuscroll and ppuaddr)
 );
 
@@ -56,6 +57,7 @@ localparam [2:0] RS_PPUCTRL = 0;
 localparam [2:0] RS_PPUMASK = 1;
 localparam [2:0] RS_PPUSTATUS = 2;
 localparam [2:0] RS_PPUSCROLL = 5;
+localparam [2:0] RS_PPUADDR = 6;
 
 // RW - read / write options
 localparam RW_READ = 1;
@@ -69,6 +71,7 @@ reg [7:0] r_data;
 reg [7:0] r_ppuctrl;
 reg [7:0] r_ppumask;
 reg [6:0] r_ppustatus;          // note: bit 7 is provided by r_nmi_occurred
+reg [15:0] r_ppuaddr;
 
 reg [8:0] r_video_x;
 reg [8:0] r_video_y;
@@ -249,6 +252,29 @@ begin
 end
 
 //
+// ppuaddr
+//
+
+always @(negedge i_reset_n or negedge i_clk)
+begin
+    if (!i_reset_n)
+    begin
+        r_ppuaddr <= 0;
+    end
+    else if ((i_rw == RW_WRITE) && (i_rs == RS_PPUADDR))
+    begin
+        if (r_w == 0)
+        begin
+            r_ppuaddr[15:8] <= i_data;
+        end
+        else
+        begin
+            r_ppuaddr[7:0] <= i_data;
+        end
+    end
+end
+
+//
 // w
 //
 
@@ -262,9 +288,18 @@ begin
     begin
         r_w <= 0;
     end
-    else if ((i_rw == RW_WRITE) && (i_rs == RS_PPUSCROLL))
+    else if (i_rw == RW_WRITE)
     begin
-        r_w <= !r_w;
+        case (i_rs)
+        RS_PPUSCROLL, RS_PPUADDR:
+        begin
+            r_w <= !r_w;
+        end
+        default:
+        begin
+        end
+        endcase
+        
     end
 end
 
@@ -285,6 +320,7 @@ assign o_debug_ppuctrl = r_ppuctrl;
 assign o_debug_ppumask = r_ppumask;
 assign o_debug_ppuscroll_x = r_ppuscroll_x;
 assign o_debug_ppuscroll_y = r_ppuscroll_y;
+assign o_debug_ppuaddr = r_ppuaddr;
 assign o_debug_w = r_w;
 
 endmodule
