@@ -9,6 +9,8 @@ using namespace gtestverilog;
 #include "nes/PPUTestBench.h"
 using namespace pputestbench;
 
+#include "nes/memory/SRAM.hpp"
+
 const int RS_PPUCTRL   = 0;
 const int RS_PPUMASK   = 1;
 const int RS_PPUSTATUS = 2;
@@ -32,20 +34,44 @@ const int PPUSTATUS_V = 1<<7;           // V - Currently in VBlank
 namespace {
     class PPU : public ::testing::Test {
     public:
+        PPU(): vram(2 * 1024) {}
+
         void SetUp() override {
+            auto& core = testBench.core();
+
             testBench.setClockPolarity(1);
 
             testBench.reset();
             testBench.trace.clear();
 
             // enable chip select
-            testBench.core().i_cs_n = 0;
+            core.i_cs_n = 0;
+
+            // simulate vram access
+            testBench.setCallbackSimulateCombinatorial([this, &core]{
+                if (core.i_clk == 1) {
+                    // clock: end of phi2
+                    // R/W data is valid on the bus
+                    if (core.o_video_we_n == 0) {
+                        // write
+                        vram.write(core.o_video_address, core.o_video_data);
+                    } else if (core.o_video_rd_n == 0) {
+                        // read
+                        core.i_video_data = vram.read(core.o_video_address);
+                    }
+                } else {
+                    // clock: end of phi 1
+                    // undefined data on the bus
+                    core.i_video_data = 0xFF;
+                }
+            });
         }
         
         void TearDown() override {
         }
 
         PPUTestBench testBench;
+        memory::SRAM vram;
     };
 }
 
@@ -302,14 +328,30 @@ TEST_F(PPU, ShouldWritePPUADDR) {
     EXPECT_EQ(0, core.o_debug_ppumask);
 }
 
+//
+// ppudata
+//
+// palette
+// - write and read palette data $3F00->$3F1F
+// - palette data mirrored in $3F20->$3FFF
+// - reading
+//    - data available on bus immediately
+//    - internal buffer is filled with data from elsewhere in VRAM (PPU_ADDR - 0x1000)
+// non-palette
+// - 1st read requires dummy read, to prime internal buffer
+//   - internal buffer contains value of last address that was read
+
 
 //
 // tiles
 //
 // - TODO: write ppudata
-//          - autoincrement ppuaddr
+//          - autoincrement ppuaddr (based on PPUCTRL[2] for vertical or horizontal)
 // - TODO: read ppudata
-//          - autoincrement ppuaddr
+//          - autoincrement ppuaddr (based on PPUCTRL[2] for vertical or horizontal)
+// - TODO: ppu data read/write
+//          - timing when accessing palette data (in single clock cycle)
+//          - timing when accessing any other data (two clock cycles, to update internal buffer)
 
 //
 // sprites
