@@ -133,9 +133,6 @@ TEST_F(PPU, ShouldInvokeNonMaskableInterruptDuringVBlank) {
     core.i_rs = RS_PPUCTRL;
     core.i_rw = RW_WRITE;
     core.i_data = PPUCTRL_V;        // enable NMI
-    testBench.tick();
-    testBench.trace.clear();
-
     testBench.tick(SCREEN_WIDTH * SCREEN_HEIGHT * 2);
 
     Trace expected = TraceBuilder()
@@ -156,8 +153,6 @@ TEST_F(PPU, ShouldNotInvokeNonMaskableInterruptDuringVBlankWhenDisabledOnPPUCTRL
     core.i_rs = RS_PPUCTRL;
     core.i_rw = RW_WRITE;
     core.i_data = 0;        // disable NMI
-    testBench.tick();
-    testBench.trace.clear();
 
     testBench.tick(SCREEN_WIDTH * SCREEN_HEIGHT);
 
@@ -176,8 +171,6 @@ TEST_F(PPU, ShouldClearVBlankNonMaskableInterruptWhenReadingPPUSTATUS) {
     core.i_rs = RS_PPUCTRL;
     core.i_rw = RW_WRITE;
     core.i_data = PPUCTRL_V;        // enable NMI
-    testBench.tick();
-    testBench.trace.clear();
 
     // skip to pixel during vblank
     testBench.tick(SCREEN_WIDTH * 243);
