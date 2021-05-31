@@ -75,7 +75,7 @@ TEST_F(PPU, ShouldWriteToPPUCTRL) {
     core.eval();
     EXPECT_EQ(0, core.o_debug_ppuctrl);
     
-    testBench.tick(1);
+    testBench.tick();
     EXPECT_EQ(0xFF, core.o_debug_ppuctrl);
 
     // should not affect other registers
@@ -91,7 +91,7 @@ TEST_F(PPU, ShouldWriteToPPUMASK) {
     core.eval();
     EXPECT_EQ(0, core.o_debug_ppumask);
     
-    testBench.tick(1);
+    testBench.tick();
     EXPECT_EQ(0xFF, core.o_debug_ppumask);
 
     // should not affect other registers
@@ -194,8 +194,6 @@ TEST_F(PPU, ShouldClearVBlankNonMaskableInterruptWhenReadingPPUSTATUS) {
     EXPECT_EQ(0, core.o_data & PPUSTATUS_V);
 }
 
-//
-
 TEST_F(PPU, ShouldNotInvokeNonMaskableInterruptDuringVBlankWhileReadingPPUSTATUS) {
     auto& core = testBench.core();
 
@@ -234,7 +232,7 @@ TEST_F(PPU, ShouldWritePPUSCROLL) {
     EXPECT_EQ(0, core.o_debug_ppuscroll_y);
     EXPECT_EQ(0, core.o_debug_w);
     
-    testBench.tick(1);
+    testBench.tick();
     EXPECT_EQ(kTestX, core.o_debug_ppuscroll_x);
     EXPECT_EQ(0, core.o_debug_ppuscroll_y);
     EXPECT_EQ(1, core.o_debug_w);
@@ -246,7 +244,7 @@ TEST_F(PPU, ShouldWritePPUSCROLL) {
     EXPECT_EQ(0, core.o_debug_ppuscroll_y);
     EXPECT_EQ(1, core.o_debug_w);
     
-    testBench.tick(1);
+    testBench.tick();
     EXPECT_EQ(kTestX, core.o_debug_ppuscroll_x);
     EXPECT_EQ(kTestY, core.o_debug_ppuscroll_y);
     EXPECT_EQ(0, core.o_debug_w);
@@ -254,6 +252,28 @@ TEST_F(PPU, ShouldWritePPUSCROLL) {
     // should not affect other registers
     EXPECT_EQ(0, core.o_debug_ppuctrl);
     EXPECT_EQ(0, core.o_debug_ppumask);
+}
+
+TEST_F(PPU, ShouldResetWregWhenReadingFromPPUSTATUS) {
+    auto& core = testBench.core();
+
+    // write x ppuscroll, and set W to 1
+    const uint kTestX = 42;
+    core.i_rs = RS_PPUSCROLL;
+    core.i_rw = RW_WRITE;
+    core.i_data = kTestX;
+    testBench.tick();
+    EXPECT_EQ(kTestX, core.o_debug_ppuscroll_x);
+    EXPECT_EQ(0, core.o_debug_ppuscroll_y);
+    EXPECT_EQ(1, core.o_debug_w);
+
+    // read from PPUSTATUS
+    core.i_rs = RS_PPUSTATUS;
+    core.i_rw = RW_READ;
+    testBench.tick();
+    EXPECT_EQ(kTestX, core.o_debug_ppuscroll_x);
+    EXPECT_EQ(0, core.o_debug_ppuscroll_y);
+    EXPECT_EQ(0, core.o_debug_w);
 }
 
 //

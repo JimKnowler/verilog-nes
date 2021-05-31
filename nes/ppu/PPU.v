@@ -258,6 +258,10 @@ begin
     begin
         r_w <= 0;
     end
+    else if ((i_rw == RW_READ) && (i_rs == RS_PPUSTATUS))
+    begin
+        r_w <= 0;
+    end
     else if ((i_rw == RW_WRITE) && (i_rs == RS_PPUSCROLL))
     begin
         r_w <= !r_w;
