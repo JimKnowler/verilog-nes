@@ -554,25 +554,8 @@ TEST_F(PPU, ShouldWriteVRamViaPPUDATA) {
 //    - internal buffer is filled with data read from elsewhere in VRAM (PPU_ADDR - 0x1000)
 //      todo: write test to prime internal buffer like this, and then read it as part of non-palette ppudata read
 //
-// non-palette
-// - 1st read requires dummy read, to prime internal buffer
-//   - internal buffer contains value of last address that was read
-
-// VRAM read/write circuit
-//  - used by PPUDATA read/write
-//  - used by rasterizer
-//  - 2 cycles per read/write (to simulate multiplexing PPU bus)
-
-//
-// tiles
-//
-// - TODO: write ppudata
-//          - autoincrement ppuaddr (based on PPUCTRL[2] for vertical or horizontal)
-// - TODO: read ppudata
-//          - autoincrement ppuaddr (based on PPUCTRL[2] for vertical or horizontal)
-// - TODO: ppu data read/write
-//          - timing when accessing palette data (in single clock cycle)
-//          - timing when accessing any other data (two clock cycles, to update internal buffer)
+// - autoincrement ppuaddr
+//   - based on PPUCTRL[2] for hoizontal/vertical writing
 
 //
 // sprites
@@ -582,3 +565,6 @@ TEST_F(PPU, ShouldWriteVRamViaPPUDATA) {
 //          - auto increment oamaddr
 // - TODO: read oamdata
 //          - does NOT auto increment oamaddr
+
+// rasteriser
+// - todo: ...
