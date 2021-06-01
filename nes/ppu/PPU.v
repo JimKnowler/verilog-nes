@@ -356,9 +356,12 @@ begin
         begin
             if (i_rw == RW_WRITE)
             begin
-                // WRITE ppudata
-                r_video_we_n <= 0;
-                r_vram_buffer <= i_data;
+                if (r_ppuaddr < 16'h3f00)
+                begin
+                    // WRITE ppudata
+                    r_video_we_n <= 0;
+                    r_vram_buffer <= i_data;
+                end
             end
             else
             begin
