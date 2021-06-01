@@ -20,16 +20,22 @@ namespace memory {
     }
 
     void SRAM::write(size_t address, uint8_t value) {
+        assert(address < memory.size());
+
         memory[address] = value;
     }
 
     void SRAM::write(size_t address, const std::vector<uint8_t>& program) {
+        assert( (address + program.size()) <= memory.size());
+
         for (size_t i=0; i<program.size(); i++) {
             write(i + address, program[i]);
         }
     }
 
     uint8_t SRAM::read(size_t address) const {
+        assert(address < memory.size());
+        
         return memory[address];
     }
 }

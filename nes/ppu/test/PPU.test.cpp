@@ -34,7 +34,7 @@ const int PPUSTATUS_V = 1<<7;           // V - Currently in VBlank
 namespace {
     class PPU : public ::testing::Test {
     public:
-        PPU(): vram(2 * 1024) {}
+        PPU(): vram(0x4000) {}
 
         void SetUp() override {
             auto& core = testBench.core();
@@ -469,6 +469,82 @@ TEST_F(PPU, ShouldReadMirroredPaletteDataViaPPUDATA) {
     }
 }
 
+TEST_F(PPU, ShouldReadVRamViaPPUDATA) {
+    auto& core = testBench.core();
+
+    const int kVRamSize = 0x3F00;
+
+    helperDisableRendering();
+
+    // write to VRAM
+    for (int i=0; i < kVRamSize; i++) {
+        vram.write(i, i % 256);
+    }
+
+    // prime PPUADDR to read from VRAM
+    core.i_rs = RS_PPUADDR;
+    core.i_rw = RW_WRITE;
+    core.i_data = 0x00;
+    testBench.tick();
+    testBench.tick();
+    
+    // prime internal buffer with the first read
+    core.i_rs = RS_PPUDATA;
+    core.i_rw = RW_READ;
+    testBench.tick();
+
+    // 2nd cycle for internal buffer to be filled from VRAM
+    core.i_cs_n = 1;
+    testBench.tick();
+    core.i_cs_n = 0;
+
+    // TODO: this test only reads up to VRamSize - 1, because the auto-increment will have set addr to start of palette data
+    for (int i=0; i<kVRamSize-1; i++) {
+        // read from VRAM
+        core.eval();
+
+        EXPECT_EQ(i % 256, core.o_data);
+        testBench.tick();
+
+        // 2nd cycle for internal buffer to be filled with next read from VRAM
+        core.i_cs_n = 1;
+        testBench.tick();
+        core.i_cs_n = 0;
+    }
+}
+
+TEST_F(PPU, ShouldWriteVRamViaPPUDATA) {
+    auto& core = testBench.core();
+
+    const int kVRamSize = 0x3F00;
+
+    helperDisableRendering();
+
+    // write to VRAM
+    core.i_rs = RS_PPUADDR;
+    core.i_rw = RW_WRITE;
+    core.i_data = 0x00;
+    testBench.tick();
+    testBench.tick();
+
+    core.i_rs = RS_PPUDATA;
+    for (int i=0; i<kVRamSize; i++) {
+        // write to VRAM
+
+        // cycle 1 (when write is setup)
+        core.i_data = i % 256;
+        testBench.tick();
+
+        // cycle 2 (when write occurs)
+        core.i_cs_n = 1;
+        testBench.tick();
+        core.i_cs_n = 0;
+    }
+
+    for (int i=0; i<kVRamSize; i++) {
+        EXPECT_EQ(i % 256, vram.read(i));
+    }
+}
 
 //
 // ppudata

@@ -15,8 +15,6 @@ module PPU(
     output [7:0] o_data,            // Write to CPU data bus
     input i_rw,                     // Read/~Write for CPU data bus
 
-/* verilator lint_off UNUSED */
-/* verilator lint_off UNDRIVEN */
     // VIDEO interface    
     output o_video_rd_n,                // ~Read from VIDEO data bus
     output o_video_we_n,                // ~Write to VIDEO data bus
@@ -24,6 +22,8 @@ module PPU(
     output [7:0] o_video_data,          // data write to video data bus
     input [7:0] i_video_data,           // data read from video data bus
 
+/* verilator lint_off UNUSED */
+/* verilator lint_off UNDRIVEN */
     // Video output
     output [7:0] o_video_red,
     output [7:0] o_video_green,
@@ -100,37 +100,44 @@ reg r_nmi_occurred;
 wire w_nmi_output;
 assign w_nmi_output = r_ppuctrl[7];
 
+// internal buffer for last read from VRAM
+reg [7:0] r_vram_buffer;
+
+// address output on video address bus
+reg [13:0] r_video_address;
+
 //
 // READ - PPU/OAM Registers
 //
 
 always @(*)
 begin
-    r_video_rd_n = 1;
-    r_video_we_n = 1;
-    
-    // todo: chip select
+    r_data = 0;
 
-    if (i_rw == RW_READ)
+    if (i_cs_n == 0)
     begin
-        case (i_rs)
-        RS_PPUSTATUS: begin
-            r_data = { r_nmi_occurred, r_ppustatus[6:0] };
-        end
-        RS_PPUDATA: begin
-            if ((r_ppuaddr >= 16'h3F00) && (r_ppuaddr <= 16'h3FFF)) 
-            begin
-                r_data = r_palette[r_ppuaddr[4:0]];
+        if (i_rw == RW_READ)
+        begin
+            case (i_rs)
+            RS_PPUSTATUS: begin
+                r_data = { r_nmi_occurred, r_ppustatus[6:0] };
             end
+            RS_PPUDATA: begin
+                if ((r_ppuaddr >= 16'h3F00) && (r_ppuaddr <= 16'h3FFF)) 
+                begin
+                    r_data = r_palette[r_ppuaddr[4:0]];
+                end
+                else
+                begin
+                    // the last value received from the VRAM read circuit
+                    r_data = r_vram_buffer;
+                end
+            end
+            default: begin
+                r_data = 0;
+            end
+            endcase
         end
-        default: begin
-            r_data = 0;
-        end
-        endcase
-    end
-    else
-    begin
-        r_data = 0;
     end
 end
 
@@ -148,8 +155,6 @@ begin
     end
     else if (i_cs_n == 0)
     begin
-        // todo: chip select
-
         if (i_rw == RW_WRITE)
         begin
             case (i_rs)
@@ -184,9 +189,7 @@ begin
     end
     else
     begin
-        // todo: chip select
-
-        if ((i_rw == RW_READ) && (i_rs == RS_PPUSTATUS))
+        if ((i_cs_n == 0) && (i_rw == RW_READ) && (i_rs == RS_PPUSTATUS))
         begin
             r_nmi_occurred <= 0;
         end
@@ -254,17 +257,18 @@ begin
         r_ppuscroll_x <= 0;
         r_ppuscroll_y <= 0;
     end
-    else if ((i_rw == RW_WRITE) && (i_rs == RS_PPUSCROLL))
+    else if (i_cs_n == 0)
     begin
-        // todo: CHIP SELECT
-
-        if (r_w == 0)
+        if ((i_rw == RW_WRITE) && (i_rs == RS_PPUSCROLL))
         begin
-            r_ppuscroll_x <= i_data;
-        end
-        else
-        begin
-            r_ppuscroll_y <= i_data;
+            if (r_w == 0)
+            begin
+                r_ppuscroll_x <= i_data;
+            end
+            else
+            begin
+                r_ppuscroll_y <= i_data;
+            end
         end
     end
 end
@@ -279,22 +283,23 @@ begin
     begin
         r_ppuaddr <= 0;
     end
-    else if ((i_rw == RW_WRITE) && (i_rs == RS_PPUADDR))
+    else if (i_cs_n == 0)
     begin
-        // todo: chip select
-
-        if (r_w == 0)
+        if ((i_rw == RW_WRITE) && (i_rs == RS_PPUADDR))
         begin
-            r_ppuaddr[15:8] <= i_data;
+            if (r_w == 0)
+            begin
+                r_ppuaddr[15:8] <= i_data;
+            end
+            else
+            begin
+                r_ppuaddr[7:0] <= i_data;
+            end
         end
-        else
+        else if (i_rs == RS_PPUDATA)
         begin
-            r_ppuaddr[7:0] <= i_data;
+            r_ppuaddr <= r_ppuaddr + 1;
         end
-    end
-    else if (i_rs == RS_PPUDATA)
-    begin
-        r_ppuaddr <= r_ppuaddr + 1;
     end
 end
 
@@ -308,29 +313,73 @@ begin
     begin
         r_w <= 0;
     end
-    else if ((i_rw == RW_READ) && (i_rs == RS_PPUSTATUS))
+    else if (i_cs_n == 0)
     begin
-        // todo: chip select
-        r_w <= 0;
-    end
-    else if (i_rw == RW_WRITE)
-    begin
-        // todo: chip select
-
-        case (i_rs)
-        RS_PPUSCROLL, RS_PPUADDR:
+        if ((i_rw == RW_READ) && (i_rs == RS_PPUSTATUS))
         begin
-            r_w <= !r_w;
+            r_w <= 0;
         end
-        default:
+        else if (i_rw == RW_WRITE)
         begin
+            case (i_rs)
+            RS_PPUSCROLL, RS_PPUADDR:
+            begin
+                r_w <= !r_w;
+            end
+            default:
+            begin
+            end
+            endcase
+            
         end
-        endcase
-        
     end
 end
 
+//
+// VRAM read/write
+//
 
+// should take two cycles.. state machine
+//  cycle 1: acknowledge request
+//  cycle 2: make the request (put value on address bus, read into target at clock)
+always @(negedge i_reset_n or negedge i_clk)
+begin
+    if (!i_reset_n)
+    begin
+        r_video_rd_n <= 1;
+        r_video_we_n <= 1;
+        r_vram_buffer <= 0;
+    end
+    else
+    begin
+        if ((i_cs_n == 0) && (i_rs == RS_PPUDATA))
+        begin
+            if (i_rw == RW_WRITE)
+            begin
+                // WRITE ppudata
+                r_video_we_n <= 0;
+                r_vram_buffer <= i_data;
+            end
+            else
+            begin
+                // READ ppudata from VRAM into r_vram_buffer
+                r_video_rd_n <= 0;
+                r_vram_buffer <= i_data;
+            end
+
+            r_video_address <= r_ppuaddr[13:0];
+        end
+        else if (!r_video_we_n)
+        begin
+            r_video_we_n <= 1;
+        end
+        else if (!r_video_rd_n)
+        begin
+            r_video_rd_n <= 1;
+            r_vram_buffer <= i_video_data;
+        end
+    end
+end
 
 //
 // drive outputs
@@ -344,6 +393,9 @@ assign o_video_we_n = r_video_we_n;
 assign o_video_x = r_video_x;
 assign o_video_y = r_video_y;
 assign o_video_visible = w_video_visible;
+
+assign o_video_address = r_video_address;
+assign o_video_data = (o_video_we_n == 0) ? r_vram_buffer : 0;
 
 assign o_debug_ppuctrl = r_ppuctrl;
 assign o_debug_ppumask = r_ppumask;
