@@ -72,6 +72,15 @@ namespace {
         void TearDown() override {
         }
 
+        void helperDisableRendering() {
+            auto& core = testBench.core();
+
+            core.i_rs = RS_PPUMASK;
+            core.i_rw = RW_WRITE;
+            core.i_data = 0x00;
+            testBench.tick();
+        }
+
         PPUTestBench testBench;
         memory::SRAM vram;
     };
@@ -335,7 +344,7 @@ TEST_F(PPU, ShouldAccessPaletteDataViaPPUDATA) {
 
     const int kNumPaletteEntries = 0x20;
 
-    // todo: disable rendering, or wait for vblank?
+    helperDisableRendering();
 
     // write to palette data
     core.i_rs = RS_PPUADDR;
@@ -378,7 +387,7 @@ TEST_F(PPU, ShouldWriteMirroredPaletteDataViaPPUDATA) {
 
     const int kNumPaletteEntries = 0x20;
 
-    // todo: disable rendering, or wait for vblank?
+    helperDisableRendering();
 
     for (int mirror = 0x20; mirror < 0xff; mirror += 0x20) {
         vram.clear(0);
@@ -425,7 +434,7 @@ TEST_F(PPU, ShouldReadMirroredPaletteDataViaPPUDATA) {
 
     const int kNumPaletteEntries = 0x20;
 
-    // todo: disable rendering, or wait for vblank?
+    helperDisableRendering();
 
     // write to palette data
     core.i_rs = RS_PPUADDR;
@@ -472,7 +481,6 @@ TEST_F(PPU, ShouldReadMirroredPaletteDataViaPPUDATA) {
 // non-palette
 // - 1st read requires dummy read, to prime internal buffer
 //   - internal buffer contains value of last address that was read
-
 
 // VRAM read/write circuit
 //  - used by PPUDATA read/write
