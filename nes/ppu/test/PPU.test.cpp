@@ -28,7 +28,9 @@ const int SCREEN_HEIGHT = 262;
 const int SCREEN_VISIBLE_WIDTH = 256;
 const int SCREEN_VISIBLE_HEIGHT = 240;
 
+const int PPUCTRL_I = 1<<2;             // I - horiz/vertical increment to PPUADDR
 const int PPUCTRL_V = 1<<7;             // V - NMI enable for VBlank
+
 const int PPUSTATUS_V = 1<<7;           // V - Currently in VBlank
 
 namespace {
@@ -78,6 +80,15 @@ namespace {
             core.i_rs = RS_PPUMASK;
             core.i_rw = RW_WRITE;
             core.i_data = 0x00;
+            testBench.tick();
+        }
+
+        void helperSetVerticalVRAMIncrement() {
+            auto& core = testBench.core();
+
+            core.i_rs = RS_PPUCTRL;
+            core.i_rw = RW_WRITE;
+            core.i_data = PPUCTRL_I;
             testBench.tick();
         }
 
@@ -597,7 +608,6 @@ TEST_F(PPU, ShouldNotIncrementOAMADDRWhenReadingFromOAMDATA) {
     core.i_rw = RW_WRITE;
     core.i_data = 0x00;
     testBench.tick();
-     
     
     // read from OAMDATA
     core.i_rs = RS_OAMDATA;
@@ -605,6 +615,32 @@ TEST_F(PPU, ShouldNotIncrementOAMADDRWhenReadingFromOAMDATA) {
     testBench.tick();
 
     EXPECT_EQ(0x00, core.o_debug_oamaddr);
+}
+
+TEST_F(PPU, ShouldAutoIncrementPPUADDRVerticallyWhenReadingFromPPUDATA) {
+    auto& core = testBench.core();
+
+    helperDisableRendering();
+    helperSetVerticalVRAMIncrement();
+
+    // prime PPUADDR to start reading from 0
+    core.i_rs = RS_PPUADDR;
+    core.i_rw = RW_WRITE;
+    core.i_data = 0x00;
+    testBench.tick();
+    testBench.tick();
+    
+    // prime internal buffer with the first read
+    core.i_rs = RS_PPUDATA;
+    core.i_rw = RW_READ;
+    testBench.tick();
+
+    // 2nd cycle for internal buffer to be filled from VRAM
+    core.i_cs_n = 1;
+    testBench.tick();
+    core.i_cs_n = 0;
+
+    EXPECT_EQ(32, core.o_debug_ppuaddr);
 }
 
 //
@@ -615,9 +651,9 @@ TEST_F(PPU, ShouldNotIncrementOAMADDRWhenReadingFromOAMDATA) {
 //    - internal buffer is filled with data read from elsewhere in VRAM (PPU_ADDR - 0x1000)
 //      todo: write test to prime internal buffer like this, and then read it as part of non-palette ppudata read
 //
-// - autoincrement ppuaddr
-//   - based on PPUCTRL[2] for hoizontal/vertical writing
 
+// OAM DMA
+// - CPU write to $4014
 
 // rasteriser
 // - todo: ...

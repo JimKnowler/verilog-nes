@@ -311,7 +311,7 @@ begin
         end
         else if (i_rs == RS_PPUDATA)
         begin
-            r_ppuaddr <= r_ppuaddr + 1;
+            r_ppuaddr <= r_ppuaddr + ( r_ppuctrl[2] ? 32 : 1 );
         end
     end
 end
