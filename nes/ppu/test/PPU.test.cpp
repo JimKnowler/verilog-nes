@@ -587,6 +587,26 @@ TEST_F(PPU, ShouldAccessOAMviaOAMDATA) {
     }
 }
 
+TEST_F(PPU, ShouldNotIncrementOAMADDRWhenReadingFromOAMDATA) {
+    auto& core = testBench.core();
+
+    helperDisableRendering();
+
+    // write to OAMADDR
+    core.i_rs = RS_OAMADDR;
+    core.i_rw = RW_WRITE;
+    core.i_data = 0x00;
+    testBench.tick();
+     
+    
+    // read from OAMDATA
+    core.i_rs = RS_OAMDATA;
+    core.i_rw = RW_READ;
+    testBench.tick();
+
+    EXPECT_EQ(0x00, core.o_debug_oamaddr);
+}
+
 //
 // ppudata
 //
@@ -598,14 +618,6 @@ TEST_F(PPU, ShouldAccessOAMviaOAMDATA) {
 // - autoincrement ppuaddr
 //   - based on PPUCTRL[2] for hoizontal/vertical writing
 
-//
-// sprites
-//
-// - TODO: write oamaddr - verify by reading from o_debug_oamaddr
-// - TODO: write oamdata - verify o_debug_oamaddr
-//          - auto increment oamaddr
-// - TODO: read oamdata
-//          - does NOT auto increment oamaddr
 
 // rasteriser
 // - todo: ...
