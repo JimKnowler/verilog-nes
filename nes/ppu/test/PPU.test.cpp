@@ -480,6 +480,41 @@ TEST_F(PPU, ShouldReadMirroredPaletteDataViaPPUDATA) {
     }
 }
 
+TEST_F(PPU, ShouldReadFromVRamToInternalBufferWhenReadingPaletteDataViaPPUDATA) {
+    auto& core = testBench.core();
+
+    const int kNumPaletteEntries = 0x20;
+
+    helperDisableRendering();
+
+    // write to VRAM
+    for (size_t i=0; i<256; i++) {
+        vram.write(0x3F00 + i, i);
+    }
+
+    // read from palette data
+    core.i_rs = RS_PPUADDR;
+    core.i_rw = RW_WRITE;
+    core.i_data = 0x3F;
+    testBench.tick();
+    core.i_data = 0x00;
+    testBench.tick();
+
+    core.i_rs = RS_PPUDATA;
+    core.i_rw = RW_READ;
+
+    for (int i=0; i<kNumPaletteEntries; i++) {
+        testBench.tick();
+
+        core.i_cs_n = 1;
+        testBench.tick();
+        core.i_cs_n = 0;
+
+        EXPECT_EQ(i, core.o_debug_video_buffer);
+    }
+}
+
+
 TEST_F(PPU, ShouldReadVRamViaPPUDATA) {
     auto& core = testBench.core();
 
@@ -642,15 +677,6 @@ TEST_F(PPU, ShouldAutoIncrementPPUADDRVerticallyWhenReadingFromPPUDATA) {
 
     EXPECT_EQ(32, core.o_debug_ppuaddr);
 }
-
-//
-// ppudata
-//
-// palette
-// - reading
-//    - internal buffer is filled with data read from elsewhere in VRAM (PPU_ADDR - 0x1000)
-//      todo: write test to prime internal buffer like this, and then read it as part of non-palette ppudata read
-//
 
 // OAM DMA - CPU!
 // - CPU write to $4014
