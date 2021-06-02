@@ -41,6 +41,7 @@ module PPU(
     output [7:0] o_debug_ppuscroll_x,
     output [7:0] o_debug_ppuscroll_y,
     output [15:0] o_debug_ppuaddr,
+    output [7:0] o_debug_oamaddr,
     output o_debug_w                    // write register (for ppuscroll and ppuaddr)
 );
 
@@ -54,6 +55,8 @@ localparam [8:0] SCREEN_VISIBLE_HEIGHT = 240;
 localparam [2:0] RS_PPUCTRL = 0;
 localparam [2:0] RS_PPUMASK = 1;
 localparam [2:0] RS_PPUSTATUS = 2;
+localparam [2:0] RS_OAMADDR = 3;
+localparam [2:0] RS_OAMDATA = 4;
 localparam [2:0] RS_PPUSCROLL = 5;
 localparam [2:0] RS_PPUADDR = 6;
 localparam [2:0] RS_PPUDATA = 7;
@@ -84,10 +87,9 @@ reg r_w;
 // Palette entries for sprites + background
 reg [7:0] r_palette [31:0];
 
-/* verilator lint_off UNUSED */
 // OAM sprite data
+reg [7:0] r_oamaddr;
 reg [7:0] r_oam [255:0];
-/* verilator lint_on UNUSED */
 
 // NMI_Occurred
 // - set true when vblank starts
@@ -133,6 +135,9 @@ begin
                     r_data = r_vram_buffer;
                 end
             end
+            RS_OAMDATA: begin
+                r_data = r_oam[r_oamaddr];
+            end
             default: begin
                 r_data = 0;
             end
@@ -152,6 +157,7 @@ begin
         r_ppuctrl <= 0;
         r_ppumask <= 0;
         r_ppustatus <= 0;
+        r_oamaddr <= 0;
     end
     else if (i_cs_n == 0)
     begin
@@ -169,6 +175,13 @@ begin
                 begin
                     r_palette[r_ppuaddr[4:0]] <= i_data;
                 end
+            end
+            RS_OAMADDR: begin
+                r_oamaddr <= i_data;
+            end
+            RS_OAMDATA: begin
+                r_oamaddr <= r_oamaddr + 1;
+                r_oam[r_oamaddr] <= i_data;
             end
             default: begin
             end
@@ -405,6 +418,7 @@ assign o_debug_ppumask = r_ppumask;
 assign o_debug_ppuscroll_x = r_ppuscroll_x;
 assign o_debug_ppuscroll_y = r_ppuscroll_y;
 assign o_debug_ppuaddr = r_ppuaddr;
+assign o_debug_oamaddr = r_oamaddr;
 assign o_debug_w = r_w;
 
 endmodule

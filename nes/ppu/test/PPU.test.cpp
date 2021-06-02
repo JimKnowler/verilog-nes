@@ -546,6 +546,47 @@ TEST_F(PPU, ShouldWriteVRamViaPPUDATA) {
     }
 }
 
+TEST_F(PPU, ShouldAccessOAMviaOAMDATA) {
+    auto& core = testBench.core();
+
+    const int kOAMSize = 256;
+
+    helperDisableRendering();
+
+    // write to OAM
+    core.i_rs = RS_OAMADDR;
+    core.i_rw = RW_WRITE;
+    core.i_data = 0x00;
+    testBench.tick();
+    
+    // write to OAM
+    core.i_rs = RS_OAMDATA;
+    for (int i=0; i<kOAMSize; i++) {
+        // test auto increment
+        EXPECT_EQ(i, core.o_debug_oamaddr);
+
+        // write a byte to oamdata
+        core.i_data = i;
+        testBench.tick();
+    }
+    
+    // read from oamaddr
+    for (int i=0; i<kOAMSize; i++) {
+        // set address
+        core.i_rs = RS_OAMADDR;
+        core.i_rw = RW_WRITE;
+        core.i_data = i;
+        testBench.tick();
+
+        // read data
+        core.i_rs = RS_OAMDATA;
+        core.i_rw = RW_READ;
+        core.eval();
+
+        EXPECT_EQ(i, core.o_data);
+    }
+}
+
 //
 // ppudata
 //
