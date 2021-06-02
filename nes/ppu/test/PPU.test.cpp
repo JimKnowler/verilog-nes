@@ -652,8 +652,18 @@ TEST_F(PPU, ShouldAutoIncrementPPUADDRVerticallyWhenReadingFromPPUDATA) {
 //      todo: write test to prime internal buffer like this, and then read it as part of non-palette ppudata read
 //
 
-// OAM DMA
+// OAM DMA - CPU!
 // - CPU write to $4014
+
+// CPUMemoryMap
+// - map to game ROM
+// - map to PPU
+// - map to internal RAM
+
+// PPUMemoryMap
+// - map to CHR ROM
+// - map to VRAM for nametables
+// - mirror $3000 to $2000
 
 // rasteriser
 // - todo: ...

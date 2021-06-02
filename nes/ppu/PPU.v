@@ -33,7 +33,7 @@ module PPU(
 
     output [8:0] o_video_x,             // pixel clock - x co-ord of current pixel
     output [8:0] o_video_y,             // pixel clock - y co-ord of current pixel
-    output o_video_visible,              // pixel clock - visibility of the current pixel
+    output o_video_visible,             // pixel clock - visibility of the current pixel
 
     // debug ports
     output [7:0] o_debug_ppuctrl,
@@ -42,7 +42,8 @@ module PPU(
     output [7:0] o_debug_ppuscroll_y,
     output [15:0] o_debug_ppuaddr,
     output [7:0] o_debug_oamaddr,
-    output o_debug_w                    // write register (for ppuscroll and ppuaddr)
+    output o_debug_w,                   // write register (for ppuscroll and ppuaddr)
+    output [7:0] o_debug_video_buffer   // internal buffer of last read from video bus
 );
 
 // Screen Constants
@@ -102,8 +103,8 @@ reg r_nmi_occurred;
 wire w_nmi_output;
 assign w_nmi_output = r_ppuctrl[7];
 
-// internal buffer for last read from VRAM
-reg [7:0] r_vram_buffer;
+// internal buffer for last read from video bus
+reg [7:0] r_video_buffer;
 
 // address output on video address bus
 reg [13:0] r_video_address;
@@ -131,8 +132,8 @@ begin
                 end
                 else
                 begin
-                    // the last value received from the VRAM read circuit
-                    r_data = r_vram_buffer;
+                    // the last value received from the VIDEO bus read circuit
+                    r_data = r_video_buffer;
                 end
             end
             RS_OAMDATA: begin
@@ -352,7 +353,7 @@ end
 // VRAM read/write
 //
 
-// should take two cycles.. state machine
+// note: take two cycles for each read/write
 //  cycle 1: acknowledge request
 //  cycle 2: make the request (put value on address bus, read into target at clock)
 always @(negedge i_reset_n or negedge i_clk)
@@ -361,7 +362,7 @@ begin
     begin
         r_video_rd_n <= 1;
         r_video_we_n <= 1;
-        r_vram_buffer <= 0;
+        r_video_buffer <= 0;
     end
     else
     begin
@@ -371,16 +372,16 @@ begin
             begin
                 if (r_ppuaddr < 16'h3f00)
                 begin
-                    // WRITE ppudata
+                    // WRITE ppudata to video bus
                     r_video_we_n <= 0;
-                    r_vram_buffer <= i_data;
+                    r_video_buffer <= i_data;
                 end
             end
             else
             begin
-                // READ ppudata from VRAM into r_vram_buffer
+                // READ ppudata from video bus into r_video_buffer
                 r_video_rd_n <= 0;
-                r_vram_buffer <= i_data;
+                r_video_buffer <= i_data;
             end
 
             r_video_address <= r_ppuaddr[13:0];
@@ -392,7 +393,7 @@ begin
         else if (!r_video_rd_n)
         begin
             r_video_rd_n <= 1;
-            r_vram_buffer <= i_video_data;
+            r_video_buffer <= i_video_data;
         end
     end
 end
@@ -411,7 +412,7 @@ assign o_video_y = r_video_y;
 assign o_video_visible = w_video_visible;
 
 assign o_video_address = r_video_address;
-assign o_video_data = (o_video_we_n == 0) ? r_vram_buffer : 0;
+assign o_video_data = (o_video_we_n == 0) ? r_video_buffer : 0;
 
 assign o_debug_ppuctrl = r_ppuctrl;
 assign o_debug_ppumask = r_ppumask;
@@ -420,5 +421,6 @@ assign o_debug_ppuscroll_y = r_ppuscroll_y;
 assign o_debug_ppuaddr = r_ppuaddr;
 assign o_debug_oamaddr = r_oamaddr;
 assign o_debug_w = r_w;
+assign o_debug_video_buffer = r_video_buffer;
 
 endmodule
