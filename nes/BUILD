@@ -1,24 +1,26 @@
 load("@rules_verilator//verilator:defs.bzl", "verilator_cc_library")
 load("@gtestverilog//gtestverilog:defs.bzl", "gtest_verilog_testbench")
 
+cpu6502_srcs = [
+    "cpu6502/Cpu6502.v", 
+    "cpu6502/Decoder.v",
+    "cpu6502/PCL.v",
+    "cpu6502/PCH.v",
+    "cpu6502/DL.v",
+    "cpu6502/Register.v",
+    "cpu6502/AddressBusRegister.v",
+    "cpu6502/DOR.v",
+    "cpu6502/Routing.v",
+    "cpu6502/TCU.v",
+    "cpu6502/IR.v",
+    "cpu6502/ALU.v",
+    "cpu6502/ALUFullAdder.v",
+    "cpu6502/ProcessorStatus.v"
+]
+
 verilator_cc_library(
     name = "Cpu6502",
-    srcs = [
-        "cpu6502/Cpu6502.v", 
-        "cpu6502/Decoder.v",
-        "cpu6502/PCL.v",
-        "cpu6502/PCH.v",
-        "cpu6502/DL.v",
-        "cpu6502/Register.v",
-        "cpu6502/AddressBusRegister.v",
-        "cpu6502/DOR.v",
-        "cpu6502/Routing.v",
-        "cpu6502/TCU.v",
-        "cpu6502/IR.v",
-        "cpu6502/ALU.v",
-        "cpu6502/ALUFullAdder.v",
-        "cpu6502/ProcessorStatus.v"
-    ],
+    srcs = cpu6502_srcs,
 )
 
 gtest_verilog_testbench(
@@ -322,7 +324,7 @@ gtest_verilog_testbench(
 
 verilator_cc_library(
     name = "Cpu2A03",
-    srcs = ["nes/Cpu2A03.v"],
+    srcs = ["nes/Cpu2A03.v"] + cpu6502_srcs
 )
 
 gtest_verilog_testbench(

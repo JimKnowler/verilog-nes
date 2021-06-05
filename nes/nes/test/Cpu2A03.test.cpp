@@ -28,5 +28,5 @@ namespace {
 }
 
 TEST_F(Cpu2A03, ShouldConstruct) {
-
+    
 }
