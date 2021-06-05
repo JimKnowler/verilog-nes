@@ -9,7 +9,7 @@ Aim: to play the original NES [Super Mario Bros](https://en.wikipedia.org/wiki/S
 # 6502 cpu
 
 ## Build Unit Tests
-> bazel build //nes:test-cpu6502
+> bazel build //nes:test-cpu6502 --incompatible_require_linker_input_cc_api=false
 
 ## Run Unit Tests
 > ./bazel-bin/nes/test-cpu6502
@@ -17,7 +17,7 @@ Aim: to play the original NES [Super Mario Bros](https://en.wikipedia.org/wiki/S
 # NES PPU (Picture Processing Unit)
 
 ## Build Unit Tests
-> bazel build //nes:test-ppu 
+> bazel build //nes:test-ppu --incompatible_require_linker_input_cc_api=false
 
 ## Run Unit Tests
 > ./bazel-bin/nes/test-ppu
@@ -31,7 +31,7 @@ Implemented with the [OneLoneCoder Pixel Game Engine](https://github.com/OneLone
 Test the VGA output module.
 
 ## Build 
-> bazel build //nes:emulator-vga
+> bazel build //nes:emulator-vga --incompatible_require_linker_input_cc_api=false --config release
 
 ## Run
 > ./bazel-bin/nes/emulator-vga
@@ -43,7 +43,7 @@ Currently supported on MacOSX.
 Implemented with the [OneLoneCoder Pixel Game Engine](https://github.com/OneLoneCoder/olcPixelGameEngine).
 
 ## Build 
-> bazel build //nes:emulator
+> bazel build //nes:emulator --incompatible_require_linker_input_cc_api=false --config release
 
 ## Run
 > ./bazel-bin/nes/emulator
