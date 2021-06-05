@@ -61,6 +61,13 @@ namespace {
 
         }
 
+        void helperSkipResetVector() {
+            /// @brief skip T0-6 steps of reset vector
+            /// @note Next tick will act as T0 of first opcode
+            testBench.tick(7);
+            testBench.trace.clear();
+        }
+
         Cpu2A03TestBench testBench;
         SRAM sram;
     };
@@ -98,3 +105,148 @@ TEST_F(Cpu2A03, ShouldImplementResetVector) {
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
+
+TEST_F(Cpu2A03, ShouldImplementOAMDMA) {
+    sram.clear(0);
+
+    std::vector<uint8_t> dmaData;
+
+    for (int i = 0; i<256; i++) {
+        dmaData.push_back(i);
+    }
+
+    std::vector<uint32_t> dmaAddresses;
+    for (int i=0; i<256; i++) {
+        dmaAddresses.push_back( 0x3F00 + i );
+    }
+
+    for (int i = 0; i<256; i++) {
+        sram.write( dmaAddresses[i], dmaData[i]);
+    }
+
+    Assembler assembler;
+    assembler
+        .label("lda")
+            .LDA().immediate(0x3F)
+        .label("sta")
+            .STA().absolute(0x4014)
+        .label("nop")
+            .NOP() 
+        .compileTo(sram);
+
+    cpu6502::assembler::Address lda("lda");
+    assembler.lookupAddress(lda);
+
+    cpu6502::assembler::Address sta("sta");
+    assembler.lookupAddress(sta);
+
+    cpu6502::assembler::Address nop("nop");
+    assembler.lookupAddress(nop);
+    
+    helperSkipResetVector();
+    testBench.tick(2);
+
+    //
+    // LDA 
+    // 
+
+    Trace expectedLoad = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(2)
+        .port(o_rw).signal("11")
+                    .repeat(2)
+        .port(o_sync).signal("10").repeatEachStep(2)
+        .port(o_address).signal({
+                            lda.byteIndex(), 
+                            lda.byteIndex() + 1u
+                            })
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({0xFF, 0xFF})
+                        .repeatEachStep(2)
+        .port(o_debug_x).signal({0xFF}).repeat(4)
+        .port(o_debug_y).signal({0xFF}).repeat(4);
+
+    EXPECT_THAT(expectedLoad, MatchesTrace(testBench.trace));
+    
+    //
+    // STA
+    // 
+
+    testBench.trace.clear();
+    testBench.tick(4);
+
+    Trace expectedStore = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(4)
+        .port(o_sync).signal("1000")
+                     .repeatEachStep(2)
+        .port(o_rw).signal("11").repeat(3)      // READ (STAa)
+                    .signal("00")               // WRITE (STAa)
+        .port(o_data).signal({0}).repeat(7)
+                     .signal({0x3F})
+        .port(o_address).signal({
+                            sta.byteIndex(),
+                            sta.byteIndex() + 1u,
+                            sta.byteIndex() + 2u,
+                            0x4014
+                            })          // STAa
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({0x3F}).repeat(4)
+                         .repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expectedStore));
+
+    testBench.trace.clear();
+    testBench.tick(513);
+
+    //
+    // OAM DMA
+    // 
+
+    TraceBuilder traceBuilderDMA;
+    traceBuilderDMA
+        .port(i_clk).signal("_-")
+                    .repeat(513)
+        .port(o_sync).signal("00")      // no op-codes loaded by CPU
+                     .repeat(513)
+        .port(o_rw).signal("11")       
+                    .signal("1100").repeat(256)
+        .port(o_address).signal({
+                            0
+                        })
+                            .repeat(2)
+                        .signal(dmaAddresses)
+                            .repeatEachStep(4)
+        .port(o_data).signal({0}).repeat(2);
+
+    for (int i=0; i<256; i++) {
+        traceBuilderDMA.signal({0, dmaData[i]})
+                        .repeatEachStep(2);
+    }
+
+    Trace expectedDMA = traceBuilderDMA;
+    EXPECT_THAT(testBench.trace, MatchesTrace(expectedDMA));
+
+    //
+    // NOP (after DMA completes)
+    //
+
+    testBench.trace.clear();
+    testBench.tick(2);
+
+    Trace expectedNOP = TraceBuilder()
+        .port(i_clk).signal("_-").repeat(2)
+        .port(o_rw).signal("11").repeat(2)
+        .port(o_sync).signal("10").repeatEachStep(2)
+        .port(o_address).signal({
+           nop.byteIndex(),
+           nop.byteIndex() + 1u}
+        ).repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expectedNOP));
+}
+
+
+// should use i_clk_en to decide when DMA is running
+// should use i_clk_en internally to disable CPU while DMA is running
+// 

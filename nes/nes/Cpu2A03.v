@@ -35,17 +35,81 @@ module Cpu2A03(
     output o_debug_error
 );
 
+reg [1:0] r_state;
+localparam [1:0] STATE_CPU = 0;
+localparam [1:0] STATE_OAMDMA_START = 1;
+localparam [1:0] STATE_OAMDMA_READ = 2;
+localparam [1:0] STATE_OAMDMA_WRITE = 3;
+
+wire [15:0] w_address_cpu;
+wire [7:0] w_o_data_cpu;
+reg [7:0] r_o_data;
+
+reg r_clk_en_cpu;
+
+always @(*)
+begin
+    case (r_state)
+    STATE_CPU:
+        r_clk_en_cpu = i_clk_en;
+    default:
+        r_clk_en_cpu = 0;
+    endcase
+end
+
+always @(*)
+begin
+    case (r_state)
+    STATE_CPU:
+        r_o_data = w_o_data_cpu;
+    STATE_OAMDMA_START, STATE_OAMDMA_READ:
+        r_o_data = 0;
+    STATE_OAMDMA_WRITE:
+        r_o_data = r_oamdma_data;
+    endcase
+end
+
+reg r_rw;
+reg r_rw_cpu;
+
+always @(*)
+begin
+    case (r_state)
+    STATE_CPU:
+        r_rw = r_rw_cpu;
+    STATE_OAMDMA_START:
+        r_rw = 1;
+    STATE_OAMDMA_READ:
+        r_rw = 1;
+    STATE_OAMDMA_WRITE:
+        r_rw = 0;
+    endcase
+end
+
+reg r_sync;
+reg r_sync_cpu;
+
+always @(*)
+begin
+    case (r_state)
+    STATE_CPU:
+        r_sync = r_sync_cpu;
+    default:
+        r_sync = 0;
+    endcase
+end
+
 Cpu6502 cpu(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
-    .i_clk_en(i_clk_en),
-    .o_rw(o_rw),
-    .o_address(o_address),
+    .i_clk_en(r_clk_en_cpu),
+    .o_rw(r_rw_cpu),
+    .o_address(w_address_cpu),
     .i_data(i_data),
-    .o_data(o_data),
+    .o_data(w_o_data_cpu),
     .i_irq_n(i_irq_n),
     .i_nmi_n(i_nmi_n),
-    .o_sync(o_sync),
+    .o_sync(r_sync_cpu),
     .o_debug_bus_db(o_debug_bus_db),
     .o_debug_bus_adl(o_debug_bus_adl),
     .o_debug_bus_adh(o_debug_bus_adh),
@@ -64,16 +128,73 @@ Cpu6502 cpu(
     .o_debug_error(o_debug_error)
 );
 
+reg [7:0] r_oamdma_counter;
+reg [15:0] r_oamdma_address;
+reg [7:0] r_oamdma_data;
+
+localparam [15:0] ADDRESS_OAMDMA = 16'h4014; 
+
 always @(negedge i_reset_n or negedge i_clk)
 begin
     if (!i_reset_n)
     begin
-        
+        r_state <= STATE_CPU;
     end
     else
     begin
-        
+        case (r_state)
+        STATE_CPU: begin
+            if (w_address_cpu == ADDRESS_OAMDMA)
+            begin
+                r_oamdma_address[15:8] <= w_o_data_cpu;
+                r_oamdma_address[7:0] <= 0;
+                r_state <= STATE_OAMDMA_START;
+            end
+        end
+        STATE_OAMDMA_START: begin
+            r_oamdma_counter <= 255;
+            r_state <= STATE_OAMDMA_READ;
+        end
+        STATE_OAMDMA_READ: begin
+            r_state <= STATE_OAMDMA_WRITE;
+            r_oamdma_data <= i_data;
+        end
+        STATE_OAMDMA_WRITE: begin
+            r_oamdma_counter <= r_oamdma_counter - 1;
+            r_oamdma_address <= r_oamdma_address + 1;
+
+            if (r_oamdma_counter == 0)
+                r_state <= STATE_CPU;
+            else
+                r_state <= STATE_OAMDMA_READ;
+            
+        end
+        default: begin 
+        end
+        endcase
     end
 end
+
+reg [15:0] r_address;
+
+always @(*)
+begin
+    case (r_state)
+    STATE_OAMDMA_READ, STATE_OAMDMA_WRITE: begin
+        r_address = r_oamdma_address;
+    end
+    STATE_OAMDMA_START: begin
+        r_address = 0;
+    end
+    default: begin
+        r_address = w_address_cpu;
+    end
+    endcase
+end
+
+assign o_address = r_address;
+assign o_data = r_o_data;
+assign o_rw = r_rw;
+assign o_sync = r_sync;
 
 endmodule
