@@ -343,7 +343,7 @@ cc_test(
         ],
         exclude = [
             "emulator/**/*",
-            "cpu6502/**/*",
+            "cpu6502/test/**/*",
             "ppu/**/*"
         ]
     ) + [

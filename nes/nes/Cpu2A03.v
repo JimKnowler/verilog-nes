@@ -68,7 +68,7 @@ always @(negedge i_reset_n or negedge i_clk)
 begin
     if (!i_reset_n)
     begin
-
+        
     end
     else
     begin
