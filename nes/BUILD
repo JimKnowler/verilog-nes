@@ -320,6 +320,16 @@ gtest_verilog_testbench(
     deps = [":MemoryController"]
 )
 
+verilator_cc_library(
+    name = "Cpu2A03",
+    srcs = ["nes/Cpu2A03.v"],
+)
+
+gtest_verilog_testbench(
+    name = "Cpu2A03TestBench",
+    deps = [":Cpu2A03"]
+)
+
 cc_test(
     name = "test-nes",
     srcs = glob(
@@ -337,12 +347,14 @@ cc_test(
     ) + [
         ":ClockEnableTestBench",
         ":MemoryControllerTestBench",
+        ":Cpu2A03TestBench"
     ],
     deps = [
         "@com_google_googletest//:gtest",
         "@gtestverilog//gtestverilog:lib",
         ":ClockEnable",
         ":MemoryController",
+        ":Cpu2A03"
     ],
 )
 
