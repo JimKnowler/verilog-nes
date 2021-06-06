@@ -73,7 +73,7 @@ TEST_F(CPUMemoryMap, ShouldWriteToRAM) {
         int data = i % 256;
         core.i_address_cpu = address;
         core.i_rw_cpu = RW_WRITE;
-        core.i_data_ram = data;
+        core.i_data_cpu = data;
         core.eval();
 
         EXPECT_EQ(RW_WRITE, core.o_rw_ram);
@@ -82,7 +82,7 @@ TEST_F(CPUMemoryMap, ShouldWriteToRAM) {
         EXPECT_EQ(0, core.o_cs_prg);
         EXPECT_EQ(1, core.o_cs_ram);
         EXPECT_EQ(0, core.o_cs_ppu);
-        EXPECT_EQ(data, core.o_data_cpu);
+        EXPECT_EQ(data, core.o_data_ram);
     }
 }
 
@@ -113,7 +113,7 @@ TEST_F(CPUMemoryMap, ShouldWriteToMirroredRAM) {
         int data = i % 256;
         core.i_address_cpu = address;
         core.i_rw_cpu = RW_WRITE;
-        core.i_data_ram = data;
+        core.i_data_cpu = data;
         core.eval();
 
         EXPECT_EQ(RW_WRITE, core.o_rw_ram);
@@ -122,7 +122,7 @@ TEST_F(CPUMemoryMap, ShouldWriteToMirroredRAM) {
         EXPECT_EQ(0, core.o_cs_prg);
         EXPECT_EQ(1, core.o_cs_ram);
         EXPECT_EQ(0, core.o_cs_ppu);
-        EXPECT_EQ(data, core.o_data_cpu);
+        EXPECT_EQ(data, core.o_data_ram);
     }
 }
 
@@ -171,7 +171,7 @@ TEST_F(CPUMemoryMap, ShouldWriteToPPU) {
         int data = i % 256;
         core.i_address_cpu = address;
         core.i_rw_cpu = RW_WRITE;
-        core.i_data_ppu = data;
+        core.i_data_cpu = data;
         core.eval();
 
         EXPECT_EQ(RW_WRITE, core.o_rw_ppu);
@@ -180,7 +180,7 @@ TEST_F(CPUMemoryMap, ShouldWriteToPPU) {
         EXPECT_EQ(0, core.o_cs_prg);
         EXPECT_EQ(0, core.o_cs_ram);
         EXPECT_EQ(1, core.o_cs_ppu);
-        EXPECT_EQ(data, core.o_data_cpu);
+        EXPECT_EQ(data, core.o_data_ppu);
     }
 }
 
@@ -211,7 +211,7 @@ TEST_F(CPUMemoryMap, ShouldWriteToMirroredPPU) {
         int data = i % 256;
         core.i_address_cpu = address;
         core.i_rw_cpu = RW_WRITE;
-        core.i_data_ppu = data;
+        core.i_data_cpu = data;
         core.eval();
 
         EXPECT_EQ(RW_WRITE, core.o_rw_ppu);
@@ -220,7 +220,7 @@ TEST_F(CPUMemoryMap, ShouldWriteToMirroredPPU) {
         EXPECT_EQ(0, core.o_cs_prg);
         EXPECT_EQ(0, core.o_cs_ram);
         EXPECT_EQ(1, core.o_cs_ppu);
-        EXPECT_EQ(data, core.o_data_cpu);
+        EXPECT_EQ(data, core.o_data_ppu);
     }
 }
 
