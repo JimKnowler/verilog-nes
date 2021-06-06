@@ -237,3 +237,7 @@ TEST_F(CPUMemoryMap, ShouldOnlyEnableChipSelectsWhenClockIsEnabled) {
         EXPECT_EQ(0, core.o_cs_ppu);
     }
 }
+
+
+// TODO: cartridge space for mappers at 0x4020
+//      https://wiki.nesdev.com/w/index.php/CPU_memory_map
