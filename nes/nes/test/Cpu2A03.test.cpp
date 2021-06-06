@@ -107,6 +107,9 @@ TEST_F(Cpu2A03, ShouldImplementResetVector) {
 }
 
 TEST_F(Cpu2A03, ShouldImplementOAMDMA) {
+    const uint32_t kOAMDMA = 0x4014;
+    const uint32_t kOAMDATA = 0x2004;
+
     sram.clear(0);
 
     std::vector<uint8_t> dmaData;
@@ -129,7 +132,7 @@ TEST_F(Cpu2A03, ShouldImplementOAMDMA) {
         .label("lda")
             .LDA().immediate(0x3F)
         .label("sta")
-            .STA().absolute(0x4014)
+            .STA().absolute(kOAMDMA)
         .label("nop")
             .NOP() 
         .compileTo(sram);
@@ -188,7 +191,7 @@ TEST_F(Cpu2A03, ShouldImplementOAMDMA) {
                             sta.byteIndex(),
                             sta.byteIndex() + 1u,
                             sta.byteIndex() + 2u,
-                            0x4014
+                            kOAMDMA
                             })          // STAa
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({0x3F}).repeat(4)
@@ -214,9 +217,16 @@ TEST_F(Cpu2A03, ShouldImplementOAMDMA) {
         .port(o_address).signal({
                             0
                         })
-                            .repeat(2)
-                        .signal(dmaAddresses)
-                            .repeatEachStep(4)
+                        .repeat(2);
+    
+
+    for (int i=0; i<256; i++) {
+        traceBuilderDMA
+            .signal({dmaAddresses[i], kOAMDATA})
+            .repeatEachStep(2);
+    }
+                        
+    traceBuilderDMA
         .port(o_data).signal({0}).repeat(2);
 
     for (int i=0; i<256; i++) {

@@ -35,6 +35,9 @@ module Cpu2A03(
     output o_debug_error
 );
 
+localparam [15:0] ADDRESS_OAMDMA = 16'h4014; 
+localparam [15:0] ADDRESS_OAMDATA = 16'h2004;
+
 reg [1:0] r_state;
 localparam [1:0] STATE_CPU = 0;
 localparam [1:0] STATE_OAMDMA_START = 1;
@@ -132,8 +135,6 @@ reg [7:0] r_oamdma_counter;
 reg [15:0] r_oamdma_address;
 reg [7:0] r_oamdma_data;
 
-localparam [15:0] ADDRESS_OAMDMA = 16'h4014; 
-
 always @(negedge i_reset_n or negedge i_clk)
 begin
     if (!i_reset_n)
@@ -180,8 +181,11 @@ reg [15:0] r_address;
 always @(*)
 begin
     case (r_state)
-    STATE_OAMDMA_READ, STATE_OAMDMA_WRITE: begin
+    STATE_OAMDMA_READ: begin
         r_address = r_oamdma_address;
+    end
+    STATE_OAMDMA_WRITE: begin
+        r_address = ADDRESS_OAMDATA;
     end
     STATE_OAMDMA_START: begin
         r_address = 0;
