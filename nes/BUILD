@@ -332,6 +332,26 @@ gtest_verilog_testbench(
     deps = [":Cpu2A03"]
 )
 
+verilator_cc_library(
+    name = "CPUMemoryMap",
+    srcs = ["nes/CPUMemoryMap.v"],
+)
+
+gtest_verilog_testbench(
+    name = "CPUMemoryMapTestBench",
+    deps = [":CPUMemoryMap"]
+)
+
+verilator_cc_library(
+    name = "PPUMemoryMap",
+    srcs = ["nes/PPUMemoryMap.v"],
+)
+
+gtest_verilog_testbench(
+    name = "PPUMemoryMapTestBench",
+    deps = [":PPUMemoryMap"]
+)
+
 cc_test(
     name = "test-nes",
     srcs = glob(
@@ -349,14 +369,18 @@ cc_test(
     ) + [
         ":ClockEnableTestBench",
         ":MemoryControllerTestBench",
-        ":Cpu2A03TestBench"
+        ":Cpu2A03TestBench",
+        ":PPUMemoryMapTestBench",
+        ":CPUMemoryMapTestBench"
     ],
     deps = [
         "@com_google_googletest//:gtest",
         "@gtestverilog//gtestverilog:lib",
         ":ClockEnable",
         ":MemoryController",
-        ":Cpu2A03"
+        ":Cpu2A03",
+        ":CPUMemoryMap",
+        ":PPUMemoryMap"
     ],
 )
 
