@@ -18,6 +18,10 @@ cpu6502_srcs = [
     "cpu6502/ProcessorStatus.v"
 ]
 
+ppu_srcs = [
+    "ppu/PPU.v"
+]
+
 verilator_cc_library(
     name = "Cpu6502",
     srcs = cpu6502_srcs,
@@ -196,7 +200,7 @@ gtest_verilog_testbench(
 
 verilator_cc_library(
     name = "PPU",
-    srcs = ["ppu/PPU.v"],
+    srcs = ppu_srcs,
 )
 
 gtest_verilog_testbench(
@@ -352,6 +356,22 @@ gtest_verilog_testbench(
     deps = [":PPUMemoryMap"]
 )
 
+verilator_cc_library(
+    name = "NES",
+    srcs = ["nes/NES.v", 
+            "nes/Cpu2A03.v",
+            "nes/ClockEnable.v",
+            "nes/CPUMemoryMap.v",
+            "nes/PPUMemoryMap.v",
+            "ppu/PPUChipEnable.v"
+            ] + cpu6502_srcs + ppu_srcs,
+)
+
+gtest_verilog_testbench(
+    name = "NESTestBench",
+    deps = [":NES"]
+)
+
 cc_test(
     name = "test-nes",
     srcs = glob(
@@ -371,7 +391,8 @@ cc_test(
         ":MemoryControllerTestBench",
         ":Cpu2A03TestBench",
         ":PPUMemoryMapTestBench",
-        ":CPUMemoryMapTestBench"
+        ":CPUMemoryMapTestBench",
+        ":NESTestBench"
     ],
     deps = [
         "@com_google_googletest//:gtest",
@@ -380,7 +401,8 @@ cc_test(
         ":MemoryController",
         ":Cpu2A03",
         ":CPUMemoryMap",
-        ":PPUMemoryMap"
+        ":PPUMemoryMap",
+        ":NES"
     ],
 )
 
