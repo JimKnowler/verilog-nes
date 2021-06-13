@@ -85,7 +85,7 @@ TEST_F(PPUMemoryMap, ShouldWriteToNametable) {
         core.i_address_ppu = address;
         core.i_rd_en_ppu_n = 1;
         core.i_wr_en_ppu_n = 0;
-        core.i_data_nametable = data;
+        core.i_data_ppu = data;
         core.eval();
 
         EXPECT_EQ(RW_WRITE, core.o_rw_nametable);
@@ -93,7 +93,7 @@ TEST_F(PPUMemoryMap, ShouldWriteToNametable) {
 
         EXPECT_EQ(0, core.o_cs_patterntable);
         EXPECT_EQ(1, core.o_cs_nametable);
-        EXPECT_EQ(data, core.o_data_ppu);
+        EXPECT_EQ(data, core.o_data_nametable);
     }
 }
 
@@ -125,7 +125,7 @@ TEST_F(PPUMemoryMap, ShouldWriteToNametableMirror) {
         core.i_address_ppu = address;
         core.i_rd_en_ppu_n = 1;
         core.i_wr_en_ppu_n = 0;
-        core.i_data_nametable = data;
+        core.i_data_ppu = data;
         core.eval();
 
         EXPECT_EQ(RW_WRITE, core.o_rw_nametable);
@@ -133,7 +133,7 @@ TEST_F(PPUMemoryMap, ShouldWriteToNametableMirror) {
 
         EXPECT_EQ(0, core.o_cs_patterntable);
         EXPECT_EQ(1, core.o_cs_nametable);
-        EXPECT_EQ(data, core.o_data_ppu);
+        EXPECT_EQ(data, core.o_data_nametable);
     }
 }
 
