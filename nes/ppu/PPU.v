@@ -212,7 +212,7 @@ begin
             // start of vblank
             r_nmi_occurred <= 1;
         end
-        else if ((r_video_x == (SCREEN_WIDTH-1)) && (r_video_y == (SCREEN_HEIGHT-1)))
+        else if ((r_video_x == 0) && (r_video_y == (SCREEN_HEIGHT-1)))
         begin
             // end of vblank
             r_nmi_occurred <= 0;

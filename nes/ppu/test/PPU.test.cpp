@@ -186,7 +186,8 @@ TEST_F(PPU, ShouldInvokeNonMaskableInterruptDuringVBlank) {
     Trace expected = TraceBuilder()
         .port(o_int_n)
             .signal("1").repeat((SCREEN_WIDTH * 242) + 1)
-            .signal("0").repeat((SCREEN_WIDTH * 20) - 1)           // NMI set on 2nd tick of 242nd line
+            .signal("0").repeat(SCREEN_WIDTH * 19)           // NMI set on 2nd tick of 242nd line
+            .signal("1").repeat(SCREEN_WIDTH - 1)            // NMI cleared on 2nd tick of last line
             .concat()
             .repeatEachStep(2)
             .repeat(2);
