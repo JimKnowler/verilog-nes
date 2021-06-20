@@ -61,7 +61,6 @@ TEST_F(CPUMemoryMap, ShouldReadFromRAM) {
 
         EXPECT_EQ(0, core.o_cs_prg);
         EXPECT_EQ(1, core.o_cs_ram);
-        EXPECT_EQ(0, core.o_cs_ppu);
         EXPECT_EQ(data, core.o_data_cpu);
     }
 }
@@ -81,7 +80,6 @@ TEST_F(CPUMemoryMap, ShouldWriteToRAM) {
 
         EXPECT_EQ(0, core.o_cs_prg);
         EXPECT_EQ(1, core.o_cs_ram);
-        EXPECT_EQ(0, core.o_cs_ppu);
         EXPECT_EQ(data, core.o_data_ram);
     }
 }
@@ -101,7 +99,6 @@ TEST_F(CPUMemoryMap, ShouldReadFromMirroredRAM) {
         
         EXPECT_EQ(0, core.o_cs_prg);
         EXPECT_EQ(1, core.o_cs_ram);
-        EXPECT_EQ(0, core.o_cs_ppu);
         EXPECT_EQ(data, core.o_data_cpu);
     }
 }
@@ -121,7 +118,6 @@ TEST_F(CPUMemoryMap, ShouldWriteToMirroredRAM) {
         
         EXPECT_EQ(0, core.o_cs_prg);
         EXPECT_EQ(1, core.o_cs_ram);
-        EXPECT_EQ(0, core.o_cs_ppu);
         EXPECT_EQ(data, core.o_data_ram);
     }
 }
@@ -139,7 +135,6 @@ TEST_F(CPUMemoryMap, ShouldReadFromPRGROM) {
         EXPECT_EQ(address, core.o_address_prg);
         EXPECT_EQ(1, core.o_cs_prg);
         EXPECT_EQ(0, core.o_cs_ram);
-        EXPECT_EQ(0, core.o_cs_ppu);
         EXPECT_EQ(data, core.o_data_cpu);
     }
 }
@@ -159,7 +154,6 @@ TEST_F(CPUMemoryMap, ShouldReadFromPPU) {
         
         EXPECT_EQ(0, core.o_cs_prg);
         EXPECT_EQ(0, core.o_cs_ram);
-        EXPECT_EQ(1, core.o_cs_ppu);
         EXPECT_EQ(data, core.o_data_cpu);
     }
 }
@@ -179,7 +173,6 @@ TEST_F(CPUMemoryMap, ShouldWriteToPPU) {
         
         EXPECT_EQ(0, core.o_cs_prg);
         EXPECT_EQ(0, core.o_cs_ram);
-        EXPECT_EQ(1, core.o_cs_ppu);
         EXPECT_EQ(data, core.o_data_ppu);
     }
 }
@@ -199,7 +192,6 @@ TEST_F(CPUMemoryMap, ShouldReadFromMirroredPPU) {
         
         EXPECT_EQ(0, core.o_cs_prg);
         EXPECT_EQ(0, core.o_cs_ram);
-        EXPECT_EQ(1, core.o_cs_ppu);
         EXPECT_EQ(data, core.o_data_cpu);
     }
 }
@@ -219,7 +211,6 @@ TEST_F(CPUMemoryMap, ShouldWriteToMirroredPPU) {
         
         EXPECT_EQ(0, core.o_cs_prg);
         EXPECT_EQ(0, core.o_cs_ram);
-        EXPECT_EQ(1, core.o_cs_ppu);
         EXPECT_EQ(data, core.o_data_ppu);
     }
 }
@@ -234,7 +225,6 @@ TEST_F(CPUMemoryMap, ShouldOnlyEnableChipSelectsWhenClockIsEnabled) {
         
         EXPECT_EQ(0, core.o_cs_prg);
         EXPECT_EQ(0, core.o_cs_ram);
-        EXPECT_EQ(0, core.o_cs_ppu);
     }
 }
 

@@ -6,12 +6,49 @@ module NES(
     /* verilator lint_on UNUSED */
     /* verilator lint_on UNDRIVEN */
 
+    //////////////////////////////
+    // Video output
+    //////////////////////////////
+
     output [7:0] o_video_red,           // pixel colour - red
     output [7:0] o_video_green,         // pixel colour - green
     output [7:0] o_video_blue,          // pixel colour - blue
     output [8:0] o_video_x,             // pixel clock - x co-ord of current pixel
     output [8:0] o_video_y,             // pixel clock - y co-ord of current pixel
-    output o_video_visible              // is current pixel visible
+    output o_video_visible,             // is current pixel visible
+
+    //////////////////////////////
+    // CPU memory
+    //////////////////////////////
+
+    // RAM (read / write)
+    output o_cs_ram,
+    output [15:0] o_address_ram,
+    output o_rw_ram,
+    output [7:0] o_data_ram,
+    input [7:0] i_data_ram,
+
+    // PRG (read only)
+    output o_cs_prg,
+    output [15:0] o_address_prg,
+    input [7:0] i_data_prg,
+
+    //////////////////////////////
+    // PPU memory
+    //////////////////////////////
+
+    // pattern table
+    output o_cs_patterntable,
+    input [7:0] i_data_patterntable,
+    output o_rw_patterntable,
+    output [13:0] o_address_patterntable,
+
+    // nametable
+    output o_cs_nametable,
+    input [7:0] i_data_nametable,
+    output [7:0] o_data_nametable,
+    output o_rw_nametable,
+    output [13:0] o_address_nametable
 );
     wire w_ce_cpu;
 
@@ -104,15 +141,20 @@ module NES(
     wire [7:0] w_debug_video_buffer;
     /* verilator lint_on UNUSED */
 
+    wire [2:0] w_rs_ppu;
+    wire [7:0] w_data_ppu_cpu;
+    wire [7:0] w_data_cpu_ppu;
+    wire w_rw_ppu;
+
     PPU ppu(
         .i_clk(i_clk),
         .i_reset_n(i_reset_n),
         .i_cs_n(~w_ce_ppu),
         .o_int_n(w_nmi_n),
-        .i_rs(w_cpu_address[2:0]),
-        .i_data(w_ppu_data_input),
-        .o_data(w_ppu_data_output),
-        .i_rw(w_cpu_rw),
+        .i_rs(w_rs_ppu),
+        .i_data(w_data_cpu_ppu),
+        .o_data(w_data_ppu_cpu),
+        .i_rw(w_rw_ppu),
         .o_video_rd_n(w_ppu_rd_n),
         .o_video_we_n(w_ppu_we_n),
         .o_video_address(w_ppu_address_output),
@@ -144,26 +186,21 @@ module NES(
         .i_data_cpu(w_cpu_data_output),
         .o_data_cpu(w_cpu_data_input),
 
-        /* verilator lint_off PINCONNECTEMPTY */
-
         // RAM (read / write)
-        .o_cs_ram(),
-        .o_address_ram(),
-        .o_rw_ram(),
-        .o_data_ram(),
-        .i_data_ram(),
+        .o_cs_ram(o_cs_ram),
+        .o_address_ram(o_address_ram),
+        .o_rw_ram(o_rw_ram),
+        .o_data_ram(o_data_ram),
+        .i_data_ram(i_data_ram),
         // PRG (read only)
-        .o_cs_prg(),
-        .o_address_prg(),
-        .i_data_prg(),
+        .o_cs_prg(o_cs_prg),
+        .o_address_prg(o_address_prg),
+        .i_data_prg(i_data_prg),
         // PPU (read / write)
-        .o_cs_ppu(),
-        .o_rs_ppu(),
-        .o_data_ppu(),
-        .i_data_ppu(),
-        .o_rw_ppu()
-
-        /* verilator lint_on PINCONNECTEMPTY */
+        .o_rs_ppu(w_rs_ppu),
+        .o_data_ppu(w_data_cpu_ppu),
+        .i_data_ppu(w_data_ppu_cpu),
+        .o_rw_ppu(w_rw_ppu)
     );
 
     PPUMemoryMap ppuMemoryMap(
@@ -175,21 +212,18 @@ module NES(
         .o_data_ppu(w_ppu_data_input),
         .i_data_ppu(w_ppu_data_output),
 
-        /* verilator lint_off PINCONNECTEMPTY */
-
         // pattern table
-        .o_cs_patterntable(),
-        .i_data_patterntable(),
-        .o_rw_patterntable(),
-        .o_address_patterntable(),
-        // nametable
-        .o_cs_nametable(),
-        .i_data_nametable(),
-        .o_data_nametable(),
-        .o_rw_nametable(),
-        .o_address_nametable()
+        .o_cs_patterntable(o_cs_patterntable),
+        .i_data_patterntable(i_data_patterntable),
+        .o_rw_patterntable(o_rw_patterntable),
+        .o_address_patterntable(o_address_patterntable),
 
-        /* verilator lint_on PINCONNECTEMPTY */
+        // nametable
+        .o_cs_nametable(o_cs_nametable),
+        .i_data_nametable(i_data_nametable),
+        .o_data_nametable(o_data_nametable),
+        .o_rw_nametable(o_rw_nametable),
+        .o_address_nametable(o_address_nametable)
     );
 
 endmodule

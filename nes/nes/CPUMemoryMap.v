@@ -26,7 +26,6 @@ module CPUMemoryMap(
     input [7:0] i_data_prg,                 // data read from PRG
 
     // connections to PPU (read/write)
-    output o_cs_ppu,
     output [2:0] o_rs_ppu,
     output [7:0] o_data_ppu,
     input [7:0] i_data_ppu,
@@ -43,7 +42,10 @@ localparam RW_WRITE = 0;
 
 reg [1:0] r_address_range;
 reg [15:0] r_address;
+
+/* verilator lint_off UNOPTFLAT */
 reg [7:0] r_data;
+/* verilator lint_on UNOPTFLAT */
 
 always @(*)
 begin
@@ -88,14 +90,16 @@ begin
         begin
             r_address_range = ADDRESS_RANGE_PRG;
             r_address = i_address_cpu;
-            r_data = i_data_prg;
+            if (i_rw_cpu == RW_READ)
+            begin
+                r_data = i_data_prg;
+            end
         end
     end
 end
 
 assign o_cs_prg = (r_address_range == ADDRESS_RANGE_PRG);
 assign o_cs_ram = (r_address_range == ADDRESS_RANGE_RAM);
-assign o_cs_ppu = (r_address_range == ADDRESS_RANGE_PPU);
 assign o_data_cpu = (i_rw_cpu == RW_READ) ? r_data : 0;
 assign o_rw_ram = (r_address_range == ADDRESS_RANGE_RAM) ? i_rw_cpu : 0;
 assign o_address_ram = (r_address_range == ADDRESS_RANGE_RAM) ? r_address : 0;
