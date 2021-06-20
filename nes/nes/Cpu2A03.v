@@ -141,7 +141,7 @@ begin
     begin
         r_state <= STATE_CPU;
     end
-    else
+    else if (i_clk_en)
     begin
         case (r_state)
         STATE_CPU: begin
