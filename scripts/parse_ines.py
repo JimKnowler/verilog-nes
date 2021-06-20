@@ -64,7 +64,7 @@ def validate_ines(data, header):
     expected_file_size = SIZE_INES_HEADER + (size_prg_rom * SIZE_PRG_ROM_BANK) + (size_chr_rom * SIZE_CHR_ROM_BANK)
     assert(expected_file_size == len(data))
 
-def export_ines_chr_rom_bank(index, chr_data):
+def export_ines_chr_rom_bank_png(index, chr_data):
     BYTES_PER_TILE = 16         # 8 bits per row * 8 rows * 2 bits per pixels
     NUM_TILES = int(len(chr_data) / BYTES_PER_TILE)
 
@@ -98,7 +98,12 @@ def export_ines_chr_rom(data, header):
     offset_chr_rom = SIZE_INES_HEADER + (size_prg_rom * SIZE_PRG_ROM_BANK)
     for i in range(header['size_chr_rom']):
         bank_offset = offset_chr_rom + (i * SIZE_CHR_ROM_BANK)
-        export_ines_chr_rom_bank(i, data[bank_offset: bank_offset + SIZE_CHR_ROM_BANK])
+        chr_data = data[bank_offset: bank_offset + SIZE_CHR_ROM_BANK]
+        export_ines_chr_rom_bank_png(i, chr_data)
+
+        with open('chr_rom_bank_%d.bin' % (i), 'wb') as file:
+            file.write(chr_data)
+
 
 def export_ines_prg_rom(data, header):
     offset_prg_rom = SIZE_INES_HEADER
