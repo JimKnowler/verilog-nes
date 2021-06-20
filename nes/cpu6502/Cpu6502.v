@@ -151,6 +151,7 @@ wire w_error;
 Decoder decoder(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
+    .i_clk_en(i_clk_en),
     .i_ir(w_ir),
     .i_tcu(w_tcu),
     .i_p(w_p),

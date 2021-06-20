@@ -5,6 +5,7 @@
 module Decoder(
     input i_reset_n,
     input i_clk,
+    input i_clk_en,
 
     output reg o_error,             // 1 if an error has occurred
     
@@ -169,7 +170,7 @@ begin
         r_last_acr <= 0;
         r_bus_db_n <= 0;
     end
-    else
+    else if (i_clk_en == 1)
     begin
         r_last_acr <= i_acr;
         r_bus_db_n <= i_bus_db_n;
@@ -203,7 +204,7 @@ begin
         r_nmi_n <= 1;
         r_nmi_falling_edge <= 0;
     end
-    else
+    else if (i_clk_en == 1)
     begin
         r_irq_n <= i_irq_n;
         r_nmi_n_last <= r_nmi_n;
