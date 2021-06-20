@@ -48,7 +48,14 @@ module NES(
     input [7:0] i_data_nametable,
     output [7:0] o_data_nametable,
     output o_rw_nametable,
-    output [13:0] o_address_nametable
+    output [13:0] o_address_nametable,
+
+    //
+    // CPU Debugging
+    // 
+
+    output [7:0] o_cpu_debug_ir,
+    output o_cpu_debug_error
 );
     wire w_ce_cpu;
 
@@ -70,7 +77,6 @@ module NES(
     wire [7:0] w_debug_bus_adl;
     wire [7:0] w_debug_bus_adh;
     wire [7:0] w_debug_bus_sb;
-    wire [7:0] w_debug_ir;
     wire [3:0] w_debug_tcu;
     wire [7:0] w_debug_s;
     wire [7:0] w_debug_pcl;
@@ -81,7 +87,6 @@ module NES(
     wire [7:0] w_debug_x;
     wire [7:0] w_debug_y;
     wire [7:0] w_debug_p;
-    wire w_debug_error;
     /* verilator lint_on UNUSED */
 
     Cpu2A03 cpu(
@@ -99,7 +104,7 @@ module NES(
         .o_debug_bus_adl(w_debug_bus_adl),
         .o_debug_bus_adh(w_debug_bus_adh),
         .o_debug_bus_sb(w_debug_bus_sb),
-        .o_debug_ir(w_debug_ir),
+        .o_debug_ir(o_cpu_debug_ir),
         .o_debug_tcu(w_debug_tcu),
         .o_debug_s(w_debug_s),
         .o_debug_pcl(w_debug_pcl),
@@ -110,7 +115,7 @@ module NES(
         .o_debug_x(w_debug_x),
         .o_debug_y(w_debug_y),
         .o_debug_p(w_debug_p),
-        .o_debug_error(w_debug_error)
+        .o_debug_error(o_cpu_debug_error)
     );
 
     wire w_ce_ppu;

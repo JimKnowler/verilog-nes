@@ -27,7 +27,7 @@ namespace emulator {
     {
     public:
         Emulator() : sram(0x10000) {
-            sAppName = "FGPA NES Emulator";
+            sAppName = "Emulator - CPU 6502";
 
             SetPixelMode(olc::Pixel::ALPHA);
         }
@@ -79,7 +79,6 @@ namespace emulator {
             testBench.reset();
 
             // todo: reset testBench step count
-            
             simulateOpcode();               // skip SYNC incorrectly reported during RESET
             
             // skip reset
