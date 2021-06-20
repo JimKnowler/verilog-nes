@@ -7,7 +7,7 @@
 
 namespace emulator {
 
-    class Renderer {
+    class RendererCPU {
     public:
         void drawTitle(olc::PixelGameEngine& engine, int x, int y);
         void drawCPU(olc::PixelGameEngine& engine, int x, int y, cpu6502testbench::Cpu6502TestBench& testBench);

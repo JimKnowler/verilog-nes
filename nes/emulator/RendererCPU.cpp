@@ -1,4 +1,4 @@
-#include "nes/emulator/Renderer.hpp"
+#include "nes/emulator/RendererCPU.hpp"
 #include "nes/cpu6502/ProcessorStatusFlags.hpp"
 
 using namespace cpu6502;
@@ -38,14 +38,14 @@ namespace {
 }
 
 namespace emulator {
-    void Renderer::drawTitle(olc::PixelGameEngine& engine, int x, int y) {
+    void RendererCPU::drawTitle(olc::PixelGameEngine& engine, int x, int y) {
         engine.DrawString({x,y}, "Nintendo ENTERTAINMENT SYSTEM fpga version", olc::RED);
         y += kRowHeight;
 
         engine.DrawLine({x, y}, {x + 42 * 8, y}, olc::RED);
     }
 
-    void Renderer::drawCPU(olc::PixelGameEngine& engine, int x, int y, cpu6502testbench::Cpu6502TestBench& testBench) {
+    void RendererCPU::drawCPU(olc::PixelGameEngine& engine, int x, int y, cpu6502testbench::Cpu6502TestBench& testBench) {
         engine.DrawString({ x, y }, "CPU State", olc::RED);
         y += kRowHeight;
 
@@ -73,7 +73,7 @@ namespace emulator {
         }
     }
 
-    void Renderer::drawTestBench(olc::PixelGameEngine& engine, int x, int y, cpu6502testbench::Cpu6502TestBench& testBench, int numOpcodes) {
+    void RendererCPU::drawTestBench(olc::PixelGameEngine& engine, int x, int y, cpu6502testbench::Cpu6502TestBench& testBench, int numOpcodes) {
         engine.DrawString({ x, y }, "TestBench", olc::RED);
         y += kRowHeight;
 
@@ -95,7 +95,7 @@ namespace emulator {
         }
     }
 
-    void Renderer::drawDisassembly(olc::PixelGameEngine& engine, int x, int y, const cpu6502::assembler::Disassembler::DisassembledOpcodes& opcodes) {
+    void RendererCPU::drawDisassembly(olc::PixelGameEngine& engine, int x, int y, const cpu6502::assembler::Disassembler::DisassembledOpcodes& opcodes) {
         engine.DrawString({ x, y }, "Disassembly", olc::RED);
         y += kRowHeight;
 
@@ -110,7 +110,7 @@ namespace emulator {
         }
     }
 
-    void Renderer::drawStack(olc::PixelGameEngine& engine, int x, int y, cpu6502testbench::Cpu6502TestBench& testBench, const memory::SRAM& sram) {
+    void RendererCPU::drawStack(olc::PixelGameEngine& engine, int x, int y, cpu6502testbench::Cpu6502TestBench& testBench, const memory::SRAM& sram) {
         engine.DrawString({ x, y }, "Stack", olc::RED);
 
         const int kOffset = 3;
@@ -134,7 +134,7 @@ namespace emulator {
         }
     }
 
-    void Renderer::drawLastOpcodeTrace(olc::PixelGameEngine& engine, int x, int y, const gtestverilog::Trace& trace, const cpu6502::assembler::Disassembler::DisassembledOpcode& opcode) {
+    void RendererCPU::drawLastOpcodeTrace(olc::PixelGameEngine& engine, int x, int y, const gtestverilog::Trace& trace, const cpu6502::assembler::Disassembler::DisassembledOpcode& opcode) {
         engine.DrawString({ x, y }, "Last Opcode", olc::RED);
         y += kRowHeight;
 
@@ -159,7 +159,7 @@ namespace emulator {
     }
 
     
-    void Renderer::drawTrace(olc::PixelGameEngine& engine, int x, int y, const gtestverilog::Trace& trace) {
+    void RendererCPU::drawTrace(olc::PixelGameEngine& engine, int x, int y, const gtestverilog::Trace& trace) {
         // note: each text character is 8x8 pixels       
         // note: each Row is 10 pixels high
 
@@ -190,7 +190,7 @@ namespace emulator {
         drawTraceTimeline(engine, x, yTimeline, maxPortLabelSize + 11, steps.size(), yStart, yEnd);
     }
 
-    void Renderer::drawTraceTimeline(olc::PixelGameEngine& engine, int x, int y, size_t offsetX, size_t numSteps, int yTraceStart, int yTraceEnd) {
+    void RendererCPU::drawTraceTimeline(olc::PixelGameEngine& engine, int x, int y, size_t offsetX, size_t numSteps, int yTraceStart, int yTraceEnd) {
         x += (offsetX * kCharWidth);
 
         const int kDividerSize = 2;
@@ -208,7 +208,7 @@ namespace emulator {
         engine.DrawLine({x,yTraceStart}, {x,yTraceEnd}, olc::Pixel(150,150,150,50));
     }
 
-    size_t Renderer::drawTracePort(olc::PixelGameEngine& engine, int x, int y, int portIndex, size_t maxPortLabelSize, const gtestverilog::PortDescription& portDesc, const std::vector<gtestverilog::Step>& steps) {
+    size_t RendererCPU::drawTracePort(olc::PixelGameEngine& engine, int x, int y, int portIndex, size_t maxPortLabelSize, const gtestverilog::PortDescription& portDesc, const std::vector<gtestverilog::Step>& steps) {
         size_t numRows = size_t(ceil(portDesc.width() / 4.0f));
 
         // choose colour for the port

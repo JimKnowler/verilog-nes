@@ -7,7 +7,7 @@
 #include "nes/cpu6502/assembler/Disassembler.hpp"
 #include "nes/memory/SRAM.hpp"
 #include "nes/Cpu6502TestBench.h"
-#include "nes/emulator/Renderer.hpp"
+#include "nes/emulator/RendererCPU.hpp"
 
 #include <vector>
 #include <cassert>
@@ -26,7 +26,7 @@ namespace emulator {
     class Emulator : public olc::PixelGameEngine
     {
     public:
-        Emulator() : sram(0xffff) {
+        Emulator() : sram(0x10000) {
             sAppName = "FGPA NES Emulator";
 
             SetPixelMode(olc::Pixel::ALPHA);
@@ -36,7 +36,7 @@ namespace emulator {
         bool OnUserCreate() override {
             initSimulation();
 
-            //initSimpleProgram()
+            //initSimpleProgram();
             initMario();
 
             mode = kSingleStep;
@@ -64,7 +64,7 @@ namespace emulator {
         Disassembler::DisassembledOpcode lastOpcode;
         gtestverilog::Trace traceLastOpcode;
         
-        Renderer renderer;
+        RendererCPU renderer;
 
         int numOpcodes;
 
@@ -284,6 +284,10 @@ namespace emulator {
             const int kMaxTicks = 10;
 
             auto& core = testBench.core();
+
+            core.i_clk_en = 1;
+            core.i_irq_n = 1;
+            core.i_nmi_n = 1;
 
             for (int i=0; i<kMaxTicks; i++) {
                 testBench.tick();

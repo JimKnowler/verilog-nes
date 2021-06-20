@@ -407,7 +407,7 @@ cc_test(
 )
 
 cc_binary(
-    name = "emulator",
+    name = "emulator-cpu",
     srcs = glob(
         include =[
             "**/*.cpp",
@@ -418,7 +418,8 @@ cc_binary(
         exclude = [
             "**/test/**/*",
             "**/*.test.cpp",
-            "emulator/EmulatorVGA.cpp"
+            "emulator/EmulatorVGA.cpp",
+            "emulator/EmulatorNES.cpp"
         ]
     ) + [
         ":Cpu6502TestBench"
@@ -459,8 +460,9 @@ cc_binary(
         exclude = [
             "**/test/**/*",
             "**/*.test.cpp",
-            "emulator/Emulator.cpp",
-            "emulator/Renderer.cpp"
+            "emulator/EmulatorCPU.cpp",
+            "emulator/EmulatorNES.cpp",
+            "emulator/RendererCPU.cpp"
         ]
     ) + [
         ":VGAExampleTestBench",
@@ -468,6 +470,35 @@ cc_binary(
     deps = [
         "@gtestverilog//gtestverilog:lib",
         ":VGAExample",
+    ],
+    linkopts = [
+        "-framework OpenGL",
+        "-framework GLUT"
+    ]
+)
+
+cc_binary(
+    name = "emulator-nes",
+    srcs = glob(
+        include =[
+            "**/*.cpp",
+            "**/*.h",
+            "**/*.hpp",
+            "**/*.inl"
+        ],
+        exclude = [
+            "**/test/**/*",
+            "**/*.test.cpp",
+            "emulator/EmulatorVGA.cpp",
+            "emulator/EmulatorCPU.cpp",
+            "emulator/RendererCPU.cpp"
+        ]
+    ) + [
+        ":NESTestBench"
+    ],
+    deps = [
+        "@gtestverilog//gtestverilog:lib",
+        ":NES"
     ],
     linkopts = [
         "-framework OpenGL",
