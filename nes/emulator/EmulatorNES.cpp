@@ -116,9 +116,11 @@ namespace emulator {
         void simulateTick() {
             testBench.tick();
 
-            printf("CPU - IR = 0x%02X\n", testBench.core().o_cpu_debug_ir);
+            auto& core = testBench.core();
+
+            printf("CPU - IR:0x%02X address:0x%04X rw:%d\n", core.o_cpu_debug_ir, core.o_cpu_debug_address, core.o_cpu_debug_rw);
             
-            if (testBench.core().o_cpu_debug_error == 1) {
+            if (core.o_cpu_debug_error == 1) {
                 printf("error!\n");
 
                 exit(2);

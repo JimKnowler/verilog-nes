@@ -55,7 +55,9 @@ module NES(
     // 
 
     output [7:0] o_cpu_debug_ir,
-    output o_cpu_debug_error
+    output o_cpu_debug_error,
+    output o_cpu_debug_rw,
+    output [15:0] o_cpu_debug_address
 );
     wire w_ce_cpu;
 
@@ -230,5 +232,9 @@ module NES(
         .o_rw_nametable(o_rw_nametable),
         .o_address_nametable(o_address_nametable)
     );
+
+
+    assign o_cpu_debug_rw = w_cpu_rw;
+    assign o_cpu_debug_address = w_cpu_address;
 
 endmodule
