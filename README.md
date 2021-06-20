@@ -36,17 +36,17 @@ Test the VGA output module.
 ## Run
 > ./bazel-bin/nes/emulator-vga
 
-# NES Emulator
+# 6502 Emulator
 
 Currently supported on MacOSX.
 
 Implemented with the [OneLoneCoder Pixel Game Engine](https://github.com/OneLoneCoder/olcPixelGameEngine).
 
 ## Build 
-> bazel build //nes:emulator --incompatible_require_linker_input_cc_api=false --config release
+> bazel build //nes:emulator-cpu --incompatible_require_linker_input_cc_api=false --config release
 
 ## Run
-> ./bazel-bin/nes/emulator
+> ./bazel-bin/nes/emulator-cpu
 
 ## Keyboard Controls
 
@@ -55,6 +55,19 @@ Implemented with the [OneLoneCoder Pixel Game Engine](https://github.com/OneLone
 | Z             | Reset Simulation |
 | R             | Switch between single step and run mode    |
 | SPACE         | Step through a single Opcode (in single step mode)      |
+
+# NES Emulator
+
+Currently supported on MacOSX.
+
+Implemented with the [OneLoneCoder Pixel Game Engine](https://github.com/OneLoneCoder/olcPixelGameEngine).
+
+## Build 
+> bazel build //nes:emulator-nes --incompatible_require_linker_input_cc_api=false --config release
+
+## Run
+> ./bazel-bin/nes/emulator-nes
+
 # Components
 
 - FPGA
