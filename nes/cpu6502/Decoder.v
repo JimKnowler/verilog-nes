@@ -152,7 +152,8 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  EOR_ax = 8'h5D,    EOR_ay = 8'h59,
                  STA_ax = 8'h9D,    STA_ay = 8'h99,
                  STA_zp = 8'h85,    STX_zp = 8'h86,     STY_zp = 8'h84,
-                 STA_zp_ind_y = 8'h91;
+                 STA_zp_ind_y = 8'h91,
+                 LDA_zp_ind_y = 8'hB1;
 
 // RW pin
 localparam RW_READ = 1;
@@ -637,7 +638,7 @@ begin
                 load_z_n_from_db(1);
             end
         end
-        LDA_a, LDX_a, LDY_a:
+        LDA_a, LDX_a, LDY_a, LDA_zp_ind_y:
         begin
             if (w_phi1)
             begin
@@ -649,7 +650,7 @@ begin
                 output_add_on_sb(1);
 
                 case (w_ir)
-                LDA_a: o_sb_ac = 1;
+                LDA_a, LDA_zp_ind_y: o_sb_ac = 1;
                 LDX_a: o_sb_x = 1;
                 LDY_a: o_sb_y = 1;
                 default: begin
@@ -1097,6 +1098,14 @@ begin
                 next_opcode();
             end 
         end
+        LDA_zp_ind_y:
+        begin
+            // load page zero indirect address
+            output_pch_on_abh(1);
+            output_pcl_on_abl(1);
+            retain_pc(1);
+            increment_pc(1);
+        end
         default:
         begin
             // unsupported opcode
@@ -1306,6 +1315,22 @@ begin
             begin
                 next_opcode();
             end
+        end
+        LDA_zp_ind_y:
+        begin
+            retain_pc(1);
+
+            // output 0, IAL - low byte of base address
+            output_0_on_abh(1);
+            output_dl_on_abl(1);
+
+            // start increment of 
+            load_add_from_dl(1);
+
+            // increment add
+            o_1_addc = 1;
+            o_sums = 1;
+            o_0_add = 1;
         end
         default:
         begin
@@ -1546,6 +1571,23 @@ begin
             o_sb_add = 1;
             o_sums = 1;
         end
+        LDA_zp_ind_y:
+        begin
+            retain_pc(1);
+
+            // output 0, IAL + 1 on address bus = fetch high byte of base address
+            output_0_on_abh(1);
+            output_add_on_abl(1);
+
+            // load low byte of base address into ADD
+            load_add_from_dl(1);
+            
+            // increment add by Y
+            o_sums = 1;
+            o_0_add = 0;                // cancel this signal set in load_add_from_dl
+            o_y_sb = 1;
+            o_sb_add = 1;
+        end
         default:
         begin
         end
@@ -1741,6 +1783,15 @@ begin
             load_add_from_dl(1);
 
             o_1_addc = r_last_acr;
+        end
+        LDA_zp_ind_y:
+        begin
+            retain_pc(1);
+
+            output_dl_on_abh(1);
+            output_add_on_abl(1);
+
+            next_opcode();
         end
         default:
         begin

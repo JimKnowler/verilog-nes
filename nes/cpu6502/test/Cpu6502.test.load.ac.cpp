@@ -278,3 +278,73 @@ TEST_F(Cpu6502, ShouldImplementLDAabsoluteIndexedWithYProcessorStatusWithCarry) 
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
+
+TEST_F(Cpu6502, ShouldImplementLDAZeroPageIndirectIndexedWithY) {
+    sram.clear(0);
+    
+    const uint8_t kTestAddressIndirect = 42;
+    const uint16_t kTestAddress = 0x1230;
+    const uint8_t kTestOffset = 0x4;
+    const uint8_t kTestData = 0x50;
+
+    Assembler assembler;
+    assembler
+        .NOP()
+        .org(0x0000 + kTestAddressIndirect)
+            .word(kTestAddress)
+        .org(kTestAddress + kTestOffset)
+            .byte(kTestData)
+        .org(0xABCD)
+        .label("init")
+            .LDY().immediate(kTestOffset)
+        .label("start")
+            .LDA().zpIndirect(kTestAddressIndirect).y()
+            .NOP()
+        .org(0xFFFC)
+        .word("init")
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    cpu6502::assembler::Address addressStart("start");
+    assembler.lookupAddress(addressStart);
+
+    // simulate LDY (init)
+    testBench.tick(2);
+    testBench.trace.clear();
+
+    // simulate LDA (zp),y
+    testBench.tick(7);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(7)
+        .port(o_rw).signal("11")
+                    .repeat(7)
+        .port(o_sync).signal("1000010").repeatEachStep(2)
+        .port(o_debug_tcu).signal({0,1,2,3,4,0,1}).repeatEachStep(2)
+        .port(o_address).signal({
+                            // LDA (zp),y
+                            addressStart.byteIndex(),
+                            addressStart.byteIndex()+1u,
+                            0x0000 + kTestAddressIndirect,
+                            0x0001 + kTestAddressIndirect,
+                            kTestAddress + kTestOffset,
+
+                            // NOP
+                            addressStart.byteIndex() + 2u,
+                            addressStart.byteIndex() + 3u
+                        })
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({0xFF}).repeat(6)
+                         .signal({kTestData}).repeat(1)
+                        .concat()
+                        .repeatEachStep(2)
+        .port(o_debug_x).signal({0xFF}).repeat(7).repeatEachStep(2)
+        .port(o_debug_y).signal({kTestOffset}).repeat(7).repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+// TODO
+// TEST_F(Cpu6502, ShouldImplementLDAZeroPageIndirectIndexedWithYWithCarry) {
