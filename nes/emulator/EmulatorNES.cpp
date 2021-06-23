@@ -51,6 +51,7 @@ namespace emulator {
         
     private:
         NESTestBench testBench;
+        int numTicks = 0;
 
         // CPU memory
         SRAM sram;
@@ -109,19 +110,22 @@ namespace emulator {
                 }
             }
 
+            // current output position
             auto& core = testBench.core();
+            FillRect({ x , y + (core.o_video_y*kPixelSize)}, {kPixelSize * kNESWidth, kPixelSize}, olc::GREY);
             FillRect({ x + (core.o_video_x * kPixelSize), y + (core.o_video_y * kPixelSize)}, {kPixelSize << 1, kPixelSize << 1}, olc::WHITE);
         }
 
         void simulateTick() {
             testBench.tick();
+            numTicks += 1;
 
             auto& core = testBench.core();
 
             printf("CPU - IR:0x%02X address:0x%04X rw:%d\n", core.o_cpu_debug_ir, core.o_cpu_debug_address, core.o_cpu_debug_rw);
             
             if (core.o_cpu_debug_error == 1) {
-                printf("error!\n");
+                printf("error! tick (%d)\n", numTicks);
 
                 exit(2);
             }
