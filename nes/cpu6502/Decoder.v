@@ -1791,7 +1791,20 @@ begin
             output_dl_on_abh(1);
             output_add_on_abl(1);
 
-            next_opcode();
+            if (r_last_acr == 1)
+            begin
+                // use ALU to add +1 to Base address high (BAH)
+
+                // B INPUT = (BAH)
+                load_add_from_dl(1);
+
+                // + 1
+                o_1_addc = 1;
+            end
+            else
+            begin
+                next_opcode();
+            end
         end
         default:
         begin
@@ -1900,6 +1913,14 @@ begin
             o_ac_db = 1;
 
             next_opcode();            
+        end
+        LDA_zp_ind_y:
+        begin
+            retain_pc(1);
+
+            output_add_on_abh(1);
+
+            next_opcode();
         end
         default:
         begin
