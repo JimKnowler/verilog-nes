@@ -52,6 +52,7 @@ namespace emulator {
     private:
         NESTestBench testBench;
         int numTicks = 0;
+        int numFrames = 0;
 
         // CPU memory
         SRAM sram;
@@ -91,6 +92,24 @@ namespace emulator {
 
             drawTitle(10, 10);
             drawPixels(10, 50);
+            drawStats(700, 50);
+            
+        }
+
+        void drawStats(int x, int y) {
+            DrawString({x,y}, "Stats", olc::RED);
+            y += kRowHeight;
+            DrawLine({x, y}, {x + 42 * 8, y}, olc::RED);
+            y += kRowHeight;
+
+            char buffer[32];
+            sprintf(buffer, " #ticks %d", numTicks);
+            DrawString({x,y}, buffer, olc::BLACK);
+            y += kRowHeight;
+
+            sprintf(buffer, "#frames %d", numFrames);
+            DrawString({x,y}, buffer, olc::BLACK);
+            y += kRowHeight;
         }
 
         void drawTitle(int x, int y) {
@@ -117,10 +136,14 @@ namespace emulator {
         }
 
         void simulateTick() {
-            testBench.tick();
-            numTicks += 1;
-
             auto& core = testBench.core();
+
+            testBench.tick();
+
+            if ((core.o_video_x == 0) && (core.o_video_y == 0)) {
+                numFrames +=1;
+            }
+            numTicks += 1;
 
             printf("CPU - IR:0x%02X address:0x%04X rw:%d\n", core.o_cpu_debug_ir, core.o_cpu_debug_address, core.o_cpu_debug_rw);
             
