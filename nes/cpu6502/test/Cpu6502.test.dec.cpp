@@ -520,3 +520,115 @@ TEST_F(Cpu6502, ShouldImplementSBCabsoluteIndexedWithYProcessorStatusWithCarry) 
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
+
+TEST_F(Cpu6502, ShouldImplementSBCabsoluteIndexedWithXWithoutCarry) {
+    const uint16_t kTestAddress = 0x5678;
+    const uint8_t kTestData1 = 0x45;
+    const uint8_t kTestData2 = 0x22;
+
+    TestAbsoluteIndexed<SBC> testAbsolute = {
+        {
+            .address = kTestAddress,
+            .data = kTestData2,
+            .port = o_debug_ac,
+            .expected = kTestData1 - kTestData2,
+
+            .preloadPort = &o_debug_ac,
+            .preloadPortValue = kTestData1
+        },
+
+        .indexRegister = kX,
+        .preloadIndexRegisterValue = 5,
+    };
+
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementSBCabsoluteIndexedWithXProcessorStatusWithoutCarry) {
+    for (auto& testCase : kTestCasesSBC) {
+        const uint8_t kTestData1 = testCase.first.first;
+        const uint8_t kTestData2 = testCase.first.second;
+        
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        const uint8_t kX = 3;
+
+        sram.clear(0);
+    
+        Assembler()
+                .LDA().immediate(kTestData1)
+                .LDX().immediate(kX)
+                .SBC().absolute("decrement").x()
+                .NOP()
+            .org(0x678A)
+            .label("decrement")
+            .org(0x678A + kX)
+            .byte(kTestData2)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.trace.clear();
+
+        testBench.tick(10);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementSBCabsoluteIndexedWithXWithCarry) {
+    const uint16_t kTestAddress = 0x5678;
+    const uint8_t kTestData1 = 0x45;
+    const uint8_t kTestData2 = 0x22;
+
+    TestAbsoluteIndexed<SBC> testAbsolute = {
+        {
+            .address = kTestAddress,
+            .data = kTestData2,
+            .port = o_debug_ac,
+            .expected = kTestData1 - kTestData2,
+
+            .preloadPort = &o_debug_ac,
+            .preloadPortValue = kTestData1
+        },
+
+        .indexRegister = kX,
+        .preloadIndexRegisterValue = 3,
+    };
+
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementSBCabsoluteIndexedWithXProcessorStatusWithCarry) {
+    for (auto& testCase : kTestCasesSBC) {
+        const uint8_t kTestData1 = testCase.first.first;
+        const uint8_t kTestData2 = testCase.first.second;
+        
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        const uint8_t kX = 3;
+
+        sram.clear(0);
+    
+        Assembler()
+                .LDA().immediate(kTestData1)
+                .LDX().immediate(kX)
+                .SBC().absolute("decrement").x()
+                .NOP()
+            .org(0x67FE)
+            .label("decrement")
+            .org(0x67FE + kX)
+            .byte(kTestData2)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.trace.clear();
+
+        testBench.tick(11);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+// TODO: SBC a,x + SBC a,y with 'carry in'
