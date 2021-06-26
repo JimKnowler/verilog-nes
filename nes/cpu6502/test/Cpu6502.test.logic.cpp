@@ -1033,3 +1033,79 @@ TEST_F(Cpu6502, ShouldImplementORAzeropageProcessorStatus) {
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
+
+TEST_F(Cpu6502, ShouldImplementEORzeropage) {
+    sram.clear(0);
+    
+    const uint8_t kTestDataA = 0b10110011;
+    const uint8_t kTestAddress = 0x67;
+    const uint8_t kTestDataI = 0b10010110;
+    const uint8_t kExpectedData = kTestDataA ^ kTestDataI;
+
+    Assembler()
+            .LDA().immediate(kTestDataA)
+            .EOR().zp(kTestAddress)
+            .NOP()
+        .org(0x0000 + kTestAddress)
+        .byte(kTestDataI)
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    // skip LDA
+    testBench.tick(2);
+    testBench.trace.clear();
+
+    // simulate EOR and NOP
+    testBench.tick(5);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(5)
+        .port(o_rw).signal("11")
+                    .repeat(5)
+        .port(o_sync).signal("10010").repeatEachStep(2)
+        .port(o_address).signal({
+                            // EOR
+                            2,
+                            3,
+                            0x0000 + kTestAddress,
+
+                            // NOP
+                            4,
+                            5
+                        })
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({kTestDataA}).repeat(8)
+                         .signal({kExpectedData}).repeat(2)
+        .port(o_debug_x).signal({0xFF}).repeat(10)
+        .port(o_debug_y).signal({0xFF}).repeat(10);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldImplementEORzeropageProcessorStatus) {
+    const uint8_t kTestAddress = 0x83;
+
+    for (auto& testCase : kTestCasesEOR) {
+        const uint8_t kTestDataA = testCase.first.first;
+        const uint8_t kTestDataI = testCase.first.second;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+                .LDA().immediate(kTestDataA)
+                .EOR().zp(kTestAddress)
+                .NOP()
+            .org(0x0000 + kTestAddress)
+            .byte(kTestDataI)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(7);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}

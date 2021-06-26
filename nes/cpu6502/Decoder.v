@@ -156,7 +156,8 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  LDA_zp_ind_y = 8'hB1,
                  ORA_zp = 8'h05,
                  SBC_ax = 8'hFD, SBC_ay = 8'hF9,
-                 INC_zp = 8'hE6, DEC_zp = 8'hC6;
+                 INC_zp = 8'hE6, DEC_zp = 8'hC6,
+                 EOR_zp = 8'h45;
 
 // RW pin
 localparam RW_READ = 1;
@@ -670,7 +671,7 @@ begin
         CMP_ax, CMP_ay,
         AND_ax, AND_ay,
         ORA_ax, ORA_ay,
-        EOR_ax, EOR_ay:
+        EOR_ax, EOR_ay, EOR_zp:
         begin
             if (w_phi1)
             begin
@@ -691,7 +692,7 @@ begin
                     o_db_add = 1;
                     o_ands = 1;
                 end
-                EOR_a, EOR_ax, EOR_ay: begin
+                EOR_a, EOR_ax, EOR_ay, EOR_zp: begin
                     o_db_add = 1;
                     o_eors = 1;
                 end
@@ -732,7 +733,7 @@ begin
                 // load Accumulator from SB
                 case (w_ir)
                 AND_a, AND_ax, AND_ay,
-                EOR_a, EOR_ax, EOR_ay,
+                EOR_a, EOR_ax, EOR_ay, EOR_zp,
                 ORA_a, ORA_ax, ORA_ay,
                 ADC_a,
                 SBC_a, SBC_ax, SBC_ay: begin
@@ -837,11 +838,6 @@ begin
                     // load carry flag from result
                     o_acr_c = 1;
 
-                    o_sb_ac = 1;
-                end
-                AND_a, EOR_a,
-                ORA_a, ADC_a,
-                SBC_a: begin
                     o_sb_ac = 1;
                 end
                 default: begin
@@ -1004,7 +1000,8 @@ begin
         STA_zp, STX_zp, STY_zp,
         STA_zp_ind_y,
         ORA_zp, SBC_ax, SBC_ay,
-        INC_zp, DEC_zp:
+        INC_zp, DEC_zp,
+        EOR_zp:
         begin
             // Read PC+1
             output_pch_on_abh(1);
@@ -1347,13 +1344,22 @@ begin
             o_sums = 1;
             o_0_add = 1;
         end
-        INC_zp, DEC_zp:
+        INC_zp, DEC_zp, EOR_zp:
         begin
             retain_pc(1);
 
             // output 0, ADL - zero page effective address
             output_0_on_abh(1);
             output_dl_on_abl(1);
+
+            case (w_ir)
+            EOR_zp:
+            begin
+                next_opcode();
+            end
+            default: begin
+            end
+            endcase
         end
         default:
         begin
