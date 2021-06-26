@@ -154,7 +154,8 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  STA_zp = 8'h85,    STX_zp = 8'h86,     STY_zp = 8'h84,
                  STA_zp_ind_y = 8'h91,
                  LDA_zp_ind_y = 8'hB1,
-                 ORA_zp = 8'h05;
+                 ORA_zp = 8'h05,
+                 SBC_ay = 8'hF9;
 
 // RW pin
 localparam RW_READ = 1;
@@ -663,7 +664,7 @@ begin
             end
         end
         CMP_a, CPX_a, CPY_a,
-        ADC_a, SBC_a,
+        ADC_a, SBC_a, SBC_ay,
         AND_a, EOR_a, ORA_a,
         CMP_ax, CMP_ay,
         AND_ax, AND_ay,
@@ -704,7 +705,7 @@ begin
                     // carry in
                     o_1_addc = i_p[C];
                 end
-                SBC_a: begin
+                SBC_a, SBC_ay: begin
                     o_db_n_add = 1;
                     o_sums = 1;
                     
@@ -733,7 +734,7 @@ begin
                 EOR_a, EOR_ax, EOR_ay,
                 ORA_a, ORA_ax, ORA_ay,
                 ADC_a,
-                SBC_a: begin
+                SBC_a, SBC_ay: begin
                     o_sb_ac = 1;
                 end
                 default: begin
@@ -747,7 +748,7 @@ begin
                     // C flag
                     o_acr_c = 1;
                 end
-                ADC_a, SBC_a: 
+                ADC_a, SBC_a, SBC_ay: 
                 begin
                     // C + V flags
                     o_acr_c = 1;
@@ -1001,7 +1002,7 @@ begin
         STA_ax, STA_ay,
         STA_zp, STX_zp, STY_zp,
         STA_zp_ind_y,
-        ORA_zp:
+        ORA_zp, SBC_ay:
         begin
             // Read PC+1
             output_pch_on_abh(1);
@@ -1274,7 +1275,8 @@ begin
         CMP_ax, CMP_ay, AND_ax, AND_ay,
         ORA_ax, ORA_ay,
         EOR_ax, EOR_ay,
-        STA_ax, STA_ay:
+        STA_ax, STA_ay,
+        SBC_ay:
         begin
             // PC + 2 = Fetch high order effective address byte            
             retain_pc(1);
@@ -1292,7 +1294,7 @@ begin
                 o_sb_add = 1;
                 o_x_sb = 1;
             end
-            LDA_ay, CMP_ay, LDX_ay, AND_ay, ORA_ay, EOR_ay, STA_ay:
+            LDA_ay, CMP_ay, LDX_ay, AND_ay, ORA_ay, EOR_ay, STA_ay, SBC_ay:
             begin
                 // add index register
                 o_0_add = 0;                // cancel this signal set in load_add_from_dl
@@ -1470,7 +1472,8 @@ begin
         LDA_ax, LDA_ay, CMP_ax, CMP_ay, LDX_ay, LDY_ax, AND_ax, AND_ay,
         ORA_ax, ORA_ay,
         EOR_ax, EOR_ay,
-        STA_ax, STA_ay: begin
+        STA_ax, STA_ay,
+        SBC_ay: begin
             output_dl_on_abh(1);        // BAH
             output_add_on_abl(1);
                         
@@ -1766,7 +1769,8 @@ begin
         LDA_ax, LDA_ay, CMP_ax, CMP_ay, LDX_ay, LDY_ax, AND_ax, AND_ay,
         ORA_ax, ORA_ay,
         EOR_ax, EOR_ay,
-        STA_ax, STA_ay:
+        STA_ax, STA_ay,
+        SBC_ay:
         begin
             retain_pc(1);
             output_add_on_abh(1);

@@ -1,5 +1,28 @@
 #include "Cpu6502.fixture.hpp"
 
+namespace {
+    // todo: compare this to real 6502
+    const std::map<std::pair<uint8_t, uint8_t>, uint8_t> kTestCasesSBCWithCarryIn = {
+        {{0x00, 0x00}, N},
+        {{0x00, 0x01}, N},
+        {{0x7F, 0x00}, C},
+        {{0x80, 0x00}, C|V},
+        {{0xFF, 0x00}, C|N},
+        {{0xFF, 0x01}, C|N},
+        {{0xFF, 0x80}, C},
+        {{0xFF, 0x7F}, C|V}
+    };
+
+    const std::map<std::pair<uint8_t, uint8_t>, uint8_t> kTestCasesSBC = {
+        {{0x00, 0x00}, C|Z},
+        {{0x00, 0x01}, N},
+        {{0x7F, 0x01}, C},      
+        {{0x80, 0x00}, C|N},
+        {{0xFF, 0x01}, C|N},
+        {{0xFF, 0x80}, C}
+    };
+}
+
 TEST_F(Cpu6502, ShouldImplementDEX) {
     sram.clear(0);
     
@@ -168,17 +191,7 @@ TEST_F(Cpu6502, ShouldImplementSBCimmediate) {
 }
 
 TEST_F(Cpu6502, ShouldImplementSBCimmediateProcessorStatus) {
-    // TODO: compare these to a real 6502
-    const std::map<std::pair<uint8_t, uint8_t>, uint8_t> testCases = {
-        {{0x00, 0x00}, C|Z},
-        {{0x00, 0x01}, N},
-        {{0x7F, 0x01}, C},      
-        {{0x80, 0x00}, C|N},
-        {{0xFF, 0x01}, C|N},
-        {{0xFF, 0x80}, C}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesSBC) {
         const uint8_t kTestData1 = testCase.first.first;
         const uint8_t kTestData2 = testCase.first.second;
         
@@ -242,19 +255,7 @@ TEST_F(Cpu6502, ShouldImplementSBCimmediateWithCarryIn) {
 }
 
 TEST_F(Cpu6502, ShouldImplementSBCimmediateProcessorStatusWithCarryIn) {
-    // todo: compare this to real 6502
-    const std::map<std::pair<uint8_t, uint8_t>, uint8_t> testCases = {
-        {{0x00, 0x00}, N},
-        {{0x00, 0x01}, N},
-        {{0x7F, 0x00}, C},
-        {{0x80, 0x00}, C|V},
-        {{0xFF, 0x00}, C|N},
-        {{0xFF, 0x01}, C|N},
-        {{0xFF, 0x80}, C},
-        {{0xFF, 0x7F}, C|V}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesSBCWithCarryIn) {
         const uint8_t kTestData1 = testCase.first.first;
         const uint8_t kTestData2 = testCase.first.second;
         
@@ -339,17 +340,7 @@ TEST_F(Cpu6502, ShouldImplementSBCabsolute) {
 }
 
 TEST_F(Cpu6502, ShouldImplementSBCabsoluteProcessorStatus) {
-    // TODO: compare these to a real 6502
-    const std::map<std::pair<uint8_t, uint8_t>, uint8_t> testCases = {
-        {{0x00, 0x00}, C|Z},
-        {{0x00, 0x01}, N},
-        {{0x7F, 0x01}, C},      
-        {{0x80, 0x00}, C|N},
-        {{0xFF, 0x01}, C|N},
-        {{0xFF, 0x80}, C}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesSBC) {
         const uint8_t kTestData1 = testCase.first.first;
         const uint8_t kTestData2 = testCase.first.second;
         
@@ -394,19 +385,7 @@ TEST_F(Cpu6502, ShouldImplementSBCabsoluteWithCarryIn) {
 }
 
 TEST_F(Cpu6502, ShouldImplementSBCabsoluteProcessorStatusWithCarryIn) {
-    // todo: compare this to real 6502
-    const std::map<std::pair<uint8_t, uint8_t>, uint8_t> testCases = {
-        {{0x00, 0x00}, N},
-        {{0x00, 0x01}, N},
-        {{0x7F, 0x00}, C},
-        {{0x80, 0x00}, C|V},
-        {{0xFF, 0x00}, C|N},
-        {{0xFF, 0x01}, C|N},
-        {{0xFF, 0x80}, C},
-        {{0xFF, 0x7F}, C|V}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesSBCWithCarryIn) {
         const uint8_t kTestData1 = testCase.first.first;
         const uint8_t kTestData2 = testCase.first.second;
         
@@ -428,6 +407,116 @@ TEST_F(Cpu6502, ShouldImplementSBCabsoluteProcessorStatusWithCarryIn) {
         helperSkipResetVector();
 
         testBench.tick(10);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementSBCabsoluteIndexedWithYWithoutCarry) {
+    const uint16_t kTestAddress = 0x5678;
+    const uint8_t kTestData1 = 0x45;
+    const uint8_t kTestData2 = 0x22;
+
+    TestAbsoluteIndexed<SBC> testAbsolute = {
+        {
+            .address = kTestAddress,
+            .data = kTestData2,
+            .port = o_debug_ac,
+            .expected = kTestData1 - kTestData2,
+
+            .preloadPort = &o_debug_ac,
+            .preloadPortValue = kTestData1
+        },
+
+        .indexRegister = kY,
+        .preloadIndexRegisterValue = 5,
+    };
+
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementSBCabsoluteIndexedWithYProcessorStatusWithoutCarry) {
+    for (auto& testCase : kTestCasesSBC) {
+        const uint8_t kTestData1 = testCase.first.first;
+        const uint8_t kTestData2 = testCase.first.second;
+        
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        const uint8_t kY = 3;
+
+        sram.clear(0);
+    
+        Assembler()
+                .LDA().immediate(kTestData1)
+                .LDY().immediate(kY)
+                .SBC().absolute("decrement").y()
+                .NOP()
+            .org(0x678A)
+            .label("decrement")
+            .org(0x678A + kY)
+            .byte(kTestData2)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.trace.clear();
+
+        testBench.tick(10);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementSBCabsoluteIndexedWithYWithCarry) {
+    const uint16_t kTestAddress = 0x5678;
+    const uint8_t kTestData1 = 0x45;
+    const uint8_t kTestData2 = 0x22;
+
+    TestAbsoluteIndexed<SBC> testAbsolute = {
+        {
+            .address = kTestAddress,
+            .data = kTestData2,
+            .port = o_debug_ac,
+            .expected = kTestData1 - kTestData2,
+
+            .preloadPort = &o_debug_ac,
+            .preloadPortValue = kTestData1
+        },
+
+        .indexRegister = kY,
+        .preloadIndexRegisterValue = 3,
+    };
+
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementSBCabsoluteIndexedWithYProcessorStatusWithCarry) {
+    for (auto& testCase : kTestCasesSBC) {
+        const uint8_t kTestData1 = testCase.first.first;
+        const uint8_t kTestData2 = testCase.first.second;
+        
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        const uint8_t kY = 3;
+
+        sram.clear(0);
+    
+        Assembler()
+                .LDA().immediate(kTestData1)
+                .LDY().immediate(kY)
+                .SBC().absolute("decrement").y()
+                .NOP()
+            .org(0x67FE)
+            .label("decrement")
+            .org(0x67FE + kY)
+            .byte(kTestData2)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.trace.clear();
+
+        testBench.tick(11);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
