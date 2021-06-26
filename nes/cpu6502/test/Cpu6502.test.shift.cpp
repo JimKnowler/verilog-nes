@@ -675,3 +675,218 @@ TEST_F(Cpu6502, ShouldImplementROLabsoluteWithCarryInProcessorStatus) {
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
+
+TEST_F(Cpu6502, ShouldImplementRORabsoluteIndexedWithX) {
+    const uint16_t kTestAddress = 0x5678;
+    const uint8_t kTestData = 0x93;
+
+    TestAbsoluteIndexed<ROR> testAbsolute = {
+        {
+            .address = kTestAddress,
+            .data = kTestData,
+            .expected = kTestData >> 1
+        },
+
+        .indexRegister = kX,
+        .preloadIndexRegisterValue = 5,
+    };
+
+    helperTestReadModifyWrite(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementRORabsoluteIndexedWithXProcessorStatus) {
+    const std::map<uint8_t, uint8_t> testCases = {
+        {1, Z | C},
+        {2, 0},
+        {3, C},
+        {0, Z},
+        {0xFF, C}
+    };
+
+    const uint8_t kX = 45;
+
+    for (auto& testCase : testCases) {
+        const uint8_t kTestData = testCase.first;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+            .LDX().immediate(kX)
+            .ROR().absolute("data").x()
+            .NOP()
+        .org(0x2345)
+        .label("data")
+        .org(0x2345 + kX)
+        .byte(kTestData)
+        .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(10);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementROLabsoluteIndexedWithX) {
+    const uint16_t kTestAddress = 0x5678;
+    const uint8_t kTestData = 0x93;
+
+    TestAbsoluteIndexed<ROL> testAbsolute = {
+        {
+            .address = kTestAddress,
+            .data = kTestData,
+            .expected = (kTestData << 1) & 0xff
+        },
+
+        .indexRegister = kX,
+        .preloadIndexRegisterValue = 5
+    };
+
+    helperTestReadModifyWrite(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementROLabsoluteIndexedWithXProcessorStatus) {
+    const std::map<uint8_t, uint8_t> testCases = {
+        {0, Z},
+        {1, 0},
+        {0x40, N},
+        {0xff, C|N},
+        {0x80, C|Z}
+    };
+
+    for (auto& testCase : testCases) {
+        const uint8_t kTestData = testCase.first;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+            .LDX().immediate(kX)
+            .ROL().absolute("data").x()
+            .NOP()
+        .org(0x2345)
+        .label("data")
+        .org(0x2345 + kX)
+        .byte(kTestData)
+        .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(10);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementRORabsoluteIndexedWithXWithCarryIn) {
+    const uint16_t kTestAddress = 0x5678;
+    const uint8_t kTestData = 0x93;
+
+    TestAbsoluteIndexed<ROR> testAbsolute = {
+        {
+            .address = kTestAddress,
+            .data = kTestData,
+            .expected = 0x80 | (kTestData >> 1),
+
+            .presetCarry = true
+        },
+
+        .indexRegister = kX,
+        .preloadIndexRegisterValue = 5
+    };
+
+    helperTestReadModifyWrite(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementRORabsoluteIndexedWithXWithCarryInProcessorStatus) {
+    const std::map<uint8_t, uint8_t> testCases = {
+        {1, C | N},
+        {2, N},
+        {3, C | N},
+        {0, N},
+        {0xFF, C | N}
+    };
+
+    const uint8_t kX = 46;
+
+    for (auto& testCase : testCases) {
+        const uint8_t kTestData = testCase.first;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+            .SEC()
+            .LDX().immediate(kX)
+            .ROR().absolute("data").x()
+            .NOP()
+        .org(0x2345)
+        .label("data")
+        .org(0x2345 + kX)
+        .byte(kTestData)
+        .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(12);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementROLabsoluteIndexedWithXWithCarryIn) {
+    const uint16_t kTestAddress = 0x5678;
+    const uint8_t kTestData = 0x93;
+
+    TestAbsoluteIndexed<ROL> testAbsolute = {
+        {
+            .address = kTestAddress,
+            .data = kTestData,
+            .expected = ((kTestData << 1) + 1) & 0xff,
+
+            .presetCarry = true
+        },
+
+        .indexRegister = kX,
+        .preloadIndexRegisterValue = 6
+    };
+
+    helperTestReadModifyWrite(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementROLabsoluteIndexedWithXWithCarryInProcessorStatus) {
+    const std::map<uint8_t, uint8_t> testCases = {
+        {0, 0},
+        {1, 0},
+        {0x40, N},
+        {0xff, C|N},
+        {0x80, C}
+    };
+
+    for (auto& testCase : testCases) {
+        const uint8_t kTestData = testCase.first;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+            .SEC()
+            .LDX().immediate(kX)
+            .ROL().absolute("data").x()
+            .NOP()
+        .org(0x2345)
+        .label("data")
+        .org(0x2345 + kX)
+        .byte(kTestData)
+        .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(12);
+
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}

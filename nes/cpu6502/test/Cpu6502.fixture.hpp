@@ -63,6 +63,9 @@ public:
     void helperTestInternalExecutionOnMemoryData(const TestAbsoluteIndexed<OPCODE>& test);
 
     template <class OPCODE>
+    void helperTestReadModifyWrite(const TestAbsoluteIndexed<OPCODE>& test);
+
+    template <class OPCODE>
     void helperTestStore(const TestAbsoluteIndexed<OPCODE>& test);
 };
 

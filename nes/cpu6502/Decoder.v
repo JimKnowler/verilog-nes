@@ -157,7 +157,8 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  ORA_zp = 8'h05,
                  SBC_ax = 8'hFD, SBC_ay = 8'hF9,
                  INC_zp = 8'hE6, DEC_zp = 8'hC6,
-                 EOR_zp = 8'h45, AND_zp = 8'h25;
+                 EOR_zp = 8'h45, AND_zp = 8'h25,
+                 ROR_ax = 8'h7E, ROL_ax = 8'h3E;
 
 // RW pin
 localparam RW_READ = 1;
@@ -1001,7 +1002,8 @@ begin
         STA_zp_ind_y,
         ORA_zp, SBC_ax, SBC_ay,
         INC_zp, DEC_zp,
-        EOR_zp, AND_zp:
+        EOR_zp, AND_zp,
+        ROR_ax, ROL_ax:
         begin
             // Read PC+1
             output_pch_on_abh(1);
@@ -1304,6 +1306,22 @@ begin
             begin
             end
             endcase
+        end
+        ROR_ax, ROL_ax:
+        begin
+            // PC + 2 = Fetch high order effective address byte            
+            retain_pc(1);
+            output_pcl_on_abl(1);
+            output_pch_on_abh(1);
+            increment_pc(1);
+
+            // load BASE ADDRESS LO from DL into ALU
+            load_add_from_dl(1);
+
+            // add X to alu
+            o_0_add = 0;
+            o_sb_add = 1;
+            o_x_sb= 1;
         end
         JMP_a, JMP_indirect:
         begin
@@ -1654,6 +1672,22 @@ begin
 
             o_rw = RW_WRITE;
         end
+        ROR_ax, ROL_ax:
+        begin
+            retain_pc(1);
+
+            output_add_on_abl(1);
+            output_dl_on_abh(1);
+
+            load_add_from_dl(1);
+            if (r_last_acr)
+            begin
+                o_1_addc = 1;
+            end
+            
+            // load BASE ADDRESS HI from DL into ALU
+            load_add_from_dl(1);
+        end
         default:
         begin
         end
@@ -1884,6 +1918,14 @@ begin
 
             next_opcode();
         end
+        ROR_ax, ROL_ax:
+        begin
+            retain_pc(1);
+
+            output_add_on_abh(1);
+
+            load_add_from_dl(1);
+        end
         default:
         begin
         end
@@ -2000,6 +2042,54 @@ begin
 
             next_opcode();
         end
+        ROR_ax, ROL_ax:
+        begin
+            retain_pc(1);
+
+            if (w_phi1)
+            begin
+                // output current value of phi1 on o_data
+                output_add_on_sb(1);
+                o_sb_db = 1;
+
+                // apply rotate 
+                o_sb_add = 1;
+                
+                case (w_ir)
+                ROR_ax:
+                begin
+                    // ROR
+                    o_srs = 1;    
+                end
+                ROL_ax:
+                begin
+                    // load accumulator into both A and B registers
+                    o_sb_db = 1;
+                    o_db_add = 1;
+
+                    // sum
+                    o_sums = 1;
+                end
+                default: begin
+                end
+                endcase
+
+                // use CARRY flag to drive CARRY_IN on accumulator
+                o_1_addc = i_p[C];
+            end
+            else
+            begin
+                output_add_on_sb(1);
+                
+                // load carry flag from result
+                o_acr_c = 1;
+                
+                o_sb_db = 1;
+                load_z_n_from_db(1);
+            end
+
+            o_rw = RW_WRITE;
+        end
         default:
         begin
             
@@ -2059,6 +2149,17 @@ begin
             begin
             end
             endcase
+
+            next_opcode();
+        end
+        ROR_ax, ROL_ax:
+        begin
+            retain_pc(1);
+
+            output_add_on_sb(1);
+            o_sb_db = 1;
+
+            o_rw = RW_WRITE;
 
             next_opcode();
         end

@@ -153,6 +153,106 @@ void Cpu6502::helperTestReadModifyWrite(const TestAbsolute<OPCODE>& test) {
 }
 
 template <class OPCODE>
+void Cpu6502::helperTestReadModifyWrite(const TestAbsoluteIndexed<OPCODE>& test) {
+    sram.clear(0);
+
+    Assembler assembler;
+    uint16_t pc = 0;
+    int skipTicks = 0;
+
+    if (test.preloadPort != nullptr) {
+        pc += 2;
+        skipTicks += 2;
+        
+        if (test.preloadPort == &o_debug_ac) {
+            assembler.LDA().immediate(test.preloadPortValue);
+        } else if (test.preloadPort == &o_debug_x) {
+            assembler.LDX().immediate(test.preloadPortValue);
+        } else if (test.preloadPort == &o_debug_y) {
+            assembler.LDY().immediate(test.preloadPortValue);
+        }
+    }
+
+    switch (test.indexRegister) {
+        case kX:
+            assembler.LDX().immediate(test.preloadIndexRegisterValue);
+            break;
+        case kY:
+            assembler.LDY().immediate(test.preloadIndexRegisterValue);
+            break;
+        default:
+            assert(!"unknown index register");
+    }
+    pc += 2;
+    skipTicks += 2;
+
+    if (test.presetCarry) {
+        assembler.SEC();
+        pc += 1;
+        skipTicks +=2 ;
+    }
+
+    assembler
+            .addOpcode(std::make_unique<OPCODE>()).absolute(test.address);
+
+    switch (test.indexRegister) {
+        case kX:
+            assembler.x();
+            break;
+        case kY:
+            assembler.y();
+            break;
+        default:
+            assert(!"unknown index register");
+    }
+
+    assembler
+        .NOP()
+        .org(test.address + test.preloadIndexRegisterValue)
+        .word(test.data)
+        .compileTo(sram);
+
+    helperSkipResetVector();
+    testBench.tick(skipTicks);
+    testBench.trace.clear();
+
+    testBench.tick(9);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(9)
+        .port(o_rw).signal("111110011")
+                    .repeatEachStep(2)
+        .port(o_sync).signal("100000010").repeatEachStep(2)
+        .port(o_data).signal({0}).repeat(11)
+                     .signal({test.data}).repeat(2)
+                     .signal({test.expected}).repeat(2)
+                     .signal({0}).repeat(3)
+        .port(o_address).signal({
+                            // <OPCODE>
+                            pc,
+                            pc + 1u,
+                            pc + 2u,
+                            (test.address & 0xff00u) + ((test.address + test.preloadIndexRegisterValue) & 0x00ffu),
+                            static_cast<uint32_t>(test.address + test.preloadIndexRegisterValue),
+                            static_cast<uint32_t>(test.address + test.preloadIndexRegisterValue),
+                            static_cast<uint32_t>(test.address + test.preloadIndexRegisterValue),
+                            // NOP
+                            pc + 3u,
+                            pc + 4u
+                        })
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({0xFF})
+                        .repeat(18);
+    
+    // todo: test contents for X,Y index registers, based on index register used in test
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+
+    EXPECT_EQ(test.expected, sram.read(test.address + test.preloadIndexRegisterValue));
+}
+
+template <class OPCODE>
 void Cpu6502::helperTestInternalExecutionOnMemoryData(const TestAbsoluteIndexed<OPCODE>& test) {
     sram.clear(0);
     
