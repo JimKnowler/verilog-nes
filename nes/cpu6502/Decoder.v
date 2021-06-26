@@ -156,7 +156,7 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  LDA_zp_ind_y = 8'hB1,
                  ORA_zp = 8'h05,
                  SBC_ax = 8'hFD, SBC_ay = 8'hF9,
-                 INC_zp = 8'hE6;
+                 INC_zp = 8'hE6, DEC_zp = 8'hC6;
 
 // RW pin
 localparam RW_READ = 1;
@@ -1004,7 +1004,7 @@ begin
         STA_zp, STX_zp, STY_zp,
         STA_zp_ind_y,
         ORA_zp, SBC_ax, SBC_ay,
-        INC_zp:
+        INC_zp, DEC_zp:
         begin
             // Read PC+1
             output_pch_on_abh(1);
@@ -1347,7 +1347,7 @@ begin
             o_sums = 1;
             o_0_add = 1;
         end
-        INC_zp:
+        INC_zp, DEC_zp:
         begin
             retain_pc(1);
 
@@ -1612,18 +1612,32 @@ begin
             o_y_sb = 1;
             o_sb_add = 1;
         end
-        INC_zp:
+        INC_zp, DEC_zp:
         begin
             retain_pc(1);
 
             if (w_phi1)
             begin
-            // increment value read from ZP
-            load_add_from_dl(1);
-            
-            o_1_addc = 1;
-            o_sums = 1;
-            o_0_add = 1; 
+                load_add_from_dl(1);
+                
+                case (w_ir)
+                INC_zp:
+                begin
+                    // increment value read from ZP
+                    o_1_addc = 1;
+                    o_sums = 1;
+                    o_0_add = 1; 
+                end
+                DEC_zp:
+                begin
+                    // decrement value read from zp
+                    o_sums = 1;
+                    o_sb_add = 1; // precharge mosfets
+                    o_0_add = 0;
+                end
+                default: begin
+                end
+                endcase
             end
             else 
             begin
@@ -1853,7 +1867,7 @@ begin
                 next_opcode();
             end
         end
-        INC_zp:
+        INC_zp, DEC_zp:
         begin
             retain_pc(1);
 
