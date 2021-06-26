@@ -405,3 +405,84 @@ TEST_F(Cpu6502, ShouldImplementADCabsoluteProcessorStatusWithCarryIn) {
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
+
+TEST_F(Cpu6502, ShouldImplementINCzeropage) {
+    const uint8_t kTestAddress = 0x78;
+    const uint8_t kTestData = 0x49;
+
+    sram.clear(0);
+    
+    Assembler assembler;
+    assembler
+            .INC().zp(kTestAddress)
+            .NOP()
+        .org(kTestAddress)
+        .byte(kTestData)
+        .compileTo(sram);
+
+    testBench.reset();
+    helperSkipResetVector();
+
+    testBench.tick(7);
+    
+    Trace expected = TraceBuilder()
+        .port(o_address).signal({
+            // INC
+            0,
+            1,
+            0x0000 + kTestAddress,      // R
+            0x0000 + kTestAddress,      // W (original value)
+            0x0000 + kTestAddress,      // W (incremented value)
+
+            // NOP
+            2,
+            3
+        }).repeatEachStep(2)
+        .port(o_rw).signal("1110011").repeatEachStep(2)
+        .port(o_data)
+            .signal({0}).repeat(7)
+            .signal({kTestData}).repeat(2)
+            .signal({kTestData+1}).repeat(2)
+            .signal({0}).repeat(3)
+        .port(o_sync).signal("1000010").repeatEachStep(2)
+        .port(o_debug_ac).signal({0xFF}).repeat(7).repeatEachStep(2)
+        .port(o_debug_x).signal({0xFF}).repeat(7).repeatEachStep(2)
+        .port(o_debug_y).signal({0xFF}).repeat(7).repeatEachStep(2);
+    
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldImplementINCzeropageProcessorStatus) {
+    const std::map<uint8_t, uint8_t> testCases = {
+        {0 - 1, Z},
+        {(1<<7) - 1, N},
+        {1 - 1, 0}
+    };
+
+    for (auto& testCase : testCases) {
+        const uint8_t kTestData = testCase.first;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        const uint8_t kTestAddress = 0x56;
+        
+        Assembler assembler;
+        assembler
+                .INC().zp(kTestAddress)
+                .NOP()
+            .org(0x0000 + kTestAddress)
+            .byte(kTestData)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(7);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+
+        if (kExpectedProcessorStatus != testBench.core().o_debug_p) {
+            std::cout << testBench.trace;
+        }
+    }
+}

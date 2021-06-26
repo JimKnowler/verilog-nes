@@ -155,7 +155,8 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  STA_zp_ind_y = 8'h91,
                  LDA_zp_ind_y = 8'hB1,
                  ORA_zp = 8'h05,
-                 SBC_ax = 8'hFD, SBC_ay = 8'hF9;
+                 SBC_ax = 8'hFD, SBC_ay = 8'hF9,
+                 INC_zp = 8'hE6;
 
 // RW pin
 localparam RW_READ = 1;
@@ -1002,7 +1003,8 @@ begin
         STA_ax, STA_ay,
         STA_zp, STX_zp, STY_zp,
         STA_zp_ind_y,
-        ORA_zp, SBC_ax, SBC_ay:
+        ORA_zp, SBC_ax, SBC_ay,
+        INC_zp:
         begin
             // Read PC+1
             output_pch_on_abh(1);
@@ -1345,6 +1347,14 @@ begin
             o_sums = 1;
             o_0_add = 1;
         end
+        INC_zp:
+        begin
+            retain_pc(1);
+
+            // output 0, ADL - zero page effective address
+            output_0_on_abh(1);
+            output_dl_on_abl(1);
+        end
         default:
         begin
         end
@@ -1602,6 +1612,28 @@ begin
             o_y_sb = 1;
             o_sb_add = 1;
         end
+        INC_zp:
+        begin
+            retain_pc(1);
+
+            if (w_phi1)
+            begin
+            // increment value read from ZP
+            load_add_from_dl(1);
+            
+            o_1_addc = 1;
+            o_sums = 1;
+            o_0_add = 1; 
+            end
+            else 
+            begin
+                output_add_on_sb(1);
+                o_sb_db = 1;
+                load_z_n_from_db(1);
+            end
+
+            o_rw = RW_WRITE;
+        end
         default:
         begin
         end
@@ -1820,6 +1852,17 @@ begin
             begin
                 next_opcode();
             end
+        end
+        INC_zp:
+        begin
+            retain_pc(1);
+
+            output_add_on_sb(w_phi1);
+            o_sb_db = w_phi1;
+
+            o_rw = RW_WRITE;
+
+            next_opcode();
         end
         default:
         begin
