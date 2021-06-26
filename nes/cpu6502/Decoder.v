@@ -160,7 +160,8 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  EOR_zp = 8'h45, AND_zp = 8'h25,
                  ROR_ax = 8'h7E, ROL_ax = 8'h3E,
                  LDA_zp = 8'hA5, LDX_zp = 8'hA6, LDY_zp = 8'hA4,
-                 ADC_zp = 8'h65;
+                 ADC_zp = 8'h65,
+                 ADC_ax = 8'h7D, ADC_ay = 8'h79;
 
 // RW pin
 localparam RW_READ = 1;
@@ -552,7 +553,8 @@ begin
         AND_i, EOR_i, ORA_i, 
         ADC_i, SBC_i,
         CMP_i, CPX_i, CPY_i,
-        ORA_zp, ADC_zp:
+        ORA_zp, ADC_zp,
+        ADC_ax, ADC_ay:
         begin
             if (w_phi1)
             begin
@@ -581,7 +583,7 @@ begin
                     o_db_add = 1;
                     o_ors = 1;
                 end
-                ADC_i, ADC_zp: begin
+                ADC_i, ADC_zp, ADC_ax, ADC_ay: begin
                     o_db_add = 1;
                     o_sums = 1;
 
@@ -622,7 +624,8 @@ begin
             begin
                 // PHI2
                 case (w_ir)
-                ADC_i, ADC_zp, SBC_i, CMP_i, CPX_i, CPY_i: begin
+                ADC_i, ADC_zp, ADC_ax, ADC_ay,
+                SBC_i, CMP_i, CPX_i, CPY_i: begin
                     // C + V flags
                     o_acr_c = 1;
                     o_avr_v = 1;
@@ -635,7 +638,7 @@ begin
                 
                 case (w_ir)
                 AND_i, EOR_i, ORA_i, ADC_i, SBC_i,
-                ORA_zp, ADC_zp: begin
+                ORA_zp, ADC_zp, ADC_ax, ADC_ay: begin
                     o_sb_ac = 1;
                 end
                 default: begin
@@ -1007,7 +1010,7 @@ begin
         EOR_zp, AND_zp,
         ROR_ax, ROL_ax,
         LDA_zp, LDX_zp, LDY_zp,
-        ADC_zp:
+        ADC_zp, ADC_ax, ADC_ay:
         begin
             // Read PC+1
             output_pch_on_abh(1);
@@ -1281,7 +1284,8 @@ begin
         ORA_ax, ORA_ay,
         EOR_ax, EOR_ay,
         STA_ax, STA_ay,
-        SBC_ax, SBC_ay:
+        SBC_ax, SBC_ay,
+        ADC_ax, ADC_ay:
         begin
             // PC + 2 = Fetch high order effective address byte            
             retain_pc(1);
@@ -1292,14 +1296,14 @@ begin
             load_add_from_dl(1);
 
             case (w_ir)
-            LDA_ax, CMP_ax, LDY_ax, AND_ax, ORA_ax, EOR_ax, STA_ax, SBC_ax:
+            LDA_ax, CMP_ax, LDY_ax, AND_ax, ORA_ax, EOR_ax, STA_ax, SBC_ax, ADC_ax:
             begin
                 // add index register
                 o_0_add = 0;                // cancel this signal set in load_add_from_dl
                 o_sb_add = 1;
                 o_x_sb = 1;
             end
-            LDA_ay, CMP_ay, LDX_ay, AND_ay, ORA_ay, EOR_ay, STA_ay, SBC_ay:
+            LDA_ay, CMP_ay, LDX_ay, AND_ay, ORA_ay, EOR_ay, STA_ay, SBC_ay, ADC_ay:
             begin
                 // add index register
                 o_0_add = 0;                // cancel this signal set in load_add_from_dl
@@ -1511,7 +1515,8 @@ begin
         ORA_ax, ORA_ay,
         EOR_ax, EOR_ay,
         STA_ax, STA_ay,
-        SBC_ax, SBC_ay: begin
+        SBC_ax, SBC_ay,
+        ADC_ax, ADC_ay: begin
             output_dl_on_abh(1);        // BAH
             output_add_on_abl(1);
                         
@@ -1860,7 +1865,8 @@ begin
         ORA_ax, ORA_ay,
         EOR_ax, EOR_ay,
         STA_ax, STA_ay,
-        SBC_ax, SBC_ay:
+        SBC_ax, SBC_ay,
+        ADC_ax, ADC_ay:
         begin
             retain_pc(1);
             output_add_on_abh(1);

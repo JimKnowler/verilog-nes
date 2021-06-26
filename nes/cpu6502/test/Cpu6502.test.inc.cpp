@@ -623,3 +623,261 @@ TEST_F(Cpu6502, ShouldImplementADCzeropageProcessorStatusWithCarryIn) {
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
+
+TEST_F(Cpu6502, ShouldImplementADCabsoluteIndexedWithX) {
+    const uint8_t kTestData1 = 0x42;
+    const uint8_t kTestData2 = 0x22;
+
+    TestAbsoluteIndexed<ADC> testAbsolute = {
+        {
+            .address = 0x5678,
+            .data = kTestData1,
+            .port = o_debug_ac,
+            .expected = kTestData1 + kTestData2,
+
+            .preloadPort = &o_debug_ac,
+            .preloadPortValue = kTestData2
+        },
+
+        .indexRegister = kX,
+        .preloadIndexRegisterValue = 5
+    };
+    
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementADCabsoluteIndexedWithXProcessorStatus) {
+    const uint8_t kX = 5;
+
+    for (auto& testCase : kTestCasesADCWithoutCarryIn) {
+        const uint8_t kTestData1 = testCase.first.first;
+        const uint8_t kTestData2 = testCase.first.second;
+        
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+                .LDX().immediate(kX)
+                .LDA().immediate(kTestData1)
+                .ADC().absolute("increment").x()
+                .NOP()
+            .org(0x678A)
+            .label("increment")
+            .org(0x678A + kX)
+            .byte(kTestData2)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(11);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementADCabsoluteIndexedWithXWithCarryIn) {
+    const uint8_t kTestData1 = 0x22;
+    const uint8_t kTestData2 = 0x31;
+
+    TestAbsoluteIndexed<ADC> testAbsolute = {
+        {
+            .address = 0x5678,
+            .data = kTestData1,
+            .port = o_debug_ac,
+            .expected = kTestData1 + kTestData2 + 1,
+
+            .presetCarry = true,
+
+            .preloadPort = &o_debug_ac,
+            .preloadPortValue = kTestData2
+        },
+
+        .indexRegister = kX,
+        .preloadIndexRegisterValue = 0x5
+    };
+    
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementADCabsoluteIndexedWithXProcessorStatusWithCarryIn) {
+    const uint8_t kX = 8;
+
+    for (auto& testCase : kTestCasesADCWithCarryIn) {
+        const uint8_t kTestData1 = testCase.first.first;
+        const uint8_t kTestData2 = testCase.first.second;
+        
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+                .LDA().immediate(kTestData1)
+                .LDX().immediate(kX)
+                .SEC()
+                .ADC().absolute("increment").x()
+                .NOP()
+            .org(0x4532)
+            .label("increment")
+            .org(0x4532+kX)
+            .byte(kTestData2)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(13);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementADCabsoluteIndexedWithY) {
+    const uint8_t kTestData1 = 0x42;
+    const uint8_t kTestData2 = 0x22;
+
+    TestAbsoluteIndexed<ADC> testAbsolute = {
+        {
+            .address = 0x5678,
+            .data = kTestData1,
+            .port = o_debug_ac,
+            .expected = kTestData1 + kTestData2,
+
+            .preloadPort = &o_debug_ac,
+            .preloadPortValue = kTestData2
+        },
+
+        .indexRegister = kY,
+        .preloadIndexRegisterValue = 5
+    };
+    
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementADCabsoluteIndexedWithYProcessorStatus) {
+    const uint8_t kY = 5;
+
+    for (auto& testCase : kTestCasesADCWithoutCarryIn) {
+        const uint8_t kTestData1 = testCase.first.first;
+        const uint8_t kTestData2 = testCase.first.second;
+        
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+                .LDY().immediate(kY)
+                .LDA().immediate(kTestData1)
+                .ADC().absolute("increment").y()
+                .NOP()
+            .org(0x678A)
+            .label("increment")
+            .org(0x678A + kY)
+            .byte(kTestData2)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(11);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementADCabsoluteIndexedWithYWithCarryIn) {
+    const uint8_t kTestData1 = 0x22;
+    const uint8_t kTestData2 = 0x31;
+
+    TestAbsoluteIndexed<ADC> testAbsolute = {
+        {
+            .address = 0x5678,
+            .data = kTestData1,
+            .port = o_debug_ac,
+            .expected = kTestData1 + kTestData2 + 1,
+
+            .presetCarry = true,
+
+            .preloadPort = &o_debug_ac,
+            .preloadPortValue = kTestData2
+        },
+
+        .indexRegister = kY,
+        .preloadIndexRegisterValue = 0x5
+    };
+    
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementADCabsoluteIndexedWithYProcessorStatusWithCarryIn) {
+    const uint8_t kY = 8;
+
+    for (auto& testCase : kTestCasesADCWithCarryIn) {
+        const uint8_t kTestData1 = testCase.first.first;
+        const uint8_t kTestData2 = testCase.first.second;
+        
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+                .LDA().immediate(kTestData1)
+                .LDY().immediate(kY)
+                .SEC()
+                .ADC().absolute("increment").y()
+                .NOP()
+            .org(0x4532)
+            .label("increment")
+            .org(0x4532+kY)
+            .byte(kTestData2)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(13);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementADCabsoluteIndexedWithXWithCarry) {
+    const uint8_t kTestData1 = 0x42;
+    const uint8_t kTestData2 = 0x22;
+
+    TestAbsoluteIndexed<ADC> testAbsolute = {
+        {
+            .address = 0x56FE,
+            .data = kTestData1,
+            .port = o_debug_ac,
+            .expected = kTestData1 + kTestData2,
+
+            .preloadPort = &o_debug_ac,
+            .preloadPortValue = kTestData2
+        },
+
+        .indexRegister = kX,
+        .preloadIndexRegisterValue = 5
+    };
+    
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementADCabsoluteIndexedWithYWithCarry) {
+    const uint8_t kTestData1 = 0x42;
+    const uint8_t kTestData2 = 0x22;
+
+    TestAbsoluteIndexed<ADC> testAbsolute = {
+        {
+            .address = 0x56FE,
+            .data = kTestData1,
+            .port = o_debug_ac,
+            .expected = kTestData1 + kTestData2,
+
+            .preloadPort = &o_debug_ac,
+            .preloadPortValue = kTestData2
+        },
+
+        .indexRegister = kY,
+        .preloadIndexRegisterValue = 5
+    };
+    
+    helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
