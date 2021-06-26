@@ -157,7 +157,7 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  ORA_zp = 8'h05,
                  SBC_ax = 8'hFD, SBC_ay = 8'hF9,
                  INC_zp = 8'hE6, DEC_zp = 8'hC6,
-                 EOR_zp = 8'h45;
+                 EOR_zp = 8'h45, AND_zp = 8'h25;
 
 // RW pin
 localparam RW_READ = 1;
@@ -669,7 +669,7 @@ begin
         ADC_a, SBC_a, SBC_ax, SBC_ay,
         AND_a, EOR_a, ORA_a,
         CMP_ax, CMP_ay,
-        AND_ax, AND_ay,
+        AND_ax, AND_ay, AND_zp,
         ORA_ax, ORA_ay,
         EOR_ax, EOR_ay, EOR_zp:
         begin
@@ -688,7 +688,7 @@ begin
                 o_sb_add = 1;
 
                 case (w_ir)
-                AND_a, AND_ax, AND_ay: begin
+                AND_a, AND_ax, AND_ay, AND_zp: begin
                     o_db_add = 1;
                     o_ands = 1;
                 end
@@ -732,7 +732,7 @@ begin
 
                 // load Accumulator from SB
                 case (w_ir)
-                AND_a, AND_ax, AND_ay,
+                AND_a, AND_ax, AND_ay, AND_zp,
                 EOR_a, EOR_ax, EOR_ay, EOR_zp,
                 ORA_a, ORA_ax, ORA_ay,
                 ADC_a,
@@ -1001,7 +1001,7 @@ begin
         STA_zp_ind_y,
         ORA_zp, SBC_ax, SBC_ay,
         INC_zp, DEC_zp,
-        EOR_zp:
+        EOR_zp, AND_zp:
         begin
             // Read PC+1
             output_pch_on_abh(1);
@@ -1344,7 +1344,7 @@ begin
             o_sums = 1;
             o_0_add = 1;
         end
-        INC_zp, DEC_zp, EOR_zp:
+        INC_zp, DEC_zp, EOR_zp, AND_zp:
         begin
             retain_pc(1);
 
@@ -1353,7 +1353,7 @@ begin
             output_dl_on_abl(1);
 
             case (w_ir)
-            EOR_zp:
+            EOR_zp, AND_zp:
             begin
                 next_opcode();
             end
