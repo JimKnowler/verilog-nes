@@ -159,7 +159,8 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  INC_zp = 8'hE6, DEC_zp = 8'hC6,
                  EOR_zp = 8'h45, AND_zp = 8'h25,
                  ROR_ax = 8'h7E, ROL_ax = 8'h3E,
-                 LDA_zp = 8'hA5, LDX_zp = 8'hA6, LDY_zp = 8'hA4;
+                 LDA_zp = 8'hA5, LDX_zp = 8'hA6, LDY_zp = 8'hA4,
+                 ADC_zp = 8'h65;
 
 // RW pin
 localparam RW_READ = 1;
@@ -551,7 +552,7 @@ begin
         AND_i, EOR_i, ORA_i, 
         ADC_i, SBC_i,
         CMP_i, CPX_i, CPY_i,
-        ORA_zp:
+        ORA_zp, ADC_zp:
         begin
             if (w_phi1)
             begin
@@ -580,7 +581,7 @@ begin
                     o_db_add = 1;
                     o_ors = 1;
                 end
-                ADC_i: begin
+                ADC_i, ADC_zp: begin
                     o_db_add = 1;
                     o_sums = 1;
 
@@ -621,7 +622,7 @@ begin
             begin
                 // PHI2
                 case (w_ir)
-                ADC_i, SBC_i, CMP_i, CPX_i, CPY_i: begin
+                ADC_i, ADC_zp, SBC_i, CMP_i, CPX_i, CPY_i: begin
                     // C + V flags
                     o_acr_c = 1;
                     o_avr_v = 1;
@@ -634,7 +635,7 @@ begin
                 
                 case (w_ir)
                 AND_i, EOR_i, ORA_i, ADC_i, SBC_i,
-                ORA_zp: begin
+                ORA_zp, ADC_zp: begin
                     o_sb_ac = 1;
                 end
                 default: begin
@@ -1005,7 +1006,8 @@ begin
         INC_zp, DEC_zp,
         EOR_zp, AND_zp,
         ROR_ax, ROL_ax,
-        LDA_zp, LDX_zp, LDY_zp:
+        LDA_zp, LDX_zp, LDY_zp,
+        ADC_zp:
         begin
             // Read PC+1
             output_pch_on_abh(1);
@@ -1364,7 +1366,7 @@ begin
             o_sums = 1;
             o_0_add = 1;
         end
-        INC_zp, DEC_zp, EOR_zp, AND_zp:
+        INC_zp, DEC_zp, EOR_zp, AND_zp, ADC_zp:
         begin
             retain_pc(1);
 
@@ -1373,7 +1375,7 @@ begin
             output_dl_on_abl(1);
 
             case (w_ir)
-            EOR_zp, AND_zp:
+            EOR_zp, AND_zp, ADC_zp:
             begin
                 next_opcode();
             end

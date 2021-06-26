@@ -486,3 +486,140 @@ TEST_F(Cpu6502, ShouldImplementINCzeropageProcessorStatus) {
         }
     }
 }
+
+TEST_F(Cpu6502, ShouldImplementADCzeropage) {
+    sram.clear(0);
+    
+    const uint8_t kTestData1 = 0x45;
+    const uint8_t kTestData2 = 0x22;
+    const uint8_t kTestAddress = 0x89;
+
+    Assembler()
+            .LDA().immediate(kTestData1)
+            .ADC().zp(kTestAddress)
+            .NOP()
+        .org(0x0000 + kTestAddress)
+        .byte(kTestData2)
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    // skip LDAimmediate
+    testBench.tick(2);
+    testBench.trace.clear();
+
+    // simulate ADC + NOP
+    testBench.tick(5);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(5)
+        .port(o_rw).signal("11")
+                    .repeat(5)
+        .port(o_sync).signal("10010").repeatEachStep(2)
+        .port(o_address).signal({2, 3, kTestAddress, 4, 5})
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({kTestData1}).repeat(8)
+                         .signal({kTestData1+kTestData2}).repeat(2)
+        .port(o_debug_x).signal({0xFF}).repeat(10)
+        .port(o_debug_y).signal({0xFF}).repeat(10);
+        
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldImplementADCzeropageProcessorStatus) {
+    const uint8_t kTestAddress = 0x78;
+
+    for (auto& testCase : kTestCasesADCWithoutCarryIn) {
+        const uint8_t kTestData1 = testCase.first.first;
+        const uint8_t kTestData2 = testCase.first.second;
+        
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+                .LDA().immediate(kTestData1)
+                .ADC().zp(kTestAddress)
+                .NOP()
+            .org(kTestAddress)
+            .byte(kTestData2)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(7);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementADCzeropageWithCarryIn) {
+    sram.clear(0);
+    
+    const uint8_t kTestData1 = 0x22;
+    const uint8_t kTestData2 = 0x31;
+    const uint8_t kTestAddress = 0x94;
+
+    Assembler()
+            .LDA().immediate(kTestData1)
+            .SEC()
+            .ADC().zp(kTestAddress)
+            .NOP()
+        .org(kTestAddress)
+        .byte(kTestData2)
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    // skip LDAimmediate & SEC
+    testBench.tick(4);
+    testBench.trace.clear();
+
+    // simulate ADC + NOP
+    testBench.tick(5);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(5)
+        .port(o_rw).signal("11")
+                    .repeat(5)
+        .port(o_sync).signal("10010").repeatEachStep(2)
+        .port(o_address).signal({3, 4, kTestAddress, 5, 6})
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({kTestData1}).repeat(8)
+                         .signal({kTestData1+kTestData2+1}).repeat(2)
+        .port(o_debug_x).signal({0xFF}).repeat(10)
+        .port(o_debug_y).signal({0xFF}).repeat(10);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldImplementADCzeropageProcessorStatusWithCarryIn) {
+    const uint8_t kTestAddress = 83;
+
+    for (auto& testCase : kTestCasesADCWithCarryIn) {
+        const uint8_t kTestData1 = testCase.first.first;
+        const uint8_t kTestData2 = testCase.first.second;
+        
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+                .LDA().immediate(kTestData1)
+                .SEC()
+                .ADC().zp(kTestAddress)
+                .NOP()
+            .org(kTestAddress)
+            .byte(kTestData2)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(9);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
