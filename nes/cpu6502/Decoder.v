@@ -159,7 +159,7 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  INC_zp = 8'hE6, DEC_zp = 8'hC6,
                  EOR_zp = 8'h45, AND_zp = 8'h25,
                  ROR_ax = 8'h7E, ROL_ax = 8'h3E,
-                 LDA_zp = 8'hA5;
+                 LDA_zp = 8'hA5, LDX_zp = 8'hA6, LDY_zp = 8'hA4;
 
 // RW pin
 localparam RW_READ = 1;
@@ -645,7 +645,7 @@ begin
                 load_z_n_from_db(1);
             end
         end
-        LDA_a, LDX_a, LDY_a, LDA_zp_ind_y, LDA_zp:
+        LDA_a, LDX_a, LDY_a, LDA_zp_ind_y, LDA_zp, LDX_zp, LDY_zp:
         begin
             if (w_phi1)
             begin
@@ -658,8 +658,8 @@ begin
 
                 case (w_ir)
                 LDA_a, LDA_zp_ind_y, LDA_zp: o_sb_ac = 1;
-                LDX_a: o_sb_x = 1;
-                LDY_a: o_sb_y = 1;
+                LDX_a, LDX_zp: o_sb_x = 1;
+                LDY_a, LDY_zp: o_sb_y = 1;
                 default: begin
                 end
                 endcase
@@ -1005,7 +1005,7 @@ begin
         INC_zp, DEC_zp,
         EOR_zp, AND_zp,
         ROR_ax, ROL_ax,
-        LDA_zp:
+        LDA_zp, LDX_zp, LDY_zp:
         begin
             // Read PC+1
             output_pch_on_abh(1);
@@ -1231,7 +1231,7 @@ begin
             // retain the value in ADD
             load_add_from_sb(1);
         end
-        ORA_zp, LDA_zp:
+        ORA_zp, LDA_zp, LDX_zp, LDY_zp:
         begin
             retain_pc(1);
             output_0_on_abh(1);
