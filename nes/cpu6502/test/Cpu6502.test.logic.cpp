@@ -1029,7 +1029,7 @@ TEST_F(Cpu6502, ShouldImplementORAzeropageProcessorStatus) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(6);
+        testBench.tick(7);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }

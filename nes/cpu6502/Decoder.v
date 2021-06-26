@@ -153,7 +153,8 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  STA_ax = 8'h9D,    STA_ay = 8'h99,
                  STA_zp = 8'h85,    STX_zp = 8'h86,     STY_zp = 8'h84,
                  STA_zp_ind_y = 8'h91,
-                 LDA_zp_ind_y = 8'hB1;
+                 LDA_zp_ind_y = 8'hB1,
+                 ORA_zp = 8'h05;
 
 // RW pin
 localparam RW_READ = 1;
@@ -544,7 +545,8 @@ begin
         case (w_ir)
         AND_i, EOR_i, ORA_i, 
         ADC_i, SBC_i,
-        CMP_i, CPX_i, CPY_i:
+        CMP_i, CPX_i, CPY_i,
+        ORA_zp:
         begin
             if (w_phi1)
             begin
@@ -569,7 +571,7 @@ begin
                     o_db_add = 1;
                     o_eors = 1;
                 end
-                ORA_i: begin
+                ORA_i, ORA_zp: begin
                     o_db_add = 1;
                     o_ors = 1;
                 end
@@ -626,13 +628,13 @@ begin
                 output_add_on_sb(1);
                 
                 case (w_ir)
-                AND_i, EOR_i, ORA_i, ADC_i, SBC_i: begin
+                AND_i, EOR_i, ORA_i, ADC_i, SBC_i,
+                ORA_zp: begin
                     o_sb_ac = 1;
                 end
                 default: begin
                 end
                 endcase
-                
                 
                 o_sb_db = 1;
                 load_z_n_from_db(1);
@@ -998,7 +1000,8 @@ begin
         EOR_ax, EOR_ay,
         STA_ax, STA_ay,
         STA_zp, STX_zp, STY_zp,
-        STA_zp_ind_y:
+        STA_zp_ind_y,
+        ORA_zp:
         begin
             // Read PC+1
             output_pch_on_abh(1);
@@ -1223,6 +1226,14 @@ begin
 
             // retain the value in ADD
             load_add_from_sb(1);
+        end
+        ORA_zp:
+        begin
+            retain_pc(1);
+            output_0_on_abh(1);
+            output_dl_on_abl(1);
+
+            next_opcode();
         end
         STA_zp, STX_zp, STY_zp:
         begin
