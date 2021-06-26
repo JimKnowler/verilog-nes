@@ -7,4 +7,5 @@ OPCODE_IMPL(LDA, {
     addAddressingMode(kAbsolute|kIndexedWithY, 0xB9);
     addAddressingMode(kZeroPage|kIndexedWithX|kIndirect, 0xA1);
     addAddressingMode(kZeroPage|kIndirect|kIndexedWithY, 0xB1);
+    addAddressingMode(kZeroPage, 0xA5);
 })
