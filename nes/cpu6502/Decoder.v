@@ -1720,7 +1720,14 @@ begin
             begin
                 output_add_on_sb(1);
                 o_sb_db = 1;
-                o_acr_c = 1;
+                case (w_ir)
+                ROL_zp, ROR_zp, LSR_zp:
+                begin
+                    o_acr_c = 1;
+                end
+                default: begin
+                end
+                endcase
                 load_z_n_from_db(1);
             end
 
