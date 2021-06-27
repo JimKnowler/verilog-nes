@@ -828,3 +828,157 @@ TEST_F(Cpu6502, ShouldImplementROLabsoluteIndexedWithXWithCarryInProcessorStatus
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
+
+TEST_F(Cpu6502, ShouldImplementROLzeropage) {
+    const uint8_t kTestAddress = 0x78;
+    const uint8_t kTestData = 0x49;
+
+    sram.clear(0);
+    
+    Assembler assembler;
+    assembler
+            .ROL().zp(kTestAddress)
+            .NOP()
+        .org(kTestAddress)
+        .byte(kTestData)
+        .compileTo(sram);
+
+    testBench.reset();
+    helperSkipResetVector();
+
+    testBench.tick(7);
+    
+    Trace expected = TraceBuilder()
+        .port(o_address).signal({
+            // ROL
+            0,
+            1,
+            0x0000 + kTestAddress,      // R
+            0x0000 + kTestAddress,      // W (original value)
+            0x0000 + kTestAddress,      // W (incremented value)
+
+            // NOP
+            2,
+            3
+        }).repeatEachStep(2)
+        .port(o_rw).signal("1110011").repeatEachStep(2)
+        .port(o_data)
+            .signal({0}).repeat(7)
+            .signal({kTestData}).repeat(2)
+            .signal({(kTestData << 1) & 0xff}).repeat(2)
+            .signal({0}).repeat(3)
+        .port(o_sync).signal("1000010").repeatEachStep(2)
+        .port(o_debug_ac).signal({0xFF}).repeat(7).repeatEachStep(2)
+        .port(o_debug_x).signal({0xFF}).repeat(7).repeatEachStep(2)
+        .port(o_debug_y).signal({0xFF}).repeat(7).repeatEachStep(2);
+    
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldImplementROLzeropageProcessorStatus) {
+    const uint8_t kTestAddress = 0x87;
+
+    for (auto& testCase : kTestCasesROL) {
+        const uint8_t kTestData = testCase.first;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+            .ROL().zp(kTestAddress)
+            .NOP()
+        .org(0x0000 + kTestAddress)
+        .byte(kTestData)
+        .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(7);
+
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementROLzeropageWithCarryIn) {
+    const uint8_t kTestAddress = 0x78;
+    const uint8_t kTestData = 0x49;
+
+    sram.clear(0);
+    
+    Assembler assembler;
+    assembler
+            .SEC()
+            .ROL().zp(kTestAddress)
+            .NOP()
+        .org(kTestAddress)
+        .byte(kTestData)
+        .compileTo(sram);
+
+    testBench.reset();
+    helperSkipResetVector();
+
+    // skip SEC
+    testBench.tick(2);
+    testBench.trace.clear();
+
+    // simulate ROL + NOP
+    testBench.tick(7);
+    
+    Trace expected = TraceBuilder()
+        .port(o_address).signal({
+            // ROL
+            1,
+            2,
+            0x0000 + kTestAddress,      // R
+            0x0000 + kTestAddress,      // W (original value)
+            0x0000 + kTestAddress,      // W (incremented value)
+
+            // NOP
+            3,
+            4
+        }).repeatEachStep(2)
+        .port(o_rw).signal("1110011").repeatEachStep(2)
+        .port(o_data)
+            .signal({0}).repeat(7)
+            .signal({kTestData}).repeat(2)
+            .signal({((kTestData << 1) + 1) & 0xff}).repeat(2)
+            .signal({0}).repeat(3)
+        .port(o_sync).signal("1000010").repeatEachStep(2)
+        .port(o_debug_ac).signal({0xFF}).repeat(7).repeatEachStep(2)
+        .port(o_debug_x).signal({0xFF}).repeat(7).repeatEachStep(2)
+        .port(o_debug_y).signal({0xFF}).repeat(7).repeatEachStep(2);
+    
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldImplementROLzeropageWithCarryInProcessorStatus) {
+    const uint8_t kTestAddress = 0x87;
+
+    for (auto& testCase : kTestCasesROLwithCarryIn) {
+        const uint8_t kTestData = testCase.first;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+            .SEC()
+            .ROL().zp(kTestAddress)
+            .NOP()
+        .org(0x0000 + kTestAddress)
+        .byte(kTestData)
+        .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(9);
+
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+// ROR zp - same as ROL zp
+
+
+// todo: ROL a,x + ROR a,x - test when address+index carries

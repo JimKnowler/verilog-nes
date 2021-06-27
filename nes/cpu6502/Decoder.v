@@ -162,7 +162,7 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  LDA_zp = 8'hA5, LDX_zp = 8'hA6, LDY_zp = 8'hA4,
                  ADC_zp = 8'h65,
                  ADC_ax = 8'h7D, ADC_ay = 8'h79,
-                 BIT_zp = 8'h24;
+                 BIT_zp = 8'h24, ROL_zp = 8'h26;
 
 // RW pin
 localparam RW_READ = 1;
@@ -1012,7 +1012,7 @@ begin
         ROR_ax, ROL_ax,
         LDA_zp, LDX_zp, LDY_zp,
         ADC_zp, ADC_ax, ADC_ay,
-        BIT_zp:
+        BIT_zp, ROL_zp:
         begin
             // Read PC+1
             output_pch_on_abh(1);
@@ -1383,7 +1383,7 @@ begin
             o_sums = 1;
             o_0_add = 1;
         end
-        INC_zp, DEC_zp, EOR_zp, AND_zp, ADC_zp:
+        INC_zp, DEC_zp, EOR_zp, AND_zp, ADC_zp, ROL_zp:
         begin
             retain_pc(1);
 
@@ -1656,7 +1656,7 @@ begin
             o_y_sb = 1;
             o_sb_add = 1;
         end
-        INC_zp, DEC_zp:
+        INC_zp, DEC_zp, ROL_zp:
         begin
             retain_pc(1);
 
@@ -1679,6 +1679,22 @@ begin
                     o_sb_add = 1; // precharge mosfets
                     o_0_add = 0;
                 end
+                ROL_zp:
+                begin
+                    // rotate value to the left
+                    o_sb_db = 1;
+                    o_sb_add = 1;
+                    o_0_add = 0;
+
+                    // load accumulator into both A and B registers
+                    o_db_add = 1;
+
+                    // sum
+                    o_sums = 1;
+
+                    // use CARRY flag to drive CARRY_IN on ALU
+                    o_1_addc = i_p[C];
+                end
                 default: begin
                 end
                 endcase
@@ -1687,6 +1703,7 @@ begin
             begin
                 output_add_on_sb(1);
                 o_sb_db = 1;
+                o_acr_c = 1;
                 load_z_n_from_db(1);
             end
 
@@ -1928,7 +1945,7 @@ begin
                 next_opcode();
             end
         end
-        INC_zp, DEC_zp:
+        INC_zp, DEC_zp, ROL_zp:
         begin
             retain_pc(1);
 
