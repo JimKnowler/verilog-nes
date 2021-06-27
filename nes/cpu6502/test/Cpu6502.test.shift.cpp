@@ -1,5 +1,39 @@
 #include "Cpu6502.fixture.hpp"
 
+namespace {
+    const std::map<uint8_t, uint8_t> kTestCasesROR = {
+        {1, Z | C},
+        {2, 0},
+        {3, C},
+        {0, Z},
+        {0xFF, C}
+    };
+
+    const std::map<uint8_t, uint8_t> kTestCasesRORwithCarryIn = {
+        {1, C | N},
+        {2, N},
+        {3, C | N},
+        {0, N},
+        {0xFF, C | N}
+    };
+
+    const std::map<uint8_t, uint8_t> kTestCasesROL = {
+        {0, Z},
+        {1, 0},
+        {0x40, N},
+        {0xff, C|N},
+        {0x80, C|Z}
+    };
+
+    const std::map<uint8_t, uint8_t> kTestCasesROLwithCarryIn = {
+        {0, 0},
+        {1, 0},
+        {0x40, N},
+        {0xff, C|N},
+        {0x80, C}
+    };
+}
+
 TEST_F(Cpu6502, ShouldImplementLSRaccumulator) {
     sram.clear(0);
     
@@ -171,15 +205,7 @@ TEST_F(Cpu6502, ShouldImplementRORaccumulator) {
 }
 
 TEST_F(Cpu6502, ShouldImplementRORaccumulatorProcessorStatus) {
-    const std::map<uint8_t, uint8_t> testCases = {
-        {1, Z | C},
-        {2, 0},
-        {3, C},
-        {0, Z},
-        {0xFF, C}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesROR) {
         const uint8_t kTestData = testCase.first;
         const uint8_t kExpectedProcessorStatus = testCase.second;
 
@@ -237,15 +263,7 @@ TEST_F(Cpu6502, ShouldImplementROLaccumulator) {
 }
 
 TEST_F(Cpu6502, ShouldImplementROLaccumulatorProcessorStatus) {
-    const std::map<uint8_t, uint8_t> testCases = {
-        {0, Z},
-        {1, 0},
-        {0x40, N},
-        {0xff, C|N},
-        {0x80, C|Z}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesROL) {
         const uint8_t kTestData = testCase.first;
         const uint8_t kExpectedProcessorStatus = testCase.second;
 
@@ -305,15 +323,7 @@ TEST_F(Cpu6502, ShouldImplementRORaccumulatorWithCarryIn) {
 }
 
 TEST_F(Cpu6502, ShouldImplementRORaccumulatorWithCarryInProcessorStatus) {
-    const std::map<uint8_t, uint8_t> testCases = {
-        {1, C | N},
-        {2, N},
-        {3, C | N},
-        {0, N},
-        {0xFF, C | N}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesRORwithCarryIn) {
         const uint8_t kTestData = testCase.first;
         const uint8_t kExpectedProcessorStatus = testCase.second;
 
@@ -373,15 +383,7 @@ TEST_F(Cpu6502, ShouldImplementROLaccumulatorWithCarryIn) {
 }
 
 TEST_F(Cpu6502, ShouldImplementROLaccumulatorWithCarryInProcessorStatus) {
-    const std::map<uint8_t, uint8_t> testCases = {
-        {0, 0},
-        {1, 0},
-        {0x40, N},
-        {0xff, C|N},
-        {0x80, C}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesROLwithCarryIn) {
         const uint8_t kTestData = testCase.first;
         const uint8_t kExpectedProcessorStatus = testCase.second;
 
@@ -506,15 +508,7 @@ TEST_F(Cpu6502, ShouldImplementRORabsolute) {
 }
 
 TEST_F(Cpu6502, ShouldImplementRORabsoluteProcessorStatus) {
-    const std::map<uint8_t, uint8_t> testCases = {
-        {1, Z | C},
-        {2, 0},
-        {3, C},
-        {0, Z},
-        {0xFF, C}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesROR) {
         const uint8_t kTestData = testCase.first;
         const uint8_t kExpectedProcessorStatus = testCase.second;
 
@@ -550,15 +544,7 @@ TEST_F(Cpu6502, ShouldImplementROLabsolute) {
 }
 
 TEST_F(Cpu6502, ShouldImplementROLabsoluteProcessorStatus) {
-    const std::map<uint8_t, uint8_t> testCases = {
-        {0, Z},
-        {1, 0},
-        {0x40, N},
-        {0xff, C|N},
-        {0x80, C|Z}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesROL) {
         const uint8_t kTestData = testCase.first;
         const uint8_t kExpectedProcessorStatus = testCase.second;
 
@@ -597,15 +583,7 @@ TEST_F(Cpu6502, ShouldImplementRORabsoluteWithCarryIn) {
 }
 
 TEST_F(Cpu6502, ShouldImplementRORabsoluteWithCarryInProcessorStatus) {
-    const std::map<uint8_t, uint8_t> testCases = {
-        {1, C | N},
-        {2, N},
-        {3, C | N},
-        {0, N},
-        {0xFF, C | N}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesRORwithCarryIn) {
         const uint8_t kTestData = testCase.first;
         const uint8_t kExpectedProcessorStatus = testCase.second;
 
@@ -644,15 +622,7 @@ TEST_F(Cpu6502, ShouldImplementROLabsoluteWithCarryIn) {
 }
 
 TEST_F(Cpu6502, ShouldImplementROLabsoluteWithCarryInProcessorStatus) {
-    const std::map<uint8_t, uint8_t> testCases = {
-        {0, 0},
-        {1, 0},
-        {0x40, N},
-        {0xff, C|N},
-        {0x80, C}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesROLwithCarryIn) {
         const uint8_t kTestData = testCase.first;
         const uint8_t kExpectedProcessorStatus = testCase.second;
 
@@ -695,17 +665,9 @@ TEST_F(Cpu6502, ShouldImplementRORabsoluteIndexedWithX) {
 }
 
 TEST_F(Cpu6502, ShouldImplementRORabsoluteIndexedWithXProcessorStatus) {
-    const std::map<uint8_t, uint8_t> testCases = {
-        {1, Z | C},
-        {2, 0},
-        {3, C},
-        {0, Z},
-        {0xFF, C}
-    };
-
     const uint8_t kX = 45;
 
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesROR) {
         const uint8_t kTestData = testCase.first;
         const uint8_t kExpectedProcessorStatus = testCase.second;
 
@@ -748,15 +710,7 @@ TEST_F(Cpu6502, ShouldImplementROLabsoluteIndexedWithX) {
 }
 
 TEST_F(Cpu6502, ShouldImplementROLabsoluteIndexedWithXProcessorStatus) {
-    const std::map<uint8_t, uint8_t> testCases = {
-        {0, Z},
-        {1, 0},
-        {0x40, N},
-        {0xff, C|N},
-        {0x80, C|Z}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesROL) {
         const uint8_t kTestData = testCase.first;
         const uint8_t kExpectedProcessorStatus = testCase.second;
 
@@ -801,17 +755,9 @@ TEST_F(Cpu6502, ShouldImplementRORabsoluteIndexedWithXWithCarryIn) {
 }
 
 TEST_F(Cpu6502, ShouldImplementRORabsoluteIndexedWithXWithCarryInProcessorStatus) {
-    const std::map<uint8_t, uint8_t> testCases = {
-        {1, C | N},
-        {2, N},
-        {3, C | N},
-        {0, N},
-        {0xFF, C | N}
-    };
-
     const uint8_t kX = 46;
 
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesRORwithCarryIn) {
         const uint8_t kTestData = testCase.first;
         const uint8_t kExpectedProcessorStatus = testCase.second;
 
@@ -857,15 +803,7 @@ TEST_F(Cpu6502, ShouldImplementROLabsoluteIndexedWithXWithCarryIn) {
 }
 
 TEST_F(Cpu6502, ShouldImplementROLabsoluteIndexedWithXWithCarryInProcessorStatus) {
-    const std::map<uint8_t, uint8_t> testCases = {
-        {0, 0},
-        {1, 0},
-        {0x40, N},
-        {0xff, C|N},
-        {0x80, C}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesROLwithCarryIn) {
         const uint8_t kTestData = testCase.first;
         const uint8_t kExpectedProcessorStatus = testCase.second;
 
