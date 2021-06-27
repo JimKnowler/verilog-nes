@@ -162,7 +162,7 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  LDA_zp = 8'hA5, LDX_zp = 8'hA6, LDY_zp = 8'hA4,
                  ADC_zp = 8'h65,
                  ADC_ax = 8'h7D, ADC_ay = 8'h79,
-                 BIT_zp = 8'h24, ROL_zp = 8'h26;
+                 BIT_zp = 8'h24, ROL_zp = 8'h26, ROR_zp = 8'h66;
 
 // RW pin
 localparam RW_READ = 1;
@@ -1012,7 +1012,7 @@ begin
         ROR_ax, ROL_ax,
         LDA_zp, LDX_zp, LDY_zp,
         ADC_zp, ADC_ax, ADC_ay,
-        BIT_zp, ROL_zp:
+        BIT_zp, ROL_zp, ROR_zp:
         begin
             // Read PC+1
             output_pch_on_abh(1);
@@ -1383,7 +1383,7 @@ begin
             o_sums = 1;
             o_0_add = 1;
         end
-        INC_zp, DEC_zp, EOR_zp, AND_zp, ADC_zp, ROL_zp:
+        INC_zp, DEC_zp, EOR_zp, AND_zp, ADC_zp, ROL_zp, ROR_zp:
         begin
             retain_pc(1);
 
@@ -1656,7 +1656,7 @@ begin
             o_y_sb = 1;
             o_sb_add = 1;
         end
-        INC_zp, DEC_zp, ROL_zp:
+        INC_zp, DEC_zp, ROL_zp, ROR_zp:
         begin
             retain_pc(1);
 
@@ -1691,6 +1691,18 @@ begin
 
                     // sum
                     o_sums = 1;
+
+                    // use CARRY flag to drive CARRY_IN on ALU
+                    o_1_addc = i_p[C];
+                end
+                ROR_zp:
+                begin
+                    // rotate value to the right
+                    o_sb_db = 1;
+                    o_sb_add = 1;
+                    o_0_add = 0;
+                    o_sums = 0;
+                    o_srs = 1;
 
                     // use CARRY flag to drive CARRY_IN on ALU
                     o_1_addc = i_p[C];
@@ -1945,7 +1957,7 @@ begin
                 next_opcode();
             end
         end
-        INC_zp, DEC_zp, ROL_zp:
+        INC_zp, DEC_zp, ROL_zp, ROR_zp:
         begin
             retain_pc(1);
 
