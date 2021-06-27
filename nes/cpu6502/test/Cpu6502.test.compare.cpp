@@ -7,6 +7,16 @@ namespace {
         {{0x80, 0x00}, C|N},
         {{0x00, 0x01}, N}
     };
+
+    const std::map<std::pair<uint8_t, uint8_t>, uint8_t> kTestCasesBIT = {
+        {{0x00, 0x00}, Z},          // A == M (==0)
+        {{0x00, 0x80}, Z|N},        // load N from M[6]
+        {{0x00, 0x40}, Z|V},        // load V from M[7]
+        {{0x01, 0x01}, 0},          // A == M
+        {{0x01, 0x02}, Z},          // A != M
+        {{0x40, 0x40}, V},
+        {{0x80, 0x80}, N},
+    };
 }
 
 TEST_F(Cpu6502, ShouldImplementCMPimmediate) {
@@ -213,17 +223,7 @@ TEST_F(Cpu6502, ShouldImplementBITabsolute) {
 }
 
 TEST_F(Cpu6502, ShouldImplementBITabsoluteProcessorStatus) {
-    const std::map<std::pair<uint8_t, uint8_t>, uint8_t> testCases = {
-        {{0x00, 0x00}, Z},          // A == M (==0)
-        {{0x00, 0x80}, Z|N},        // load N from M[6]
-        {{0x00, 0x40}, Z|V},        // load V from M[7]
-        {{0x01, 0x01}, 0},          // A == M
-        {{0x01, 0x02}, Z},          // A != M
-        {{0x40, 0x40}, V},
-        {{0x80, 0x80}, N},
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesBIT) {
         const uint8_t A = testCase.first.first;
         const uint8_t M = testCase.first.second;
         const uint8_t kExpectedProcessorStatus = testCase.second;
@@ -577,6 +577,96 @@ TEST_F(Cpu6502, ShouldImplementCMPabsoluteIndexedWithYProcessorStatusWithCarry) 
         helperSkipResetVector();
 
         testBench.tick(11);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementBITzeropage) { 
+    sram.clear(0);
+    
+    const uint8_t kTestDataA = 0b10110011;
+    const uint8_t kTestAddressZeroPage = 0x42;
+    const uint8_t kTestDataI = 0b10010110;
+
+    Assembler assembler;
+    assembler
+        .byte(0)
+        .org(0x0000 + kTestAddressZeroPage)
+            .byte(kTestDataI)
+        .org(1234)
+        .label("init")
+            .LDA().immediate(kTestDataA)
+        .label("start")
+            .BIT().zp(kTestAddressZeroPage)
+            .NOP()
+        .org(0xfffc)
+        .word("init")
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    cpu6502::assembler::Address addressStart("start");
+    assembler.lookupAddress(addressStart);
+
+    // skip LDA
+    testBench.tick(2);
+    testBench.trace.clear();
+
+    // simulate BIT and NOP
+    testBench.tick(5);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(5)
+        .port(o_rw).signal("11")
+                    .repeat(5)
+        .port(o_sync).signal("10010").repeatEachStep(2)
+        .port(o_address).signal({
+                            //BIT
+                            addressStart.byteIndex(),
+                            addressStart.byteIndex() + 1u,
+                            0x0000 + kTestAddressZeroPage,
+
+                            // NOP
+                            addressStart.byteIndex() + 2u,
+                            addressStart.byteIndex() + 3u,
+                        })
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({kTestDataA}).repeat(5).repeatEachStep(2)
+        .port(o_debug_x).signal({0xFF}).repeat(5).repeatEachStep(2)
+        .port(o_debug_y).signal({0xFF}).repeat(5).repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldImplementBITzeropageProcessorStatus) {
+    const uint8_t kTestAddressZeroPage = 0x48;
+
+    for (auto& testCase : kTestCasesBIT) {
+        const uint8_t A = testCase.first.first;
+        const uint8_t M = testCase.first.second;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+            .byte(0)
+            .org(0x0000 + kTestAddressZeroPage)
+                .byte(M)
+            .org(1234)
+            .label("init")
+                .LDA().immediate(A)
+            .label("start")
+                .BIT().zp(kTestAddressZeroPage)
+                .NOP()
+            .org(0xfffc)
+            .word("init")
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(7);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }

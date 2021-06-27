@@ -161,7 +161,8 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  ROR_ax = 8'h7E, ROL_ax = 8'h3E,
                  LDA_zp = 8'hA5, LDX_zp = 8'hA6, LDY_zp = 8'hA4,
                  ADC_zp = 8'h65,
-                 ADC_ax = 8'h7D, ADC_ay = 8'h79;
+                 ADC_ax = 8'h7D, ADC_ay = 8'h79,
+                 BIT_zp = 8'h24;
 
 // RW pin
 localparam RW_READ = 1;
@@ -878,7 +879,7 @@ begin
             end
 
         end
-        BIT_a: begin
+        BIT_a, BIT_zp: begin
             if (w_phi1)
             begin
                 // load value from DL into ALU via DB
@@ -1010,7 +1011,8 @@ begin
         EOR_zp, AND_zp,
         ROR_ax, ROL_ax,
         LDA_zp, LDX_zp, LDY_zp,
-        ADC_zp, ADC_ax, ADC_ay:
+        ADC_zp, ADC_ax, ADC_ay,
+        BIT_zp:
         begin
             // Read PC+1
             output_pch_on_abh(1);
@@ -1236,11 +1238,22 @@ begin
             // retain the value in ADD
             load_add_from_sb(1);
         end
-        ORA_zp, LDA_zp, LDX_zp, LDY_zp:
+        ORA_zp, LDA_zp, LDX_zp, LDY_zp, BIT_zp:
         begin
             retain_pc(1);
-            output_0_on_abh(1);
-            output_dl_on_abl(1);
+            output_0_on_abh(w_phi1);
+            output_dl_on_abl(w_phi1);
+
+            case (w_ir)
+            BIT_zp:
+            begin
+                o_dl_db = w_phi2;
+                o_db6_v = w_phi2;
+                o_db7_n = w_phi2;
+            end
+            default: begin
+            end
+            endcase
 
             next_opcode();
         end
@@ -1447,7 +1460,6 @@ begin
                 o_pcl_db = 1;
             end
         end
-
         CMP_a, CPX_a, CPY_a,
         ADC_a, SBC_a,
         AND_a, EOR_a, ORA_a:
@@ -1461,7 +1473,6 @@ begin
 
             next_opcode();
         end
-
         LDA_a, LDX_a, LDY_a,
         STA_a, STX_a, STY_a,
         BIT_a, INC_a, DEC_a,
