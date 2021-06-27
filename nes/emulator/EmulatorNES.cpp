@@ -148,7 +148,7 @@ namespace emulator {
             printf("CPU - IR:0x%02X address:0x%04X rw:%d\n", core.o_cpu_debug_ir, core.o_cpu_debug_address, core.o_cpu_debug_rw);
             
             if (core.o_cpu_debug_error == 1) {
-                printf("error! tick (%d)\n", numTicks);
+                printf("error! tick (%d) frame (%d)\n", numTicks, numFrames);
 
                 exit(2);
             }
