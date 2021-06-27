@@ -32,6 +32,14 @@ namespace {
         {0xff, C|N},
         {0x80, C}
     };
+
+    const std::map<uint8_t, uint8_t> kTestCasesLSR = {
+        {1, Z | C},
+        {2, 0},
+        {3, C},
+        {0, Z},
+        {0xFF, C}
+    };
 }
 
 TEST_F(Cpu6502, ShouldImplementLSRaccumulator) {
@@ -72,15 +80,7 @@ TEST_F(Cpu6502, ShouldImplementLSRaccumulator) {
 }
 
 TEST_F(Cpu6502, ShouldImplementLSRaccumulatorProcessorStatus) {
-    const std::map<uint8_t, uint8_t> testCases = {
-        {1, Z | C},
-        {2, 0},
-        {3, C},
-        {0, Z},
-        {0xFF, C}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesLSR) {
         const uint8_t kTestData = testCase.first;
         const uint8_t kExpectedProcessorStatus = testCase.second;
 
@@ -419,15 +419,7 @@ TEST_F(Cpu6502, ShouldImplementLSRabsolute) {
 }
 
 TEST_F(Cpu6502, ShouldImplementLSRabsoluteProcessorStatus) {
-    const std::map<uint8_t, uint8_t> testCases = {
-        {1, Z | C},
-        {2, 0},
-        {3, C},
-        {0, Z},
-        {0xFF, C}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesLSR) {
         const uint8_t kTestData = testCase.first;
         const uint8_t kExpectedProcessorStatus = testCase.second;
 
@@ -999,7 +991,7 @@ TEST_F(Cpu6502, ShouldImplementRORzeropage) {
     
     Trace expected = TraceBuilder()
         .port(o_address).signal({
-            // ROL
+            // ROR
             0,
             1,
             0x0000 + kTestAddress,      // R
@@ -1076,7 +1068,7 @@ TEST_F(Cpu6502, ShouldImplementRORzeropageWithCarryIn) {
     
     Trace expected = TraceBuilder()
         .port(o_address).signal({
-            // ROL
+            // ROR
             1,
             2,
             0x0000 + kTestAddress,      // R
@@ -1126,5 +1118,86 @@ TEST_F(Cpu6502, ShouldImplementRORzeropageWithCarryInProcessorStatus) {
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
+
+TEST_F(Cpu6502, ShouldImplementLSRzeropage) {
+    const uint8_t kTestAddress = 0x78;
+    const uint8_t kTestData = 0x49;
+
+    sram.clear(0);
+    
+    Assembler assembler;
+    assembler
+            .SEC()                  // make sure carry-in is ignored
+            .LSR().zp(kTestAddress)
+            .NOP()
+        .org(kTestAddress)
+        .byte(kTestData)
+        .compileTo(sram);
+
+    testBench.reset();
+    helperSkipResetVector();
+
+    // skip SEC
+    testBench.tick(2);
+    testBench.trace.clear();
+
+    // simulate LSR and NOP
+    testBench.tick(7);
+    
+    Trace expected = TraceBuilder()
+        .port(o_address).signal({
+            // LSR
+            1,
+            2,
+            0x0000 + kTestAddress,      // R
+            0x0000 + kTestAddress,      // W (original value)
+            0x0000 + kTestAddress,      // W (incremented value)
+
+            // NOP
+            3,
+            4
+        }).repeatEachStep(2)
+        .port(o_rw).signal("1110011").repeatEachStep(2)
+        .port(o_data)
+            .signal({0}).repeat(7)
+            .signal({kTestData}).repeat(2)
+            .signal({(kTestData >> 1) & 0xff}).repeat(2)
+            .signal({0}).repeat(3)
+        .port(o_sync).signal("1000010").repeatEachStep(2)
+        .port(o_debug_ac).signal({0xFF}).repeat(7).repeatEachStep(2)
+        .port(o_debug_x).signal({0xFF}).repeat(7).repeatEachStep(2)
+        .port(o_debug_y).signal({0xFF}).repeat(7).repeatEachStep(2);
+    
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldImplementLSRzeropageProcessorStatus) {
+    const uint8_t kTestAddress = 0xa6;
+
+    for (auto& testCase : kTestCasesLSR) {
+        const uint8_t kTestData = testCase.first;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+            .SEC()                  // make sure carry-in doesn't affect result
+            .LSR().zp(kTestAddress)
+            .NOP()
+        .org(kTestAddress)
+        .byte(kTestData)
+        .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(9);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+
+// ASL zp
+
 
 // todo: ROL a,x + ROR a,x - test when address+index carries
