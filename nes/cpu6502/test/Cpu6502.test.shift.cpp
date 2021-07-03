@@ -1329,6 +1329,8 @@ TEST_F(Cpu6502, ShouldImplementASLabsoluteIndexedWithX) {
 }
 
 TEST_F(Cpu6502, ShouldImplementASLabsoluteIndexedWithXProcessorStatus) {
+    const uint8_t kX = 5;
+
     for (auto& testCase : kTestCasesASL) {
         const uint8_t kTestData = testCase.first;
         const uint8_t kExpectedProcessorStatus = testCase.second;
@@ -1422,6 +1424,8 @@ TEST_F(Cpu6502, ShouldImplementASLabsoluteIndexedWithXWithCarryIn) {
 }
 
 TEST_F(Cpu6502, ShouldImplementASLabsoluteIndexedWithXWithCarryInProcessorStatus) {
+    const uint8_t kX = 5;
+    
     for (auto& testCase : kTestCasesASL) {
         const uint8_t kTestData = testCase.first;
         const uint8_t kExpectedProcessorStatus = testCase.second;
