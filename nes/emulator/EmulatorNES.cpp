@@ -12,6 +12,9 @@
 using namespace nestestbench;
 using namespace memory;
 
+#define LOG_CPU(msg, ...)   //printf(msg, __VA_ARGS__) 
+#define LOG_BUS(msg, ...)   //printf(msg, __VA_ARGS__)
+
 namespace {
     const uint32_t kScreenWidth = 1000;
     const uint32_t kScreenHeight = 600;
@@ -25,8 +28,6 @@ namespace emulator {
     public:
         EmulatorNES() : sram(0x10000), vram(0x10000) {
             sAppName = "Emulator - NES";
-
-            SetPixelMode(olc::Pixel::ALPHA);
         }
 
         /// @brief called once at start		
@@ -145,7 +146,8 @@ namespace emulator {
             }
             numTicks += 1;
 
-            printf("CPU - IR:0x%02X address:0x%04X rw:%d\n", core.o_cpu_debug_ir, core.o_cpu_debug_address, core.o_cpu_debug_rw);
+            // only log this on ticks when CPU clock enable is active
+            LOG_CPU("CPU - IR:0x%02X address:0x%04X rw:%d\n", core.o_cpu_debug_ir, core.o_cpu_debug_address, core.o_cpu_debug_rw);
             
             if (core.o_cpu_debug_error == 1) {
                 printf("error! tick (%d) frame (%d)\n", numTicks, numFrames);
@@ -189,27 +191,27 @@ namespace emulator {
                         if (core.o_rw_ram == 0) {
                             sram.write(core.o_address_ram, core.o_data_ram);
 
-                            printf("write ram 0x%04X = 0x%02X\n", core.o_address_ram, core.o_data_ram);
+                            LOG_BUS("write ram 0x%04X = 0x%02X\n", core.o_address_ram, core.o_data_ram);
                         } else {
                             core.i_data_ram = sram.read(core.o_address_ram);
 
-                            printf("read ram 0x%04X = 0x%02X\n", core.o_address_ram, core.i_data_ram);
+                            LOG_BUS("read ram 0x%04X = 0x%02X\n", core.o_address_ram, core.i_data_ram);
                         }
                     }
                     
                     if (core.o_cs_prg == 1) {
                         core.i_data_prg = sram.read(core.o_address_prg);
 
-                        printf("read prg 0x%04X = 0x%02X\n", core.o_address_prg, core.i_data_prg);
+                        LOG_BUS("read prg 0x%04X = 0x%02X\n", core.o_address_prg, core.i_data_prg);
                     }
 
                     if (core.o_cs_patterntable == 1) {
                         if (core.o_rw_patterntable == 1) {
                             core.i_data_patterntable = vram.read(core.o_address_patterntable);
 
-                            printf("read patterntable 0x%04X\n = 0x%02X", core.o_address_patterntable, core.i_data_patterntable);
+                            LOG_BUS("read patterntable 0x%04X\n = 0x%02X", core.o_address_patterntable, core.i_data_patterntable);
                         } else {
-                            printf("???? write patterntable 0x%04X ???? - not supported!\n", core.o_address_patterntable);
+                            LOG_BUS("???? write patterntable 0x%04X ???? - not supported!\n", core.o_address_patterntable);
                             exit(2);
                         }
                     }
@@ -218,11 +220,11 @@ namespace emulator {
                         if (core.o_rw_nametable == 0) {                            
                             vram.write(core.o_address_nametable, core.o_data_nametable);
 
-                            printf("write nametable 0x%04X = 0x%02X\n", core.o_address_nametable, core.o_data_nametable);
+                            LOG_BUS("write nametable 0x%04X = 0x%02X\n", core.o_address_nametable, core.o_data_nametable);
                         } else {
                             core.i_data_nametable = vram.read(core.o_address_nametable);
 
-                            printf("read nametable 0x%04X = 0x%02X\n", core.o_address_nametable, core.i_data_nametable);
+                            LOG_BUS("read nametable 0x%04X = 0x%02X\n", core.o_address_nametable, core.i_data_nametable);
                         }
                     }
 
