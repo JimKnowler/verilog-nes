@@ -1265,4 +1265,188 @@ TEST_F(Cpu6502, ShouldImplementASLzeropageProcessorStatus) {
     }
 }
 
+TEST_F(Cpu6502, ShouldImplementLSRabsoluteIndexedWithX) {
+    const uint16_t kTestAddress = 0x5678;
+    const uint8_t kTestData = 0x93;
+
+    TestAbsoluteIndexed<LSR> testAbsolute = {
+        {
+            .address = kTestAddress,
+            .data = kTestData,
+            .expected = kTestData >> 1
+        },
+
+        .indexRegister = kX,
+        .preloadIndexRegisterValue = 5,
+    };
+
+    helperTestReadModifyWrite(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementLSRabsoluteIndexedWithXProcessorStatus) {
+    const uint8_t kX = 45;
+
+    for (auto& testCase : kTestCasesLSR) {
+        const uint8_t kTestData = testCase.first;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+            .LDX().immediate(kX)
+            .LSR().absolute("data").x()
+            .NOP()
+        .org(0x2345)
+        .label("data")
+        .org(0x2345 + kX)
+        .byte(kTestData)
+        .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(10);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementASLabsoluteIndexedWithX) {
+    const uint16_t kTestAddress = 0x5678;
+    const uint8_t kTestData = 0x93;
+
+    TestAbsoluteIndexed<ASL> testAbsolute = {
+        {
+            .address = kTestAddress,
+            .data = kTestData,
+            .expected = (kTestData << 1) & 0xff
+        },
+
+        .indexRegister = kX,
+        .preloadIndexRegisterValue = 5
+    };
+
+    helperTestReadModifyWrite(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementASLabsoluteIndexedWithXProcessorStatus) {
+    for (auto& testCase : kTestCasesASL) {
+        const uint8_t kTestData = testCase.first;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+            .LDX().immediate(kX)
+            .ASL().absolute("data").x()
+            .NOP()
+        .org(0x2345)
+        .label("data")
+        .org(0x2345 + kX)
+        .byte(kTestData)
+        .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(10);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementLSRabsoluteIndexedWithXWithCarryIn) {
+    const uint16_t kTestAddress = 0x5678;
+    const uint8_t kTestData = 0x93;
+
+    TestAbsoluteIndexed<LSR> testAbsolute = {
+        {
+            .address = kTestAddress,
+            .data = kTestData,
+            .expected = (kTestData >> 1),
+
+            .presetCarry = true
+        },
+
+        .indexRegister = kX,
+        .preloadIndexRegisterValue = 5
+    };
+
+    helperTestReadModifyWrite(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementLSRabsoluteIndexedWithXWithCarryInProcessorStatus) {
+    const uint8_t kX = 46;
+
+    for (auto& testCase : kTestCasesLSR) {
+        const uint8_t kTestData = testCase.first;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+            .SEC()
+            .LDX().immediate(kX)
+            .LSR().absolute("data").x()
+            .NOP()
+        .org(0x2345)
+        .label("data")
+        .org(0x2345 + kX)
+        .byte(kTestData)
+        .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(12);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementASLabsoluteIndexedWithXWithCarryIn) {
+    const uint16_t kTestAddress = 0x5678;
+    const uint8_t kTestData = 0x93;
+
+    TestAbsoluteIndexed<ASL> testAbsolute = {
+        {
+            .address = kTestAddress,
+            .data = kTestData,
+            .expected = (kTestData << 1) & 0xff,
+
+            .presetCarry = true
+        },
+
+        .indexRegister = kX,
+        .preloadIndexRegisterValue = 6
+    };
+
+    helperTestReadModifyWrite(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementASLabsoluteIndexedWithXWithCarryInProcessorStatus) {
+    for (auto& testCase : kTestCasesASL) {
+        const uint8_t kTestData = testCase.first;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+            .SEC()
+            .LDX().immediate(kX)
+            .ASL().absolute("data").x()
+            .NOP()
+        .org(0x2345)
+        .label("data")
+        .org(0x2345 + kX)
+        .byte(kTestData)
+        .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(12);
+
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+
 // todo: ROL a,x + ROR a,x - test when address+index carries

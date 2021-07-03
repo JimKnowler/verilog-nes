@@ -163,7 +163,8 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  ADC_zp = 8'h65,
                  ADC_ax = 8'h7D, ADC_ay = 8'h79,
                  BIT_zp = 8'h24, ROL_zp = 8'h26, ROR_zp = 8'h66,
-                 LSR_zp = 8'h46, ASL_zp = 8'h06;
+                 LSR_zp = 8'h46, ASL_zp = 8'h06,
+                 ASL_ax = 8'h1E, LSR_ax = 8'h5E;
 
 // RW pin
 localparam RW_READ = 1;
@@ -1014,7 +1015,8 @@ begin
         LDA_zp, LDX_zp, LDY_zp,
         ADC_zp, ADC_ax, ADC_ay,
         BIT_zp, ROL_zp, ROR_zp,
-        LSR_zp, ASL_zp:
+        LSR_zp, ASL_zp,
+        ASL_ax, LSR_ax:
         begin
             // Read PC+1
             output_pch_on_abh(1);
@@ -1330,7 +1332,7 @@ begin
             end
             endcase
         end
-        ROR_ax, ROL_ax:
+        ROR_ax, ROL_ax, ASL_ax, LSR_ax:
         begin
             // PC + 2 = Fetch high order effective address byte            
             retain_pc(1);
@@ -1736,7 +1738,7 @@ begin
 
             o_rw = RW_WRITE;
         end
-        ROR_ax, ROL_ax:
+        ROR_ax, ROL_ax, ASL_ax, LSR_ax:
         begin
             retain_pc(1);
 
@@ -1983,7 +1985,7 @@ begin
 
             next_opcode();
         end
-        ROR_ax, ROL_ax:
+        ROR_ax, ROL_ax, ASL_ax, LSR_ax:
         begin
             retain_pc(1);
 
@@ -2107,7 +2109,7 @@ begin
 
             next_opcode();
         end
-        ROR_ax, ROL_ax:
+        ROR_ax, ROL_ax, ASL_ax, LSR_ax:
         begin
             retain_pc(1);
 
@@ -2121,12 +2123,12 @@ begin
                 o_sb_add = 1;
                 
                 case (w_ir)
-                ROR_ax:
+                ROR_ax, LSR_ax:
                 begin
                     // ROR
                     o_srs = 1;    
                 end
-                ROL_ax:
+                ROL_ax, ASL_ax:
                 begin
                     // load accumulator into both A and B registers
                     o_sb_db = 1;
@@ -2139,8 +2141,14 @@ begin
                 end
                 endcase
 
-                // use CARRY flag to drive CARRY_IN on accumulator
-                o_1_addc = i_p[C];
+                case (w_ir)
+                ROR_ax, ROL_ax: begin
+                    // use CARRY flag to drive CARRY_IN on accumulator
+                    o_1_addc = i_p[C];
+                end
+                default: begin
+                end
+                endcase
             end
             else
             begin
@@ -2217,7 +2225,7 @@ begin
 
             next_opcode();
         end
-        ROR_ax, ROL_ax:
+        ROR_ax, ROL_ax, ASL_ax, LSR_ax:
         begin
             retain_pc(1);
 
