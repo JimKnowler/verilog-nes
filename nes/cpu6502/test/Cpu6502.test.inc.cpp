@@ -20,6 +20,12 @@ namespace {
         {{0xFF, 0x01}, C|Z},
         {{0xFF, 0x80}, C|V}
     };
+
+    const std::map<uint8_t, uint8_t> kTestCasesINC = {
+        {0 - 1, Z},
+        {(1<<7) - 1, N},
+        {1 - 1, 0}
+    };
 }
 
 TEST_F(Cpu6502, ShouldImplementINX) {
@@ -60,13 +66,7 @@ TEST_F(Cpu6502, ShouldImplementINX) {
 }
 
 TEST_F(Cpu6502, ShouldImplementINXProcessorStatus) {
-    const std::map<uint8_t, uint8_t> testCases = {
-        {0 - 1, Z},
-        {(1<<7) - 1, N},
-        {1 - 1, 0}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesINC) {
         const uint8_t kTestData = testCase.first;
         const uint8_t kExpectedProcessorStatus = testCase.second;
 
@@ -124,13 +124,7 @@ TEST_F(Cpu6502, ShouldImplementINY) {
 }
 
 TEST_F(Cpu6502, ShouldImplementINYProcessorStatus) {
-    const std::map<uint8_t, uint8_t> testCases = {
-        {0 - 1, Z},
-        {(1<<7) - 1, N},
-        {1 - 1, 0}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesINC) {
         const uint8_t kTestData = testCase.first;
         const uint8_t kExpectedProcessorStatus = testCase.second;
 
@@ -287,13 +281,7 @@ TEST_F(Cpu6502, ShouldImplementINCabsolute) {
 }
 
 TEST_F(Cpu6502, ShouldImplementINCabsoluteProcessorStatus) {
-    const std::map<uint8_t, uint8_t> testCases = {
-        {0 - 1, Z},
-        {(1<<7) - 1, N},
-        {1 - 1, 0}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesINC) {
         const uint8_t kTestData = testCase.first;
         const uint8_t kExpectedProcessorStatus = testCase.second;
 
@@ -453,13 +441,7 @@ TEST_F(Cpu6502, ShouldImplementINCzeropage) {
 }
 
 TEST_F(Cpu6502, ShouldImplementINCzeropageProcessorStatus) {
-    const std::map<uint8_t, uint8_t> testCases = {
-        {0 - 1, Z},
-        {(1<<7) - 1, N},
-        {1 - 1, 0}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesINC) {
         const uint8_t kTestData = testCase.first;
         const uint8_t kExpectedProcessorStatus = testCase.second;
 
@@ -880,4 +862,96 @@ TEST_F(Cpu6502, ShouldImplementADCabsoluteIndexedWithYWithCarry) {
     };
     
     helperTestInternalExecutionOnMemoryData(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementINCabsoluteIndexedWithXWithoutCarry) {
+    const uint16_t kTestAddress = 0x5678;
+    const uint8_t kTestData1 = 0x45;
+
+    TestAbsoluteIndexed<INC> testAbsolute = {
+        {
+            .address = kTestAddress,
+            .data = kTestData1,
+            .expected = kTestData1 + 1,
+        },
+
+        .indexRegister = kX,
+        .preloadIndexRegisterValue = 5,
+    };
+
+    helperTestReadModifyWrite(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementINCabsoluteIndexedWithXProcessorStatusWithoutCarry) {
+    const uint8_t kX = 3;
+
+    for (auto& testCase : kTestCasesINC) {
+        const uint8_t kTestData = testCase.first;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+                .LDX().immediate(kX)
+                .INC().absolute("increment").x()
+                .NOP()
+            .org(0x678A)
+            .label("increment")
+            .org(0x678A + kX)
+            .byte(kTestData)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(10);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementINCabsoluteIndexedWithXWithCarry) {
+    const uint16_t kTestAddress = 0x67FE;
+    const uint8_t kTestData1 = 0x45;
+
+    TestAbsoluteIndexed<INC> testAbsolute = {
+        {
+            .address = kTestAddress,
+            .data = kTestData1,
+            .expected = kTestData1 + 1,
+        },
+
+        .indexRegister = kX,
+        .preloadIndexRegisterValue = 3,
+    };
+
+    helperTestReadModifyWrite(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementINCabsoluteIndexedWithXProcessorStatusWithCarry) {
+    const uint8_t kX = 3;
+
+    for (auto& testCase : kTestCasesINC) {
+        const uint8_t kTestData1 = testCase.first;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+                .LDX().immediate(kX)
+                .INC().absolute("increment").x()
+                .NOP()
+            .org(0x67FE)
+            .label("increment")
+            .org(0x67FE + kX)
+            .byte(kTestData1)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.trace.clear();
+
+        testBench.tick(11);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
 }

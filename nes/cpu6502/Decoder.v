@@ -165,7 +165,7 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  BIT_zp = 8'h24, ROL_zp = 8'h26, ROR_zp = 8'h66,
                  LSR_zp = 8'h46, ASL_zp = 8'h06,
                  ASL_ax = 8'h1E, LSR_ax = 8'h5E,
-                 DEC_ax = 8'hDE;
+                 DEC_ax = 8'hDE, INC_ax = 8'hFE;
 
 // RW pin
 localparam RW_READ = 1;
@@ -1018,7 +1018,7 @@ begin
         BIT_zp, ROL_zp, ROR_zp,
         LSR_zp, ASL_zp,
         ASL_ax, LSR_ax,
-        DEC_ax:
+        DEC_ax, INC_ax:
         begin
             // Read PC+1
             output_pch_on_abh(1);
@@ -1334,7 +1334,7 @@ begin
             end
             endcase
         end
-        ROR_ax, ROL_ax, ASL_ax, LSR_ax, DEC_ax:
+        ROR_ax, ROL_ax, ASL_ax, LSR_ax, DEC_ax, INC_ax:
         begin
             // PC + 2 = Fetch high order effective address byte            
             retain_pc(1);
@@ -1740,7 +1740,7 @@ begin
 
             o_rw = RW_WRITE;
         end
-        ROR_ax, ROL_ax, ASL_ax, LSR_ax, DEC_ax:
+        ROR_ax, ROL_ax, ASL_ax, LSR_ax, DEC_ax, INC_ax:
         begin
             retain_pc(1);
 
@@ -1986,7 +1986,7 @@ begin
 
             next_opcode();
         end
-        ROR_ax, ROL_ax, ASL_ax, LSR_ax, DEC_ax:
+        ROR_ax, ROL_ax, ASL_ax, LSR_ax, DEC_ax, INC_ax:
         begin
             retain_pc(1);
 
@@ -2108,7 +2108,7 @@ begin
 
             next_opcode();
         end
-        ROR_ax, ROL_ax, ASL_ax, LSR_ax, DEC_ax:
+        ROR_ax, ROL_ax, ASL_ax, LSR_ax, DEC_ax, INC_ax:
         begin
             retain_pc(1);
 
@@ -2138,11 +2138,19 @@ begin
                 end
                 DEC_ax:
                 begin
-                    // decrement ALU 
+                    // decrement
                     o_sums = 1;
                     o_db_add = 1;
                     
                     o_adl_add = 1;  // 0xFF from precharge mosfets
+                end
+                INC_ax:
+                begin
+                    // increment
+                    o_sums = 1;
+                    o_db_add = 1;
+                    o_1_addc = 1;
+                    o_0_add = 1;
                 end
                 default: begin
                 end
@@ -2240,7 +2248,7 @@ begin
 
             next_opcode();
         end
-        ROR_ax, ROL_ax, ASL_ax, LSR_ax, DEC_ax:
+        ROR_ax, ROL_ax, ASL_ax, LSR_ax, DEC_ax, INC_ax:
         begin
             retain_pc(1);
 

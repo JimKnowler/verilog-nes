@@ -782,6 +782,4 @@ TEST_F(Cpu6502, ShouldImplementDECabsoluteIndexedWithXProcessorStatusWithCarry) 
     }
 }
 
-
-
 // TODO: SBC a,x + SBC a,y with 'carry in'
