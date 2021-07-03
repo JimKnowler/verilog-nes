@@ -670,3 +670,198 @@ TEST_F(Cpu6502, ShouldImplementBITzeropageProcessorStatus) {
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
+
+TEST_F(Cpu6502, ShouldImplementCMPzeropage) {
+    sram.clear(0);
+    
+    const uint8_t A = 0x45;
+    const uint8_t M = 0x22;
+    const uint8_t kTestAddress = 0x94;
+
+    Assembler()
+            .LDA().immediate(A)
+            .CMP().zp(kTestAddress)
+            .NOP()
+        .org(0x0000 + kTestAddress)
+        .byte(M)
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    // skip LDAimmediate
+    testBench.tick(2);
+    testBench.trace.clear();
+    
+    // simulate CMP & NOP
+    testBench.tick(5);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(5)
+        .port(o_rw).signal("11")
+                    .repeat(5)
+        .port(o_sync).signal("10010").repeatEachStep(2)
+        .port(o_address).signal({2, 3, kTestAddress, 4, 5})
+                        .repeatEachStep(2)
+        .port(o_debug_x).signal({0xFF}).repeat(10)
+        .port(o_debug_ac).signal({A}).repeat(10)
+        .port(o_debug_y).signal({0xFF}).repeat(10);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldImplementCMPzeropageProcessorStatus) {
+    const uint8_t kTestAddress = 0x78;
+
+    for (auto& testCase : kTestCasesCMP) {
+        const uint8_t A = testCase.first.first;
+        const uint8_t M = testCase.first.second;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+        
+        sram.clear(0);
+    
+        Assembler()
+                .LDA().immediate(A)
+                .CMP().zp(kTestAddress)
+                .NOP()
+            .org(0x0000 + kTestAddress)
+            .byte(M)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(7);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementCPXzeropage) {
+    sram.clear(0);
+    
+    const uint8_t X = 0x45;
+    const uint8_t M = 0x22;
+    const uint8_t kTestAddress = 0x94;
+
+    Assembler()
+            .LDX().immediate(X)
+            .CPX().zp(kTestAddress)
+            .NOP()
+        .org(0x0000 + kTestAddress)
+        .byte(M)
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    // skip LDAimmediate
+    testBench.tick(2);
+    testBench.trace.clear();
+    
+    // simulate CMP & NOP
+    testBench.tick(5);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(5)
+        .port(o_rw).signal("11")
+                    .repeat(5)
+        .port(o_sync).signal("10010").repeatEachStep(2)
+        .port(o_address).signal({2, 3, kTestAddress, 4, 5})
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({0xFF}).repeat(10)
+        .port(o_debug_x).signal({X}).repeat(10)
+        .port(o_debug_y).signal({0xFF}).repeat(10);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldImplementCPXzeropageProcessorStatus) {
+    const uint8_t kTestAddress = 0x78;
+
+    for (auto& testCase : kTestCasesCMP) {
+        const uint8_t X = testCase.first.first;
+        const uint8_t M = testCase.first.second;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+        
+        sram.clear(0);
+    
+        Assembler()
+                .LDX().immediate(X)
+                .CPX().zp(kTestAddress)
+                .NOP()
+            .org(0x0000 + kTestAddress)
+            .byte(M)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(7);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementCPYzeropage) {
+    sram.clear(0);
+    
+    const uint8_t Y = 0x45;
+    const uint8_t M = 0x22;
+    const uint8_t kTestAddress = 0x94;
+
+    Assembler()
+            .LDY().immediate(Y)
+            .CPY().zp(kTestAddress)
+            .NOP()
+        .org(0x0000 + kTestAddress)
+        .byte(M)
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    // skip LDAimmediate
+    testBench.tick(2);
+    testBench.trace.clear();
+    
+    // simulate CMP & NOP
+    testBench.tick(5);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(5)
+        .port(o_rw).signal("11")
+                    .repeat(5)
+        .port(o_sync).signal("10010").repeatEachStep(2)
+        .port(o_address).signal({2, 3, kTestAddress, 4, 5})
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({0xFF}).repeat(10)
+        .port(o_debug_x).signal({0xFF}).repeat(10)
+        .port(o_debug_y).signal({Y}).repeat(10);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldImplementCPYzeropageProcessorStatus) {
+    const uint8_t kTestAddress = 0x78;
+
+    for (auto& testCase : kTestCasesCMP) {
+        const uint8_t Y = testCase.first.first;
+        const uint8_t M = testCase.first.second;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+        
+        sram.clear(0);
+    
+        Assembler()
+                .LDY().immediate(Y)
+                .CPY().zp(kTestAddress)
+                .NOP()
+            .org(0x0000 + kTestAddress)
+            .byte(M)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(7);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}

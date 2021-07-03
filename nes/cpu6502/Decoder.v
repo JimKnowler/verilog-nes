@@ -165,7 +165,8 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  BIT_zp = 8'h24, ROL_zp = 8'h26, ROR_zp = 8'h66,
                  LSR_zp = 8'h46, ASL_zp = 8'h06,
                  ASL_ax = 8'h1E, LSR_ax = 8'h5E,
-                 DEC_ax = 8'hDE, INC_ax = 8'hFE;
+                 DEC_ax = 8'hDE, INC_ax = 8'hFE,
+                 CMP_zp = 8'hC5, CPX_zp = 8'hE4, CPY_zp = 8'hC4;
 
 // RW pin
 localparam RW_READ = 1;
@@ -558,7 +559,8 @@ begin
         ADC_i, SBC_i,
         CMP_i, CPX_i, CPY_i,
         ORA_zp, ADC_zp,
-        ADC_ax, ADC_ay:
+        ADC_ax, ADC_ay,
+        CMP_zp, CPX_zp, CPY_zp:
         begin
             if (w_phi1)
             begin
@@ -567,8 +569,8 @@ begin
 
                 // load register into ALU via SB
                 case (w_ir)
-                CPX_i: o_x_sb = 1;
-                CPY_i: o_y_sb = 1;
+                CPX_i, CPX_zp: o_x_sb = 1;
+                CPY_i, CPY_zp: o_y_sb = 1;
                 default: o_ac_sb = 1;
                 endcase
                     
@@ -609,7 +611,8 @@ begin
                     o_acr_c = 1;
                     o_avr_v = 1;
                 end
-                CMP_i, CPX_i, CPY_i: begin
+                CMP_i, CPX_i, CPY_i,
+                CMP_zp, CPX_zp, CPY_zp: begin
                     // subtraction as 2's complement addition
                     o_db_n_add = 1;
                     o_1_addc = 1;
@@ -629,7 +632,8 @@ begin
                 // PHI2
                 case (w_ir)
                 ADC_i, ADC_zp, ADC_ax, ADC_ay,
-                SBC_i, CMP_i, CPX_i, CPY_i: begin
+                SBC_i, CMP_i, CPX_i, CPY_i,
+                CMP_zp, CPX_zp, CPY_zp: begin
                     // C + V flags
                     o_acr_c = 1;
                     o_avr_v = 1;
@@ -1018,7 +1022,8 @@ begin
         BIT_zp, ROL_zp, ROR_zp,
         LSR_zp, ASL_zp,
         ASL_ax, LSR_ax,
-        DEC_ax, INC_ax:
+        DEC_ax, INC_ax,
+        CMP_zp, CPX_zp, CPY_zp:
         begin
             // Read PC+1
             output_pch_on_abh(1);
@@ -1244,7 +1249,8 @@ begin
             // retain the value in ADD
             load_add_from_sb(1);
         end
-        ORA_zp, LDA_zp, LDX_zp, LDY_zp, BIT_zp:
+        ORA_zp, LDA_zp, LDX_zp, LDY_zp, BIT_zp,
+        CMP_zp, CPX_zp, CPY_zp:
         begin
             retain_pc(1);
             output_0_on_abh(w_phi1);
