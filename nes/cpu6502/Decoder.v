@@ -164,7 +164,8 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  ADC_ax = 8'h7D, ADC_ay = 8'h79,
                  BIT_zp = 8'h24, ROL_zp = 8'h26, ROR_zp = 8'h66,
                  LSR_zp = 8'h46, ASL_zp = 8'h06,
-                 ASL_ax = 8'h1E, LSR_ax = 8'h5E;
+                 ASL_ax = 8'h1E, LSR_ax = 8'h5E,
+                 DEC_ax = 8'hDE;
 
 // RW pin
 localparam RW_READ = 1;
@@ -1016,7 +1017,8 @@ begin
         ADC_zp, ADC_ax, ADC_ay,
         BIT_zp, ROL_zp, ROR_zp,
         LSR_zp, ASL_zp,
-        ASL_ax, LSR_ax:
+        ASL_ax, LSR_ax,
+        DEC_ax:
         begin
             // Read PC+1
             output_pch_on_abh(1);
@@ -1332,7 +1334,7 @@ begin
             end
             endcase
         end
-        ROR_ax, ROL_ax, ASL_ax, LSR_ax:
+        ROR_ax, ROL_ax, ASL_ax, LSR_ax, DEC_ax:
         begin
             // PC + 2 = Fetch high order effective address byte            
             retain_pc(1);
@@ -1738,14 +1740,13 @@ begin
 
             o_rw = RW_WRITE;
         end
-        ROR_ax, ROL_ax, ASL_ax, LSR_ax:
+        ROR_ax, ROL_ax, ASL_ax, LSR_ax, DEC_ax:
         begin
             retain_pc(1);
 
             output_add_on_abl(1);
             output_dl_on_abh(1);
 
-            load_add_from_dl(1);
             if (r_last_acr)
             begin
                 o_1_addc = 1;
@@ -1985,13 +1986,11 @@ begin
 
             next_opcode();
         end
-        ROR_ax, ROL_ax, ASL_ax, LSR_ax:
+        ROR_ax, ROL_ax, ASL_ax, LSR_ax, DEC_ax:
         begin
             retain_pc(1);
 
             output_add_on_abh(1);
-
-            load_add_from_dl(1);
         end
         default:
         begin
@@ -2109,33 +2108,41 @@ begin
 
             next_opcode();
         end
-        ROR_ax, ROL_ax, ASL_ax, LSR_ax:
+        ROR_ax, ROL_ax, ASL_ax, LSR_ax, DEC_ax:
         begin
             retain_pc(1);
 
             if (w_phi1)
             begin
-                // output current value of phi1 on o_data
-                output_add_on_sb(1);
+                o_dl_db = 1;
                 o_sb_db = 1;
-
-                // apply rotate 
-                o_sb_add = 1;
                 
                 case (w_ir)
                 ROR_ax, LSR_ax:
                 begin
-                    // ROR
+                    // shift right
+                    o_sb_add = 1;
+
                     o_srs = 1;    
                 end
                 ROL_ax, ASL_ax:
                 begin
+                    // shift left
+                
                     // load accumulator into both A and B registers
-                    o_sb_db = 1;
                     o_db_add = 1;
+                    o_sb_add = 1;
 
                     // sum
                     o_sums = 1;
+                end
+                DEC_ax:
+                begin
+                    // decrement ALU 
+                    o_sums = 1;
+                    o_db_add = 1;
+                    
+                    o_adl_add = 1;  // 0xFF from precharge mosfets
                 end
                 default: begin
                 end
@@ -2154,9 +2161,17 @@ begin
             begin
                 output_add_on_sb(1);
                 
-                // load carry flag from result
-                o_acr_c = 1;
-                
+                case (w_ir)
+                ROR_ax, LSR_ax,
+                ROL_ax, ASL_ax:
+                begin
+                    // load carry flag from result
+                    o_acr_c = 1;
+                end
+                default: begin
+                end
+                endcase
+
                 o_sb_db = 1;
                 load_z_n_from_db(1);
             end
@@ -2225,7 +2240,7 @@ begin
 
             next_opcode();
         end
-        ROR_ax, ROL_ax, ASL_ax, LSR_ax:
+        ROR_ax, ROL_ax, ASL_ax, LSR_ax, DEC_ax:
         begin
             retain_pc(1);
 

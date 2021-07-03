@@ -21,6 +21,12 @@ namespace {
         {{0xFF, 0x01}, C|N},
         {{0xFF, 0x80}, C}
     };
+
+    const std::map<uint8_t, uint8_t> kTestCasesDEC = {
+        {0 + 1, Z},
+        {(1<<7) + 1, N},
+        {1 + 1, 0}
+    };
 }
 
 TEST_F(Cpu6502, ShouldImplementDEX) {
@@ -61,13 +67,7 @@ TEST_F(Cpu6502, ShouldImplementDEX) {
 }
 
 TEST_F(Cpu6502, ShouldImplementDEXProcessorStatus) {
-    const std::map<uint8_t, uint8_t> testCases = {
-        {0 + 1, Z},
-        {(1<<7) + 1, N},
-        {1 + 1, 0}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesDEC) {
         const uint8_t kTestData = testCase.first;
         const uint8_t kExpectedProcessorStatus = testCase.second;
 
@@ -125,13 +125,7 @@ TEST_F(Cpu6502, ShouldImplementDEY) {
 }
 
 TEST_F(Cpu6502, ShouldImplementDEYProcessorStatus) {
-    const std::map<uint8_t, uint8_t> testCases = {
-        {0 + 1, Z},
-        {(1<<7) + 1, N},
-        {1 + 1, 0}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesDEC) {
         const uint8_t kTestData = testCase.first;
         const uint8_t kExpectedProcessorStatus = testCase.second;
 
@@ -292,13 +286,7 @@ TEST_F(Cpu6502, ShouldImplementDECabsolute) {
 }
 
 TEST_F(Cpu6502, ShouldImplementDECabsoluteProcessorStatus) {
-    const std::map<uint8_t, uint8_t> testCases = {
-        {0 + 1, Z},
-        {(1<<7) + 1, N},
-        {1 + 1, 0}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesDEC) {
         const uint8_t kTestData = testCase.first;
         const uint8_t kExpectedProcessorStatus = testCase.second;
 
@@ -467,7 +455,7 @@ TEST_F(Cpu6502, ShouldImplementSBCabsoluteIndexedWithYProcessorStatusWithoutCarr
 }
 
 TEST_F(Cpu6502, ShouldImplementSBCabsoluteIndexedWithYWithCarry) {
-    const uint16_t kTestAddress = 0x5678;
+    const uint16_t kTestAddress = 0x67FE;
     const uint8_t kTestData1 = 0x45;
     const uint8_t kTestData2 = 0x22;
 
@@ -577,7 +565,7 @@ TEST_F(Cpu6502, ShouldImplementSBCabsoluteIndexedWithXProcessorStatusWithoutCarr
 }
 
 TEST_F(Cpu6502, ShouldImplementSBCabsoluteIndexedWithXWithCarry) {
-    const uint16_t kTestAddress = 0x5678;
+    const uint16_t kTestAddress = 0x67FE;
     const uint8_t kTestData1 = 0x45;
     const uint8_t kTestData2 = 0x22;
 
@@ -678,13 +666,7 @@ TEST_F(Cpu6502, ShouldImplementDECzeropage) {
 }
 
 TEST_F(Cpu6502, ShouldImplementDECzeropageProcessorStatus) {
-    const std::map<uint8_t, uint8_t> testCases = {
-        {0 + 1, Z},
-        {(1<<7) + 1, N},
-        {1 + 1, 0}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesDEC) {
         const uint8_t kTestData = testCase.first;
         const uint8_t kExpectedProcessorStatus = testCase.second;
 
@@ -707,5 +689,99 @@ TEST_F(Cpu6502, ShouldImplementDECzeropageProcessorStatus) {
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
+
+TEST_F(Cpu6502, ShouldImplementDECabsoluteIndexedWithXWithoutCarry) {
+    const uint16_t kTestAddress = 0x5678;
+    const uint8_t kTestData1 = 0x45;
+
+    TestAbsoluteIndexed<DEC> testAbsolute = {
+        {
+            .address = kTestAddress,
+            .data = kTestData1,
+            .expected = kTestData1 - 1,
+        },
+
+        .indexRegister = kX,
+        .preloadIndexRegisterValue = 5,
+    };
+
+    helperTestReadModifyWrite(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementDECabsoluteIndexedWithXProcessorStatusWithoutCarry) {
+    const uint8_t kX = 3;
+
+    for (auto& testCase : kTestCasesDEC) {
+        const uint8_t kTestData = testCase.first;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+                .LDX().immediate(kX)
+                .DEC().absolute("decrement").x()
+                .NOP()
+            .org(0x678A)
+            .label("decrement")
+            .org(0x678A + kX)
+            .byte(kTestData)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(10);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementDECabsoluteIndexedWithXWithCarry) {
+    const uint16_t kTestAddress = 0x67FE;
+    const uint8_t kTestData1 = 0x45;
+
+    TestAbsoluteIndexed<DEC> testAbsolute = {
+        {
+            .address = kTestAddress,
+            .data = kTestData1,
+            .expected = kTestData1 - 1,
+        },
+
+        .indexRegister = kX,
+        .preloadIndexRegisterValue = 3,
+    };
+
+    helperTestReadModifyWrite(testAbsolute);
+}
+
+TEST_F(Cpu6502, ShouldImplementDECabsoluteIndexedWithXProcessorStatusWithCarry) {
+    const uint8_t kX = 3;
+
+    for (auto& testCase : kTestCasesDEC) {
+        const uint8_t kTestData1 = testCase.first;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+                .LDX().immediate(kX)
+                .DEC().absolute("decrement").x()
+                .NOP()
+            .org(0x67FE)
+            .label("decrement")
+            .org(0x67FE + kX)
+            .byte(kTestData1)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.trace.clear();
+
+        testBench.tick(11);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+
 
 // TODO: SBC a,x + SBC a,y with 'carry in'

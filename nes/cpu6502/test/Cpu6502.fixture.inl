@@ -209,7 +209,7 @@ void Cpu6502::helperTestReadModifyWrite(const TestAbsoluteIndexed<OPCODE>& test)
     assembler
         .NOP()
         .org(test.address + test.preloadIndexRegisterValue)
-        .word(test.data)
+        .byte(test.data)
         .compileTo(sram);
 
     helperSkipResetVector();
