@@ -220,7 +220,10 @@ begin
                 else
                 begin
                     r_t[7:0] <= i_data[7:0];
-                    r_v <= r_t;
+
+                    // 'v' is made identical to final value of t
+                    r_v[7:0] <= i_data[7:0];
+                    r_v[14:8] <= r_t[14:8];
                 end     
             end
             default: begin
