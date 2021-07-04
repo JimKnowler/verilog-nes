@@ -82,6 +82,9 @@ wire w_video_visible;
 reg [7:0] r_ppuscroll_x;
 reg [7:0] r_ppuscroll_y;
 
+reg [14:0] r_v;
+reg [14:0] r_t;
+reg [2:0] r_x;
 reg r_w;
 
 // Palette entries for sprites + background
@@ -160,6 +163,10 @@ begin
         r_ppumask <= 0;
         r_ppustatus <= 0;
         r_oamaddr <= 0;
+        r_v <= 0;
+        r_t <= 0;
+        r_ppuscroll_x <= 0;
+        r_ppuscroll_y <= 0;
     end
     else if (i_cs_n == 0)
     begin
@@ -168,6 +175,7 @@ begin
             case (i_rs)
             RS_PPUCTRL: begin
                 r_ppuctrl <= i_data;
+                r_t[11:10] <= i_data[1:0];
             end
             RS_PPUMASK: begin
                 r_ppumask <= i_data;
@@ -184,6 +192,36 @@ begin
             RS_OAMDATA: begin
                 r_oamaddr <= r_oamaddr + 1;
                 r_oam[r_oamaddr] <= i_data;
+            end
+            RS_PPUSCROLL: begin
+                if (r_w == 0)
+                begin
+                    r_ppuscroll_x <= i_data;
+
+                    // load coarse x into t
+                    r_t[4:0] <= i_data[7:3];
+                    r_x <= i_data[2:0];
+                end
+                else
+                begin
+                    r_ppuscroll_y <= i_data;
+                    
+                    // load y into t
+                    r_t[9:5] <= i_data[7:3];
+                    r_t[14:12] <= i_data[2:0];
+                end
+            end
+            RS_PPUADDR: begin
+                if (r_w == 0)
+                begin
+                    r_t[13:8] <= i_data[5:0];
+                    r_t[14] <= 0;
+                end
+                else
+                begin
+                    r_t[7:0] <= i_data[7:0];
+                    r_v <= r_t;
+                end     
             end
             default: begin
             end
@@ -260,33 +298,6 @@ begin
 end
 
 assign w_video_visible = (r_video_x < 256) && (r_video_y < 240);
-
-//
-// ppuscroll
-//
-
-always @(negedge i_reset_n or negedge i_clk)
-begin
-    if (!i_reset_n)
-    begin
-        r_ppuscroll_x <= 0;
-        r_ppuscroll_y <= 0;
-    end
-    else if (i_cs_n == 0)
-    begin
-        if ((i_rw == RW_WRITE) && (i_rs == RS_PPUSCROLL))
-        begin
-            if (r_w == 0)
-            begin
-                r_ppuscroll_x <= i_data;
-            end
-            else
-            begin
-                r_ppuscroll_y <= i_data;
-            end
-        end
-    end
-end
 
 //
 // ppuaddr
@@ -438,9 +449,9 @@ assign o_debug_ppuscroll_x = r_ppuscroll_x;
 assign o_debug_ppuscroll_y = r_ppuscroll_y;
 assign o_debug_ppuaddr = r_ppuaddr;
 assign o_debug_oamaddr = r_oamaddr;
-assign o_debug_v = 15'habcd;
-assign o_debug_t = 15'h1234;
-assign o_debug_x = r_ppuscroll_x[2:0];
+assign o_debug_v = r_v;
+assign o_debug_t = r_t;
+assign o_debug_x = r_x;
 assign o_debug_w = r_w;
 assign o_debug_video_buffer = r_video_buffer;
 
