@@ -157,6 +157,47 @@ namespace emulator {
             sprintf(buffer, "#frames %d", numFrames);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
+
+            // CPU
+            DrawString({x,y}, "CPU", olc::RED);
+            y += kRowHeight;
+            DrawLine({x, y}, {x + 42 * 8, y}, olc::RED);
+            y += kRowHeight;
+
+            sprintf(buffer, " clk-en %d", testBench.core().o_cpu_debug_clk_en);
+            DrawString({x,y}, buffer, olc::BLACK);
+            y += kRowHeight;
+
+            sprintf(buffer, "     ir 0x%02x", testBench.core().o_cpu_debug_ir);
+            DrawString({x,y}, buffer, olc::BLACK);
+            y += kRowHeight;
+
+            sprintf(buffer, "    tcu 0x%02x", testBench.core().o_cpu_debug_tcu);
+            DrawString({x,y}, buffer, olc::BLACK);
+            y += kRowHeight;
+
+            sprintf(buffer, "address 0x%04x", testBench.core().o_cpu_debug_address);
+            DrawString({x,y}, buffer, olc::BLACK);
+            y += kRowHeight;  
+
+            // PPU
+            DrawString({x,y}, "PPU", olc::RED);
+            y += kRowHeight;
+            DrawLine({x, y}, {x + 42 * 8, y}, olc::RED);
+            y += kRowHeight;
+
+            sprintf(buffer, " ppuctrl  0x%02x", testBench.core().o_ppu_debug_ppuctrl);
+            DrawString({x,y}, buffer, olc::BLACK);
+            y += kRowHeight;
+
+            sprintf(buffer, " ppumask  0x%02x", testBench.core().o_ppu_debug_ppumask);
+            DrawString({x,y}, buffer, olc::BLACK);
+            y += kRowHeight;
+
+            sprintf(buffer, " ppustatus 0x%02x", testBench.core().o_ppu_debug_ppustatus);
+            DrawString({x,y}, buffer, olc::BLACK);
+            y += kRowHeight;
+              
         }
 
         void drawTitle(int x, int y) {

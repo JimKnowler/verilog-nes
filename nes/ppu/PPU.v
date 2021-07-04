@@ -33,6 +33,7 @@ module PPU(
     // debug ports
     output [7:0] o_debug_ppuctrl,
     output [7:0] o_debug_ppumask,
+    output [7:0] o_debug_ppustatus,
     output [7:0] o_debug_ppuscroll_x,
     output [7:0] o_debug_ppuscroll_y,
     output [15:0] o_debug_ppuaddr,
@@ -93,6 +94,8 @@ reg [7:0] r_oam [255:0];
 // - read through ppustatus[7], and set false after the read
 reg r_nmi_occurred;
 
+wire [7:0] w_ppustatus = { r_nmi_occurred, r_ppustatus[6:0] };
+
 // NMI_Output
 // - PPU pulls o_nmi_n low when nmi_occurred && nmi_output
 wire w_nmi_output;
@@ -118,7 +121,7 @@ begin
         begin
             case (i_rs)
             RS_PPUSTATUS: begin
-                r_data = { r_nmi_occurred, r_ppustatus[6:0] };
+                r_data = w_ppustatus;
             end
             RS_PPUDATA: begin
                 if ((r_ppuaddr >= 16'h3F00) && (r_ppuaddr <= 16'h3FFF)) 
@@ -427,6 +430,7 @@ assign o_video_data = (o_video_we_n == 0) ? r_video_buffer : 0;
 
 assign o_debug_ppuctrl = r_ppuctrl;
 assign o_debug_ppumask = r_ppumask;
+assign o_debug_ppustatus = w_ppustatus;
 assign o_debug_ppuscroll_x = r_ppuscroll_x;
 assign o_debug_ppuscroll_y = r_ppuscroll_y;
 assign o_debug_ppuaddr = r_ppuaddr;

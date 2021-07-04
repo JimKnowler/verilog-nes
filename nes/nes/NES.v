@@ -57,7 +57,17 @@ module NES(
     output [7:0] o_cpu_debug_ir,
     output o_cpu_debug_error,
     output o_cpu_debug_rw,
-    output [15:0] o_cpu_debug_address
+    output [15:0] o_cpu_debug_address,
+    output [3:0] o_cpu_debug_tcu,
+    output o_cpu_debug_clk_en,
+
+    //
+    // PPU Debugging
+    //
+
+    output [7:0] o_ppu_debug_ppumask,
+    output [7:0] o_ppu_debug_ppuctrl,
+    output [7:0] o_ppu_debug_ppustatus
 );
     wire w_ce_cpu;
 
@@ -79,7 +89,6 @@ module NES(
     wire [7:0] w_debug_bus_adl;
     wire [7:0] w_debug_bus_adh;
     wire [7:0] w_debug_bus_sb;
-    wire [3:0] w_debug_tcu;
     wire [7:0] w_debug_s;
     wire [7:0] w_debug_pcl;
     wire [7:0] w_debug_pch;
@@ -107,7 +116,7 @@ module NES(
         .o_debug_bus_adh(w_debug_bus_adh),
         .o_debug_bus_sb(w_debug_bus_sb),
         .o_debug_ir(o_cpu_debug_ir),
-        .o_debug_tcu(w_debug_tcu),
+        .o_debug_tcu(o_cpu_debug_tcu),
         .o_debug_s(w_debug_s),
         .o_debug_pcl(w_debug_pcl),
         .o_debug_pch(w_debug_pch),
@@ -138,8 +147,6 @@ module NES(
     wire [7:0] w_ppu_data_output;
 
     /* verilator lint_off UNUSED */
-    wire [7:0] w_debug_ppuctrl;
-    wire [7:0] w_debug_ppumask;
     wire [7:0] w_debug_ppuscroll_x;
     wire [7:0] w_debug_ppuscroll_y;
     wire [15:0] w_debug_ppuaddr;
@@ -173,8 +180,9 @@ module NES(
         .o_video_x(o_video_x),
         .o_video_y(o_video_y),
         .o_video_visible(o_video_visible),
-        .o_debug_ppuctrl(w_debug_ppuctrl),
-        .o_debug_ppumask(w_debug_ppumask),
+        .o_debug_ppuctrl(o_ppu_debug_ppuctrl),
+        .o_debug_ppumask(o_ppu_debug_ppumask),
+        .o_debug_ppustatus(o_ppu_debug_ppustatus),
         .o_debug_ppuscroll_x(w_debug_ppuscroll_x),
         .o_debug_ppuscroll_y(w_debug_ppuscroll_y),
         .o_debug_ppuaddr(w_debug_ppuaddr),
@@ -236,5 +244,6 @@ module NES(
 
     assign o_cpu_debug_rw = w_cpu_rw;
     assign o_cpu_debug_address = w_cpu_address;
+    assign o_cpu_debug_clk_en = w_ce_cpu;
 
 endmodule
