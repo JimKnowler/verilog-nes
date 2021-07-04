@@ -157,6 +157,7 @@ namespace emulator {
             sprintf(buffer, "#frames %d", numFrames);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
+            y += kRowHeight;
 
             // CPU
             DrawString({x,y}, "CPU", olc::RED);
@@ -179,11 +180,24 @@ namespace emulator {
             sprintf(buffer, "address 0x%04x", testBench.core().o_cpu_debug_address);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;  
+            y += kRowHeight;
 
             // PPU
             DrawString({x,y}, "PPU", olc::RED);
             y += kRowHeight;
             DrawLine({x, y}, {x + 42 * 8, y}, olc::RED);
+            y += kRowHeight;
+
+            sprintf(buffer, "         x %3d", testBench.core().o_video_x);
+            DrawString({x,y}, buffer, olc::BLACK);
+            y += kRowHeight;
+
+            sprintf(buffer, "         y %3d", testBench.core().o_video_y);
+            DrawString({x,y}, buffer, olc::BLACK);
+            y += kRowHeight;
+
+            sprintf(buffer, "   ppuctrl 0x%02x", testBench.core().o_ppu_debug_ppuctrl);
+            DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
             sprintf(buffer, "   ppuctrl 0x%02x", testBench.core().o_ppu_debug_ppuctrl);
