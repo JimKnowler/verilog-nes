@@ -38,6 +38,9 @@ module PPU(
     output [7:0] o_debug_ppuscroll_y,
     output [15:0] o_debug_ppuaddr,
     output [7:0] o_debug_oamaddr,
+    output [14:0] o_debug_v,            // current vram address
+    output [14:0] o_debug_t,            // temporary vram address
+    output [2:0] o_debug_x,             // fine x scroll
     output o_debug_w,                   // write register (for ppuscroll and ppuaddr)
     output [7:0] o_debug_video_buffer   // internal buffer of last read from video bus
 );
@@ -435,6 +438,9 @@ assign o_debug_ppuscroll_x = r_ppuscroll_x;
 assign o_debug_ppuscroll_y = r_ppuscroll_y;
 assign o_debug_ppuaddr = r_ppuaddr;
 assign o_debug_oamaddr = r_oamaddr;
+assign o_debug_v = 15'habcd;
+assign o_debug_t = 15'h1234;
+assign o_debug_x = r_ppuscroll_x[2:0];
 assign o_debug_w = r_w;
 assign o_debug_video_buffer = r_video_buffer;
 

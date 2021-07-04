@@ -186,11 +186,11 @@ namespace emulator {
             DrawLine({x, y}, {x + 42 * 8, y}, olc::RED);
             y += kRowHeight;
 
-            sprintf(buffer, "   ppuctrl  0x%02x", testBench.core().o_ppu_debug_ppuctrl);
+            sprintf(buffer, "   ppuctrl 0x%02x", testBench.core().o_ppu_debug_ppuctrl);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
-            sprintf(buffer, "   ppumask  0x%02x", testBench.core().o_ppu_debug_ppumask);
+            sprintf(buffer, "   ppumask 0x%02x", testBench.core().o_ppu_debug_ppumask);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
@@ -205,6 +205,22 @@ namespace emulator {
             sprintf(buffer, "  scroll-y %02d", testBench.core().o_ppu_debug_ppuscroll_y);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;  
+
+            sprintf(buffer, "         v 0x%04x", testBench.core().o_ppu_debug_v);
+            DrawString({x,y}, buffer, olc::BLACK);
+            y += kRowHeight; 
+
+            sprintf(buffer, "         t 0x%04x", testBench.core().o_ppu_debug_t);
+            DrawString({x,y}, buffer, olc::BLACK);
+            y += kRowHeight; 
+
+            sprintf(buffer, "         x %d", testBench.core().o_ppu_debug_x);
+            DrawString({x,y}, buffer, olc::BLACK);
+            y += kRowHeight; 
+
+            sprintf(buffer, "         w %d", testBench.core().o_ppu_debug_w);
+            DrawString({x,y}, buffer, olc::BLACK);
+            y += kRowHeight; 
         }
 
         void drawTitle(int x, int y) {

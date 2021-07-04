@@ -69,7 +69,11 @@ module NES(
     output [7:0] o_ppu_debug_ppuctrl,
     output [7:0] o_ppu_debug_ppustatus,
     output [7:0] o_ppu_debug_ppuscroll_x,
-    output [7:0] o_ppu_debug_ppuscroll_y
+    output [7:0] o_ppu_debug_ppuscroll_y,
+    output [14:0] o_ppu_debug_v,
+    output [14:0] o_ppu_debug_t,
+    output [2:0] o_ppu_debug_x,
+    output o_ppu_debug_w
 );
     wire w_ce_cpu;
 
@@ -151,7 +155,6 @@ module NES(
     /* verilator lint_off UNUSED */
     wire [15:0] w_debug_ppuaddr;
     wire [7:0] w_debug_oamaddr;
-    wire w_debug_w;
     wire [7:0] w_debug_video_buffer;
     /* verilator lint_on UNUSED */
 
@@ -187,7 +190,10 @@ module NES(
         .o_debug_ppuscroll_y(o_ppu_debug_ppuscroll_y),
         .o_debug_ppuaddr(w_debug_ppuaddr),
         .o_debug_oamaddr(w_debug_oamaddr),
-        .o_debug_w(w_debug_w),
+        .o_debug_v(o_ppu_debug_v),
+        .o_debug_t(o_ppu_debug_t),
+        .o_debug_x(o_ppu_debug_x),
+        .o_debug_w(o_ppu_debug_w),
         .o_debug_video_buffer(w_debug_video_buffer)
     );
 
