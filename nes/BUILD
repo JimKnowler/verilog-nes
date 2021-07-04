@@ -19,7 +19,8 @@ cpu6502_srcs = [
 ]
 
 ppu_srcs = [
-    "ppu/PPU.v"
+    "ppu/PPU.v",
+    "ppu/PaletteLookupRGB.v"
 ]
 
 verilator_cc_library(

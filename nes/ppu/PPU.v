@@ -22,15 +22,10 @@ module PPU(
     output [7:0] o_video_data,          // data write to video data bus
     input [7:0] i_video_data,           // data read from video data bus
 
-/* verilator lint_off UNUSED */
-/* verilator lint_off UNDRIVEN */
     // Video output
     output [7:0] o_video_red,
     output [7:0] o_video_green,
     output [7:0] o_video_blue,
-/* verilator lint_on UNDRIVEN */
-/* verilator lint_on UNUSED */
-
     output [8:0] o_video_x,             // pixel clock - x co-ord of current pixel
     output [8:0] o_video_y,             // pixel clock - y co-ord of current pixel
     output o_video_visible,             // pixel clock - visibility of the current pixel
@@ -397,6 +392,22 @@ begin
         end
     end
 end
+
+//
+// Video output
+// 
+
+// background colour
+wire [5:0] w_background_colour = r_palette[0][5:0];
+PaletteLookupRGB palette(
+    .i_clk(i_clk),
+    .i_reset_n(i_reset_n),
+    .i_index(w_background_colour),
+    .o_red(o_video_red),
+    .o_green(o_video_green),
+    .o_blue(o_video_blue)
+);
+
 
 //
 // drive outputs
