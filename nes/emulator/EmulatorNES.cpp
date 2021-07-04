@@ -66,6 +66,13 @@ namespace emulator {
 
         std::vector<olc::Pixel> pixels;
 
+        enum Mode {
+            kSingleStep,
+            kRun
+        };
+
+        Mode mode = kRun;
+
         void reset() {
             testBench.reset();
 
@@ -82,10 +89,49 @@ namespace emulator {
         }
 
         void update() {
-            const int kNumTicksPerFrame = 2000;       // todo: replace by 30fps timer
-            for (int i=0; i<kNumTicksPerFrame; i++) {
-                simulateTick();
+            switch (mode) {
+                case kRun:
+                {
+                    // todo: replace by 30fps timer
+                    const int kNumTicksPerFrame = 2000;
+                    
+                    for (int i=0; i<kNumTicksPerFrame; i++) {
+                        simulateTick();
+                    }
+
+                    if(GetKey(olc::R).bReleased) {
+                        mode = kSingleStep;
+                    }
+
+                    break;
+                }
+                case kSingleStep:
+                {
+                    if (GetKey(olc::SPACE).bReleased) {
+                        int numTicks = 1;
+
+                        if (GetKey(olc::RIGHT).bHeld) {
+                            numTicks = 100;
+                        }
+
+                        for (int i=0; i<numTicks; i++) {
+                            simulateTick();
+                        }
+                    }
+
+                    if (GetKey(olc::R).bReleased) {
+                        mode = kRun;
+                    }
+
+                    break;
+                }
+                default:
+                {
+                    break;
+                }
             }
+
+            
         }
 
         void render() {			
