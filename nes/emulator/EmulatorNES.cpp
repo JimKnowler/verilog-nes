@@ -186,18 +186,25 @@ namespace emulator {
             DrawLine({x, y}, {x + 42 * 8, y}, olc::RED);
             y += kRowHeight;
 
-            sprintf(buffer, " ppuctrl  0x%02x", testBench.core().o_ppu_debug_ppuctrl);
+            sprintf(buffer, "   ppuctrl  0x%02x", testBench.core().o_ppu_debug_ppuctrl);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
-            sprintf(buffer, " ppumask  0x%02x", testBench.core().o_ppu_debug_ppumask);
+            sprintf(buffer, "   ppumask  0x%02x", testBench.core().o_ppu_debug_ppumask);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
             sprintf(buffer, " ppustatus 0x%02x", testBench.core().o_ppu_debug_ppustatus);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
-              
+
+            sprintf(buffer, "  scroll-x %02d", testBench.core().o_ppu_debug_ppuscroll_x);
+            DrawString({x,y}, buffer, olc::BLACK);
+            y += kRowHeight;
+
+            sprintf(buffer, "  scroll-y %02d", testBench.core().o_ppu_debug_ppuscroll_y);
+            DrawString({x,y}, buffer, olc::BLACK);
+            y += kRowHeight;  
         }
 
         void drawTitle(int x, int y) {
