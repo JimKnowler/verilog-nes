@@ -143,6 +143,20 @@ namespace emulator {
             
         }
 
+        std::string bitLabel(uint8_t value, const std::string& label) {
+            std::string output;
+
+            for (int i=0; i<8; i++) {
+                if ((value & (1<<(7-i))) != 0) {
+                    output += label[i];
+                } else {
+                    output += '.';
+                }
+            }
+
+            return output;
+        }
+
         void drawStats(int x, int y) {
             DrawString({x,y}, "Stats", olc::RED);
             y += kRowHeight;
@@ -150,11 +164,11 @@ namespace emulator {
             y += kRowHeight;
 
             char buffer[32];
-            sprintf(buffer, " #ticks %d", numTicks);
+            sprintf(buffer, "     ticks %d", numTicks);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
-            sprintf(buffer, "#frames %d", numFrames);
+            sprintf(buffer, "     frame %d", numFrames);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
             y += kRowHeight;
@@ -165,19 +179,19 @@ namespace emulator {
             DrawLine({x, y}, {x + 42 * 8, y}, olc::RED);
             y += kRowHeight;
 
-            sprintf(buffer, " clk-en %d", testBench.core().o_cpu_debug_clk_en);
+            sprintf(buffer, "    clk-en %d", testBench.core().o_cpu_debug_clk_en);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
-            sprintf(buffer, "     ir 0x%02x", testBench.core().o_cpu_debug_ir);
+            sprintf(buffer, "        ir 0x%02x", testBench.core().o_cpu_debug_ir);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
-            sprintf(buffer, "    tcu 0x%02x", testBench.core().o_cpu_debug_tcu);
+            sprintf(buffer, "       tcu 0x%02x", testBench.core().o_cpu_debug_tcu);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
-            sprintf(buffer, "address 0x%04x", testBench.core().o_cpu_debug_address);
+            sprintf(buffer, "   address 0x%04x", testBench.core().o_cpu_debug_address);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;  
             y += kRowHeight;
@@ -196,27 +210,26 @@ namespace emulator {
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
-            sprintf(buffer, "   ppuctrl 0x%02x", testBench.core().o_ppu_debug_ppuctrl);
+            uint8_t ppuctrl = testBench.core().o_ppu_debug_ppuctrl;
+            sprintf(buffer, "   ppuctrl 0x%02x %s", ppuctrl, bitLabel(ppuctrl, "VPHBSINN").c_str());
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
-            sprintf(buffer, "   ppuctrl 0x%02x", testBench.core().o_ppu_debug_ppuctrl);
+            uint8_t ppumask = testBench.core().o_ppu_debug_ppumask;
+            sprintf(buffer, "   ppumask 0x%02x %s", ppumask, bitLabel(ppumask, "BGRsbMmG").c_str());
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
-            sprintf(buffer, "   ppumask 0x%02x", testBench.core().o_ppu_debug_ppumask);
+            uint8_t ppustatus = testBench.core().o_ppu_debug_ppustatus;
+            sprintf(buffer, " ppustatus 0x%02x %s", ppustatus, bitLabel(ppustatus, "VSO.....").c_str());
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
-            sprintf(buffer, " ppustatus 0x%02x", testBench.core().o_ppu_debug_ppustatus);
+            sprintf(buffer, "  scroll-x %03d", testBench.core().o_ppu_debug_ppuscroll_x);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
-            sprintf(buffer, "  scroll-x %02d", testBench.core().o_ppu_debug_ppuscroll_x);
-            DrawString({x,y}, buffer, olc::BLACK);
-            y += kRowHeight;
-
-            sprintf(buffer, "  scroll-y %02d", testBench.core().o_ppu_debug_ppuscroll_y);
+            sprintf(buffer, "  scroll-y %03d", testBench.core().o_ppu_debug_ppuscroll_y);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;  
 
