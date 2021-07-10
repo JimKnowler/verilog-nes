@@ -20,7 +20,12 @@ cpu6502_srcs = [
 
 ppu_srcs = [
     "ppu/PPU.v",
-    "ppu/PaletteLookupRGB.v"
+    "ppu/PaletteLookupRGB.v",
+    "ppu/PPUAttributeAddress.v",
+    "ppu/PPUIncrementX.v",
+    "ppu/PPUIncrementY.v",
+    "ppu/PPUPatternTableAddress.v",
+    "ppu/Shift16.v"
 ]
 
 verilator_cc_library(
@@ -229,6 +234,46 @@ gtest_verilog_testbench(
     deps = [":Shift16"]
 )
 
+verilator_cc_library(
+    name = "PPUAttributeAddress",
+    srcs = ["ppu/PPUAttributeAddress.v"],
+)
+
+gtest_verilog_testbench(
+    name = "PPUAttributeAddressTestBench",
+    deps = [":PPUAttributeAddress"]
+)
+
+verilator_cc_library(
+    name = "PPUIncrementX",
+    srcs = ["ppu/PPUIncrementX.v"],
+)
+
+gtest_verilog_testbench(
+    name = "PPUIncrementXTestBench",
+    deps = [":PPUIncrementX"]
+)
+
+verilator_cc_library(
+    name = "PPUIncrementY",
+    srcs = ["ppu/PPUIncrementY.v"],
+)
+
+gtest_verilog_testbench(
+    name = "PPUIncrementYTestBench",
+    deps = [":PPUIncrementY"]
+)
+
+verilator_cc_library(
+    name = "PPUPatternTableAddress",
+    srcs = ["ppu/PPUPatternTableAddress.v"],
+)
+
+gtest_verilog_testbench(
+    name = "PPUPatternTableAddressTestBench",
+    deps = [":PPUPatternTableAddress"]
+)
+
 # Generate instance of VGAGenerator for
 #  a smaller screen (easier to test!)
 verilator_cc_library(
@@ -293,7 +338,11 @@ cc_test(
         ":PPUChipEnableTestBench",
         ":Shift16TestBench",
         ":VGAGenerator3x2TestBench",
-        ":VGAOutput3x2TestBench"
+        ":VGAOutput3x2TestBench",
+        ":PPUAttributeAddressTestBench",
+        ":PPUIncrementXTestBench",
+        ":PPUIncrementYTestBench",
+        ":PPUPatternTableAddressTestBench"
     ],
     deps = [
         "@com_google_googletest//:gtest",
@@ -303,7 +352,11 @@ cc_test(
         ":PPUChipEnable",
         ":Shift16",
         ":VGAGenerator3x2",
-        ":VGAOutput3x2"
+        ":VGAOutput3x2",
+        ":PPUAttributeAddress",
+        ":PPUIncrementX",
+        ":PPUIncrementY",
+        ":PPUPatternTableAddress"
     ],
 )
 

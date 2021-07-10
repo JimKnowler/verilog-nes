@@ -679,18 +679,8 @@ TEST_F(PPU, ShouldAutoIncrementPPUADDRVerticallyWhenReadingFromPPUDATA) {
     EXPECT_EQ(32, core.o_debug_ppuaddr);
 }
 
-// OAM DMA - CPU!
-// - CPU write to $4014
-
-// CPUMemoryMap
-// - map to game ROM
-// - map to PPU
-// - map to internal RAM
-
-// PPUMemoryMap
-// - map to CHR ROM
-// - map to VRAM for nametables
-// - mirror $3000 to $2000
+// TODO: test PPU internal registers (t,v,x,w) when writing to 
+//  PPUCTRL, PPUSCROLL, PPUADDR and reading from PPUSTATUS
 
 // rasteriser
 // - todo: ...
