@@ -20,6 +20,13 @@ namespace {
     };
 }
 
-TEST_F(PPUPatternTableAddress, ShouldConstruct) {
-    // empty
+TEST_F(PPUPatternTableAddress, ShouldOutputCorrectAddress) {
+    auto& core = testBench.core();
+
+    for (uint16_t v=0; v < (1<<15); v++) {
+        core.i_v = v;
+        core.eval();
+
+        ASSERT_EQ(core.o_address, 0x2000 | (v & 0x0FFF));
+    }
 }
