@@ -16,8 +16,8 @@ using namespace memory;
 #define LOG_BUS(msg, ...)   printf(msg, __VA_ARGS__)
 
 namespace {
-    const uint32_t kScreenWidth = 1000;
-    const uint32_t kScreenHeight = 600;
+    const uint32_t kScreenWidth = 1300;
+    const uint32_t kScreenHeight = 700;
 
     const int kRowHeight = 11;
 }
@@ -73,6 +73,8 @@ namespace emulator {
 
         Mode mode = kRun;
 
+        int vramDisplay = 0;
+
         void reset() {
             testBench.reset();
 
@@ -89,6 +91,10 @@ namespace emulator {
         }
 
         void update() {
+            if (GetKey(olc::V).bReleased) {
+                toggleDisplayVRAM();
+            }
+
             switch (mode) {
                 case kRun:
                 {
@@ -140,7 +146,25 @@ namespace emulator {
             drawTitle(10, 10);
             drawPixels(10, 50);
             drawStats(700, 50);
-            drawPatternTable(700, 350);
+
+            // visual debug of VRAM
+            const int kVramX = 700;
+            const int kVramY = 350;
+
+            switch (vramDisplay) {
+                case 0:
+                    drawNametable(kVramX, kVramY);
+                    break;
+                case 1:
+                    drawPatternTable(kVramX, kVramY);
+                    break;                
+                default:
+                   break;
+            }
+        }
+
+        void toggleDisplayVRAM() {
+            vramDisplay = (vramDisplay + 1) % 2;
         }
 
         std::string bitLabel(uint8_t value, const std::string& label) {
@@ -279,7 +303,7 @@ namespace emulator {
         }
 
         void drawPatternTable(int x, int y) {
-            DrawString({x,y}, "Pattern Table", olc::RED);
+            DrawString({x,y}, "VRAM - Pattern Table", olc::RED);
             y += kRowHeight;
             DrawLine({x, y}, {x + 42 * 8, y}, olc::RED);
             y += kRowHeight;
@@ -291,23 +315,50 @@ namespace emulator {
                         int tx = x + (section * 128) + (c*8);
                         int ty = y + (r * 8);
 
-                        for (int i=0; i<8; i++) {
-                            // each row in the character
-                            uint8_t low = vram.read(i | (c<<4) | (r<<8) | (section << 12));
-                            uint8_t high = vram.read(i | (1<<3) | (c<<4) | (r<<8) | (section << 12));
-
-                            for (int p=0; p<8; p++) {
-                                // each pixel in the row
-                                uint8_t lowBit = (low >> (8-p)) & 0x1;
-                                uint8_t highBit = (high >> (8-p)) & 0x1;
-                                uint8_t colour = lowBit + (highBit << 1);
-
-                                const static olc::Pixel kColours[] = { olc::BLACK, olc::DARK_GREY, olc::GREY, olc::WHITE };
-
-                                DrawRect({tx+p, ty+i}, {1,1}, kColours[colour]);
-                            }
-                        }
+                        drawCharacter(tx, ty, section, c, r);
                     }
+                }
+            }
+        }
+
+        void drawNametable(int x, int y) {
+            DrawString({x,y}, "VRAM - Nametable", olc::RED);
+            y += kRowHeight;
+            DrawLine({x, y}, {x + 42 * 8, y}, olc::RED);
+            y += kRowHeight;
+
+            for (int section=0; section<2; section++) {
+                for (int c = 0; c<32; c++) {
+                    for (int r =0; r<30; r++) {
+                        // read value from nametable
+                        uint8_t tile = vram.read(0x2000 + (section * 0x0800) + c + (r * 32));
+
+                        // position of character's top left corner
+                        int tx = x + (section * 32 * 8) + (c*8);
+                        int ty = y + (r * 8);
+                        
+                        int patternTableSection = 1;        // TODO: read from PPUCTRL[4]
+                        drawCharacter(tx, ty, patternTableSection, tile & 0xF, (tile >> 4) & 0xF);
+                    }
+                }
+            }
+        }
+
+        void drawCharacter(int x, int y, int section, int c, int r) {
+            for (int i=0; i<8; i++) {
+                // each row in the character
+                uint8_t low = vram.read(i | (c<<4) | (r<<8) | (section << 12));
+                uint8_t high = vram.read(i | (1<<3) | (c<<4) | (r<<8) | (section << 12));
+
+                for (int p=0; p<8; p++) {
+                    // each pixel in the row
+                    uint8_t lowBit = (low >> (7-p)) & 0x1;
+                    uint8_t highBit = (high >> (7-p)) & 0x1;
+                    uint8_t colour = lowBit + (highBit << 1);
+
+                    const static olc::Pixel kColours[] = { olc::BLACK, olc::DARK_GREY, olc::GREY, olc::WHITE };
+
+                    DrawRect({x+p, y+i}, {1,1}, kColours[colour]);
                 }
             }
         }
