@@ -4,11 +4,11 @@ using namespace testing;
 #include "gtestverilog/gtestverilog.h"
 using namespace gtestverilog;
 
-#include "nes/PPUPatternTableAddressTestBench.h"
-using namespace ppupatterntableaddresstestbench;
+#include "nes/PPUTileAddressTestBench.h"
+using namespace pputileaddresstestbench;
 
 namespace {
-    class PPUPatternTableAddress : public ::testing::TestWithParam<int> {
+    class PPUTileAddress : public ::testing::TestWithParam<int> {
     public:
         void SetUp() override {
         }
@@ -16,11 +16,11 @@ namespace {
         void TearDown() override {
         }
 
-        PPUPatternTableAddressTestBench testBench;
+        PPUTileAddressTestBench testBench;
     };
 }
 
-TEST_F(PPUPatternTableAddress, ShouldOutputCorrectAddress) {
+TEST_F(PPUTileAddress, ShouldOutputCorrectAddress) {
     auto& core = testBench.core();
 
     for (uint16_t v=0; v < (1<<15); v++) {

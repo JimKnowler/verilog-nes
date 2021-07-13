@@ -1,4 +1,4 @@
-module PPUPatternTableAddress(
+module PPUTileAddress(
     /* verilator lint_off UNUSED */
     input i_clk,
     input i_reset_n,
