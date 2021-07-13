@@ -225,6 +225,11 @@ namespace emulator {
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
+            uint16_t vramAddress = testBench.core().o_ppu_debug_vram_address;
+            sprintf(buffer, " vram addr 0x%04x", vramAddress);
+            DrawString({x,y}, buffer, olc::BLACK);
+            y += kRowHeight;
+            
             sprintf(buffer, "  scroll-x %03d", testBench.core().o_ppu_debug_ppuscroll_x);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;

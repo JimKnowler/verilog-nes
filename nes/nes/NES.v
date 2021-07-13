@@ -70,6 +70,7 @@ module NES(
     output [7:0] o_ppu_debug_ppustatus,
     output [7:0] o_ppu_debug_ppuscroll_x,
     output [7:0] o_ppu_debug_ppuscroll_y,
+    output [13:0] o_ppu_debug_vram_address,
     output [14:0] o_ppu_debug_v,
     output [14:0] o_ppu_debug_t,
     output [2:0] o_ppu_debug_x,
@@ -146,11 +147,11 @@ module NES(
         .o_ce(w_ce_ppu)
     );
 
-    wire w_ppu_we_n;
-    wire w_ppu_rd_n;
-    wire [13:0] w_ppu_address_output;
-    wire [7:0] w_ppu_data_input;
-    wire [7:0] w_ppu_data_output;
+    wire w_ppu_vram_we_n;
+    wire w_ppu_vram_rd_n;
+    wire [13:0] w_ppu_vram_address;
+    wire [7:0] w_ppu_vram_data_input;
+    wire [7:0] w_ppu_vram_data_output;
 
     /* verilator lint_off UNUSED */
     wire [15:0] w_debug_ppuaddr;
@@ -172,11 +173,11 @@ module NES(
         .i_data(w_data_cpu_ppu),
         .o_data(w_data_ppu_cpu),
         .i_rw(w_rw_ppu),
-        .o_vram_rd_n(w_ppu_rd_n),
-        .o_vram_we_n(w_ppu_we_n),
-        .o_vram_address(w_ppu_address_output),
-        .o_vram_data(w_ppu_data_output),
-        .i_vram_data(w_ppu_data_input),
+        .o_vram_rd_n(w_ppu_vram_rd_n),
+        .o_vram_we_n(w_ppu_vram_we_n),
+        .o_vram_address(w_ppu_vram_address),
+        .o_vram_data(w_ppu_vram_data_output),
+        .i_vram_data(w_ppu_vram_data_input),
         .o_video_red(o_video_red),
         .o_video_green(o_video_green),
         .o_video_blue(o_video_blue),
@@ -227,11 +228,11 @@ module NES(
     PPUMemoryMap ppuMemoryMap(
         .i_clk(i_clk),
         .i_reset_n(i_reset_n),
-        .i_address_ppu(w_ppu_address_output),
-        .i_rd_en_ppu_n(w_ppu_rd_n),
-        .i_wr_en_ppu_n(w_ppu_we_n),
-        .o_data_ppu(w_ppu_data_input),
-        .i_data_ppu(w_ppu_data_output),
+        .i_address_ppu(w_ppu_vram_address),
+        .i_rd_en_ppu_n(w_ppu_vram_rd_n),
+        .i_wr_en_ppu_n(w_ppu_vram_we_n),
+        .o_data_ppu(w_ppu_vram_data_input),
+        .i_data_ppu(w_ppu_vram_data_output),
 
         // pattern table
         .o_cs_patterntable(o_cs_patterntable),
@@ -251,5 +252,6 @@ module NES(
     assign o_cpu_debug_rw = w_cpu_rw;
     assign o_cpu_debug_address = w_cpu_address;
     assign o_cpu_debug_clk_en = w_ce_cpu;
+    assign o_ppu_debug_vram_address = w_ppu_vram_address;
 
 endmodule
