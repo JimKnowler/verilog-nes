@@ -10,13 +10,13 @@ module PPUAttributeAddress(
 
 // https://wiki.nesdev.com/w/index.php/PPU_scrolling#Tile_and_attribute_fetching
 
-reg [14:0] r_v;
+reg [14:0] r_address;
 
 always @(*)
 begin
-    r_v = 15'h23C0 | (i_v & 15'h0C00) | { {9{1'b0}}, i_v[9:7], {3{1'b0}}} | { {12{1'b0}}, i_v[4:2] };
+    r_address = 15'h23C0 | (i_v & 15'h0C00) | { {9{1'b0}}, i_v[9:7], {3{1'b0}}} | { {12{1'b0}}, i_v[4:2] };
 end
 
-assign o_address = r_v;
+assign o_address = r_address;
 
 endmodule
