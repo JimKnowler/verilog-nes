@@ -25,6 +25,7 @@ ppu_srcs = [
     "ppu/PPUIncrementX.v",
     "ppu/PPUIncrementY.v",
     "ppu/PPUTileAddress.v",
+    "ppu/PPUPatternTableAddress.v",
     "ppu/Shift16.v"
 ]
 
@@ -274,6 +275,16 @@ gtest_verilog_testbench(
     deps = [":PPUTileAddress"]
 )
 
+verilator_cc_library(
+    name = "PPUPatternTableAddress",
+    srcs = ["ppu/PPUPatternTableAddress.v"],
+)
+
+gtest_verilog_testbench(
+    name = "PPUPatternTableAddressTestBench",
+    deps = [":PPUPatternTableAddress"]
+)
+
 # Generate instance of VGAGenerator for
 #  a smaller screen (easier to test!)
 verilator_cc_library(
@@ -342,7 +353,8 @@ cc_test(
         ":PPUAttributeAddressTestBench",
         ":PPUIncrementXTestBench",
         ":PPUIncrementYTestBench",
-        ":PPUTileAddressTestBench"
+        ":PPUTileAddressTestBench",
+        ":PPUPatternTableAddressTestBench"
     ],
     deps = [
         "@com_google_googletest//:gtest",
@@ -356,7 +368,8 @@ cc_test(
         ":PPUAttributeAddress",
         ":PPUIncrementX",
         ":PPUIncrementY",
-        ":PPUTileAddress"
+        ":PPUTileAddress",
+        ":PPUPatternTableAddress"
     ],
 )
 
