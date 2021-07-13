@@ -56,17 +56,17 @@ namespace {
                 if (core.i_clk == 1) {
                     // clock: end of phi2
                     // R/W data is valid on the bus
-                    if (core.o_video_we_n == 0) {
+                    if (core.o_vram_we_n == 0) {
                         // write
-                        vram.write(core.o_video_address, core.o_video_data);
-                    } else if (core.o_video_rd_n == 0) {
+                        vram.write(core.o_vram_address, core.o_vram_data);
+                    } else if (core.o_vram_rd_n == 0) {
                         // read
-                        core.i_video_data = vram.read(core.o_video_address);
+                        core.i_vram_data = vram.read(core.o_vram_address);
                     }
                 } else {
                     // clock: end of phi 1
                     // undefined data on the bus
-                    core.i_video_data = 0xFF;
+                    core.i_vram_data = 0xFF;
                 }
             });
         }
@@ -105,8 +105,8 @@ TEST_F(PPU, ShouldInitialiseWithDefaultOutputs) {
     auto& core = testBench.core();
 
     EXPECT_EQ(1, core.o_int_n);
-    EXPECT_EQ(1, core.o_video_we_n);
-    EXPECT_EQ(1, core.o_video_rd_n);
+    EXPECT_EQ(1, core.o_vram_we_n);
+    EXPECT_EQ(1, core.o_vram_rd_n);
 
     core.i_rs = RS_PPUSTATUS;
     core.i_rw = RW_READ;

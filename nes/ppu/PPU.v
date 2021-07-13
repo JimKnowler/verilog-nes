@@ -9,18 +9,18 @@ module PPU(
     input i_cs_n,
 
     // CPU interface
-    output o_int_n,                 // ~Interrupt, to drive ~NMI on CPU
-    input [2:0] i_rs,               // register select
-    input [7:0] i_data,             // Read from CPU data bus
-    output [7:0] o_data,            // Write to CPU data bus
-    input i_rw,                     // Read/~Write for CPU data bus
+    output o_int_n,                     // ~Interrupt, to drive ~NMI on CPU
+    input [2:0] i_rs,                   // register select
+    input [7:0] i_data,                 // Read from CPU data bus
+    output [7:0] o_data,                // Write to CPU data bus
+    input i_rw,                         // Read/~Write for CPU data bus
 
-    // VIDEO interface    
-    output o_video_rd_n,                // ~Read from VIDEO data bus
-    output o_video_we_n,                // ~Write to VIDEO data bus
-    output [13:0] o_video_address,      // address for video data bus
-    output [7:0] o_video_data,          // data write to video data bus
-    input [7:0] i_video_data,           // data read from video data bus
+    // VRAM interface    
+    output o_vram_rd_n,                 // ~Read from VRAM data bus
+    output o_vram_we_n,                 // ~Write to VRAM data bus
+    output [13:0] o_vram_address,       // address for VRAM data bus
+    output [7:0] o_vram_data,           // data write to VRAM data bus
+    input [7:0] i_vram_data,            // data read from VRAM data bus
 
     // Video output
     output [7:0] o_video_red,
@@ -408,7 +408,7 @@ begin
         else if (!r_video_rd_n)
         begin
             r_video_rd_n <= 1;
-            r_video_buffer <= i_video_data;
+            r_video_buffer <= i_vram_data;
         end
     end
 end
@@ -436,14 +436,14 @@ PaletteLookupRGB palette(
 assign o_int_n = r_int_n;
 assign o_data = r_data;
 
-assign o_video_rd_n = r_video_rd_n;
-assign o_video_we_n = r_video_we_n;
+assign o_vram_rd_n = r_video_rd_n;
+assign o_vram_we_n = r_video_we_n;
 assign o_video_x = r_video_x;
 assign o_video_y = r_video_y;
 assign o_video_visible = w_video_visible;
 
-assign o_video_address = r_video_address;
-assign o_video_data = (o_video_we_n == 0) ? r_video_buffer : 0;
+assign o_vram_address = r_video_address;
+assign o_vram_data = (o_vram_we_n == 0) ? r_video_buffer : 0;
 
 assign o_debug_ppuctrl = r_ppuctrl;
 assign o_debug_ppumask = r_ppumask;
