@@ -113,6 +113,28 @@ reg [7:0] r_video_buffer;
 // address output on video address bus
 reg [13:0] r_video_address;
 
+// increment x component of v
+wire [14:0] w_v_increment_x;
+PPUIncrementX ppuIncrementX(
+    .i_clk(i_clk),
+    .i_reset_n(i_reset_n),
+    .i_v(r_v),
+    .o_v(w_v_increment_x)
+);
+
+// increment y component of v
+wire [14:0] w_v_increment_y;
+PPUIncrementY ppuIncrementY(
+    .i_clk(i_clk),
+    .i_reset_n(i_reset_n),
+    .i_v(r_v),
+    .o_v(w_v_increment_y)
+);
+
+wire w_is_rendering_background_enabled = r_ppumask[3];
+wire w_is_rendering_sprites_enabled = r_ppumask[4];
+wire w_is_rendering_enabled = w_is_rendering_background_enabled | w_is_rendering_sprites_enabled;
+
 //
 // READ - PPU/OAM Registers
 //
@@ -153,6 +175,7 @@ end
 
 //
 // WRITE - PPU/OAM Registers
+// Update T / V registers for rasterizer
 //
 
 always @(negedge i_reset_n or negedge i_clk)
@@ -229,6 +252,45 @@ begin
             default: begin
             end
             endcase
+        end
+    end
+    else if (w_is_rendering_enabled)
+    begin
+        if (r_video_x == 256)
+        begin
+            // dot 256 - increment v vertical position
+            r_v <= w_v_increment_y;
+        end
+
+        if (r_video_x == 257)
+        begin
+            // dot 257 - copy all hoizontal position bits from t to v    
+            r_v[4:0] <= r_t[4:0];
+        end
+
+        if ((r_video_y == 261) && (r_video_x >= 280) && (r_video_x <= 304))
+        begin
+            // dot 280...304 - of pre-render scanline (261) - copy vertical bits from t to v    
+            r_v[9:5] <= r_t[9:5];       // coarse y
+            r_v[14:12] <= r_t[14:12];   // fine y
+        end
+
+        if (r_video_x > 328)
+        begin
+            if (r_video_x[3:0] == 4'b1000)
+            begin
+                // increment horiz position in v every 8th pixel
+                r_v <= w_v_increment_x;
+            end
+        end
+
+        if (r_video_x < 256)
+        begin
+            if (r_video_x[3:0] == 4'b1001)
+            begin
+                // increment horiz position in v every 8th dot (starting after dot 0)
+                r_v <= w_v_increment_x;
+            end
         end
     end
 end
