@@ -79,9 +79,6 @@ reg [8:0] r_video_x;
 reg [8:0] r_video_y;
 wire w_video_visible;
 
-reg [7:0] r_ppuscroll_x;
-reg [7:0] r_ppuscroll_y;
-
 reg [14:0] r_v;
 reg [14:0] r_t;
 reg [2:0] r_x;
@@ -188,8 +185,6 @@ begin
         r_oamaddr <= 0;
         r_v <= 0;
         r_t <= 0;
-        r_ppuscroll_x <= 0;
-        r_ppuscroll_y <= 0;
     end
     else if (i_cs_n == 0)
     begin
@@ -219,16 +214,13 @@ begin
             RS_PPUSCROLL: begin
                 if (r_w == 0)
                 begin
-                    r_ppuscroll_x <= i_data;
-
                     // load coarse x into t
                     r_t[4:0] <= i_data[7:3];
+                    // load fine x into x
                     r_x <= i_data[2:0];
                 end
                 else
-                begin
-                    r_ppuscroll_y <= i_data;
-                    
+                begin                    
                     // load y into t
                     r_t[9:5] <= i_data[7:3];
                     r_t[14:12] <= i_data[2:0];
@@ -510,8 +502,8 @@ assign o_vram_data = (o_vram_we_n == 0) ? r_video_buffer : 0;
 assign o_debug_ppuctrl = r_ppuctrl;
 assign o_debug_ppumask = r_ppumask;
 assign o_debug_ppustatus = w_ppustatus;
-assign o_debug_ppuscroll_x = r_ppuscroll_x;
-assign o_debug_ppuscroll_y = r_ppuscroll_y;
+assign o_debug_ppuscroll_x = {r_t[4:0], r_x[2:0]};
+assign o_debug_ppuscroll_y = {r_t[9:5], r_t[14:12]};
 assign o_debug_ppuaddr = r_ppuaddr;
 assign o_debug_oamaddr = r_oamaddr;
 assign o_debug_v = r_v;
