@@ -164,7 +164,7 @@ namespace emulator {
         }
 
         void toggleDisplayVRAM() {
-            vramDisplay = (vramDisplay + 1) % 2;
+            vramDisplay = (vramDisplay + 1) % 3;
         }
 
         std::string bitLabel(uint8_t value, const std::string& label) {
