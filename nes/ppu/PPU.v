@@ -269,16 +269,16 @@ begin
 
         if (r_video_x > 328)
         begin
-            if (r_video_x[3:0] == 4'b1000)
+            if (r_video_x[2:0] == 3'b111)
             begin
                 // increment horiz position in v every 8th pixel
                 r_v <= w_v_increment_x;
             end
         end
 
-        if (r_video_x < 256)
+        if ((r_video_x < 256) && (r_video_x > 0))
         begin
-            if (r_video_x[3:0] == 4'b1001)
+            if (r_video_x[2:0] == 3'b000)
             begin
                 // increment horiz position in v every 8th dot (starting after dot 0)
                 r_v <= w_v_increment_x;
@@ -481,7 +481,6 @@ PaletteLookupRGB palette(
     .o_green(o_video_green),
     .o_blue(o_video_blue)
 );
-
 
 //
 // drive outputs
