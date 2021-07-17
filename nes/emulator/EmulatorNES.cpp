@@ -187,7 +187,7 @@ namespace emulator {
             DrawLine({x, y}, {x + 42 * 8, y}, olc::RED);
             y += kRowHeight;
 
-            char buffer[32];
+            char buffer[64];
             sprintf(buffer, "     ticks %d", numTicks);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
@@ -262,7 +262,12 @@ namespace emulator {
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;  
 
-            sprintf(buffer, "         v 0x%04x", testBench.core().o_ppu_debug_v);
+            uint32_t v = testBench.core().o_ppu_debug_v;
+            uint32_t v_coarse_x = v & 31;           // lowest 5 bits
+            uint32_t v_coarse_y = (v >> 5) & 31;    // next 5 bits
+            uint32_t v_fine_y = (v >> 12) & 7;      // top 3 bits
+            uint32_t v_y = ((v_coarse_y) << 3) + v_fine_y;
+            sprintf(buffer, "         v 0x%04x [coarse x: %03u] [y: %03u]", v, v_coarse_x, v_y );
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight; 
 
@@ -276,7 +281,7 @@ namespace emulator {
 
             sprintf(buffer, "         w %d", testBench.core().o_ppu_debug_w);
             DrawString({x,y}, buffer, olc::BLACK);
-            y += kRowHeight; 
+            y += kRowHeight;
         }
 
         void drawTitle(int x, int y) {
