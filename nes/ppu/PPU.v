@@ -68,6 +68,7 @@ localparam RW_WRITE = 0;
 reg r_int_n;
 reg r_video_rd_n;
 reg r_video_we_n;
+reg r_video_io_is_active;
 
 reg [7:0] r_data;
 reg [7:0] r_ppuctrl;
@@ -128,9 +129,63 @@ PPUIncrementY ppuIncrementY(
     .o_v(w_v_increment_y)
 );
 
+// rendering control signals
 wire w_is_rendering_background_enabled = r_ppumask[3];
 wire w_is_rendering_sprites_enabled = r_ppumask[4];
 wire w_is_rendering_enabled = w_is_rendering_background_enabled | w_is_rendering_sprites_enabled;
+
+// rasterizer 
+reg [2:0] r_rasterizer_counter;
+
+// background nametable
+/* verilator lint_off UNUSED */
+reg [7:0] r_video_background_tile;
+wire [13:0] w_address_background_tile;
+PPUTileAddress ppuTileAddress(
+    .i_clk(i_clk),
+    .i_reset_n(i_reset_n),
+    .i_v(r_v[13:0]),
+    .o_address(w_address_background_tile)
+);
+
+// background attribute table
+reg [7:0] r_video_background_attribute;
+wire [13:0] w_address_background_attribute;
+PPUAttributeAddress ppuAttributeAddressBackground(
+    .i_clk(i_clk),
+    .i_reset_n(i_reset_n),
+    .i_v(r_v[13:0]),
+    .o_address(w_address_background_attribute)
+);
+
+// background pattern table
+reg [7:0] r_video_background_pattern_low;
+wire [13:0] w_address_background_patterntable_low;
+PPUPatternTableAddress ppuPatternTableAddressBackgroundLow(
+    .i_clk(i_clk),
+    .i_reset_n(i_reset_n),
+    .i_t(r_v[14:12]),                                   // fine Y offset, the row number within a tile
+    .i_p(0),                                            // bit plane: 0=lower, 1=upper
+    .i_c(r_video_background_tile[3:0]),                 // tile column (=low nibble of nametable entry)
+    .i_r(r_video_background_tile[7:4]),                 // tile row (=high nibble of nametable entry)
+    .i_h(r_ppuctrl[4]),                                 // Half of the sprite table: 0=left, 1=right (from PPUCTRL)
+    .o_address(w_address_background_patterntable_low)
+);
+
+reg [7:0] r_video_background_pattern_high;
+wire [13:0] w_address_background_patterntable_high;
+PPUPatternTableAddress ppuPatternTableAddressBackgroundHigh(
+    .i_clk(i_clk),
+    .i_reset_n(i_reset_n),
+    .i_t(r_v[14:12]),                                   // fine Y offset, the row number within a tile
+    .i_p(1),                                            // bit plane: 0=lower, 1=upper
+    .i_c(r_video_background_tile[3:0]),                 // tile column (=low nibble of nametable entry)
+    .i_r(r_video_background_tile[7:4]),                 // tile row (=high nibble of nametable entry)
+    .i_h(r_ppuctrl[4]),                                 // Half of the sprite table: 0=left, 1=right (from PPUCTRL)
+    .o_address(w_address_background_patterntable_high)
+);
+/* verilator lint_on UNUSED */
+
 
 //
 // READ - PPU/OAM Registers
@@ -185,6 +240,7 @@ begin
         r_oamaddr <= 0;
         r_v <= 0;
         r_t <= 0;
+        r_rasterizer_counter <= 0;
     end
     else if (i_cs_n == 0)
     begin
@@ -258,6 +314,9 @@ begin
         begin
             // dot 257 - copy all hoizontal position bits from t to v    
             r_v[4:0] <= r_t[4:0];
+
+            // reset rasterizer counter
+            r_rasterizer_counter <= 0;
         end
 
         if ((r_video_y == 261) && (r_video_x >= 280) && (r_video_x <= 304))
@@ -267,22 +326,20 @@ begin
             r_v[14:12] <= r_t[14:12];   // fine y
         end
 
-        if (r_video_x > 328)
+        if ((r_video_x >= 321) && (r_video_x <= 336))
         begin
-            if (r_video_x[2:0] == 3'b111)
-            begin
-                // increment horiz position in v every 8th pixel
-                r_v <= w_v_increment_x;
-            end
+            r_rasterizer_counter <= r_rasterizer_counter + 1;            
         end
 
-        if ((r_video_x < 256) && (r_video_x > 0))
+        if ((r_video_x > 0) && (r_video_x < 256))
         begin
-            if (r_video_x[2:0] == 3'b000)
-            begin
-                // increment horiz position in v every 8th dot (starting after dot 0)
-                r_v <= w_v_increment_x;
-            end
+            r_rasterizer_counter <= r_rasterizer_counter + 1;
+        end
+
+        if (r_rasterizer_counter == 3'b111)
+        begin
+            // increment horiz position in v every 8th pixel
+            r_v <= w_v_increment_x;
         end
     end
 end
@@ -432,10 +489,11 @@ begin
         r_video_rd_n <= 1;
         r_video_we_n <= 1;
         r_video_buffer <= 0;
+        r_video_io_is_active <= 0;
     end
-    else
+    else if (i_cs_n == 0)
     begin
-        if ((i_cs_n == 0) && (i_rs == RS_PPUDATA))
+        if (i_rs == RS_PPUDATA)
         begin
             if (i_rw == RW_WRITE)
             begin
@@ -444,6 +502,8 @@ begin
                     // WRITE ppudata to video bus
                     r_video_we_n <= 0;
                     r_video_buffer <= i_data;
+
+                    r_video_io_is_active <= 1;
                 end
             end
             else
@@ -451,11 +511,16 @@ begin
                 // READ ppudata from video bus into r_video_buffer
                 r_video_rd_n <= 0;
                 r_video_buffer <= i_data;
+
+                r_video_io_is_active <= 1;
             end
 
             r_video_address <= r_ppuaddr[13:0];
         end
-        else if (!r_video_we_n)
+    end
+    else if (r_video_io_is_active == 1)
+    begin
+        if (!r_video_we_n)
         begin
             r_video_we_n <= 1;
         end
@@ -464,6 +529,53 @@ begin
             r_video_rd_n <= 1;
             r_video_buffer <= i_vram_data;
         end
+
+        r_video_io_is_active <= 0;
+    end
+    else if (w_is_rendering_background_enabled && (
+                ((r_video_y == 261) && (r_video_x >=321)) ||            // pre-render scanline
+                ((r_video_y < 240) && (r_video_x >= 1) && ((r_video_x <= 256 ) || (r_video_x >= 321) ))
+            ))
+    begin        
+        // background render read
+        case (r_rasterizer_counter)
+        0: begin
+            //  0,1 => nametable
+            r_video_address <= w_address_background_tile;
+            r_video_rd_n <= 0;   
+        end
+        1: begin
+            r_video_background_tile <= i_vram_data;         
+            r_video_rd_n <= 1;
+        end 
+        2: begin
+            //  2,3 => attribute table    
+            r_video_address <= w_address_background_attribute;
+            r_video_rd_n <= 0;   
+        end
+        3: begin
+            r_video_background_attribute <= i_vram_data;
+            r_video_rd_n <= 1;
+        end
+        4: begin
+            //  4,5 => pattern low 
+            r_video_address <= w_address_background_patterntable_low;
+            r_video_rd_n <= 0;   
+        end
+        5: begin
+            r_video_background_pattern_low <= i_vram_data;
+            r_video_rd_n <= 1;
+        end
+        6: begin
+            //  6,7 => pattern high 
+            r_video_address <= w_address_background_patterntable_high;
+            r_video_rd_n <= 0; 
+        end
+        7: begin
+            r_video_background_pattern_high <= i_vram_data;
+            r_video_rd_n <= 1;
+        end
+        endcase
     end
 end
 
