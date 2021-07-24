@@ -26,6 +26,7 @@ ppu_srcs = [
     "ppu/PPUIncrementY.v",
     "ppu/PPUTileAddress.v",
     "ppu/PPUPatternTableAddress.v",
+    "ppu/Shift8.v",
     "ppu/Shift16.v"
 ]
 
@@ -236,6 +237,17 @@ gtest_verilog_testbench(
 )
 
 verilator_cc_library(
+    name = "Shift8",
+    srcs = ["ppu/Shift8.v"],
+)
+
+gtest_verilog_testbench(
+    name = "Shift8TestBench",
+    deps = [":Shift8"]
+)
+
+
+verilator_cc_library(
     name = "PPUAttributeAddress",
     srcs = ["ppu/PPUAttributeAddress.v"],
 )
@@ -347,6 +359,7 @@ cc_test(
         ":PaletteLookupRGBTestBench",
         ":PPUTestBench",
         ":PPUChipEnableTestBench",
+        ":Shift8TestBench",
         ":Shift16TestBench",
         ":VGAGenerator3x2TestBench",
         ":VGAOutput3x2TestBench",
@@ -362,6 +375,7 @@ cc_test(
         ":PaletteLookupRGB",
         ":PPU",
         ":PPUChipEnable",
+        ":Shift8",
         ":Shift16",
         ":VGAGenerator3x2",
         ":VGAOutput3x2",
