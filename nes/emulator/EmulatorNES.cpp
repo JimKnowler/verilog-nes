@@ -282,6 +282,10 @@ namespace emulator {
             sprintf(buffer, "         w %d", testBench.core().o_ppu_debug_w);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
+
+            sprintf(buffer, "RazCounter %d", testBench.core().o_ppu_debug_rasterizer_counter);
+            DrawString({x,y}, buffer, olc::BLACK);
+            y += kRowHeight;
         }
 
         void drawTitle(int x, int y) {

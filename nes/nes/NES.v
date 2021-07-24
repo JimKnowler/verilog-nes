@@ -74,7 +74,8 @@ module NES(
     output [14:0] o_ppu_debug_v,
     output [14:0] o_ppu_debug_t,
     output [2:0] o_ppu_debug_x,
-    output o_ppu_debug_w
+    output o_ppu_debug_w,
+    output [2:0] o_ppu_debug_rasterizer_counter
 );
     wire w_ce_cpu;
 
@@ -195,7 +196,8 @@ module NES(
         .o_debug_t(o_ppu_debug_t),
         .o_debug_x(o_ppu_debug_x),
         .o_debug_w(o_ppu_debug_w),
-        .o_debug_video_buffer(w_debug_video_buffer)
+        .o_debug_video_buffer(w_debug_video_buffer),
+        .o_debug_rasterizer_counter(o_ppu_debug_rasterizer_counter)
     );
 
     CPUMemoryMap cpuMemoryMap(

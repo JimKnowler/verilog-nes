@@ -42,7 +42,8 @@ module PPU(
     output [14:0] o_debug_t,            // temporary vram address
     output [2:0] o_debug_x,             // fine x scroll
     output o_debug_w,                   // write register (for ppuscroll and ppuaddr)
-    output [7:0] o_debug_video_buffer   // internal buffer of last read from video bus
+    output [7:0] o_debug_video_buffer,  // internal buffer of last read from video bus
+    output [2:0] o_debug_rasterizer_counter
 );
 
 // Screen Constants
@@ -704,5 +705,6 @@ assign o_debug_t = r_t;
 assign o_debug_x = r_x;
 assign o_debug_w = r_w;
 assign o_debug_video_buffer = r_video_buffer;
+assign o_debug_rasterizer_counter = r_rasterizer_counter;
 
 endmodule
