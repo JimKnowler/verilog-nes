@@ -138,7 +138,6 @@ wire w_is_rendering_enabled = w_is_rendering_background_enabled | w_is_rendering
 reg [2:0] r_rasterizer_counter;
 
 // background nametable
-/* verilator lint_off UNUSED */
 reg [7:0] r_video_background_tile;
 wire [13:0] w_address_background_tile;
 PPUTileAddress ppuTileAddress(
@@ -149,7 +148,9 @@ PPUTileAddress ppuTileAddress(
 );
 
 // background attribute table
+/* verilator lint_off UNUSED */                     // todo: remove when using correct AT
 reg [7:0] r_video_background_attribute;
+/* verilator lint_on UNUSED */
 wire [13:0] w_address_background_attribute;
 PPUAttributeAddress ppuAttributeAddressBackground(
     .i_clk(i_clk),
@@ -184,8 +185,6 @@ PPUPatternTableAddress ppuPatternTableAddressBackgroundHigh(
     .i_h(r_ppuctrl[4]),                                 // Half of the sprite table: 0=left, 1=right (from PPUCTRL)
     .o_address(w_address_background_patterntable_high)
 );
-/* verilator lint_on UNUSED */
-
 
 //
 // READ - PPU/OAM Registers
@@ -227,8 +226,8 @@ end
 
 //
 // WRITE - PPU/OAM Registers
-// Update T / V registers for rasterizer
-//
+// + Update T / V registers for rasterizer
+// + Rasterizer Counter
 
 always @(negedge i_reset_n or negedge i_clk)
 begin
@@ -329,17 +328,23 @@ begin
         if ((r_video_x >= 321) && (r_video_x <= 336))
         begin
             r_rasterizer_counter <= r_rasterizer_counter + 1;            
+
+            if (r_rasterizer_counter == 3'b111)
+            begin
+                // increment horiz position in v every 8th pixel
+                r_v <= w_v_increment_x;
+            end
         end
 
         if ((r_video_x > 0) && (r_video_x < 256))
         begin
             r_rasterizer_counter <= r_rasterizer_counter + 1;
-        end
 
-        if (r_rasterizer_counter == 3'b111)
-        begin
-            // increment horiz position in v every 8th pixel
-            r_v <= w_v_increment_x;
+            if (r_rasterizer_counter == 3'b111)
+            begin
+                // increment horiz position in v every 8th pixel
+                r_v <= w_v_increment_x;
+            end
         end
     end
 end
@@ -574,6 +579,9 @@ begin
         7: begin
             r_video_background_pattern_high <= i_vram_data;
             r_video_rd_n <= 1;
+
+            // todo: load 2 x 16 bit shift registers with pattern table
+            // todo: load 2 x latches for palette attribute
         end
         endcase
     end
@@ -584,11 +592,85 @@ end
 // 
 
 // background colour
-wire [5:0] w_background_colour = r_palette[0][5:0];
+wire [5:0] w_background_colour_index = r_palette[0][5:0];
+
+// background shift registers
+
+/* verilator lint_off UNUSED */
+wire [15:0] o_debug_background_data_high;
+wire [15:0] o_debug_background_data_low;
+wire [7:0] o_debug_background_attribute_table_high;
+wire [7:0] o_debug_background_attribute_table_low;
+/* verilator lint_on UNUSED */
+
+wire [1:0] w_background_pattern_table;
+
+wire w_load_background_shift_registers = (r_rasterizer_counter == 0);
+
+Shift16 backgroundShiftPatternTableHigh(
+    .i_clk(i_clk),
+    .i_reset_n(i_reset_n),
+    .i_load(w_load_background_shift_registers),
+    .i_data(r_video_background_pattern_high),
+    .i_shift(1),
+    .i_offset({1'b0,r_x}),
+    .o_shift_data(w_background_pattern_table[1]),
+    .o_debug_data(o_debug_background_data_high)
+);
+
+Shift16 backgroundShiftPatternTableLow(
+    .i_clk(i_clk),
+    .i_reset_n(i_reset_n),
+    .i_load(w_load_background_shift_registers),
+    .i_data(r_video_background_pattern_low),
+    .i_shift(1),
+    .i_offset({1'b0,r_x}),
+    .o_shift_data(w_background_pattern_table[0]),
+    .o_debug_data(o_debug_background_data_low)
+);
+
+wire [1:0] w_video_background_attribute_table;
+
+Shift8 backgroundShiftAttributeTableHigh(
+    .i_clk(i_clk),
+    .i_reset_n(i_reset_n),
+    .i_load(w_load_background_shift_registers),
+    .i_data(r_video_background_attribute[1]),           // todo: right attriute for tile
+    .i_shift(1),
+    .i_offset(r_x),
+    .o_shift_data(w_video_background_attribute_table[1]),
+    .o_debug_data(o_debug_background_attribute_table_high)
+);
+
+Shift8 backgroundShiftAttributeTableLow(
+    .i_clk(i_clk),
+    .i_reset_n(i_reset_n),
+    .i_load(w_load_background_shift_registers),
+    .i_data(r_video_background_attribute[0]),           // todo: right attriute for tile
+    .i_shift(1),
+    .i_offset(r_x),
+    .o_shift_data(w_video_background_attribute_table[0]),
+    .o_debug_data(o_debug_background_attribute_table_low)
+);
+
+// combinatorial logic to get output colour index
+reg [5:0] r_colour_index;
+
+always @(*) 
+begin
+    r_colour_index = w_background_colour_index;
+
+    if (w_video_visible && w_is_rendering_background_enabled && (w_background_pattern_table > 0))
+    begin
+        r_colour_index = r_palette[{3'b0, w_background_pattern_table} + ({ 3'b0, w_video_background_attribute_table} << 2)][5:0];
+    end
+end
+
+// conversion from colour index to RGB video output
 PaletteLookupRGB palette(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
-    .i_index(w_background_colour),
+    .i_index(r_colour_index),
     .o_red(o_video_red),
     .o_green(o_video_green),
     .o_blue(o_video_blue)
