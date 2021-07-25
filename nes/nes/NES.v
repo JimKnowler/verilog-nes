@@ -75,7 +75,15 @@ module NES(
     output [14:0] o_ppu_debug_t,
     output [2:0] o_ppu_debug_x,
     output o_ppu_debug_w,
-    output [2:0] o_ppu_debug_rasterizer_counter
+    output [2:0] o_ppu_debug_rasterizer_counter,
+    output [31:0] o_ppu_debug_palette_0,
+    output [31:0] o_ppu_debug_palette_1,
+    output [31:0] o_ppu_debug_palette_2,
+    output [31:0] o_ppu_debug_palette_3,
+    output [31:0] o_ppu_debug_palette_4,
+    output [31:0] o_ppu_debug_palette_5,
+    output [31:0] o_ppu_debug_palette_6,
+    output [31:0] o_ppu_debug_palette_7
 );
     wire w_ce_cpu;
 
@@ -197,7 +205,15 @@ module NES(
         .o_debug_x(o_ppu_debug_x),
         .o_debug_w(o_ppu_debug_w),
         .o_debug_video_buffer(w_debug_video_buffer),
-        .o_debug_rasterizer_counter(o_ppu_debug_rasterizer_counter)
+        .o_debug_rasterizer_counter(o_ppu_debug_rasterizer_counter),
+        .o_debug_palette_0(o_ppu_debug_palette_0),
+        .o_debug_palette_1(o_ppu_debug_palette_1),
+        .o_debug_palette_2(o_ppu_debug_palette_2),
+        .o_debug_palette_3(o_ppu_debug_palette_3),
+        .o_debug_palette_4(o_ppu_debug_palette_4),
+        .o_debug_palette_5(o_ppu_debug_palette_5),
+        .o_debug_palette_6(o_ppu_debug_palette_6),
+        .o_debug_palette_7(o_ppu_debug_palette_7)
     );
 
     CPUMemoryMap cpuMemoryMap(

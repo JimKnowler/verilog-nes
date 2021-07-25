@@ -150,7 +150,7 @@ namespace emulator {
 
             // visual debug of VRAM
             const int kVramX = 700;
-            const int kVramY = 375;
+            const int kVramY = 390;
 
             switch (vramDisplay) {
                 case 0:
@@ -182,7 +182,63 @@ namespace emulator {
             return output;
         }
 
+        void drawRectWithOutline(const olc::vi2d& pos, const olc::vi2d& size, const olc::Pixel& fillColour, const olc::Pixel& outlineColour) {
+            FillRect(pos, size, fillColour);
+            DrawRect(pos, size, outlineColour);
+        }
+
+        struct olc::Pixel palette[0x40] = {
+            {  84,  84,  84}, {   0,  30, 116}, {    8,  16, 144}, {   48,   0, 136}, {   68,   0, 100}, {   92,   0,  48}, {   84,   4,   0}, {   60,  24,   0}, {   32,  42,   0}, {    8,  58,   0}, {    0,  64,   0}, {    0,  60,   0}, {    0,  50,  60}, {    0,   0,   0},
+            { 152, 150, 152}, {   8,  76, 196}, {   48,  50, 236}, {   92,  30, 228}, {  136,  20, 176}, {  160,  20, 100}, {  152,  34,  32}, {  120,  60,   0}, {   84,  90,   0}, {   40, 114,   0}, {    8, 124,   0}, {    0, 118,  40}, {    0, 102, 120}, {    0,   0,   0},
+            { 236, 238, 236}, {  76, 154, 236}, {  120, 124, 236}, {  176,  98, 236}, {  228,  84, 236}, {  236,  88, 180}, {  236, 106, 100}, {  212, 136,  32}, {  160, 170,   0}, {  116, 196,   0}, {   76, 208,  32}, {   56, 204, 108}, {   56, 180, 204}, {   60,  60,  60},
+            { 236, 238, 236}, { 168, 204, 236}, {  188, 188, 236}, {  212, 178, 236}, {  236, 174, 236}, {  236, 174, 212}, {  236, 180, 176}, {  228, 196, 144}, {  204, 210, 120}, {  180, 222, 120}, {  168, 226, 144}, {  152, 226, 180}, {  160, 214, 228}, {  160, 162, 160}
+        };
+
+        olc::Pixel getPaletteColour(int index) {
+            auto& core = testBench.core();
+
+            int indexCoarse = index / 4;
+            int indexFine = index % 4;
+
+            uint32_t debugPalette = -1;
+            switch (indexCoarse) {
+                case 0:
+                    debugPalette = core.o_ppu_debug_palette_0;
+                    break;
+                case 1:
+                    debugPalette = core.o_ppu_debug_palette_1;
+                    break;
+                case 2:
+                    debugPalette = core.o_ppu_debug_palette_2;
+                    break;
+                case 3:
+                    debugPalette = core.o_ppu_debug_palette_3;
+                    break;
+                case 4:
+                    debugPalette = core.o_ppu_debug_palette_4;
+                    break;
+                case 5:
+                    debugPalette = core.o_ppu_debug_palette_5;
+                    break;
+                case 6:
+                    debugPalette = core.o_ppu_debug_palette_6;
+                    break;
+                case 7:
+                    debugPalette = core.o_ppu_debug_palette_7;
+                    break;
+                default:
+                    assert(!"unknown palette entry");
+                    break;
+            }            
+
+            uint8_t paletteIndex = (debugPalette >> (indexFine * 8)) & 0xff;
+            assert(paletteIndex < 0x40);
+            return palette[paletteIndex];
+        }
+
         void drawStats(int x, int y) {
+            auto& core = testBench.core();
+
             DrawString({x,y}, "Stats", olc::RED);
             y += kRowHeight;
             DrawLine({x, y}, {x + 42 * 8, y}, olc::RED);
@@ -204,19 +260,19 @@ namespace emulator {
             DrawLine({x, y}, {x + 42 * 8, y}, olc::RED);
             y += kRowHeight;
 
-            sprintf(buffer, "    clk-en %d", testBench.core().o_cpu_debug_clk_en);
+            sprintf(buffer, "    clk-en %d", core.o_cpu_debug_clk_en);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
-            sprintf(buffer, "        ir 0x%02x", testBench.core().o_cpu_debug_ir);
+            sprintf(buffer, "        ir 0x%02x", core.o_cpu_debug_ir);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
-            sprintf(buffer, "       tcu 0x%02x", testBench.core().o_cpu_debug_tcu);
+            sprintf(buffer, "       tcu 0x%02x", core.o_cpu_debug_tcu);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
-            sprintf(buffer, "   address 0x%04x", testBench.core().o_cpu_debug_address);
+            sprintf(buffer, "   address 0x%04x", core.o_cpu_debug_address);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;  
             y += kRowHeight;
@@ -227,54 +283,61 @@ namespace emulator {
             DrawLine({x, y}, {x + 42 * 8, y}, olc::RED);
             y += kRowHeight;
 
-            sprintf(buffer, "         x %3d", testBench.core().o_video_x);
+            sprintf(buffer, "         x %3d", core.o_video_x);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
-            sprintf(buffer, "         y %3d", testBench.core().o_video_y);
+            sprintf(buffer, "         y %3d", core.o_video_y);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
-            sprintf(buffer, "   visible %3d", testBench.core().o_video_visible);
+            sprintf(buffer, "   visible %3d", core.o_video_visible);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
             sprintf(buffer, "    colour ");
             DrawString({x,y}, buffer, olc::BLACK);
-            FillRect({x + (11*kCharWidth),y}, {3 * kCharWidth, kCharWidth}, olc::Pixel(testBench.core().o_video_red, testBench.core().o_video_green, testBench.core().o_video_blue));
-            DrawRect({x + (11*kCharWidth),y}, {3 * kCharWidth, kCharWidth}, olc::BLACK);
-
+            drawRectWithOutline({x + (11*kCharWidth),y}, {4 * kCharWidth, kCharWidth}, olc::Pixel(core.o_video_red, core.o_video_green, core.o_video_blue), olc::BLACK);
             y += kRowHeight;
 
-            uint8_t ppuctrl = testBench.core().o_ppu_debug_ppuctrl;
+            sprintf(buffer, "   palette ");
+            DrawString({x,y}, buffer, olc::BLACK);
+            int px = x + (11*kCharWidth);
+            for (int i=0; i<32; i++) {
+                int lpx = px + (i*kCharWidth) + ((i / 4) * kCharWidth);
+                drawRectWithOutline({lpx,y}, {kCharWidth, kCharWidth}, getPaletteColour(i), olc::BLACK);
+            }
+            y += kRowHeight;
+
+            uint8_t ppuctrl = core.o_ppu_debug_ppuctrl;
             sprintf(buffer, "   ppuctrl 0x%02x %s", ppuctrl, bitLabel(ppuctrl, "VPHBSINN").c_str());
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
-            uint8_t ppumask = testBench.core().o_ppu_debug_ppumask;
+            uint8_t ppumask = core.o_ppu_debug_ppumask;
             sprintf(buffer, "   ppumask 0x%02x %s", ppumask, bitLabel(ppumask, "BGRsbMmG").c_str());
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
-            uint8_t ppustatus = testBench.core().o_ppu_debug_ppustatus;
+            uint8_t ppustatus = core.o_ppu_debug_ppustatus;
             sprintf(buffer, " ppustatus 0x%02x %s", ppustatus, bitLabel(ppustatus, "VSO.....").c_str());
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
-            uint16_t vramAddress = testBench.core().o_ppu_debug_vram_address;
+            uint16_t vramAddress = core.o_ppu_debug_vram_address;
             sprintf(buffer, " vram addr 0x%04x", vramAddress);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
             
-            sprintf(buffer, "  scroll-x %03d", testBench.core().o_ppu_debug_ppuscroll_x);
+            sprintf(buffer, "  scroll-x %03d", core.o_ppu_debug_ppuscroll_x);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
-            sprintf(buffer, "  scroll-y %03d", testBench.core().o_ppu_debug_ppuscroll_y);
+            sprintf(buffer, "  scroll-y %03d", core.o_ppu_debug_ppuscroll_y);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;  
 
-            uint32_t v = testBench.core().o_ppu_debug_v;
+            uint32_t v = core.o_ppu_debug_v;
             uint32_t v_coarse_x = v & 31;           // lowest 5 bits
             uint32_t v_coarse_y = (v >> 5) & 31;    // next 5 bits
             uint32_t v_fine_y = (v >> 12) & 7;      // top 3 bits
@@ -284,7 +347,7 @@ namespace emulator {
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight; 
 
-            uint32_t t = testBench.core().o_ppu_debug_t;
+            uint32_t t = core.o_ppu_debug_t;
             uint32_t t_coarse_x = t & 31;           // lowest 5 bits
             uint32_t t_coarse_y = (t >> 5) & 31;    // next 5 bits
             uint32_t t_fine_y = (t >> 12) & 7;      // top 3 bits
@@ -294,15 +357,15 @@ namespace emulator {
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight; 
 
-            sprintf(buffer, "         x %d", testBench.core().o_ppu_debug_x);
+            sprintf(buffer, "         x %d", core.o_ppu_debug_x);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight; 
 
-            sprintf(buffer, "         w %d", testBench.core().o_ppu_debug_w);
+            sprintf(buffer, "         w %d", core.o_ppu_debug_w);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
-            sprintf(buffer, "RazCounter %d", testBench.core().o_ppu_debug_rasterizer_counter);
+            sprintf(buffer, "RazCounter %d", core.o_ppu_debug_rasterizer_counter);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
         }

@@ -43,7 +43,15 @@ module PPU(
     output [2:0] o_debug_x,             // fine x scroll
     output o_debug_w,                   // write register (for ppuscroll and ppuaddr)
     output [7:0] o_debug_video_buffer,  // internal buffer of last read from video bus
-    output [2:0] o_debug_rasterizer_counter
+    output [2:0] o_debug_rasterizer_counter,
+    output [31:0] o_debug_palette_0,
+    output [31:0] o_debug_palette_1,
+    output [31:0] o_debug_palette_2,
+    output [31:0] o_debug_palette_3,
+    output [31:0] o_debug_palette_4,
+    output [31:0] o_debug_palette_5,
+    output [31:0] o_debug_palette_6,
+    output [31:0] o_debug_palette_7
 );
 
 // Screen Constants
@@ -707,5 +715,13 @@ assign o_debug_x = r_x;
 assign o_debug_w = r_w;
 assign o_debug_video_buffer = r_video_buffer;
 assign o_debug_rasterizer_counter = r_rasterizer_counter;
+assign o_debug_palette_0 = {r_palette[3],r_palette[2],r_palette[1],r_palette[0]};
+assign o_debug_palette_1 = {r_palette[7],r_palette[6],r_palette[5],r_palette[4]};
+assign o_debug_palette_2 = {r_palette[11],r_palette[10],r_palette[9],r_palette[8]};
+assign o_debug_palette_3 = {r_palette[15],r_palette[14],r_palette[13],r_palette[12]};
+assign o_debug_palette_4 = {r_palette[19],r_palette[18],r_palette[17],r_palette[16]};
+assign o_debug_palette_5 = {r_palette[23],r_palette[22],r_palette[21],r_palette[20]};
+assign o_debug_palette_6 = {r_palette[27],r_palette[26],r_palette[25],r_palette[24]};
+assign o_debug_palette_7 = {r_palette[31],r_palette[30],r_palette[29],r_palette[28]};
 
 endmodule
