@@ -51,7 +51,8 @@ module PPU(
     output [31:0] o_debug_palette_4,
     output [31:0] o_debug_palette_5,
     output [31:0] o_debug_palette_6,
-    output [31:0] o_debug_palette_7
+    output [31:0] o_debug_palette_7,
+    output [5:0] o_debug_colour_index
 );
 
 // Screen Constants
@@ -602,7 +603,8 @@ end
 // 
 
 // background colour
-wire [5:0] w_background_colour_index = r_palette[0][5:0];
+wire [5:0] w_background_colour_index;
+assign w_background_colour_index = r_palette[0][5:0];
 
 // background shift registers
 
@@ -615,7 +617,8 @@ wire [7:0] o_debug_background_attribute_table_low;
 
 wire [1:0] w_background_pattern_table;
 
-wire w_load_background_shift_registers = (r_rasterizer_counter == 0);
+wire w_load_background_shift_registers;
+assign w_load_background_shift_registers = (r_rasterizer_counter == 0);
 
 Shift16 backgroundShiftPatternTableHigh(
     .i_clk(i_clk),
@@ -672,7 +675,7 @@ begin
 
     if (w_video_visible && w_is_rendering_background_enabled && (w_background_pattern_table > 0))
     begin
-        r_colour_index = r_palette[{3'b0, w_background_pattern_table} + ({ 3'b0, w_video_background_attribute_table} << 2)][5:0];
+        r_colour_index = r_palette[{1'b0, w_video_background_attribute_table, w_background_pattern_table}][5:0];
     end
 end
 
@@ -723,5 +726,6 @@ assign o_debug_palette_4 = {r_palette[19],r_palette[18],r_palette[17],r_palette[
 assign o_debug_palette_5 = {r_palette[23],r_palette[22],r_palette[21],r_palette[20]};
 assign o_debug_palette_6 = {r_palette[27],r_palette[26],r_palette[25],r_palette[24]};
 assign o_debug_palette_7 = {r_palette[31],r_palette[30],r_palette[29],r_palette[28]};
+assign o_debug_colour_index = r_colour_index;
 
 endmodule

@@ -83,7 +83,8 @@ module NES(
     output [31:0] o_ppu_debug_palette_4,
     output [31:0] o_ppu_debug_palette_5,
     output [31:0] o_ppu_debug_palette_6,
-    output [31:0] o_ppu_debug_palette_7
+    output [31:0] o_ppu_debug_palette_7,
+    output [5:0] o_ppu_debug_colour_index
 );
     wire w_ce_cpu;
 
@@ -213,7 +214,8 @@ module NES(
         .o_debug_palette_4(o_ppu_debug_palette_4),
         .o_debug_palette_5(o_ppu_debug_palette_5),
         .o_debug_palette_6(o_ppu_debug_palette_6),
-        .o_debug_palette_7(o_ppu_debug_palette_7)
+        .o_debug_palette_7(o_ppu_debug_palette_7),
+        .o_debug_colour_index(o_ppu_debug_colour_index)
     );
 
     CPUMemoryMap cpuMemoryMap(
