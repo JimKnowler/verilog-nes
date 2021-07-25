@@ -314,6 +314,7 @@ begin
         begin
             // dot 257 - copy all hoizontal position bits from t to v    
             r_v[4:0] <= r_t[4:0];
+            r_v[10] <= r_t[10];
 
             // reset rasterizer counter
             r_rasterizer_counter <= 0;
@@ -323,7 +324,7 @@ begin
         begin
             // dot 280...304 - of pre-render scanline (261) - copy vertical bits from t to v    
             r_v[9:5] <= r_t[9:5];       // coarse y
-            r_v[14:12] <= r_t[14:12];   // fine y
+            r_v[14:11] <= r_t[14:11];   // fine y
         end
 
         if ((r_video_x >= 321) && (r_video_x <= 336))
