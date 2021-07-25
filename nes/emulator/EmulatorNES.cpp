@@ -20,6 +20,7 @@ namespace {
     const uint32_t kScreenHeight = 700;
 
     const int kRowHeight = 11;
+    const int kCharWidth = 8;
 }
 
 namespace emulator {
@@ -149,7 +150,7 @@ namespace emulator {
 
             // visual debug of VRAM
             const int kVramX = 700;
-            const int kVramY = 350;
+            const int kVramY = 375;
 
             switch (vramDisplay) {
                 case 0:
@@ -234,6 +235,17 @@ namespace emulator {
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
+            sprintf(buffer, "   visible %3d", testBench.core().o_video_visible);
+            DrawString({x,y}, buffer, olc::BLACK);
+            y += kRowHeight;
+
+            sprintf(buffer, "    colour ");
+            DrawString({x,y}, buffer, olc::BLACK);
+            FillRect({x + (11*kCharWidth),y}, {3 * kCharWidth, kCharWidth}, olc::Pixel(testBench.core().o_video_red, testBench.core().o_video_green, testBench.core().o_video_blue));
+            DrawRect({x + (11*kCharWidth),y}, {3 * kCharWidth, kCharWidth}, olc::BLACK);
+
+            y += kRowHeight;
+
             uint8_t ppuctrl = testBench.core().o_ppu_debug_ppuctrl;
             sprintf(buffer, "   ppuctrl 0x%02x %s", ppuctrl, bitLabel(ppuctrl, "VPHBSINN").c_str());
             DrawString({x,y}, buffer, olc::BLACK);
@@ -267,11 +279,18 @@ namespace emulator {
             uint32_t v_coarse_y = (v >> 5) & 31;    // next 5 bits
             uint32_t v_fine_y = (v >> 12) & 7;      // top 3 bits
             uint32_t v_y = ((v_coarse_y) << 3) + v_fine_y;
-            sprintf(buffer, "         v 0x%04x [coarse x: %03u] [y: %03u]", v, v_coarse_x, v_y );
+            uint32_t v_n = (v >> 10) & 0x3;
+            sprintf(buffer, "         v 0x%04x [coarse x: %03u] [y: %03u] [nn: %u]", v, v_coarse_x, v_y, v_n );
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight; 
 
-            sprintf(buffer, "         t 0x%04x", testBench.core().o_ppu_debug_t);
+            uint32_t t = testBench.core().o_ppu_debug_t;
+            uint32_t t_coarse_x = t & 31;           // lowest 5 bits
+            uint32_t t_coarse_y = (t >> 5) & 31;    // next 5 bits
+            uint32_t t_fine_y = (t >> 12) & 7;      // top 3 bits
+            uint32_t t_y = ((t_coarse_y) << 3) + t_fine_y;
+            uint32_t t_n = (t >> 10) & 0x3;
+            sprintf(buffer, "         t 0x%04x [coarse x: %03u] [y: %03u] [nn: %u]", t, t_coarse_x, t_y, t_n );
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight; 
 
