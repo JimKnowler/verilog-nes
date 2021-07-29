@@ -95,6 +95,12 @@ reg [14:0] r_t;
 reg [2:0] r_x;
 reg r_w;
 
+wire w_coarse_x;
+assign w_coarse_x = r_v[0];
+
+wire w_coarse_y;
+assign w_coarse_y = r_v[5];
+
 // Palette entries for sprites + background
 reg [7:0] r_palette [31:0];
 
@@ -158,9 +164,9 @@ PPUTileAddress ppuTileAddress(
 );
 
 // background attribute table
-/* verilator lint_off UNUSED */                     // todo: remove when using correct AT
-reg [7:0] r_video_background_attribute;
-/* verilator lint_on UNUSED */
+reg [7:0] r_video_background_attribute_lookup;
+reg [1:0] r_video_background_attribute;
+
 wire [13:0] w_address_background_attribute;
 PPUAttributeAddress ppuAttributeAddressBackground(
     .i_clk(i_clk),
@@ -251,74 +257,82 @@ begin
         r_t <= 0;
         r_rasterizer_counter <= 0;
     end
-    else if (i_cs_n == 0)
+    else if ((i_cs_n == 0) && (i_rw == RW_WRITE))
     begin
-        if (i_rw == RW_WRITE)
-        begin
-            case (i_rs)
-            RS_PPUCTRL: begin
-                r_ppuctrl <= i_data;
-                r_t[11:10] <= i_data[1:0];
-            end
-            RS_PPUMASK: begin
-                r_ppumask <= i_data;
-            end
-            RS_PPUDATA: begin
-                if ((r_ppuaddr >= 16'h3F00) && (r_ppuaddr <= 16'h3FFF)) 
-                begin
-                    r_palette[r_ppuaddr[4:0]] <= i_data;
-                end
-            end
-            RS_OAMADDR: begin
-                r_oamaddr <= i_data;
-            end
-            RS_OAMDATA: begin
-                r_oamaddr <= r_oamaddr + 1;
-                r_oam[r_oamaddr] <= i_data;
-            end
-            RS_PPUSCROLL: begin
-                if (r_w == 0)
-                begin
-                    // load coarse x into t
-                    r_t[4:0] <= i_data[7:3];
-                    // load fine x into x
-                    r_x <= i_data[2:0];
-                end
-                else
-                begin                    
-                    // load y into t
-                    r_t[9:5] <= i_data[7:3];
-                    r_t[14:12] <= i_data[2:0];
-                end
-            end
-            RS_PPUADDR: begin
-                if (r_w == 0)
-                begin
-                    r_t[13:8] <= i_data[5:0];
-                    r_t[14] <= 0;
-                end
-                else
-                begin
-                    r_t[7:0] <= i_data[7:0];
-
-                    // 'v' is made identical to final value of t
-                    r_v[7:0] <= i_data[7:0];
-                    r_v[14:8] <= r_t[14:8];
-                end     
-            end
-            default: begin
-            end
-            endcase
+        case (i_rs)
+        RS_PPUCTRL: begin
+            r_ppuctrl <= i_data;
+            r_t[11:10] <= i_data[1:0];
         end
+        RS_PPUMASK: begin
+            r_ppumask <= i_data;
+        end
+        RS_PPUDATA: begin
+            if ((r_ppuaddr >= 16'h3F00) && (r_ppuaddr <= 16'h3FFF)) 
+            begin
+                r_palette[r_ppuaddr[4:0]] <= i_data;
+            end
+        end
+        RS_OAMADDR: begin
+            r_oamaddr <= i_data;
+        end
+        RS_OAMDATA: begin
+            r_oamaddr <= r_oamaddr + 1;
+            r_oam[r_oamaddr] <= i_data;
+        end
+        RS_PPUSCROLL: begin
+            if (r_w == 0)
+            begin
+                // load coarse x into t
+                r_t[4:0] <= i_data[7:3];
+                // load fine x into x
+                r_x <= i_data[2:0];
+            end
+            else
+            begin                    
+                // load y into t
+                r_t[9:5] <= i_data[7:3];
+                r_t[14:12] <= i_data[2:0];
+            end
+        end
+        RS_PPUADDR: begin
+            if (r_w == 0)
+            begin
+                r_t[13:8] <= i_data[5:0];
+                r_t[14] <= 0;
+            end
+            else
+            begin
+                r_t[7:0] <= i_data[7:0];
+
+                // 'v' is made identical to final value of t
+                r_v[7:0] <= i_data[7:0];
+                r_v[14:8] <= r_t[14:8];
+            end     
+        end
+        default: begin
+        end
+        endcase
     end
     else if (w_is_rendering_enabled)
     begin
+        if ((r_video_x > 0) && (r_video_x < 256))
+        begin
+            r_rasterizer_counter <= r_rasterizer_counter + 1;
+
+            if (r_rasterizer_counter == 3'b111)
+            begin
+                // increment horiz position in v every 8th pixel
+                r_v <= w_v_increment_x;
+            end
+        end
+        
         if (r_video_x == 256)
         begin
             // dot 256 - increment v vertical position
             r_v <= w_v_increment_y;
         end
-
+        
         if (r_video_x == 257)
         begin
             // dot 257 - copy all hoizontal position bits from t to v    
@@ -345,18 +359,7 @@ begin
                 // increment horiz position in v every 8th pixel
                 r_v <= w_v_increment_x;
             end
-        end
-
-        if ((r_video_x > 0) && (r_video_x < 256))
-        begin
-            r_rasterizer_counter <= r_rasterizer_counter + 1;
-
-            if (r_rasterizer_counter == 3'b111)
-            begin
-                // increment horiz position in v every 8th pixel
-                r_v <= w_v_increment_x;
-            end
-        end
+        end        
     end
 end
 
@@ -427,7 +430,7 @@ begin
     end
 end
 
-assign w_video_visible = (r_video_x < 256) && (r_video_y < 240);
+assign w_video_visible = (r_video_x > 0) && (r_video_x < 256) && (r_video_y < 240);
 
 //
 // ppuaddr
@@ -570,7 +573,7 @@ begin
             r_video_rd_n <= 0;   
         end
         3: begin
-            r_video_background_attribute <= i_vram_data;
+            r_video_background_attribute_lookup <= i_vram_data;
             r_video_rd_n <= 1;
         end
         4: begin
@@ -591,8 +594,23 @@ begin
             r_video_background_pattern_high <= i_vram_data;
             r_video_rd_n <= 1;
 
-            // todo: load 2 x 16 bit shift registers with pattern table
-            // todo: load 2 x latches for palette attribute
+            // load the background attribute table with the correct 2bits for the current tile position
+            
+            if (w_coarse_x) 
+            begin
+                if (w_coarse_y)
+                    r_video_background_attribute <= r_video_background_attribute_lookup[7:6];
+                else
+                    r_video_background_attribute <= r_video_background_attribute_lookup[3:2];
+            end
+            else
+            begin
+                if (w_coarse_y)
+                    r_video_background_attribute <= r_video_background_attribute_lookup[5:4];
+                else
+                    r_video_background_attribute <= r_video_background_attribute_lookup[1:0];
+            end
+            
         end
         endcase
     end
@@ -617,15 +635,21 @@ wire [7:0] o_debug_background_attribute_table_low;
 
 wire [1:0] w_background_pattern_table;
 
+wire w_is_rasterizer_active;
+assign w_is_rasterizer_active = ((r_video_x > 0) && (r_video_x <= 336)) || ((r_video_x >= 321) && (r_video_x <= 336));
+
+wire w_shift_background_shift_registers;
+assign w_shift_background_shift_registers = w_is_rasterizer_active;
+
 wire w_load_background_shift_registers;
-assign w_load_background_shift_registers = (r_rasterizer_counter == 0);
+assign w_load_background_shift_registers = (r_rasterizer_counter == 0) && w_is_rasterizer_active;
 
 Shift16 backgroundShiftPatternTableHigh(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
     .i_load(w_load_background_shift_registers),
     .i_data(r_video_background_pattern_high),
-    .i_shift(1),
+    .i_shift(w_shift_background_shift_registers),
     .i_offset({1'b0,r_x}),
     .o_shift_data(w_background_pattern_table[1]),
     .o_debug_data(o_debug_background_data_high)
@@ -636,7 +660,7 @@ Shift16 backgroundShiftPatternTableLow(
     .i_reset_n(i_reset_n),
     .i_load(w_load_background_shift_registers),
     .i_data(r_video_background_pattern_low),
-    .i_shift(1),
+    .i_shift(w_shift_background_shift_registers),
     .i_offset({1'b0,r_x}),
     .o_shift_data(w_background_pattern_table[0]),
     .o_debug_data(o_debug_background_data_low)
@@ -647,9 +671,9 @@ wire [1:0] w_video_background_attribute_table;
 Shift8 backgroundShiftAttributeTableHigh(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
-    .i_load(w_load_background_shift_registers),
-    .i_data(r_video_background_attribute[1]),           // todo: right attriute for tile
-    .i_shift(1),
+    .i_load(w_is_rasterizer_active),
+    .i_data(r_video_background_attribute[1]),           // todo: right attribute for tile
+    .i_shift(w_shift_background_shift_registers),
     .i_offset(r_x),
     .o_shift_data(w_video_background_attribute_table[1]),
     .o_debug_data(o_debug_background_attribute_table_high)
@@ -658,9 +682,9 @@ Shift8 backgroundShiftAttributeTableHigh(
 Shift8 backgroundShiftAttributeTableLow(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
-    .i_load(w_load_background_shift_registers),
-    .i_data(r_video_background_attribute[0]),           // todo: right attriute for tile
-    .i_shift(1),
+    .i_load(w_is_rasterizer_active),
+    .i_data(r_video_background_attribute[0]),           // todo: right attribute for tile
+    .i_shift(w_shift_background_shift_registers),
     .i_offset(r_x),
     .o_shift_data(w_video_background_attribute_table[0]),
     .o_debug_data(o_debug_background_attribute_table_low)
