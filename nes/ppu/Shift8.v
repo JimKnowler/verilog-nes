@@ -19,7 +19,7 @@ module Shift8(
 
 reg [7:0] r_data;
 
-always @(negedge i_reset_n or posedge i_clk)
+always @(negedge i_reset_n or negedge i_clk)
 begin
     if (!i_reset_n)
     begin

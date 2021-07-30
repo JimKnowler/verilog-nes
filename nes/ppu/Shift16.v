@@ -17,7 +17,7 @@ module Shift16(
 reg [15:0] r_data;
 wire [3:0] w_shift_offset;
 
-always @(negedge i_reset_n or posedge i_clk)
+always @(negedge i_reset_n or negedge i_clk)
 begin
     if (!i_reset_n)
     begin
