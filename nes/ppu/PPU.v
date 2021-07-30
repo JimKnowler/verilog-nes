@@ -510,32 +510,29 @@ begin
         r_video_buffer <= 0;
         r_video_io_is_active <= 0;
     end
-    else if (i_cs_n == 0)
+    else if ((i_cs_n == 0) && (i_rs == RS_PPUDATA))
     begin
-        if (i_rs == RS_PPUDATA)
+        if (i_rw == RW_WRITE)
         begin
-            if (i_rw == RW_WRITE)
+            if (r_ppuaddr < 16'h3f00)
             begin
-                if (r_ppuaddr < 16'h3f00)
-                begin
-                    // WRITE ppudata to video bus
-                    r_video_we_n <= 0;
-                    r_video_buffer <= i_data;
-
-                    r_video_io_is_active <= 1;
-                end
-            end
-            else
-            begin
-                // READ ppudata from video bus into r_video_buffer
-                r_video_rd_n <= 0;
+                // WRITE ppudata to video bus
+                r_video_we_n <= 0;
                 r_video_buffer <= i_data;
 
                 r_video_io_is_active <= 1;
             end
-
-            r_video_address <= r_ppuaddr[13:0];
         end
+        else
+        begin
+            // READ ppudata from video bus into r_video_buffer
+            r_video_rd_n <= 0;
+            r_video_buffer <= i_data;
+
+            r_video_io_is_active <= 1;
+        end
+
+        r_video_address <= r_ppuaddr[13:0];
     end
     else if (r_video_io_is_active == 1)
     begin
