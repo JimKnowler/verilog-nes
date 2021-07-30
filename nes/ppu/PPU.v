@@ -558,7 +558,23 @@ begin
         0: begin
             //  0,1 => nametable
             r_video_address <= w_address_background_tile;
-            r_video_rd_n <= 0;   
+            r_video_rd_n <= 0;
+
+            // load the background attribute table with the correct 2bits for the current tile position
+            if (w_coarse_x) 
+            begin
+                if (w_coarse_y)
+                    r_video_background_attribute <= r_video_background_attribute_lookup[7:6];
+                else
+                    r_video_background_attribute <= r_video_background_attribute_lookup[3:2];
+            end
+            else
+            begin
+                if (w_coarse_y)
+                    r_video_background_attribute <= r_video_background_attribute_lookup[5:4];
+                else
+                    r_video_background_attribute <= r_video_background_attribute_lookup[1:0];
+            end
         end
         1: begin
             r_video_background_tile <= i_vram_data;         
@@ -589,25 +605,7 @@ begin
         end
         7: begin
             r_video_background_pattern_high <= i_vram_data;
-            r_video_rd_n <= 1;
-
-            // load the background attribute table with the correct 2bits for the current tile position
-            
-            if (w_coarse_x) 
-            begin
-                if (w_coarse_y)
-                    r_video_background_attribute <= r_video_background_attribute_lookup[7:6];
-                else
-                    r_video_background_attribute <= r_video_background_attribute_lookup[3:2];
-            end
-            else
-            begin
-                if (w_coarse_y)
-                    r_video_background_attribute <= r_video_background_attribute_lookup[5:4];
-                else
-                    r_video_background_attribute <= r_video_background_attribute_lookup[1:0];
-            end
-            
+            r_video_rd_n <= 1;            
         end
         endcase
     end
