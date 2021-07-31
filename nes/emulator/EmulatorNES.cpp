@@ -422,14 +422,16 @@ namespace emulator {
             DrawLine({x, y}, {x + 42 * 8, y}, olc::RED);
             y += kRowHeight;
 
+            const int kPixelSize = 2;
+
             for (int section=0; section<2; section++) {
                 for (int c = 0; c<16; c++) {
-                    for (int r =0; r<16; r++) {
+                    for (int r = 0; r<16; r++) {
                         // position of character's top left corner
-                        int tx = x + (section * 128) + (c*8);
-                        int ty = y + (r * 8);
+                        int tx = x + (kPixelSize * ((section * 128) + (c*8)));
+                        int ty = y + (kPixelSize * (r * 8));
 
-                        drawCharacter(tx, ty, section, c, r);
+                        drawCharacter(tx, ty, section, c, r, kPixelSize);
                     }
                 }
             }
@@ -452,17 +454,19 @@ namespace emulator {
                         int ty = y + (r * 8);
                         
                         int patternTableSection = 1;        // TODO: read from PPUCTRL[4]
-                        drawCharacter(tx, ty, patternTableSection, tile & 0xF, (tile >> 4) & 0xF);
+                        drawCharacter(tx, ty, patternTableSection, tile & 0xF, (tile >> 4) & 0xF, 1);
                     }
                 }
             }
         }
 
-        void drawCharacter(int x, int y, int section, int c, int r) {
+        void drawCharacter(int x, int y, int section, int c, int r, int pixelSize) {
             for (int i=0; i<8; i++) {
                 // each row in the character
                 uint8_t low = vram.read(i | (c<<4) | (r<<8) | (section << 12));
                 uint8_t high = vram.read(i | (1<<3) | (c<<4) | (r<<8) | (section << 12));
+
+                int ty = y + (pixelSize * i);
 
                 for (int p=0; p<8; p++) {
                     // each pixel in the row
@@ -472,7 +476,8 @@ namespace emulator {
 
                     const static olc::Pixel kColours[] = { olc::BLACK, olc::DARK_GREY, olc::GREY, olc::WHITE };
 
-                    DrawRect({x+p, y+i}, {1,1}, kColours[colour]);
+                    int tx = x + (pixelSize * p);
+                    FillRect({tx, ty}, {pixelSize,pixelSize}, kColours[colour]);
                 }
             }
         }
