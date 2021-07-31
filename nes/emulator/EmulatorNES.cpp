@@ -416,6 +416,22 @@ namespace emulator {
             FillRect({ x + (core.o_video_x * kPixelSize), y + (core.o_video_y * kPixelSize)}, {kPixelSize << 1, kPixelSize << 1}, olc::WHITE);
         }
 
+        struct Palette {
+            olc::Pixel colours[4];
+
+            const olc::Pixel& operator[](int index) const {
+                return colours[index];
+            }
+
+            bool isProbablyNotConfiguredYet() const {
+                return (colours[0] == colours[1]) && (colours[1] == colours[2]) && (colours[2] == colours[3]);
+            }
+        };
+
+        const Palette kDefaultPalette = {
+            { olc::BLACK, olc::DARK_GREY, olc::GREY, olc::WHITE }
+        };
+
         void drawPatternTable(int x, int y) {
             DrawString({x,y}, "VRAM - Pattern Table", olc::RED);
             y += kRowHeight;
@@ -431,7 +447,7 @@ namespace emulator {
                         int tx = x + (kPixelSize * ((section * 128) + (c*8)));
                         int ty = y + (kPixelSize * (r * 8));
 
-                        drawCharacter(tx, ty, section, c, r, kPixelSize);
+                        drawCharacter(tx, ty, section, c, r, kPixelSize, kDefaultPalette);
                     }
                 }
             }
@@ -443,24 +459,45 @@ namespace emulator {
             DrawLine({x, y}, {x + 42 * 8, y}, olc::RED);
             y += kRowHeight;
 
+            const int kPixelSize = 1;
+        
             for (int section=0; section<2; section++) {
                 for (int c = 0; c<32; c++) {
                     for (int r =0; r<30; r++) {
                         // read value from nametable
                         uint8_t tile = vram.read(0x2000 + (section * 0x0800) + c + (r * 32));
 
+                        // read value from attribute table
+                        uint8_t attribute = vram.read(0x23c0 + (section << 10) + ((r/4) << 3) + (c/4));
+
+                        int attributeShift = (c&1) 
+                                                ? ((r&1) ? 6 : 2)               // right bottom,  right top
+                                                : ((r&1) ? 4 : 0);              // left bottom,   left top
+                        int paletteOffset = (attribute >> attributeShift) & 0b11;
+                        paletteOffset <<= 2;
+
+                        Palette palette;
+                        for (int i=0; i<4; i++) {
+                            palette.colours[i] = getPaletteColour(i + paletteOffset);
+                        }
+
+                        if (palette.isProbablyNotConfiguredYet()) {
+                            // palette has probably not been set yet, so use default grayscale palette
+                            palette = kDefaultPalette;
+                        }
+
                         // position of character's top left corner
-                        int tx = x + (section * 32 * 8) + (c*8);
-                        int ty = y + (r * 8);
+                        int tx = x + (kPixelSize * ((section * 32 * 8) + (c*8)));
+                        int ty = y + (kPixelSize * (r * 8));
                         
                         int patternTableSection = 1;        // TODO: read from PPUCTRL[4]
-                        drawCharacter(tx, ty, patternTableSection, tile & 0xF, (tile >> 4) & 0xF, 1);
+                        drawCharacter(tx, ty, patternTableSection, tile & 0xF, (tile >> 4) & 0xF, kPixelSize, palette);
                     }
                 }
             }
         }
 
-        void drawCharacter(int x, int y, int section, int c, int r, int pixelSize) {
+        void drawCharacter(int x, int y, int section, int c, int r, int pixelSize, const Palette& palette) {
             for (int i=0; i<8; i++) {
                 // each row in the character
                 uint8_t low = vram.read(i | (c<<4) | (r<<8) | (section << 12));
@@ -473,11 +510,9 @@ namespace emulator {
                     uint8_t lowBit = (low >> (7-p)) & 0x1;
                     uint8_t highBit = (high >> (7-p)) & 0x1;
                     uint8_t colour = lowBit + (highBit << 1);
-
-                    const static olc::Pixel kColours[] = { olc::BLACK, olc::DARK_GREY, olc::GREY, olc::WHITE };
-
+                    
                     int tx = x + (pixelSize * p);
-                    FillRect({tx, ty}, {pixelSize,pixelSize}, kColours[colour]);
+                    FillRect({tx, ty}, {pixelSize,pixelSize}, palette[colour]);
                 }
             }
         }
