@@ -171,7 +171,7 @@ assign o_p[Z] = r_z;
 assign o_p[I] = r_i;
 assign o_p[D] = r_d;
 assign o_p[B] = r_b;
-assign o_p[5] = 1'b0;
+assign o_p[5] = 1'b1;
 assign o_p[V] = r_v;
 assign o_p[N] = r_n;
 

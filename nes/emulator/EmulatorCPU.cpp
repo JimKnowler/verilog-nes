@@ -37,7 +37,8 @@ namespace emulator {
             initSimulation();
 
             //initSimpleProgram();
-            initMario();
+            //initMario(); 
+            initNesTest();
 
             mode = kSingleStep;
 
@@ -108,6 +109,16 @@ namespace emulator {
             // https://wiki.nesdev.com/w/index.php/PPU_registers#Status_.28.242002.29_.3C_read
             // note: simulating VBLANK has started
             sram.write(0x2002, 0x80);
+        }
+
+        void initNesTest() {
+            // load bank 0 -> 0xC000:0xFFFF
+            auto bank1 = loadBinaryFile("roms/nestest/prg_rom_bank_0.6502.bin");
+            sram.write(0xC000, bank1);
+
+            // start PC at 0xc000
+            sram.write(0xfffc, 0x00);       // low byte
+            sram.write(0xfffd, 0xc0);       // high byte
         }
 
         std::vector<uint8_t> loadBinaryFile(const char* filename) {
@@ -218,7 +229,21 @@ namespace emulator {
                             break;
                         } else {
                             simulateOpcode();
-                        }
+
+                            // hard coded breakpoint
+                            /*if (lastOpcode.pc == 0xCF83) {
+                                mode = kSingleStep;
+                                break;
+                            }
+                            */
+
+                            /*
+                            if (numOpcodes == 1045) {
+                                mode = kSingleStep;
+                                break;
+                            }
+                            */
+                        }                        
                     }
                 
                     break;
@@ -232,8 +257,9 @@ namespace emulator {
             FillRect({ 0,0 }, { ScreenWidth(), ScreenHeight() }, olc::GREY);
 
             renderer.drawTitle(*this, 10, 10);
-            renderer.drawTestBench(*this, 10, 200, testBench, numOpcodes);
             renderer.drawCPU(*this, 10, 40, testBench);
+            renderer.drawTestBench(*this, 10, 200, testBench, numOpcodes);
+            renderer.drawMemory(*this, 10, 250, sram);
 
             renderer.drawDisassembly(*this, 200, 40, disassembledOpcodesAtPC());
             renderer.drawStack(*this, 200, 200, testBench, sram);
@@ -307,6 +333,48 @@ namespace emulator {
             // concatenate part of the last trace with the new trace in order
             // to create a full trace for last opcode
             traceLastOpcode = lastTrace.slice( lastTrace.getSteps().size() - 1, 1) + testBench.trace.slice(0, testBench.trace.getSteps().size()-1);
+
+            if (lastOpcode.opcode != 0) {
+                logLastOpcode();
+            }
+        }
+
+        void logLastOpcode() {
+            printf("%04X  ", lastOpcode.pc);
+            for (auto byte: lastOpcode.data) {
+                printf("%02X ", byte);
+            }
+
+            for (size_t i=lastOpcode.data.size(); i<3; i++) {
+                printf("   ");
+            }
+            printf(" ");
+
+            Disassembler::DisassembledOpcodes disassembledOpcodes = disassembler.disassemble(sram, lastOpcode.pc, 1);
+            Disassembler::DisassembledOpcode disassembledOpcode = disassembledOpcodes[0];
+            
+            char buffer[64];
+            sprintf(buffer, "%s %s", disassembledOpcode.labelOpcode.c_str(), disassembledOpcode.labelOperands.c_str());
+
+            for (size_t i=strlen(buffer); i<32; i++) {
+                buffer[i] = ' ';
+            }
+
+            buffer[32] = 0;
+            printf("%s", buffer);
+
+            // note: some opcodes are still writing to registers in the first clock cycle
+            const gtestverilog::Step& step = traceLastOpcode.getSteps()[2];
+
+            printf("A:%02X X:%02X Y:%02X P:%02X SP:%02X", 
+                    uint8_t(std::get<uint32_t>(step.port(o_debug_ac))),
+                    uint8_t(std::get<uint32_t>(step.port(o_debug_x))),
+                    uint8_t(std::get<uint32_t>(step.port(o_debug_y))),
+                    uint8_t(std::get<uint32_t>(step.port(o_debug_p))),
+                    uint8_t(std::get<uint32_t>(step.port(o_debug_s)))
+                );
+
+            printf("\n");
         }
     };
 }

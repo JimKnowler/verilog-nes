@@ -81,7 +81,10 @@ module Decoder(
     output reg o_ir5_c,
     output reg o_ir5_i,
     output reg o_ir5_d,
-    output reg o_avr_v
+    output reg o_avr_v,
+
+    // JK extra control signals
+    output reg o_1_db4
 );
 
 // Processor Status Register bitfields
@@ -381,7 +384,6 @@ begin
     o_db1_z = i_value;
     o_db2_i = i_value;
     o_db3_d = i_value;
-    o_db4_b = i_value;
     o_db6_v = i_value;
     o_db7_n = i_value;
 end
@@ -539,6 +541,7 @@ begin
     o_ir5_i = 0;
     o_ir5_d = 0;
     o_avr_v = 0;
+    o_1_db4 = 0;
 
     case (i_tcu)
     0:  // T0
@@ -618,10 +621,6 @@ begin
                     o_1_addc = 1;
 
                     o_sums = 1;
-
-                    // C + V flags
-                    o_acr_c = 1;
-                    o_avr_v = 1;
                 end
                 default: begin
                 end
@@ -634,8 +633,17 @@ begin
                 ADC_i, ADC_zp, ADC_ax, ADC_ay,
                 SBC_i, CMP_i, CPX_i, CPY_i,
                 CMP_zp, CPX_zp, CPY_zp: begin
-                    // C + V flags
+                    // C flag
                     o_acr_c = 1;
+                end
+                default: begin
+                end
+                endcase
+
+                case (w_ir)
+                ADC_i, ADC_zp, ADC_ax, ADC_ay,
+                SBC_i: begin
+                    // V flag
                     o_avr_v = 1;
                 end
                 default: begin
@@ -1225,6 +1233,7 @@ begin
             begin
                 o_rw = RW_WRITE;
                 o_p_db = 1;
+                o_1_db4 = 1;                // force BREAK bit in 
                 next_opcode();
                 load_s_from_add(w_phi2);
             end
@@ -1580,6 +1589,8 @@ begin
 
             if (w_ir == PLA) begin
                 load_ac_from_dl(1);
+                o_dbz_z = 1;
+                o_db7_n = 1;
             end
             else if (w_ir == PLP) begin
                 o_dl_db = 1;
@@ -2242,7 +2253,7 @@ begin
                 // using a BRK instruction
                 o_db4_b = 1;
             end
-            HW_INTERRUPT_IRQ, HW_INTERRUPT_NMI:
+            HW_INTERRUPT_IRQ, HW_INTERRUPT_NMI, HW_INTERRUPT_RESET:
             begin
                 // hardware interrupt
                 o_db2_i = 1;

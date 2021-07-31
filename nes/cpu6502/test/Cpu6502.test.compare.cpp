@@ -49,8 +49,8 @@ TEST_F(Cpu6502, ShouldImplementCMPimmediate) {
         .port(o_address).signal({2, 3, 4, 5})
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({A}).repeat(8)
-        .port(o_debug_x).signal({0xFF}).repeat(8)
-        .port(o_debug_y).signal({0xFF}).repeat(8);
+        .port(o_debug_x).signal({0}).repeat(8)
+        .port(o_debug_y).signal({0}).repeat(8);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -60,7 +60,8 @@ TEST_F(Cpu6502, ShouldImplementCMPimmediateProcessorStatus) {
         {{0x00, 0x00}, C|Z},
         {{0x01, 0x00}, C},
         {{0x80, 0x00}, C|N},
-        {{0x00, 0x01}, N}
+        {{0x00, 0x01}, N},
+        {{0x40, 0x40}, C|Z}
     };
 
     for (auto& testCase : testCases) {
@@ -71,6 +72,7 @@ TEST_F(Cpu6502, ShouldImplementCMPimmediateProcessorStatus) {
         sram.clear(0);
     
         Assembler()
+            .CLI()
             .LDA().immediate(A)
             .CMP().immediate(M)
             .NOP()
@@ -79,8 +81,8 @@ TEST_F(Cpu6502, ShouldImplementCMPimmediateProcessorStatus) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(6);
-        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+        testBench.tick(8);
+        EXPECT_EQ(kExpectedProcessorStatus|U, testBench.core().o_debug_p);
     }
 }
 

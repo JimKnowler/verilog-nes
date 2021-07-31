@@ -42,7 +42,8 @@ TEST_F(Cpu6502, ShouldImplementPHA) {
 TEST_F(Cpu6502, ShouldImplementPHP) {
     sram.clear(0);
     
-    const uint8_t kTestData = C|V|Z|N;
+    const uint8_t kTestData = I|C|V|Z|N;
+    const uint8_t kExpected = kTestData | U;
 
     Assembler()
         // load kTestData into P
@@ -68,18 +69,21 @@ TEST_F(Cpu6502, ShouldImplementPHP) {
                     .repeat(5)
         .port(o_rw).signal("11011").repeatEachStep(2)
         .port(o_sync).signal("10010").repeatEachStep(2)
-        .port(o_address).signal({4, 5, 0x01FC, 5, 6})
+        .port(o_address).signal({4, 5, 0x01FD, 5, 6})
                         .repeatEachStep(2)
-        .port(o_debug_s).signal({0xFC}).repeat(3)
-                        .signal({0xFB}).repeat(2)
+        .port(o_debug_s).signal({0xFD}).repeat(3)
+                        .signal({0xFC}).repeat(2)
                         .concat().repeatEachStep(2)
         .port(o_debug_ac).signal({kTestData}).repeat(10)
-        .port(o_debug_x).signal({0xFF}).repeat(10)
-        .port(o_debug_y).signal({0xFF}).repeat(10);
+        .port(o_debug_x).signal({0x00}).repeat(10)
+        .port(o_debug_y).signal({0x00}).repeat(10)
+        .port(o_debug_p).signal({kExpected}).repeat(10);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 
-    EXPECT_EQ(kTestData, sram.read(0x01FC));
+    // PHP should add B to value written to memory
+    // https://wiki.nesdev.com/w/index.php/Status_flags#The_B_flag
+    EXPECT_EQ(kExpected | B, sram.read(0x01FD));
 }
 
 TEST_F(Cpu6502, ShouldImplementPLA) {
@@ -122,8 +126,11 @@ TEST_F(Cpu6502, ShouldImplementPLP) {
     sram.clear(0);
     
     const uint8_t kTestData = 0xFF;
-    const uint8_t kExpectedP = C|Z|I|B|D|V|N;
-    sram.write(0x01FD, kTestData);
+
+    // PLP should not load B
+    // https://wiki.nesdev.com/w/index.php/Status_flags#The_B_flag
+    const uint8_t kExpectedP = C|Z|I|U|D|V|N;
+    sram.write(0x01FE, kTestData);
 
     Assembler()
         .PLP()
@@ -140,15 +147,15 @@ TEST_F(Cpu6502, ShouldImplementPLP) {
                     .repeat(6)
         .port(o_rw).signal("1").repeat(12)
         .port(o_sync).signal("100010").repeatEachStep(2)
-        .port(o_address).signal({0, 1, 0x01FC, 0x1FD, 1, 2})
+        .port(o_address).signal({0, 1, 0x01FD, 0x1FE, 1, 2})
                         .repeatEachStep(2)
-        .port(o_debug_s).signal({0xFC}).repeat(3)
-                        .signal({0xFD}).repeat(3)
+        .port(o_debug_s).signal({0xFD}).repeat(3)
+                        .signal({0xFE}).repeat(3)
                         .concat().repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(12)
-        .port(o_debug_x).signal({0xFF}).repeat(12)
-        .port(o_debug_y).signal({0xFF}).repeat(12)
-        .port(o_debug_p).signal({0x00}).repeat(4)
+        .port(o_debug_ac).signal({0x00}).repeat(12)
+        .port(o_debug_x).signal({0x00}).repeat(12)
+        .port(o_debug_y).signal({0x00}).repeat(12)
+        .port(o_debug_p).signal({I|U}).repeat(4)
                         .signal({kExpectedP}).repeat(2)
                         .concat().repeatEachStep(2);
 

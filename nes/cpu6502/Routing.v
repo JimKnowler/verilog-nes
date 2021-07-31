@@ -64,7 +64,11 @@ module Routing(
     output [7:0] o_bus_db,
     output [7:0] o_bus_sb,
     output [7:0] o_bus_adl,
-    output [7:0] o_bus_adh
+    output [7:0] o_bus_adh,
+
+
+    // JK - control line to force DB[4] to 1
+    input i_1_db4
 );
 
 reg [7:0] r_bus_db;
@@ -89,6 +93,9 @@ begin
         r_bus_db = i_p;
     else if (i_sb_db)
         r_bus_db = r_bus_sb;
+
+    if (i_1_db4)
+        r_bus_db[4] = 1;
 end
 
 // Drive SB bus

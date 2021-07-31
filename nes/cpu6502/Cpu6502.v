@@ -145,6 +145,7 @@ wire w_ir5_i;
 wire w_ir5_d;
 wire w_avr_v;
 wire w_error;
+wire w_1_db4;
 
 // Decoder
 // transform IR and TCU into control signals
@@ -221,7 +222,8 @@ Decoder decoder(
     .o_ir5_i(w_ir5_i),
     .o_ir5_d(w_ir5_d),
     .o_avr_v(w_avr_v),
-    .o_error(w_error)
+    .o_error(w_error),
+    .o_1_db4(w_1_db4)
 );
 
 // Input Data Latch
@@ -270,7 +272,8 @@ PCH pch(
 );
 
 // X Register
-Register x(
+Register #(.DEFAULT_VALUE(0)) x
+(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
     .i_clk_en(i_clk_en),
@@ -280,7 +283,7 @@ Register x(
 );
 
 // Y Register
-Register y(
+Register #(.DEFAULT_VALUE(0)) y(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
     .i_clk_en(i_clk_en),
@@ -290,7 +293,7 @@ Register y(
 );
 
 // Accumulator Register (ac)
-Register ac(
+Register #(.DEFAULT_VALUE(0)) ac(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
     .i_clk_en(i_clk_en),
@@ -300,7 +303,7 @@ Register ac(
 );
 
 // Stack Register (s)
-Register s(
+Register  #(.DEFAULT_VALUE(0)) s(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
     .i_clk_en(i_clk_en),
@@ -418,7 +421,8 @@ Routing routing(
     .o_bus_db(w_bus_db),
     .o_bus_sb(w_bus_sb),
     .o_bus_adl(w_bus_adl),
-    .o_bus_adh(w_bus_adh)
+    .o_bus_adh(w_bus_adh),
+    .i_1_db4(w_1_db4)
 );
 
 // drive debug signals

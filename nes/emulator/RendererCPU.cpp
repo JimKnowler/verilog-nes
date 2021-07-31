@@ -84,8 +84,10 @@ namespace emulator {
         engine.DrawString({x + 10 + (kCharWidth*10), y}, (hasErrored) ? "ERROR" : "OK", (hasErrored) ? olc::RED : olc::DARK_GREEN);
         y += kRowHeight;
 
+        const int kStepCountReset = 9;
+
         std::vector<std::string> registers = {
-            PrepareString("    tick: %d", int(testBench.stepCount() / 2)),
+            PrepareString("    tick: %d", int( (testBench.stepCount() / 2) - kStepCountReset)),
             PrepareString(" opcodes: %d", numOpcodes)
         };
 
@@ -131,6 +133,19 @@ namespace emulator {
 
             y += kRowHeight;
             s += 1;
+        }
+    }
+
+    void RendererCPU::drawMemory(olc::PixelGameEngine& engine, int x, int y, const memory::SRAM& sram) {
+        engine.DrawString({ x, y }, "Memory", olc::RED);
+
+        y += kRowHeight;
+        for (int i = 0; i < 10; i++) {
+            uint8_t data = sram.read(i);
+
+            engine.DrawString({ x + 10, y }, PrepareString("0x%04x %02x", i, data), olc::BLACK);
+            
+            y += kRowHeight;
         }
     }
 
