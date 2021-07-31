@@ -470,9 +470,9 @@ namespace emulator {
                         // read value from attribute table
                         uint8_t attribute = vram.read(0x23c0 + (section << 10) + ((r/4) << 3) + (c/4));
 
-                        int attributeShift = (c&1) 
-                                                ? ((r&1) ? 6 : 2)               // right bottom,  right top
-                                                : ((r&1) ? 4 : 0);              // left bottom,   left top
+                        int attributeShift = (c&2) 
+                                                ? ((r&2) ? 6 : 2)               // right bottom,  right top
+                                                : ((r&2) ? 4 : 0);              // left bottom,   left top
                         int paletteOffset = (attribute >> attributeShift) & 0b11;
                         paletteOffset <<= 2;
 

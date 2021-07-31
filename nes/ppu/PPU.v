@@ -95,11 +95,11 @@ reg [14:0] r_t;
 reg [2:0] r_x;
 reg r_w;
 
-wire w_coarse_x;
-assign w_coarse_x = r_v[0];
+wire w_attribute_table_offset_x;
+assign w_attribute_table_offset_x = r_v[1];     // coarse_x[1]
 
-wire w_coarse_y;
-assign w_coarse_y = r_v[5];
+wire w_attribute_table_offset_y;
+assign w_attribute_table_offset_y = r_v[6];     // coarse_y[1]
 
 // Palette entries for sprites + background
 reg [7:0] r_palette [31:0];
@@ -561,16 +561,16 @@ begin
             r_video_rd_n <= 0;
 
             // load the background attribute table with the correct 2bits for the current tile position
-            if (w_coarse_x) 
+            if (w_attribute_table_offset_x) 
             begin
-                if (w_coarse_y)
+                if (w_attribute_table_offset_y)
                     r_video_background_attribute <= r_video_background_attribute_lookup[7:6];
                 else
                     r_video_background_attribute <= r_video_background_attribute_lookup[3:2];
             end
             else
             begin
-                if (w_coarse_y)
+                if (w_attribute_table_offset_y)
                     r_video_background_attribute <= r_video_background_attribute_lookup[5:4];
                 else
                     r_video_background_attribute <= r_video_background_attribute_lookup[1:0];
