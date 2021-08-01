@@ -30,7 +30,7 @@ TEST_F(Cpu6502, ShouldImplementLDAi) {
         .port(o_sync).signal("1010").repeatEachStep(2)
         .port(o_address).signal({0, 1, 2, 3})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF, kTestData})
+        .port(o_debug_ac).signal({0x00, kTestData})
                         .repeatEachStep(4)
         .port(o_debug_x).signal({0x00}).repeat(8)
         .port(o_debug_y).signal({0x00}).repeat(8);

@@ -281,6 +281,8 @@ TEST_F(Cpu6502, ShouldImplementTXS) {
     testBench.tick(2);
     testBench.trace.clear();
 
+    const uint8_t sp = testBench.core().o_debug_s;
+
     // simulate TXS and NOP
     testBench.tick(4);
 
@@ -296,7 +298,7 @@ TEST_F(Cpu6502, ShouldImplementTXS) {
         .port(o_debug_x).signal({kTestData})
                         .repeat(8)
         .port(o_debug_y).signal({0x00}).repeat(8)
-        .port(o_debug_s).signal({0xFC}).repeat(4)
+        .port(o_debug_s).signal({sp}).repeat(4)
                         .signal({kTestData}).repeat(4);
         
 

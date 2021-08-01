@@ -25,10 +25,10 @@ TEST_F(Cpu6502, ShouldImplementPHA) {
                     .repeat(5)
         .port(o_rw).signal("11011").repeatEachStep(2)
         .port(o_sync).signal("10010").repeatEachStep(2)
-        .port(o_address).signal({2, 3, 0x01FC, 3, 4})
+        .port(o_address).signal({2, 3, 0x01FD, 3, 4})
                         .repeatEachStep(2)
-        .port(o_debug_s).signal({0xFC}).repeat(3)
-                        .signal({0xFB}).repeat(2)
+        .port(o_debug_s).signal({0xFD}).repeat(3)
+                        .signal({0xFC}).repeat(2)
                         .concat().repeatEachStep(2)
         .port(o_debug_ac).signal({kTestData}).repeat(10)
         .port(o_debug_x).signal({0x00}).repeat(10)
@@ -36,7 +36,7 @@ TEST_F(Cpu6502, ShouldImplementPHA) {
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 
-    EXPECT_EQ(kTestData, sram.read(0x01FC));
+    EXPECT_EQ(kTestData, sram.read(0x01FD));
 }
 
 TEST_F(Cpu6502, ShouldImplementPHP) {
@@ -90,14 +90,19 @@ TEST_F(Cpu6502, ShouldImplementPLA) {
     sram.clear(0);
     
     const uint8_t kTestData = 0xA4;
-    sram.write(0x01FD, kTestData);
+    sram.write(0x01FE, kTestData);
 
     Assembler()
+        .CLI()
         .PLA()
         .NOP()
         .compileTo(sram);
 
     helperSkipResetVector();
+
+    // skip CLI
+    testBench.tick(2);
+    testBench.trace.clear();
 
     // simulate PLA and NOP
     testBench.tick(6);
@@ -107,17 +112,18 @@ TEST_F(Cpu6502, ShouldImplementPLA) {
                     .repeat(6)
         .port(o_rw).signal("1").repeat(12)
         .port(o_sync).signal("100010").repeatEachStep(2)
-        .port(o_address).signal({0, 1, 0x01FC, 0x01FD, 1, 2})
+        .port(o_address).signal({1, 2, 0x01FD, 0x01FE, 2, 3})
                         .repeatEachStep(2)
-        .port(o_debug_s).signal({0xFC}).repeat(3)
-                        .signal({0xFD}).repeat(3)
+        .port(o_debug_s).signal({0xFD}).repeat(3)
+                        .signal({0xFE}).repeat(3)
                         .concat().repeatEachStep(2)
         .port(o_debug_ac).signal({0x00}).repeat(4)
                          .signal({kTestData}).repeat(2)
                          .concat().repeatEachStep(2)
         .port(o_debug_x).signal({0x00}).repeat(12)
         .port(o_debug_y).signal({0x00}).repeat(12)
-        .port(o_debug_p).signal({0x00}).repeat(12);
+        .port(o_debug_p).signal({U}).repeat(8)
+                        .signal({U|N}).repeat(4);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -161,3 +167,5 @@ TEST_F(Cpu6502, ShouldImplementPLP) {
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
+
+// TODO test PLA and Z flag
