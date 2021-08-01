@@ -2,29 +2,29 @@
 
 namespace {
     const std::map<std::pair<uint8_t, uint8_t>, uint8_t> kTestCasesADCWithCarryIn = {
-        {{0x00, 0x00}, 0},
-        {{0x00, 0x01}, 0},
-        {{0x7F, 0x00}, N|V},
-        {{0x80, 0x00}, N},
-        {{0xFF, 0x00}, C|Z},
-        {{0xFF, 0x01}, C},
-        {{0xFF, 0x80}, C|N},
-        {{0xFF, 0x7F}, C}
+        {{0x00, 0x00}, U},
+        {{0x00, 0x01}, U},
+        {{0x7F, 0x00}, U|N|V},
+        {{0x80, 0x00}, U|N},
+        {{0xFF, 0x00}, U|C|Z},
+        {{0xFF, 0x01}, U|C},
+        {{0xFF, 0x80}, U|C|N},
+        {{0xFF, 0x7F}, U|C}
     };
 
     const std::map<std::pair<uint8_t, uint8_t>, uint8_t> kTestCasesADCWithoutCarryIn = {
-        {{0x00, 0x00}, Z},
-        {{0x00, 0x01}, 0},
-        {{0x7F, 0x01}, N|V},
-        {{0x80, 0x00}, N},
-        {{0xFF, 0x01}, C|Z},
-        {{0xFF, 0x80}, C|V}
+        {{0x00, 0x00}, U|Z},
+        {{0x00, 0x01}, U},
+        {{0x7F, 0x01}, U|N|V},
+        {{0x80, 0x00}, U|N},
+        {{0xFF, 0x01}, U|C|Z},
+        {{0xFF, 0x80}, U|C|V}
     };
 
     const std::map<uint8_t, uint8_t> kTestCasesINC = {
-        {0 - 1, Z},
-        {(1<<7) - 1, N},
-        {1 - 1, 0}
+        {0 - 1, U|Z},
+        {(1<<7) - 1, U|N},
+        {1 - 1, U}
     };
 }
 
@@ -73,6 +73,7 @@ TEST_F(Cpu6502, ShouldImplementINXProcessorStatus) {
         sram.clear(0);
     
         Assembler()
+            .CLI()
             .LDX().immediate(kTestData)
             .INX()
             .NOP()
@@ -81,7 +82,7 @@ TEST_F(Cpu6502, ShouldImplementINXProcessorStatus) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(6);
+        testBench.tick(8);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -131,6 +132,7 @@ TEST_F(Cpu6502, ShouldImplementINYProcessorStatus) {
         sram.clear(0);
     
         Assembler()
+            .CLI()
             .LDY().immediate(kTestData)
             .INY()
             .NOP()
@@ -139,7 +141,7 @@ TEST_F(Cpu6502, ShouldImplementINYProcessorStatus) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(6);
+        testBench.tick(8);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -192,6 +194,7 @@ TEST_F(Cpu6502, ShouldImplementADCimmediateProcessorStatus) {
         sram.clear(0);
     
         Assembler()
+            .CLI()
             .LDA().immediate(kTestData1)
             .ADC().immediate(kTestData2)
             .NOP()
@@ -200,7 +203,7 @@ TEST_F(Cpu6502, ShouldImplementADCimmediateProcessorStatus) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(6);
+        testBench.tick(8);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -253,6 +256,7 @@ TEST_F(Cpu6502, ShouldImplementADCimmediateProcessorStatusWithCarryIn) {
         sram.clear(0);
     
         Assembler()
+            .CLI()
             .LDA().immediate(kTestData1)
             .SEC()
             .ADC().immediate(kTestData2)
@@ -262,7 +266,7 @@ TEST_F(Cpu6502, ShouldImplementADCimmediateProcessorStatusWithCarryIn) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(8);
+        testBench.tick(10);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -291,6 +295,7 @@ TEST_F(Cpu6502, ShouldImplementINCabsoluteProcessorStatus) {
         
         Assembler assembler;
         assembler
+                .CLI()
                 .INC().absolute(kTestAddress)
                 .NOP()
             .org(kTestAddress)
@@ -300,7 +305,7 @@ TEST_F(Cpu6502, ShouldImplementINCabsoluteProcessorStatus) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(8);
+        testBench.tick(10);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -332,6 +337,7 @@ TEST_F(Cpu6502, ShouldImplementADCabsoluteProcessorStatus) {
         sram.clear(0);
     
         Assembler()
+                .CLI()
                 .LDA().immediate(kTestData1)
                 .ADC().absolute("increment")
                 .NOP()
@@ -343,7 +349,7 @@ TEST_F(Cpu6502, ShouldImplementADCabsoluteProcessorStatus) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(8);
+        testBench.tick(10);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -377,6 +383,7 @@ TEST_F(Cpu6502, ShouldImplementADCabsoluteProcessorStatusWithCarryIn) {
         sram.clear(0);
     
         Assembler()
+                .CLI()
                 .LDA().immediate(kTestData1)
                 .SEC()
                 .ADC().absolute("increment")
@@ -389,7 +396,7 @@ TEST_F(Cpu6502, ShouldImplementADCabsoluteProcessorStatusWithCarryIn) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(10);
+        testBench.tick(12);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -451,6 +458,7 @@ TEST_F(Cpu6502, ShouldImplementINCzeropageProcessorStatus) {
         
         Assembler assembler;
         assembler
+                .CLI()
                 .INC().zp(kTestAddress)
                 .NOP()
             .org(0x0000 + kTestAddress)
@@ -460,12 +468,8 @@ TEST_F(Cpu6502, ShouldImplementINCzeropageProcessorStatus) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(7);
+        testBench.tick(9);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
-
-        if (kExpectedProcessorStatus != testBench.core().o_debug_p) {
-            std::cout << testBench.trace;
-        }
     }
 }
 
@@ -522,6 +526,7 @@ TEST_F(Cpu6502, ShouldImplementADCzeropageProcessorStatus) {
         sram.clear(0);
     
         Assembler()
+                .CLI()
                 .LDA().immediate(kTestData1)
                 .ADC().zp(kTestAddress)
                 .NOP()
@@ -532,7 +537,7 @@ TEST_F(Cpu6502, ShouldImplementADCzeropageProcessorStatus) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(7);
+        testBench.tick(9);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -590,6 +595,7 @@ TEST_F(Cpu6502, ShouldImplementADCzeropageProcessorStatusWithCarryIn) {
         sram.clear(0);
     
         Assembler()
+                .CLI()
                 .LDA().immediate(kTestData1)
                 .SEC()
                 .ADC().zp(kTestAddress)
@@ -601,7 +607,7 @@ TEST_F(Cpu6502, ShouldImplementADCzeropageProcessorStatusWithCarryIn) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(9);
+        testBench.tick(11);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -640,6 +646,7 @@ TEST_F(Cpu6502, ShouldImplementADCabsoluteIndexedWithXProcessorStatus) {
         sram.clear(0);
     
         Assembler()
+                .CLI()
                 .LDX().immediate(kX)
                 .LDA().immediate(kTestData1)
                 .ADC().absolute("increment").x()
@@ -653,7 +660,7 @@ TEST_F(Cpu6502, ShouldImplementADCabsoluteIndexedWithXProcessorStatus) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(11);
+        testBench.tick(13);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -694,6 +701,7 @@ TEST_F(Cpu6502, ShouldImplementADCabsoluteIndexedWithXProcessorStatusWithCarryIn
         sram.clear(0);
     
         Assembler()
+                .CLI()
                 .LDA().immediate(kTestData1)
                 .LDX().immediate(kX)
                 .SEC()
@@ -708,7 +716,7 @@ TEST_F(Cpu6502, ShouldImplementADCabsoluteIndexedWithXProcessorStatusWithCarryIn
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(13);
+        testBench.tick(15);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -747,6 +755,7 @@ TEST_F(Cpu6502, ShouldImplementADCabsoluteIndexedWithYProcessorStatus) {
         sram.clear(0);
     
         Assembler()
+                .CLI()
                 .LDY().immediate(kY)
                 .LDA().immediate(kTestData1)
                 .ADC().absolute("increment").y()
@@ -760,7 +769,7 @@ TEST_F(Cpu6502, ShouldImplementADCabsoluteIndexedWithYProcessorStatus) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(11);
+        testBench.tick(13);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -801,6 +810,7 @@ TEST_F(Cpu6502, ShouldImplementADCabsoluteIndexedWithYProcessorStatusWithCarryIn
         sram.clear(0);
     
         Assembler()
+                .CLI()
                 .LDA().immediate(kTestData1)
                 .LDY().immediate(kY)
                 .SEC()
@@ -815,7 +825,7 @@ TEST_F(Cpu6502, ShouldImplementADCabsoluteIndexedWithYProcessorStatusWithCarryIn
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(13);
+        testBench.tick(15);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -892,6 +902,7 @@ TEST_F(Cpu6502, ShouldImplementINCabsoluteIndexedWithXProcessorStatusWithoutCarr
         sram.clear(0);
     
         Assembler()
+                .CLI()
                 .LDX().immediate(kX)
                 .INC().absolute("increment").x()
                 .NOP()
@@ -904,7 +915,7 @@ TEST_F(Cpu6502, ShouldImplementINCabsoluteIndexedWithXProcessorStatusWithoutCarr
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(10);
+        testBench.tick(12);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -937,6 +948,7 @@ TEST_F(Cpu6502, ShouldImplementINCabsoluteIndexedWithXProcessorStatusWithCarry) 
         sram.clear(0);
     
         Assembler()
+                .CLI()
                 .LDX().immediate(kX)
                 .INC().absolute("increment").x()
                 .NOP()
@@ -951,7 +963,7 @@ TEST_F(Cpu6502, ShouldImplementINCabsoluteIndexedWithXProcessorStatusWithCarry) 
 
         testBench.trace.clear();
 
-        testBench.tick(11);
+        testBench.tick(13);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
