@@ -3,7 +3,6 @@ module PPUMemoryMap(
     /* verilator lint_off UNDRIVEN */
     input i_clk,
     input i_reset_n,
-
     /* verilator lint_on UNUSED */
     /* verilator lint_on UNDRIVEN */
 
@@ -11,9 +10,7 @@ module PPUMemoryMap(
     input i_rd_en_ppu_n,            // set to 0 when PPU is reading
     input i_wr_en_ppu_n,            // set to 0 when PPU is writing
     output [7:0] o_data_ppu,        // data output to PPU
-    /* verilator lint_off UNUSED */
     input [7:0] i_data_ppu,          // data input from PPU
-    /* verilator lint_on UNUSED */
 
     output o_cs_patterntable,       // 1 when patterntable is selected
     input [7:0] i_data_patterntable,// data read from patterntable
