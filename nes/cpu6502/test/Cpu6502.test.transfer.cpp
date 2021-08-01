@@ -39,9 +39,9 @@ TEST_F(Cpu6502, ShouldImplementTAX) {
 
 TEST_F(Cpu6502, ShouldImplementTAXProcessorStatus) {
     const std::map<uint8_t, uint8_t> testCases = {
-        {0, Z},
-        {(1<<7), N},
-        {1, 0}
+        {0, U|Z},
+        {(1<<7), U|N},
+        {1, U}
     };
 
     for (auto& testCase : testCases) {
@@ -51,6 +51,7 @@ TEST_F(Cpu6502, ShouldImplementTAXProcessorStatus) {
         sram.clear(0);
     
         Assembler()
+            .CLI()
             .LDA().immediate(kTestData)
             .LDY().immediate(1)                 // clear N and Z flags
             .TAX()
@@ -60,7 +61,7 @@ TEST_F(Cpu6502, ShouldImplementTAXProcessorStatus) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(8);
+        testBench.tick(10);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -104,9 +105,9 @@ TEST_F(Cpu6502, ShouldImplementTAY) {
 
 TEST_F(Cpu6502, ShouldImplementTAYProcessorStatus) {
     const std::map<uint8_t, uint8_t> testCases = {
-        {0, Z},
-        {(1<<7), N},
-        {1, 0}
+        {0, U|Z},
+        {(1<<7), U|N},
+        {1, U}
     };
 
     for (auto& testCase : testCases) {
@@ -116,6 +117,7 @@ TEST_F(Cpu6502, ShouldImplementTAYProcessorStatus) {
         sram.clear(0);
     
         Assembler()
+            .CLI()
             .LDA().immediate(kTestData)
             .LDX().immediate(1)                 // clear N and Z flags
             .TAY()
@@ -125,7 +127,7 @@ TEST_F(Cpu6502, ShouldImplementTAYProcessorStatus) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(8);
+        testBench.tick(10);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -169,9 +171,9 @@ TEST_F(Cpu6502, ShouldImplementTXA) {
 
 TEST_F(Cpu6502, ShouldImplementTXAProcessorStatus) {
     const std::map<uint8_t, uint8_t> testCases = {
-        {0, Z},
-        {(1<<7), N},
-        {1, 0}
+        {0, U|Z},
+        {(1<<7), U|N},
+        {1, U}
     };
 
     for (auto& testCase : testCases) {
@@ -181,6 +183,7 @@ TEST_F(Cpu6502, ShouldImplementTXAProcessorStatus) {
         sram.clear(0);
     
         Assembler()
+            .CLI()
             .LDX().immediate(kTestData)
             .LDY().immediate(1)                 // clear N and Z flags
             .TXA()
@@ -190,7 +193,7 @@ TEST_F(Cpu6502, ShouldImplementTXAProcessorStatus) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(8);
+        testBench.tick(10);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -234,9 +237,9 @@ TEST_F(Cpu6502, ShouldImplementTYA) {
 
 TEST_F(Cpu6502, ShouldImplementTYAProcessorStatus) {
     const std::map<uint8_t, uint8_t> testCases = {
-        {0, Z},
-        {(1<<7), N},
-        {1, 0}
+        {0, U|Z},
+        {(1<<7), U|N},
+        {1, U}
     };
 
     for (auto& testCase : testCases) {
@@ -246,6 +249,7 @@ TEST_F(Cpu6502, ShouldImplementTYAProcessorStatus) {
         sram.clear(0);
     
         Assembler()
+            .CLI()
             .LDY().immediate(kTestData)
             .LDX().immediate(1)                 // clear N and Z flags
             .TYA()
@@ -255,7 +259,7 @@ TEST_F(Cpu6502, ShouldImplementTYAProcessorStatus) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(8);
+        testBench.tick(10);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -301,9 +305,9 @@ TEST_F(Cpu6502, ShouldImplementTXS) {
 
 TEST_F(Cpu6502, ShouldImplementTXSProcessorStatus) {
     const std::map<uint8_t, uint8_t> testCases = {
-        {0, 0},
-        {(1<<7), 0},
-        {1, 0}
+        {0, U},
+        {(1<<7), U},
+        {1, U}
     };
 
     for (auto& testCase : testCases) {
@@ -313,6 +317,7 @@ TEST_F(Cpu6502, ShouldImplementTXSProcessorStatus) {
         sram.clear(0);
     
         Assembler()
+            .CLI()
             .LDX().immediate(kTestData)
             .LDY().immediate(1)                 // clear N and Z flags
             .TXS()
@@ -322,13 +327,13 @@ TEST_F(Cpu6502, ShouldImplementTXSProcessorStatus) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(8);
+        testBench.tick(10);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
 
 TEST_F(Cpu6502, ShouldImplementTSX) {
-sram.clear(0);
+    sram.clear(0);
     
     const uint8_t kTestData = 0x22;
 
@@ -369,9 +374,9 @@ sram.clear(0);
 
 TEST_F(Cpu6502, ShouldImplementTSXProcessorStatus) {
     const std::map<uint8_t, uint8_t> testCases = {
-        {0, Z},
-        {(1<<7), N},
-        {1, 0}
+        {0, U|Z},
+        {(1<<7), U|N},
+        {1, U}
     };
 
     for (auto& testCase : testCases) {
@@ -381,6 +386,7 @@ TEST_F(Cpu6502, ShouldImplementTSXProcessorStatus) {
         sram.clear(0);
     
         Assembler()
+            .CLI()
             .LDX().immediate(kTestData)
             .TXS()
             .LDX().immediate(1)                 // clear N and Z flags
@@ -391,7 +397,7 @@ TEST_F(Cpu6502, ShouldImplementTSXProcessorStatus) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(10);
+        testBench.tick(12);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
