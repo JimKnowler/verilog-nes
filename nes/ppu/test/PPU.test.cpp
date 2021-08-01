@@ -358,6 +358,10 @@ TEST_F(PPU, ShouldAccessPaletteDataViaPPUDATA) {
 
     helperDisableRendering();
 
+    //
+    // Mirror Writes to Sprite palette background colour into Background palette
+    //
+
     // write to palette data
     core.i_rs = RS_PPUADDR;
     core.i_rw = RW_WRITE;
@@ -389,9 +393,65 @@ TEST_F(PPU, ShouldAccessPaletteDataViaPPUDATA) {
     core.i_rw = RW_READ;
     core.eval();
     for (int i=0; i<kNumPaletteEntries; i++) {
-        EXPECT_EQ(i, core.o_data);
+        int paletteEntry = i;
+        if ((paletteEntry & 0x3) == 0) {
+            // background colour - mirrored from write to sprite palettes intoto the background palettes
+            
+            // convert background palette entry into the sprite entry
+            paletteEntry |= 0x10;
+        }
+
+        EXPECT_EQ(paletteEntry, core.o_data);
         testBench.tick();
     }
+
+    // 
+    // Mirror writes into backgroud palette entry for background palettes into sprite palettes
+    //
+
+    // write only to the background palettes
+    core.i_rs = RS_PPUADDR;
+    core.i_rw = RW_WRITE;
+    core.i_data = 0x3F;
+    testBench.tick();
+    core.i_data = 0x00;
+    testBench.tick();
+
+    core.i_rs = RS_PPUDATA;
+    for (int i=0; i<(kNumPaletteEntries/2); i++) {
+        core.i_data = i;
+        testBench.tick();
+    }
+
+    // should not have modified VRAM
+    for (size_t i=0; i<vram.size(); i++) {
+        EXPECT_EQ(0, vram.read(i));
+    }
+
+    // read from palette data
+    core.i_rs = RS_PPUADDR;
+    core.i_rw = RW_WRITE;
+    core.i_data = 0x3F;
+    testBench.tick();
+    core.i_data = 0x00;
+    testBench.tick();
+
+    core.i_rs = RS_PPUDATA;
+    core.i_rw = RW_READ;
+    core.eval();
+    for (int i=0; i<kNumPaletteEntries; i++) {
+        int paletteEntry = i;
+        if ((paletteEntry & 0x3) == 0) {
+            // background colour - mirrored from write to background palettes into sprite palettes
+            
+            // convert sprite palette entry into background palette entry
+            paletteEntry &= ~0x10;
+        }
+
+        EXPECT_EQ(paletteEntry, core.o_data);
+        testBench.tick();
+    }
+      
 }
 
 TEST_F(PPU, ShouldWriteMirroredPaletteDataViaPPUDATA) {
@@ -435,7 +495,15 @@ TEST_F(PPU, ShouldWriteMirroredPaletteDataViaPPUDATA) {
         core.i_rw = RW_READ;
         core.eval();
         for (int i=0; i<kNumPaletteEntries; i++) {
-            EXPECT_EQ(i, core.o_data);
+            int paletteEntry = i;
+            if ((paletteEntry & 0x3) == 0) {
+                // background colour - mirrored from write to sprite palettes intoto the background palettes
+                
+                // convert background palette entry into the sprite entry
+                paletteEntry |= 0x10;
+            }
+            
+            EXPECT_EQ(paletteEntry, core.o_data);
             testBench.tick();
         }
     }
@@ -475,7 +543,15 @@ TEST_F(PPU, ShouldReadMirroredPaletteDataViaPPUDATA) {
         core.i_rw = RW_READ;
         core.eval();
         for (int i=0; i<kNumPaletteEntries; i++) {
-            EXPECT_EQ(i, core.o_data);
+            int paletteEntry = i;
+            if ((paletteEntry & 0x3) == 0) {
+                // background colour - mirrored from write to sprite palettes intoto the background palettes
+                
+                // convert background palette entry into the sprite entry
+                paletteEntry |= 0x10;
+            }
+            
+            EXPECT_EQ(paletteEntry, core.o_data);
             testBench.tick();
         }
     }

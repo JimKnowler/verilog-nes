@@ -270,7 +270,16 @@ begin
         RS_PPUDATA: begin
             if ((r_ppuaddr >= 16'h3F00) && (r_ppuaddr <= 16'h3FFF)) 
             begin
-                r_palette[r_ppuaddr[4:0]] <= i_data;
+                if (r_ppuaddr[1:0] == 0)
+                begin
+                    // sprite background colour entry is mirrored to background
+                    r_palette[r_ppuaddr[4:0] & ~5'h10] <= i_data;               // background
+                    r_palette[r_ppuaddr[4:0] | 5'h10] <= i_data;                // sprite
+                end
+                else
+                begin
+                    r_palette[r_ppuaddr[4:0]] <= i_data;
+                end
             end
         end
         RS_OAMADDR: begin
@@ -667,7 +676,7 @@ Shift8 backgroundShiftAttributeTableHigh(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
     .i_load(w_is_rasterizer_active),
-    .i_data(r_video_background_attribute[1]),           // todo: right attribute for tile
+    .i_data(r_video_background_attribute[1]),
     .i_shift(w_shift_background_shift_registers),
     .i_offset(r_x),
     .o_shift_data(w_video_background_attribute_table[1]),
@@ -678,7 +687,7 @@ Shift8 backgroundShiftAttributeTableLow(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
     .i_load(w_is_rasterizer_active),
-    .i_data(r_video_background_attribute[0]),           // todo: right attribute for tile
+    .i_data(r_video_background_attribute[0]),
     .i_shift(w_shift_background_shift_registers),
     .i_offset(r_x),
     .o_shift_data(w_video_background_attribute_table[0]),

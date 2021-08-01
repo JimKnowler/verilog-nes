@@ -254,6 +254,7 @@ namespace emulator {
 
         olc::Pixel getPaletteColour(int index) {
             uint8_t paletteIndex = getPaletteColourIndex(index);
+
             return palette[paletteIndex];
         }
 
@@ -424,7 +425,7 @@ namespace emulator {
             }
 
             bool isProbablyNotConfiguredYet() const {
-                return (colours[0] == colours[1]) && (colours[1] == colours[2]) && (colours[2] == colours[3]);
+                return (colours[1] == colours[2]) && (colours[2] == colours[3]);
             }
         };
 
@@ -478,7 +479,7 @@ namespace emulator {
 
                         Palette palette;
                         for (int i=0; i<4; i++) {
-                            palette.colours[i] = getPaletteColour(i + paletteOffset);
+                            palette.colours[i] = (i == 0) ? getPaletteColour(0) : getPaletteColour(i + paletteOffset);
                         }
 
                         if (palette.isProbablyNotConfiguredYet()) {
