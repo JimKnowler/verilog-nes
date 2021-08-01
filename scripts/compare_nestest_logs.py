@@ -24,7 +24,10 @@ def compare_logs(expected_lines, actual_lines):
         "SP" : (68,4)
     }
 
-    while (line_index < min(len(expected_lines), len(actual_lines)) ):
+    expected_num_lines = len(expected_lines)
+    actual_num_lines = len(actual_lines)
+
+    while (line_index < min(expected_num_lines, actual_num_lines) ):
         expected = expected_lines[line_index]
         actual = actual_lines[line_index]
 
@@ -50,8 +53,9 @@ def compare_logs(expected_lines, actual_lines):
 
         line_index += 1
     
-    if len(expected_lines) != len(actual_lines):
-        print("different number of lines")
+
+    if expected_num_lines != actual_num_lines:
+        print("different number of lines - expected [%d] != actual [%d]" % (expected_num_lines, actual_num_lines))
         sys.exit(2)
 
 def main():

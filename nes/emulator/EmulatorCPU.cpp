@@ -199,6 +199,10 @@ namespace emulator {
         }
 
         void update() {
+            if(GetKey(olc::ESCAPE).bReleased) {
+                exit(0);
+            }
+
             if(GetKey(olc::Z).bReleased) {
                 mode = kSingleStep;
                 reset();

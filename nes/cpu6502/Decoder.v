@@ -608,7 +608,7 @@ begin
                     o_sums = 1;
                     
                     // carry in
-                    o_1_addc = ~i_p[C];
+                    o_1_addc = i_p[C];
 
                     // C + V flags
                     o_acr_c = 1;
@@ -734,7 +734,7 @@ begin
                     o_sums = 1;
                     
                     // carry in
-                    o_1_addc = ~i_p[C];
+                    o_1_addc = i_p[C];
                 end
                 CMP_a, CPX_a, CPY_a, CMP_ax, CMP_ay: begin
                     // subtraction as 2's complement addition
