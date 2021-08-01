@@ -2,20 +2,21 @@
 
 namespace {
     const std::map<std::pair<uint8_t, uint8_t>, uint8_t> kTestCasesCMP = {
-        {{0x00, 0x00}, C|Z},
-        {{0x01, 0x00}, C},
-        {{0x80, 0x00}, C|N},
-        {{0x00, 0x01}, N}
+        {{0x00, 0x00}, U|C|Z},
+        {{0x01, 0x00}, U|C},
+        {{0x80, 0x00}, U|C|N},
+        {{0x00, 0x01}, U|N},
+        {{0x40, 0x40}, U|C|Z}
     };
 
     const std::map<std::pair<uint8_t, uint8_t>, uint8_t> kTestCasesBIT = {
-        {{0x00, 0x00}, Z},          // A == M (==0)
-        {{0x00, 0x80}, Z|N},        // load N from M[6]
-        {{0x00, 0x40}, Z|V},        // load V from M[7]
-        {{0x01, 0x01}, 0},          // A == M
-        {{0x01, 0x02}, Z},          // A != M
-        {{0x40, 0x40}, V},
-        {{0x80, 0x80}, N},
+        {{0x00, 0x00}, U|Z},          // A == M (==0)
+        {{0x00, 0x80}, U|Z|N},        // load N from M[6]
+        {{0x00, 0x40}, U|Z|V},        // load V from M[7]
+        {{0x01, 0x01}, U},          // A == M
+        {{0x01, 0x02}, U|Z},          // A != M
+        {{0x40, 0x40}, U|V},
+        {{0x80, 0x80}, U|N},
     };
 }
 
@@ -56,15 +57,7 @@ TEST_F(Cpu6502, ShouldImplementCMPimmediate) {
 }
 
 TEST_F(Cpu6502, ShouldImplementCMPimmediateProcessorStatus) {
-    const std::map<std::pair<uint8_t, uint8_t>, uint8_t> testCases = {
-        {{0x00, 0x00}, C|Z},
-        {{0x01, 0x00}, C},
-        {{0x80, 0x00}, C|N},
-        {{0x00, 0x01}, N},
-        {{0x40, 0x40}, C|Z}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesCMP) {
         const uint8_t A = testCase.first.first;
         const uint8_t M = testCase.first.second;
         const uint8_t kExpectedProcessorStatus = testCase.second;
@@ -82,7 +75,7 @@ TEST_F(Cpu6502, ShouldImplementCMPimmediateProcessorStatus) {
         helperSkipResetVector();
 
         testBench.tick(8);
-        EXPECT_EQ(kExpectedProcessorStatus|U, testBench.core().o_debug_p);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
 
@@ -123,14 +116,7 @@ TEST_F(Cpu6502, ShouldImplementCPXimmediate) {
 }
 
 TEST_F(Cpu6502, ShouldImplementCPXimmediateProcessorStatus) {
-    const std::map<std::pair<uint8_t, uint8_t>, uint8_t> testCases = {
-        {{0x00, 0x00}, C|Z},
-        {{0x01, 0x00}, C},
-        {{0x80, 0x00}, C|N},
-        {{0x00, 0x01}, N}
-    };
-
-    for (auto& testCase : testCases) {
+    for (auto& testCase : kTestCasesCMP) {
         const uint8_t X = testCase.first.first;
         const uint8_t M = testCase.first.second;
         const uint8_t kExpectedProcessorStatus = testCase.second;
@@ -138,6 +124,7 @@ TEST_F(Cpu6502, ShouldImplementCPXimmediateProcessorStatus) {
         sram.clear(0);
     
         Assembler()
+            .CLI()
             .LDX().immediate(X)
             .CPX().immediate(M)
             .NOP()
@@ -146,7 +133,7 @@ TEST_F(Cpu6502, ShouldImplementCPXimmediateProcessorStatus) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(6);
+        testBench.tick(8);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -196,6 +183,7 @@ TEST_F(Cpu6502, ShouldImplementCPYimmediateProcessorStatus) {
         sram.clear(0);
     
         Assembler()
+            .CLI()
             .LDY().immediate(Y)
             .CPY().immediate(M)
             .NOP()
@@ -204,7 +192,7 @@ TEST_F(Cpu6502, ShouldImplementCPYimmediateProcessorStatus) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(6);
+        testBench.tick(8);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -236,6 +224,7 @@ TEST_F(Cpu6502, ShouldImplementBITabsoluteProcessorStatus) {
         sram.write(ADDRESS, M);
     
         Assembler()
+            .CLI()
             .LDA().immediate(A)
             .BIT().absolute(ADDRESS)
             .NOP()
@@ -244,7 +233,7 @@ TEST_F(Cpu6502, ShouldImplementBITabsoluteProcessorStatus) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(8);
+        testBench.tick(10);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -275,6 +264,7 @@ TEST_F(Cpu6502, ShouldImplementCMPabsoluteProcessorStatus) {
         sram.clear(0);
     
         Assembler()
+                .CLI()
                 .LDA().immediate(A)
                 .CMP().absolute("M")
                 .NOP()
@@ -286,7 +276,7 @@ TEST_F(Cpu6502, ShouldImplementCMPabsoluteProcessorStatus) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(8);
+        testBench.tick(10);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -317,6 +307,7 @@ TEST_F(Cpu6502, ShouldImplementCPXabsoluteProcessorStatus) {
         sram.clear(0);
     
         Assembler()
+                .CLI()
                 .LDX().immediate(X)
                 .CPX().absolute("compare_to")
                 .NOP()
@@ -328,7 +319,7 @@ TEST_F(Cpu6502, ShouldImplementCPXabsoluteProcessorStatus) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(8);
+        testBench.tick(10);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -359,6 +350,7 @@ TEST_F(Cpu6502, ShouldImplementCPYabsoluteProcessorStatus) {
         sram.clear(0);
     
         Assembler()
+                .CLI()
                 .LDY().immediate(Y)
                 .CPY().absolute("compare_to")
                 .NOP()
@@ -370,7 +362,7 @@ TEST_F(Cpu6502, ShouldImplementCPYabsoluteProcessorStatus) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(8);
+        testBench.tick(10);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -409,6 +401,7 @@ TEST_F(Cpu6502, ShouldImplementCMPabsoluteIndexedWithXProcessorStatusWithoutCarr
         const uint8_t kX = 3;
     
         Assembler()
+                .CLI()
                 .LDA().immediate(A)
                 .LDX().immediate(kX)
                 .CMP().a("M").x()
@@ -422,7 +415,7 @@ TEST_F(Cpu6502, ShouldImplementCMPabsoluteIndexedWithXProcessorStatusWithoutCarr
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(10);
+        testBench.tick(12);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -461,6 +454,7 @@ TEST_F(Cpu6502, ShouldImplementCMPabsoluteIndexedWithXProcessorStatusWithCarry) 
         const uint8_t kX = 4;
     
         Assembler()
+                .CLI()
                 .LDA().immediate(A)
                 .LDX().immediate(kX)
                 .CMP().a("M").x()
@@ -474,7 +468,7 @@ TEST_F(Cpu6502, ShouldImplementCMPabsoluteIndexedWithXProcessorStatusWithCarry) 
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(11);
+        testBench.tick(13);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -513,6 +507,7 @@ TEST_F(Cpu6502, ShouldImplementCMPabsoluteIndexedWithYProcessorStatusWithoutCarr
         const uint8_t kY = 3;
     
         Assembler()
+                .CLI()
                 .LDA().immediate(A)
                 .LDY().immediate(kY)
                 .CMP().a("M").y()
@@ -526,7 +521,7 @@ TEST_F(Cpu6502, ShouldImplementCMPabsoluteIndexedWithYProcessorStatusWithoutCarr
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(10);
+        testBench.tick(12);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -565,6 +560,7 @@ TEST_F(Cpu6502, ShouldImplementCMPabsoluteIndexedWithYProcessorStatusWithCarry) 
         const uint8_t kY = 4;
     
         Assembler()
+                .CLI()
                 .LDA().immediate(A)
                 .LDY().immediate(kY)
                 .CMP().a("M").y()
@@ -578,7 +574,7 @@ TEST_F(Cpu6502, ShouldImplementCMPabsoluteIndexedWithYProcessorStatusWithCarry) 
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(11);
+        testBench.tick(13);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -657,6 +653,7 @@ TEST_F(Cpu6502, ShouldImplementBITzeropageProcessorStatus) {
                 .byte(M)
             .org(1234)
             .label("init")
+                .CLI()
                 .LDA().immediate(A)
             .label("start")
                 .BIT().zp(kTestAddressZeroPage)
@@ -668,7 +665,7 @@ TEST_F(Cpu6502, ShouldImplementBITzeropageProcessorStatus) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(7);
+        testBench.tick(9);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -723,6 +720,7 @@ TEST_F(Cpu6502, ShouldImplementCMPzeropageProcessorStatus) {
         sram.clear(0);
     
         Assembler()
+                .CLI()
                 .LDA().immediate(A)
                 .CMP().zp(kTestAddress)
                 .NOP()
@@ -733,7 +731,7 @@ TEST_F(Cpu6502, ShouldImplementCMPzeropageProcessorStatus) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(7);
+        testBench.tick(9);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -788,6 +786,7 @@ TEST_F(Cpu6502, ShouldImplementCPXzeropageProcessorStatus) {
         sram.clear(0);
     
         Assembler()
+                .CLI()
                 .LDX().immediate(X)
                 .CPX().zp(kTestAddress)
                 .NOP()
@@ -798,7 +797,7 @@ TEST_F(Cpu6502, ShouldImplementCPXzeropageProcessorStatus) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(7);
+        testBench.tick(9);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -853,6 +852,7 @@ TEST_F(Cpu6502, ShouldImplementCPYzeropageProcessorStatus) {
         sram.clear(0);
     
         Assembler()
+                .CLI()
                 .LDY().immediate(Y)
                 .CPY().zp(kTestAddress)
                 .NOP()
@@ -863,7 +863,7 @@ TEST_F(Cpu6502, ShouldImplementCPYzeropageProcessorStatus) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(7);
+        testBench.tick(9);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
