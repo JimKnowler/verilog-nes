@@ -172,6 +172,9 @@ namespace emulator {
                     drawNametable(kVramX, kVramY);
                     break;
                 case 1:
+                    drawAttributeTable(kVramX, kVramY);
+                    break;
+                case 2:
                     drawPatternTable(kVramX, kVramY);
                     break;                
                 default:
@@ -180,7 +183,7 @@ namespace emulator {
         }
 
         void toggleDisplayVRAM() {
-            vramDisplay = (vramDisplay + 1) % 3;
+            vramDisplay = (vramDisplay + 1) % 4;
         }
 
         std::string bitLabel(uint8_t value, const std::string& label) {
@@ -514,6 +517,47 @@ namespace emulator {
                     
                     int tx = x + (pixelSize * p);
                     FillRect({tx, ty}, {pixelSize,pixelSize}, palette[colour]);
+                }
+            }
+        }
+
+        void drawAttributeTable(int x, int y) {
+            DrawString({x,y}, "VRAM - Attribute Table", olc::RED);
+            y += kRowHeight;
+            DrawLine({x, y}, {x + 42 * 8, y}, olc::RED);
+            y += kRowHeight;
+        
+            for (int section=0; section<2; section++) {
+                for (int c = 0; c<16; c++) {
+                    for (int r =0; r<15; r++) {
+                        // read value from attribute table
+                        uint8_t attribute = vram.read(0x23c0 + (section << 10) + ((r/2) << 3) + (c/2));
+
+                        int attributeShift = (c&1) 
+                                                ? ((r&1) ? 6 : 2)               // right bottom,  right top
+                                                : ((r&1) ? 4 : 0);              // left bottom,   left top
+                        int paletteOffset = (attribute >> attributeShift) & 0b11;
+                        paletteOffset <<= 2;
+
+                        Palette palette;
+                        for (int i=0; i<4; i++) {
+                            palette.colours[i] = (i == 0) ? getPaletteColour(0) : getPaletteColour(i + paletteOffset);
+                        }
+
+                        if (palette.isProbablyNotConfiguredYet()) {
+                            // palette has probably not been set yet, so use default grayscale palette
+                            palette = kDefaultPalette;
+                        }
+
+                        // position of character's top left corner
+                        int tx = x + (section * 16 * 16) + (c * 16);
+                        int ty = y + (r * 16);
+                        
+                        FillRect({tx,ty}, {8,8}, palette[0]);
+                        FillRect({tx+8,ty}, {8,8}, palette[1]);
+                        FillRect({tx,ty+8}, {8,8}, palette[2]);
+                        FillRect({tx+8,ty+8}, {8,8}, palette[3]);
+                    }
                 }
             }
         }
