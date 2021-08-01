@@ -386,6 +386,8 @@ begin
     o_db3_d = i_value;
     o_db6_v = i_value;
     o_db7_n = i_value;
+
+    // note: B (break) is ignored
 end
 endfunction
 
