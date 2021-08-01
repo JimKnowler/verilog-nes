@@ -102,7 +102,7 @@ begin
     endcase
 end
 
-Cpu6502 cpu(
+Cpu6502 cpu6502(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
     .i_clk_en(r_clk_en_cpu),

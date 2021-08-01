@@ -117,7 +117,7 @@ module NES(
     wire [7:0] w_debug_p;
     /* verilator lint_on UNUSED */
 
-    Cpu2A03 cpu(
+    Cpu2A03 cpu2A03(
         .i_clk(i_clk),
         .i_reset_n(i_reset_n),
         .i_clk_en(w_ce_cpu),
