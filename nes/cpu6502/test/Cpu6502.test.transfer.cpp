@@ -30,9 +30,9 @@ TEST_F(Cpu6502, ShouldImplementTAX) {
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({kTestData})
                         .repeat(8)
-        .port(o_debug_x).signal({0xFF}).repeat(4)
+        .port(o_debug_x).signal({0x00}).repeat(4)
                         .signal({kTestData}).repeat(4)
-        .port(o_debug_y).signal({0xFF}).repeat(8);
+        .port(o_debug_y).signal({0x00}).repeat(8);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -96,8 +96,8 @@ TEST_F(Cpu6502, ShouldImplementTAY) {
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({kTestData})
                         .repeat(8)
-        .port(o_debug_x).signal({0xFF}).repeat(8)
-        .port(o_debug_y).signal({0xFF}).repeat(4)
+        .port(o_debug_x).signal({0x00}).repeat(8)
+        .port(o_debug_y).signal({0x00}).repeat(4)
                         .signal({kTestData}).repeat(4);
         
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
@@ -160,11 +160,11 @@ TEST_F(Cpu6502, ShouldImplementTXA) {
         .port(o_sync).signal("1010").repeatEachStep(2)
         .port(o_address).signal({2, 3, 3, 4})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(4)
+        .port(o_debug_ac).signal({0x00}).repeat(4)
                         .signal({kTestData}).repeat(4)
         .port(o_debug_x).signal({kTestData})
                         .repeat(8)
-        .port(o_debug_y).signal({0xFF}).repeat(8);
+        .port(o_debug_y).signal({0x00}).repeat(8);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -226,9 +226,9 @@ TEST_F(Cpu6502, ShouldImplementTYA) {
         .port(o_sync).signal("1010").repeatEachStep(2)
         .port(o_address).signal({2, 3, 3, 4})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(4)
+        .port(o_debug_ac).signal({0x00}).repeat(4)
                         .signal({kTestData}).repeat(4)
-        .port(o_debug_x).signal({0xFF}).repeat(8)
+        .port(o_debug_x).signal({0x00}).repeat(8)
         .port(o_debug_y).signal({kTestData})
                         .repeat(8);
 
@@ -292,10 +292,10 @@ TEST_F(Cpu6502, ShouldImplementTXS) {
         .port(o_sync).signal("1010").repeatEachStep(2)
         .port(o_address).signal({2, 3, 3, 4})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(8)
+        .port(o_debug_ac).signal({0x00}).repeat(8)
         .port(o_debug_x).signal({kTestData})
                         .repeat(8)
-        .port(o_debug_y).signal({0xFF}).repeat(8)
+        .port(o_debug_y).signal({0x00}).repeat(8)
         .port(o_debug_s).signal({0xFC}).repeat(4)
                         .signal({kTestData}).repeat(4);
         
@@ -362,8 +362,8 @@ TEST_F(Cpu6502, ShouldImplementTSX) {
         .port(o_sync).signal("1010").repeatEachStep(2)
         .port(o_address).signal({5, 6, 6, 7})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(8)
-        .port(o_debug_y).signal({0xFF}).repeat(8)
+        .port(o_debug_ac).signal({0x00}).repeat(8)
+        .port(o_debug_y).signal({0x00}).repeat(8)
         .port(o_debug_x).signal({kTestData+1}).repeat(4)
                         .signal({kTestData}).repeat(4)
         .port(o_debug_s).signal({kTestData})

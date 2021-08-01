@@ -63,9 +63,9 @@ TEST_F(Cpu6502, ShouldImplementJSR) {
                         .signal({jmpTo.lo()}).repeat(4) // TODO: we're not worried about value of SP during execution
                         .signal({sp - 2u}).repeat(2)    // TODO: but we are interested in what it ends with
                         .concat().repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(20)
-        .port(o_debug_x).signal({0xFF}).repeat(20)
-        .port(o_debug_y).signal({0xFF}).repeat(20);
+        .port(o_debug_ac).signal({0x00}).repeat(20)
+        .port(o_debug_x).signal({0x00}).repeat(20)
+        .port(o_debug_y).signal({0x00}).repeat(20);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 
@@ -137,9 +137,9 @@ TEST_F(Cpu6502, ShouldImplementRTS) {
                         .signal({returnToMinus1.lo()})  // TODO: not interested in temporary changes to SP
                         .signal({sp + 2u}).repeat(3)    // TODO: but we are interested in what it ends with
                         .concat().repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(20)
-        .port(o_debug_x).signal({0xFF}).repeat(20)
-        .port(o_debug_y).signal({0xFF}).repeat(20);
+        .port(o_debug_ac).signal({0x00}).repeat(20)
+        .port(o_debug_x).signal({0x00}).repeat(20)
+        .port(o_debug_y).signal({0x00}).repeat(20);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }

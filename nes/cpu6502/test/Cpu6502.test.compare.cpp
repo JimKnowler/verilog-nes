@@ -108,9 +108,9 @@ TEST_F(Cpu6502, ShouldImplementCPXimmediate) {
         .port(o_sync).signal("1010").repeatEachStep(2)
         .port(o_address).signal({2, 3, 4, 5})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(8)
+        .port(o_debug_ac).signal({0x00}).repeat(8)
         .port(o_debug_x).signal({X}).repeat(8)
-        .port(o_debug_y).signal({0xFF}).repeat(8);
+        .port(o_debug_y).signal({0x00}).repeat(8);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -167,8 +167,8 @@ TEST_F(Cpu6502, ShouldImplementCPYimmediate) {
         .port(o_sync).signal("1010").repeatEachStep(2)
         .port(o_address).signal({2, 3, 4, 5})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(8)
-        .port(o_debug_x).signal({0xFF}).repeat(8)
+        .port(o_debug_ac).signal({0x00}).repeat(8)
+        .port(o_debug_x).signal({0x00}).repeat(8)
         .port(o_debug_y).signal({Y}).repeat(8);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
@@ -631,8 +631,8 @@ TEST_F(Cpu6502, ShouldImplementBITzeropage) {
                         })
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({kTestDataA}).repeat(5).repeatEachStep(2)
-        .port(o_debug_x).signal({0xFF}).repeat(5).repeatEachStep(2)
-        .port(o_debug_y).signal({0xFF}).repeat(5).repeatEachStep(2);
+        .port(o_debug_x).signal({0x00}).repeat(5).repeatEachStep(2)
+        .port(o_debug_y).signal({0x00}).repeat(5).repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -702,9 +702,9 @@ TEST_F(Cpu6502, ShouldImplementCMPzeropage) {
         .port(o_sync).signal("10010").repeatEachStep(2)
         .port(o_address).signal({2, 3, kTestAddress, 4, 5})
                         .repeatEachStep(2)
-        .port(o_debug_x).signal({0xFF}).repeat(10)
+        .port(o_debug_x).signal({0x00}).repeat(10)
         .port(o_debug_ac).signal({A}).repeat(10)
-        .port(o_debug_y).signal({0xFF}).repeat(10);
+        .port(o_debug_y).signal({0x00}).repeat(10);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -768,9 +768,9 @@ TEST_F(Cpu6502, ShouldImplementCPXzeropage) {
         .port(o_sync).signal("10010").repeatEachStep(2)
         .port(o_address).signal({2, 3, kTestAddress, 4, 5})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(10)
+        .port(o_debug_ac).signal({0x00}).repeat(10)
         .port(o_debug_x).signal({X}).repeat(10)
-        .port(o_debug_y).signal({0xFF}).repeat(10);
+        .port(o_debug_y).signal({0x00}).repeat(10);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -834,8 +834,8 @@ TEST_F(Cpu6502, ShouldImplementCPYzeropage) {
         .port(o_sync).signal("10010").repeatEachStep(2)
         .port(o_address).signal({2, 3, kTestAddress, 4, 5})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(10)
-        .port(o_debug_x).signal({0xFF}).repeat(10)
+        .port(o_debug_ac).signal({0x00}).repeat(10)
+        .port(o_debug_x).signal({0x00}).repeat(10)
         .port(o_debug_y).signal({Y}).repeat(10);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));

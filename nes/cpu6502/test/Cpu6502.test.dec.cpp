@@ -56,11 +56,11 @@ TEST_F(Cpu6502, ShouldImplementDEX) {
         .port(o_sync).signal("1010").repeatEachStep(2)
         .port(o_address).signal({2, 3, 3, 4})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF, 0xFF})
-                        .repeatEachStep(4)
+        .port(o_debug_ac).signal({0x00}).repeat(4)
+                        .repeatEachStep(2)
         .port(o_debug_x).signal({kTestData}).repeat(6)
                         .signal({kTestData-1}).repeat(2)
-        .port(o_debug_y).signal({0xFF}).repeat(8);
+        .port(o_debug_y).signal({0x00}).repeat(8);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -115,9 +115,9 @@ TEST_F(Cpu6502, ShouldImplementDEY) {
         .port(o_sync).signal("1010").repeatEachStep(2)
         .port(o_address).signal({2, 3, 3, 4})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF, 0xFF})
-                        .repeatEachStep(4)
-        .port(o_debug_x).signal({0xFF}).repeat(8)
+        .port(o_debug_ac).signal({0x00}).repeat(4)
+                        .repeatEachStep(2)
+        .port(o_debug_x).signal({0x00}).repeat(8)
         .port(o_debug_y).signal({kTestData}).repeat(6)
                         .signal({kTestData-1}).repeat(2);
 
@@ -151,7 +151,7 @@ TEST_F(Cpu6502, ShouldImplementSBCimmediate) {
     
     const uint8_t kTestData1 = 0x45;
     const uint8_t kTestData2 = 0x22;
-    const uint8_t kExpectedData = kTestData1 - kTestData2;
+    const uint8_t kExpectedData = kTestData1 - kTestData2 - 1;
 
     Assembler()
         .LDA().immediate(kTestData1)
@@ -178,8 +178,8 @@ TEST_F(Cpu6502, ShouldImplementSBCimmediate) {
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({kTestData1}).repeat(6)
                          .signal({kExpectedData}).repeat(2)
-        .port(o_debug_x).signal({0xFF}).repeat(8)
-        .port(o_debug_y).signal({0xFF}).repeat(8);
+        .port(o_debug_x).signal({0x00}).repeat(8)
+        .port(o_debug_y).signal({0x00}).repeat(8);
         
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
@@ -216,7 +216,7 @@ TEST_F(Cpu6502, ShouldImplementSBCimmediateWithCarryIn) {
     const uint8_t kTestData2 = 0x11;
 
     // todo: compare this to real 6502
-    const uint8_t kExpectedData = kTestData1 - kTestData2 - 1;
+    const uint8_t kExpectedData = kTestData1 - kTestData2;
 
     Assembler()
         .LDA().immediate(kTestData1)
@@ -244,8 +244,8 @@ TEST_F(Cpu6502, ShouldImplementSBCimmediateWithCarryIn) {
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({kTestData1}).repeat(6)
                          .signal({kExpectedData}).repeat(2)
-        .port(o_debug_x).signal({0xFF}).repeat(8)
-        .port(o_debug_y).signal({0xFF}).repeat(8);
+        .port(o_debug_x).signal({0x00}).repeat(8)
+        .port(o_debug_y).signal({0x00}).repeat(8);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -322,7 +322,7 @@ TEST_F(Cpu6502, ShouldImplementSBCabsolute) {
         .address = 0x5678,
         .data = kTestData2,
         .port = o_debug_ac,
-        .expected = kTestData1 - kTestData2,
+        .expected = kTestData1 - kTestData2 - 1,
 
         .preloadPort = &o_debug_ac,
         .preloadPortValue = kTestData1
@@ -366,7 +366,7 @@ TEST_F(Cpu6502, ShouldImplementSBCabsoluteWithCarryIn) {
         .address = 0x5678,
         .data = kTestData2,
         .port = o_debug_ac,
-        .expected = kTestData1 - kTestData2 - 1,
+        .expected = kTestData1 - kTestData2,
 
         .presetCarry = true,
 
@@ -415,7 +415,7 @@ TEST_F(Cpu6502, ShouldImplementSBCabsoluteIndexedWithYWithoutCarry) {
             .address = kTestAddress,
             .data = kTestData2,
             .port = o_debug_ac,
-            .expected = kTestData1 - kTestData2,
+            .expected = kTestData1 - kTestData2 - 1,
 
             .preloadPort = &o_debug_ac,
             .preloadPortValue = kTestData1
@@ -471,7 +471,7 @@ TEST_F(Cpu6502, ShouldImplementSBCabsoluteIndexedWithYWithCarry) {
             .address = kTestAddress,
             .data = kTestData2,
             .port = o_debug_ac,
-            .expected = kTestData1 - kTestData2,
+            .expected = kTestData1 - kTestData2 - 1,
 
             .preloadPort = &o_debug_ac,
             .preloadPortValue = kTestData1
@@ -527,7 +527,7 @@ TEST_F(Cpu6502, ShouldImplementSBCabsoluteIndexedWithXWithoutCarry) {
             .address = kTestAddress,
             .data = kTestData2,
             .port = o_debug_ac,
-            .expected = kTestData1 - kTestData2,
+            .expected = kTestData1 - kTestData2 - 1,
 
             .preloadPort = &o_debug_ac,
             .preloadPortValue = kTestData1
@@ -583,7 +583,7 @@ TEST_F(Cpu6502, ShouldImplementSBCabsoluteIndexedWithXWithCarry) {
             .address = kTestAddress,
             .data = kTestData2,
             .port = o_debug_ac,
-            .expected = kTestData1 - kTestData2,
+            .expected = kTestData1 - kTestData2 - 1,
 
             .preloadPort = &o_debug_ac,
             .preloadPortValue = kTestData1
@@ -668,9 +668,9 @@ TEST_F(Cpu6502, ShouldImplementDECzeropage) {
             .signal({kTestData-1}).repeat(2)
             .signal({0}).repeat(3)
         .port(o_sync).signal("1000010").repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(7).repeatEachStep(2)
-        .port(o_debug_x).signal({0xFF}).repeat(7).repeatEachStep(2)
-        .port(o_debug_y).signal({0xFF}).repeat(7).repeatEachStep(2);
+        .port(o_debug_ac).signal({0x00}).repeat(7).repeatEachStep(2)
+        .port(o_debug_x).signal({0x00}).repeat(7).repeatEachStep(2)
+        .port(o_debug_y).signal({0x00}).repeat(7).repeatEachStep(2);
     
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }

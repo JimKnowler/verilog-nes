@@ -56,11 +56,11 @@ TEST_F(Cpu6502, ShouldImplementINX) {
         .port(o_sync).signal("1010").repeatEachStep(2)
         .port(o_address).signal({2, 3, 3, 4})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF, 0xFF})
-                        .repeatEachStep(4)
+        .port(o_debug_ac).signal({0x00}).repeat(4)
+                        .repeatEachStep(2)
         .port(o_debug_x).signal({kTestData}).repeat(6)
                         .signal({kTestData+1}).repeat(2)
-        .port(o_debug_y).signal({0xFF}).repeat(8);
+        .port(o_debug_y).signal({0x00}).repeat(8);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -115,9 +115,9 @@ TEST_F(Cpu6502, ShouldImplementINY) {
         .port(o_sync).signal("1010").repeatEachStep(2)
         .port(o_address).signal({2, 3, 3, 4})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF, 0xFF})
-                        .repeatEachStep(4)
-        .port(o_debug_x).signal({0xFF}).repeat(8)
+        .port(o_debug_ac).signal({0x00}).repeat(4)
+                        .repeatEachStep(2)
+        .port(o_debug_x).signal({0x00}).repeat(8)
         .port(o_debug_y).signal({kTestData}).repeat(6)
                         .signal({kTestData+1}).repeat(2);
 
@@ -177,8 +177,8 @@ TEST_F(Cpu6502, ShouldImplementADCimmediate) {
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({kTestData1}).repeat(6)
                          .signal({kTestData1+kTestData2}).repeat(2)
-        .port(o_debug_x).signal({0xFF}).repeat(8)
-        .port(o_debug_y).signal({0xFF}).repeat(8);
+        .port(o_debug_x).signal({0x00}).repeat(8)
+        .port(o_debug_y).signal({0x00}).repeat(8);
         
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
@@ -240,8 +240,8 @@ TEST_F(Cpu6502, ShouldImplementADCimmediateWithCarryIn) {
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({kTestData1}).repeat(6)
                          .signal({kTestData1+kTestData2+1}).repeat(2)
-        .port(o_debug_x).signal({0xFF}).repeat(8)
-        .port(o_debug_y).signal({0xFF}).repeat(8);
+        .port(o_debug_x).signal({0x00}).repeat(8)
+        .port(o_debug_y).signal({0x00}).repeat(8);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -440,9 +440,9 @@ TEST_F(Cpu6502, ShouldImplementINCzeropage) {
             .signal({kTestData+1}).repeat(2)
             .signal({0}).repeat(3)
         .port(o_sync).signal("1000010").repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(7).repeatEachStep(2)
-        .port(o_debug_x).signal({0xFF}).repeat(7).repeatEachStep(2)
-        .port(o_debug_y).signal({0xFF}).repeat(7).repeatEachStep(2);
+        .port(o_debug_ac).signal({0x00}).repeat(7).repeatEachStep(2)
+        .port(o_debug_x).signal({0x00}).repeat(7).repeatEachStep(2)
+        .port(o_debug_y).signal({0x00}).repeat(7).repeatEachStep(2);
     
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -507,8 +507,8 @@ TEST_F(Cpu6502, ShouldImplementADCzeropage) {
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({kTestData1}).repeat(8)
                          .signal({kTestData1+kTestData2}).repeat(2)
-        .port(o_debug_x).signal({0xFF}).repeat(10)
-        .port(o_debug_y).signal({0xFF}).repeat(10);
+        .port(o_debug_x).signal({0x00}).repeat(10)
+        .port(o_debug_y).signal({0x00}).repeat(10);
         
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
@@ -577,8 +577,8 @@ TEST_F(Cpu6502, ShouldImplementADCzeropageWithCarryIn) {
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({kTestData1}).repeat(8)
                          .signal({kTestData1+kTestData2+1}).repeat(2)
-        .port(o_debug_x).signal({0xFF}).repeat(10)
-        .port(o_debug_y).signal({0xFF}).repeat(10);
+        .port(o_debug_x).signal({0x00}).repeat(10)
+        .port(o_debug_y).signal({0x00}).repeat(10);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }

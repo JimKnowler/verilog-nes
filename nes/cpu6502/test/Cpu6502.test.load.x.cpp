@@ -32,8 +32,8 @@ TEST_F(Cpu6502, ShouldImplementLDXi) {
                         .repeatEachStep(2)
         .port(o_debug_x).signal({0xFF, kTestData})
                         .repeatEachStep(4)
-        .port(o_debug_ac).signal({0xFF}).repeat(8)
-        .port(o_debug_y).signal({0xFF}).repeat(8);
+        .port(o_debug_ac).signal({0x00}).repeat(8)
+        .port(o_debug_y).signal({0x00}).repeat(8);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -216,10 +216,10 @@ TEST_F(Cpu6502, ShouldImplementLDXzeropage) {
         .port(o_sync).signal("10010").repeatEachStep(2)
         .port(o_address).signal({0, 1, kTestAddress, 2, 3})
                         .repeatEachStep(2)
-        .port(o_debug_x).signal({0xFF}).repeat(8)
+        .port(o_debug_x).signal({0x00}).repeat(8)
                         .signal({kTestData}).repeat(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(10)
-        .port(o_debug_y).signal({0xFF}).repeat(10);
+        .port(o_debug_ac).signal({0x00}).repeat(10)
+        .port(o_debug_y).signal({0x00}).repeat(10);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }

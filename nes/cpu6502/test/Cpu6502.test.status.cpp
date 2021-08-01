@@ -21,9 +21,9 @@ TEST_F(Cpu6502, ShouldImplementSEC) {
         .port(o_sync).signal("1010").repeatEachStep(2)
         .port(o_address).signal({0, 1, 1, 2})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(8)
-        .port(o_debug_x).signal({0xFF}).repeat(8)
-        .port(o_debug_y).signal({0xFF}).repeat(8)
+        .port(o_debug_ac).signal({0x00}).repeat(8)
+        .port(o_debug_x).signal({0x00}).repeat(8)
+        .port(o_debug_y).signal({0x00}).repeat(8)
         .port(o_debug_p).signal({0}).repeat(4)
                         .signal({C}).repeat(4);
 
@@ -56,9 +56,9 @@ sram.clear(0);
         .port(o_sync).signal("1010").repeatEachStep(2)
         .port(o_address).signal({1, 2, 2, 3})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(8)
-        .port(o_debug_x).signal({0xFF}).repeat(8)
-        .port(o_debug_y).signal({0xFF}).repeat(8)
+        .port(o_debug_ac).signal({0x00}).repeat(8)
+        .port(o_debug_x).signal({0x00}).repeat(8)
+        .port(o_debug_y).signal({0x00}).repeat(8)
         .port(o_debug_p).signal({C}).repeat(4)
                         .signal({0}).repeat(4);
 
@@ -86,9 +86,9 @@ TEST_F(Cpu6502, ShouldImplementSEI) {
         .port(o_sync).signal("1010").repeatEachStep(2)
         .port(o_address).signal({0, 1, 1, 2})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(8)
-        .port(o_debug_x).signal({0xFF}).repeat(8)
-        .port(o_debug_y).signal({0xFF}).repeat(8)
+        .port(o_debug_ac).signal({0x00}).repeat(8)
+        .port(o_debug_x).signal({0x00}).repeat(8)
+        .port(o_debug_y).signal({0x00}).repeat(8)
         .port(o_debug_p).signal({0}).repeat(4)
                         .signal({I}).repeat(4);
 
@@ -121,9 +121,9 @@ TEST_F(Cpu6502, ShouldImplementCLI) {
         .port(o_sync).signal("1010").repeatEachStep(2)
         .port(o_address).signal({1, 2, 2, 3})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(8)
-        .port(o_debug_x).signal({0xFF}).repeat(8)
-        .port(o_debug_y).signal({0xFF}).repeat(8)
+        .port(o_debug_ac).signal({0x00}).repeat(8)
+        .port(o_debug_x).signal({0x00}).repeat(8)
+        .port(o_debug_y).signal({0x00}).repeat(8)
         .port(o_debug_p).signal({I}).repeat(4)
                         .signal({0}).repeat(4);
 
@@ -161,9 +161,9 @@ TEST_F(Cpu6502, ShouldImplementCLV) {
         .port(o_sync).signal("1010").repeatEachStep(2)
         .port(o_address).signal({1, 2, 2, 3})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(8)
-        .port(o_debug_x).signal({0xFF}).repeat(8)
-        .port(o_debug_y).signal({0xFF}).repeat(8)
+        .port(o_debug_ac).signal({0x00}).repeat(8)
+        .port(o_debug_x).signal({0x00}).repeat(8)
+        .port(o_debug_y).signal({0x00}).repeat(8)
         .port(o_debug_p).signal({kBefore}).repeat(4)
                         .signal({kAfter}).repeat(4);
 
@@ -191,9 +191,9 @@ TEST_F(Cpu6502, ShouldImplementSED) {
         .port(o_sync).signal("1010").repeatEachStep(2)
         .port(o_address).signal({0, 1, 1, 2})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(8)
-        .port(o_debug_x).signal({0xFF}).repeat(8)
-        .port(o_debug_y).signal({0xFF}).repeat(8)
+        .port(o_debug_ac).signal({0x00}).repeat(8)
+        .port(o_debug_x).signal({0x00}).repeat(8)
+        .port(o_debug_y).signal({0x00}).repeat(8)
         .port(o_debug_p).signal({0}).repeat(4)
                         .signal({D}).repeat(4);
 
@@ -226,9 +226,9 @@ sram.clear(0);
         .port(o_sync).signal("1010").repeatEachStep(2)
         .port(o_address).signal({1, 2, 2, 3})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(8)
-        .port(o_debug_x).signal({0xFF}).repeat(8)
-        .port(o_debug_y).signal({0xFF}).repeat(8)
+        .port(o_debug_ac).signal({0x00}).repeat(8)
+        .port(o_debug_x).signal({0x00}).repeat(8)
+        .port(o_debug_y).signal({0x00}).repeat(8)
         .port(o_debug_p).signal({D}).repeat(4)
                         .signal({0}).repeat(4);
 

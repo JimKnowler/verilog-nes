@@ -166,8 +166,8 @@ TEST_F(Cpu2A03, ShouldImplementOAMDMA) {
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({0xFF, 0xFF})
                         .repeatEachStep(2)
-        .port(o_debug_x).signal({0xFF}).repeat(4)
-        .port(o_debug_y).signal({0xFF}).repeat(4);
+        .port(o_debug_x).signal({0x00}).repeat(4)
+        .port(o_debug_y).signal({0x00}).repeat(4);
 
     EXPECT_THAT(expectedLoad, MatchesTrace(testBench.trace));
     

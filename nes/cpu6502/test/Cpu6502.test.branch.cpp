@@ -34,9 +34,9 @@ TEST_F(Cpu6502, ShouldImplementBCCWhenCarrySet) {
         .port(o_sync).signal("101010").repeatEachStep(2)
         .port(o_address).signal({0, 1, 1, 2, 3, 4})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(12)
-        .port(o_debug_x).signal({0xFF}).repeat(12)
-        .port(o_debug_y).signal({0xFF}).repeat(12);
+        .port(o_debug_ac).signal({0x00}).repeat(12)
+        .port(o_debug_x).signal({0x00}).repeat(12)
+        .port(o_debug_y).signal({0x00}).repeat(12);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -81,9 +81,9 @@ TEST_F(Cpu6502, ShouldImplementBCCWhenCarryClear) {
                                 7,      // PC + 2 + relative
                                 8})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(14)
-        .port(o_debug_x).signal({0xFF}).repeat(14)
-        .port(o_debug_y).signal({0xFF}).repeat(14);
+        .port(o_debug_ac).signal({0x00}).repeat(14)
+        .port(o_debug_x).signal({0x00}).repeat(14)
+        .port(o_debug_y).signal({0x00}).repeat(14);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -135,9 +135,9 @@ TEST_F(Cpu6502, ShouldImplementBCCWhenCarryClearAndNextPage) {
                             0x0101
                         })
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(16)
-        .port(o_debug_x).signal({0xFF}).repeat(16)
-        .port(o_debug_y).signal({0xFF}).repeat(16);
+        .port(o_debug_ac).signal({0x00}).repeat(16)
+        .port(o_debug_x).signal({0x00}).repeat(16)
+        .port(o_debug_y).signal({0x00}).repeat(16);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -171,9 +171,9 @@ TEST_F(Cpu6502, ShouldImplementBCSWhenCarryClear) {
         .port(o_sync).signal("101010").repeatEachStep(2)
         .port(o_address).signal({0, 1, 1, 2, 3, 4})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(12)
-        .port(o_debug_x).signal({0xFF}).repeat(12)
-        .port(o_debug_y).signal({0xFF}).repeat(12);
+        .port(o_debug_ac).signal({0x00}).repeat(12)
+        .port(o_debug_x).signal({0x00}).repeat(12)
+        .port(o_debug_y).signal({0x00}).repeat(12);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -217,9 +217,9 @@ TEST_F(Cpu6502, ShouldImplementBCSWhenCarrySet) {
                         6,      // PC + 2 + relative
                         7})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(14)
-        .port(o_debug_x).signal({0xFF}).repeat(14)
-        .port(o_debug_y).signal({0xFF}).repeat(14);
+        .port(o_debug_ac).signal({0x00}).repeat(14)
+        .port(o_debug_x).signal({0x00}).repeat(14)
+        .port(o_debug_y).signal({0x00}).repeat(14);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -271,9 +271,9 @@ TEST_F(Cpu6502, ShouldImplementBCSWhenCarrySetAndNextPage) {
                             0x0101
                         })
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(16)
-        .port(o_debug_x).signal({0xFF}).repeat(16)
-        .port(o_debug_y).signal({0xFF}).repeat(16);
+        .port(o_debug_ac).signal({0x00}).repeat(16)
+        .port(o_debug_x).signal({0x00}).repeat(16)
+        .port(o_debug_y).signal({0x00}).repeat(16);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -307,10 +307,10 @@ TEST_F(Cpu6502, ShouldImplementBEQWhenZeroFlagClear) {
         .port(o_sync).signal("101010").repeatEachStep(2)
         .port(o_address).signal({0, 1, 2, 3, 4, 5})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(4)
+        .port(o_debug_ac).signal({0x00}).repeat(4)
                          .signal({0x01}).repeat(8)
-        .port(o_debug_x).signal({0xFF}).repeat(12)
-        .port(o_debug_y).signal({0xFF}).repeat(12);
+        .port(o_debug_x).signal({0x00}).repeat(12)
+        .port(o_debug_y).signal({0x00}).repeat(12);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -354,10 +354,10 @@ TEST_F(Cpu6502, ShouldImplementBEQWhenZeroFlagSet) {
                             7,      // PC + 2 + relative
                             8})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(4)
+        .port(o_debug_ac).signal({0x00}).repeat(4)
                          .signal({0x00}).repeat(10)
-        .port(o_debug_x).signal({0xFF}).repeat(14)
-        .port(o_debug_y).signal({0xFF}).repeat(14);
+        .port(o_debug_x).signal({0x00}).repeat(14)
+        .port(o_debug_y).signal({0x00}).repeat(14);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -409,10 +409,10 @@ TEST_F(Cpu6502, ShouldImplementBEQWhenZeroFlagSetAndNextPage) {
                             0x0101
                         })
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(4)
+        .port(o_debug_ac).signal({0x00}).repeat(4)
                          .signal({0x00}).repeat(12)
-        .port(o_debug_x).signal({0xFF}).repeat(16)
-        .port(o_debug_y).signal({0xFF}).repeat(16);
+        .port(o_debug_x).signal({0x00}).repeat(16)
+        .port(o_debug_y).signal({0x00}).repeat(16);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -446,10 +446,10 @@ TEST_F(Cpu6502, ShouldImplementBNEWhenZeroFlagSet) {
         .port(o_sync).signal("101010").repeatEachStep(2)
         .port(o_address).signal({0, 1, 2, 3, 4, 5})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(4)
+        .port(o_debug_ac).signal({0x00}).repeat(4)
                          .signal({0x00}).repeat(8)
-        .port(o_debug_x).signal({0xFF}).repeat(12)
-        .port(o_debug_y).signal({0xFF}).repeat(12);
+        .port(o_debug_x).signal({0x00}).repeat(12)
+        .port(o_debug_y).signal({0x00}).repeat(12);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -493,10 +493,10 @@ TEST_F(Cpu6502, ShouldImplementBNEWhenZeroFlagClear) {
                             7,      // PC + 2 + relative
                             8})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(4)
+        .port(o_debug_ac).signal({0x00}).repeat(4)
                          .signal({0x01}).repeat(10)
-        .port(o_debug_x).signal({0xFF}).repeat(14)
-        .port(o_debug_y).signal({0xFF}).repeat(14);
+        .port(o_debug_x).signal({0x00}).repeat(14)
+        .port(o_debug_y).signal({0x00}).repeat(14);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -548,10 +548,10 @@ TEST_F(Cpu6502, ShouldImplementBNEWhenZeroFlagClearAndNextPage) {
                             0x0101
                         })
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(4)
+        .port(o_debug_ac).signal({0x00}).repeat(4)
                          .signal({0x01}).repeat(12)
-        .port(o_debug_x).signal({0xFF}).repeat(16)
-        .port(o_debug_y).signal({0xFF}).repeat(16);
+        .port(o_debug_x).signal({0x00}).repeat(16)
+        .port(o_debug_y).signal({0x00}).repeat(16);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -585,10 +585,10 @@ TEST_F(Cpu6502, ShouldImplementBMIWhenNegativeFlagClear) {
         .port(o_sync).signal("101010").repeatEachStep(2)
         .port(o_address).signal({0, 1, 2, 3, 4, 5})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(4)
+        .port(o_debug_ac).signal({0x00}).repeat(4)
                          .signal({0x7F}).repeat(8)
-        .port(o_debug_x).signal({0xFF}).repeat(12)
-        .port(o_debug_y).signal({0xFF}).repeat(12);
+        .port(o_debug_x).signal({0x00}).repeat(12)
+        .port(o_debug_y).signal({0x00}).repeat(12);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -632,10 +632,10 @@ TEST_F(Cpu6502, ShouldImplementBMIWhenNegativeFlagSet) {
                             7,      // PC + 2 + relative
                             8})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(4)
+        .port(o_debug_ac).signal({0x00}).repeat(4)
                          .signal({0x80}).repeat(10)
-        .port(o_debug_x).signal({0xFF}).repeat(14)
-        .port(o_debug_y).signal({0xFF}).repeat(14);
+        .port(o_debug_x).signal({0x00}).repeat(14)
+        .port(o_debug_y).signal({0x00}).repeat(14);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -687,10 +687,10 @@ TEST_F(Cpu6502, ShouldImplementBMIWhenNegativeFlagSetAndNextPage) {
                             0x0101
                         })
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(4)
+        .port(o_debug_ac).signal({0x00}).repeat(4)
                          .signal({0x80}).repeat(12)
-        .port(o_debug_x).signal({0xFF}).repeat(16)
-        .port(o_debug_y).signal({0xFF}).repeat(16);
+        .port(o_debug_x).signal({0x00}).repeat(16)
+        .port(o_debug_y).signal({0x00}).repeat(16);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -724,10 +724,10 @@ TEST_F(Cpu6502, ShouldImplementBPLWhenNegativeFlagSet) {
         .port(o_sync).signal("101010").repeatEachStep(2)
         .port(o_address).signal({0, 1, 2, 3, 4, 5})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(4)
+        .port(o_debug_ac).signal({0x00}).repeat(4)
                          .signal({0x80}).repeat(8)
-        .port(o_debug_x).signal({0xFF}).repeat(12)
-        .port(o_debug_y).signal({0xFF}).repeat(12);
+        .port(o_debug_x).signal({0x00}).repeat(12)
+        .port(o_debug_y).signal({0x00}).repeat(12);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -771,10 +771,10 @@ TEST_F(Cpu6502, ShouldImplementBPLWhenNegativeFlagClear) {
                             7,      // PC + 2 + relative
                             8})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(4)
+        .port(o_debug_ac).signal({0x00}).repeat(4)
                          .signal({0x7F}).repeat(10)
-        .port(o_debug_x).signal({0xFF}).repeat(14)
-        .port(o_debug_y).signal({0xFF}).repeat(14);
+        .port(o_debug_x).signal({0x00}).repeat(14)
+        .port(o_debug_y).signal({0x00}).repeat(14);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -826,10 +826,10 @@ TEST_F(Cpu6502, ShouldImplementBPLWhenNegativeFlagClearAndNextPage) {
                             0x0101
                         })
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(4)
+        .port(o_debug_ac).signal({0x00}).repeat(4)
                          .signal({0x7F}).repeat(12)
-        .port(o_debug_x).signal({0xFF}).repeat(16)
-        .port(o_debug_y).signal({0xFF}).repeat(16);
+        .port(o_debug_x).signal({0x00}).repeat(16)
+        .port(o_debug_y).signal({0x00}).repeat(16);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -878,10 +878,10 @@ TEST_F(Cpu6502, ShouldImplementBPLWhenNegativeFlagClearAndBranchingBack) {
                                 1
                                 })
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(4)
+        .port(o_debug_ac).signal({0x00}).repeat(4)
                          .signal({0x7F}).repeat(10)
-        .port(o_debug_x).signal({0xFF}).repeat(14)
-        .port(o_debug_y).signal({0xFF}).repeat(14);
+        .port(o_debug_x).signal({0x00}).repeat(14)
+        .port(o_debug_y).signal({0x00}).repeat(14);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -933,10 +933,10 @@ TEST_F(Cpu6502, ShouldImplementBPLWhenNegativeFlagClearAndPreviousPage) {
                             0x00f1
                         })
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(4)
+        .port(o_debug_ac).signal({0x00}).repeat(4)
                          .signal({0x7F}).repeat(12)
-        .port(o_debug_x).signal({0xFF}).repeat(16)
-        .port(o_debug_y).signal({0xFF}).repeat(16);
+        .port(o_debug_x).signal({0x00}).repeat(16)
+        .port(o_debug_y).signal({0x00}).repeat(16);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -970,9 +970,9 @@ TEST_F(Cpu6502, ShouldImplementBVSWhenOverflowFlagClear) {
         .port(o_sync).signal("101010").repeatEachStep(2)
         .port(o_address).signal({0, 1, 1, 2, 3, 4})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(12)
-        .port(o_debug_x).signal({0xFF}).repeat(12)
-        .port(o_debug_y).signal({0xFF}).repeat(12);
+        .port(o_debug_ac).signal({0x00}).repeat(12)
+        .port(o_debug_x).signal({0x00}).repeat(12)
+        .port(o_debug_y).signal({0x00}).repeat(12);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -1026,9 +1026,9 @@ TEST_F(Cpu6502, ShouldImplementBVSWhenOverflowFlagSet) {
                                 target.byteIndex(),
                                 uint32_t(target.byteIndex()) + 1})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(18)
-        .port(o_debug_x).signal({0xFF}).repeat(18)
-        .port(o_debug_y).signal({0xFF}).repeat(18);
+        .port(o_debug_ac).signal({0x00}).repeat(18)
+        .port(o_debug_x).signal({0x00}).repeat(18)
+        .port(o_debug_y).signal({0x00}).repeat(18);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -1088,9 +1088,9 @@ TEST_F(Cpu6502, ShouldImplementBVSWhenOverflowFlagSetAndNextPage) {
                             0x0101
                         })
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(20)
-        .port(o_debug_x).signal({0xFF}).repeat(20)
-        .port(o_debug_y).signal({0xFF}).repeat(20);
+        .port(o_debug_ac).signal({0x00}).repeat(20)
+        .port(o_debug_x).signal({0x00}).repeat(20)
+        .port(o_debug_y).signal({0x00}).repeat(20);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -1130,9 +1130,9 @@ TEST_F(Cpu6502, ShouldImplementBVCWhenOverflowFlagSet) {
         .port(o_sync).signal("10001010").repeatEachStep(2)
         .port(o_address).signal({0, 1, 2, overflowFlag.byteIndex(), 3, 4, 5, 6})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(16)
-        .port(o_debug_x).signal({0xFF}).repeat(16)
-        .port(o_debug_y).signal({0xFF}).repeat(16);
+        .port(o_debug_ac).signal({0x00}).repeat(16)
+        .port(o_debug_x).signal({0x00}).repeat(16)
+        .port(o_debug_y).signal({0x00}).repeat(16);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -1177,9 +1177,9 @@ TEST_F(Cpu6502, ShouldImplementBVCWhenOverflowFlagClear) {
                                 target.byteIndex(),
                                 uint32_t(target.byteIndex()) + 1})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(14)
-        .port(o_debug_x).signal({0xFF}).repeat(14)
-        .port(o_debug_y).signal({0xFF}).repeat(14);
+        .port(o_debug_ac).signal({0x00}).repeat(14)
+        .port(o_debug_x).signal({0x00}).repeat(14)
+        .port(o_debug_y).signal({0x00}).repeat(14);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -1231,9 +1231,9 @@ TEST_F(Cpu6502, ShouldImplementBVCWhenOverflowFlagClearAndNextPage) {
                             0x0101
                         })
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(16)
-        .port(o_debug_x).signal({0xFF}).repeat(16)
-        .port(o_debug_y).signal({0xFF}).repeat(16);
+        .port(o_debug_ac).signal({0x00}).repeat(16)
+        .port(o_debug_x).signal({0x00}).repeat(16)
+        .port(o_debug_y).signal({0x00}).repeat(16);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -1271,9 +1271,9 @@ TEST_F(Cpu6502, ShouldImplementJMPabsolute) {
                                 jmpTo.byteIndex(),
                                 jmpTo.byteIndex() + 1u})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(14)
-        .port(o_debug_x).signal({0xFF}).repeat(14)
-        .port(o_debug_y).signal({0xFF}).repeat(14);
+        .port(o_debug_ac).signal({0x00}).repeat(14)
+        .port(o_debug_x).signal({0x00}).repeat(14)
+        .port(o_debug_y).signal({0x00}).repeat(14);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -1319,9 +1319,9 @@ TEST_F(Cpu6502, ShouldImplementJMPindirect) {
                                 jmpTo.byteIndex(),
                                 jmpTo.byteIndex() + 1u})
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(18)
-        .port(o_debug_x).signal({0xFF}).repeat(18)
-        .port(o_debug_y).signal({0xFF}).repeat(18);
+        .port(o_debug_ac).signal({0x00}).repeat(18)
+        .port(o_debug_x).signal({0x00}).repeat(18)
+        .port(o_debug_y).signal({0x00}).repeat(18);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }

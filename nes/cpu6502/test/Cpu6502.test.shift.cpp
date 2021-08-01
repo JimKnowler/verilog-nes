@@ -80,9 +80,9 @@ TEST_F(Cpu6502, ShouldImplementLSRaccumulator) {
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({kTestData}).repeat(6)
                         .signal({kTestData >> 1}).repeat(2)
-        .port(o_debug_x).signal({0xFF})
+        .port(o_debug_x).signal({0x00})
                         .repeatEachStep(8)
-        .port(o_debug_y).signal({0xFF}).repeat(8);
+        .port(o_debug_y).signal({0x00}).repeat(8);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -139,9 +139,9 @@ TEST_F(Cpu6502, ShouldImplementASLaccumulator) {
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({kTestData}).repeat(6)
                         .signal({(kTestData << 1) & 0xff}).repeat(2)
-        .port(o_debug_x).signal({0xFF})
+        .port(o_debug_x).signal({0x00})
                         .repeatEachStep(8)
-        .port(o_debug_y).signal({0xFF}).repeat(8);
+        .port(o_debug_y).signal({0x00}).repeat(8);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -199,9 +199,9 @@ TEST_F(Cpu6502, ShouldImplementRORaccumulator) {
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({kTestData}).repeat(6)
                         .signal({kTestData >> 1}).repeat(2)
-        .port(o_debug_x).signal({0xFF})
+        .port(o_debug_x).signal({0x00})
                         .repeatEachStep(8)
-        .port(o_debug_y).signal({0xFF}).repeat(8);
+        .port(o_debug_y).signal({0x00}).repeat(8);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -258,9 +258,9 @@ TEST_F(Cpu6502, ShouldImplementROLaccumulator) {
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({kTestData}).repeat(6)
                         .signal({(kTestData << 1) & 0xff}).repeat(2)
-        .port(o_debug_x).signal({0xFF})
+        .port(o_debug_x).signal({0x00})
                         .repeatEachStep(8)
-        .port(o_debug_y).signal({0xFF}).repeat(8);
+        .port(o_debug_y).signal({0x00}).repeat(8);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -319,9 +319,9 @@ TEST_F(Cpu6502, ShouldImplementRORaccumulatorWithCarryIn) {
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({kTestData}).repeat(6)
                         .signal({0x80 | (kTestData >> 1)}).repeat(2)
-        .port(o_debug_x).signal({0xFF})
+        .port(o_debug_x).signal({0x00})
                         .repeatEachStep(8)
-        .port(o_debug_y).signal({0xFF}).repeat(8);
+        .port(o_debug_y).signal({0x00}).repeat(8);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -380,9 +380,9 @@ TEST_F(Cpu6502, ShouldImplementROLaccumulatorWithCarryIn) {
                         .repeatEachStep(2)
         .port(o_debug_ac).signal({kTestData}).repeat(6)
                         .signal({(1 + (kTestData << 1)) & 0xff}).repeat(2)
-        .port(o_debug_x).signal({0xFF})
+        .port(o_debug_x).signal({0x00})
                         .repeatEachStep(8)
-        .port(o_debug_y).signal({0xFF}).repeat(8);
+        .port(o_debug_y).signal({0x00}).repeat(8);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -868,9 +868,9 @@ TEST_F(Cpu6502, ShouldImplementROLzeropage) {
             .signal({(kTestData << 1) & 0xff}).repeat(2)
             .signal({0}).repeat(3)
         .port(o_sync).signal("1000010").repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(7).repeatEachStep(2)
-        .port(o_debug_x).signal({0xFF}).repeat(7).repeatEachStep(2)
-        .port(o_debug_y).signal({0xFF}).repeat(7).repeatEachStep(2);
+        .port(o_debug_ac).signal({0x00}).repeat(7).repeatEachStep(2)
+        .port(o_debug_x).signal({0x00}).repeat(7).repeatEachStep(2)
+        .port(o_debug_y).signal({0x00}).repeat(7).repeatEachStep(2);
     
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -946,9 +946,9 @@ TEST_F(Cpu6502, ShouldImplementROLzeropageWithCarryIn) {
             .signal({((kTestData << 1) + 1) & 0xff}).repeat(2)
             .signal({0}).repeat(3)
         .port(o_sync).signal("1000010").repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(7).repeatEachStep(2)
-        .port(o_debug_x).signal({0xFF}).repeat(7).repeatEachStep(2)
-        .port(o_debug_y).signal({0xFF}).repeat(7).repeatEachStep(2);
+        .port(o_debug_ac).signal({0x00}).repeat(7).repeatEachStep(2)
+        .port(o_debug_x).signal({0x00}).repeat(7).repeatEachStep(2)
+        .port(o_debug_y).signal({0x00}).repeat(7).repeatEachStep(2);
     
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -1019,9 +1019,9 @@ TEST_F(Cpu6502, ShouldImplementRORzeropage) {
             .signal({(kTestData >> 1) & 0xff}).repeat(2)
             .signal({0}).repeat(3)
         .port(o_sync).signal("1000010").repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(7).repeatEachStep(2)
-        .port(o_debug_x).signal({0xFF}).repeat(7).repeatEachStep(2)
-        .port(o_debug_y).signal({0xFF}).repeat(7).repeatEachStep(2);
+        .port(o_debug_ac).signal({0x00}).repeat(7).repeatEachStep(2)
+        .port(o_debug_x).signal({0x00}).repeat(7).repeatEachStep(2)
+        .port(o_debug_y).signal({0x00}).repeat(7).repeatEachStep(2);
     
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -1097,9 +1097,9 @@ TEST_F(Cpu6502, ShouldImplementRORzeropageWithCarryIn) {
             .signal({0x80 | (kTestData >> 1)}).repeat(2)
             .signal({0}).repeat(3)
         .port(o_sync).signal("1000010").repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(7).repeatEachStep(2)
-        .port(o_debug_x).signal({0xFF}).repeat(7).repeatEachStep(2)
-        .port(o_debug_y).signal({0xFF}).repeat(7).repeatEachStep(2);
+        .port(o_debug_ac).signal({0x00}).repeat(7).repeatEachStep(2)
+        .port(o_debug_x).signal({0x00}).repeat(7).repeatEachStep(2)
+        .port(o_debug_y).signal({0x00}).repeat(7).repeatEachStep(2);
     
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -1176,9 +1176,9 @@ TEST_F(Cpu6502, ShouldImplementLSRzeropage) {
             .signal({(kTestData >> 1) & 0xff}).repeat(2)
             .signal({0}).repeat(3)
         .port(o_sync).signal("1000010").repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(7).repeatEachStep(2)
-        .port(o_debug_x).signal({0xFF}).repeat(7).repeatEachStep(2)
-        .port(o_debug_y).signal({0xFF}).repeat(7).repeatEachStep(2);
+        .port(o_debug_ac).signal({0x00}).repeat(7).repeatEachStep(2)
+        .port(o_debug_x).signal({0x00}).repeat(7).repeatEachStep(2)
+        .port(o_debug_y).signal({0x00}).repeat(7).repeatEachStep(2);
     
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -1254,9 +1254,9 @@ TEST_F(Cpu6502, ShouldImplementASLzeropage) {
             .signal({(kTestData << 1) & 0xff}).repeat(2)
             .signal({0}).repeat(3)
         .port(o_sync).signal("1000010").repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(7).repeatEachStep(2)
-        .port(o_debug_x).signal({0xFF}).repeat(7).repeatEachStep(2)
-        .port(o_debug_y).signal({0xFF}).repeat(7).repeatEachStep(2);
+        .port(o_debug_ac).signal({0x00}).repeat(7).repeatEachStep(2)
+        .port(o_debug_x).signal({0x00}).repeat(7).repeatEachStep(2)
+        .port(o_debug_y).signal({0x00}).repeat(7).repeatEachStep(2);
     
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }

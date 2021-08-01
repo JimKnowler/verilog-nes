@@ -79,10 +79,10 @@ TEST_F(Cpu6502, ShouldImplementSTXa) {
         .port(o_address).signal({2, 3, 4, kTestAddress})    // STXa
                         .signal({5, 6 })                    // NOP
                         .concat().repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(12)
+        .port(o_debug_ac).signal({0x00}).repeat(12)
         .port(o_debug_x).signal({kTestData}).repeat(6)
                          .repeatEachStep(2)
-        .port(o_debug_y).signal({0xFF}).repeat(12);
+        .port(o_debug_y).signal({0x00}).repeat(12);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
     EXPECT_EQ(kTestData, sram.read(kTestAddress));
@@ -124,8 +124,8 @@ TEST_F(Cpu6502, ShouldImplementSTYa) {
         .port(o_address).signal({2, 3, 4, kTestAddress})    // STYa
                         .signal({5, 6 })                    // NOP
                         .concat().repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(12)
-        .port(o_debug_x).signal({0xFF}).repeat(12)
+        .port(o_debug_ac).signal({0x00}).repeat(12)
+        .port(o_debug_x).signal({0x00}).repeat(12)
         .port(o_debug_y).signal({kTestData}).repeat(6)
                          .repeatEachStep(2);
 

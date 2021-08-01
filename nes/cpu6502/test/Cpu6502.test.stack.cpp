@@ -31,8 +31,8 @@ TEST_F(Cpu6502, ShouldImplementPHA) {
                         .signal({0xFB}).repeat(2)
                         .concat().repeatEachStep(2)
         .port(o_debug_ac).signal({kTestData}).repeat(10)
-        .port(o_debug_x).signal({0xFF}).repeat(10)
-        .port(o_debug_y).signal({0xFF}).repeat(10);
+        .port(o_debug_x).signal({0x00}).repeat(10)
+        .port(o_debug_y).signal({0x00}).repeat(10);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 
@@ -112,11 +112,11 @@ TEST_F(Cpu6502, ShouldImplementPLA) {
         .port(o_debug_s).signal({0xFC}).repeat(3)
                         .signal({0xFD}).repeat(3)
                         .concat().repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF}).repeat(4)
+        .port(o_debug_ac).signal({0x00}).repeat(4)
                          .signal({kTestData}).repeat(2)
                          .concat().repeatEachStep(2)
-        .port(o_debug_x).signal({0xFF}).repeat(12)
-        .port(o_debug_y).signal({0xFF}).repeat(12)
+        .port(o_debug_x).signal({0x00}).repeat(12)
+        .port(o_debug_y).signal({0x00}).repeat(12)
         .port(o_debug_p).signal({0x00}).repeat(12);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));

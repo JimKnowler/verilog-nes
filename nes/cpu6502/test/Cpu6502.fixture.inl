@@ -67,7 +67,7 @@ void Cpu6502::helperTestInternalExecutionOnMemoryData(const TestAbsolute<OPCODE>
     };
 
     for (auto& port: ports) {
-        const uint8_t preloadPortValue = (port == test.preloadPort) ? test.preloadPortValue : 0xFF;
+        const uint8_t preloadPortValue = (port == test.preloadPort) ? test.preloadPortValue : 0x00;
 
         if (port->id() == test.port.id()) {
             traceBuilder
@@ -140,11 +140,11 @@ void Cpu6502::helperTestReadModifyWrite(const TestAbsolute<OPCODE>& test) {
                             pc + 4u
                         })
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF})
+        .port(o_debug_ac).signal({0x00})
                         .repeat(16)
-        .port(o_debug_x).signal({0xFF})
+        .port(o_debug_x).signal({0x00})
                         .repeat(16)
-        .port(o_debug_y).signal({0xFF})
+        .port(o_debug_y).signal({0x00})
                         .repeat(16);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
@@ -242,7 +242,7 @@ void Cpu6502::helperTestReadModifyWrite(const TestAbsoluteIndexed<OPCODE>& test)
                             pc + 4u
                         })
                         .repeatEachStep(2)
-        .port(o_debug_ac).signal({0xFF})
+        .port(o_debug_ac).signal({0x00})
                         .repeat(18);
     
     // todo: test contents for X,Y index registers, based on index register used in test
@@ -334,7 +334,7 @@ void Cpu6502::helperTestInternalExecutionOnMemoryData(const TestAbsoluteIndexed<
     };
 
     auto getPreloadValue = [&](PortDescription* port) -> uint8_t {
-        uint8_t preloadValue = (port == test.preloadPort) ? test.preloadPortValue : 0xFF;
+        uint8_t preloadValue = (port == test.preloadPort) ? test.preloadPortValue : 0x00;
 
         if ( ((port == &o_debug_x) && (test.indexRegister == kX))
             ||  ((port == &o_debug_y) && (test.indexRegister == kY)) ) {
@@ -514,7 +514,7 @@ void Cpu6502::helperTestStore(const TestAbsoluteIndexed<OPCODE>& test) {
     };
 
     for (auto& port: ports) {
-        uint8_t preloadValue = (port == test.preloadPort) ? test.preloadPortValue : 0xFF;
+        uint8_t preloadValue = (port == test.preloadPort) ? test.preloadPortValue : 0x00;
 
         if ( ((port == &o_debug_x) && (test.indexRegister == kX))
             ||  ((port == &o_debug_y) && (test.indexRegister == kY)) ) {
