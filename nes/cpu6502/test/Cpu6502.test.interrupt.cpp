@@ -41,7 +41,7 @@ TEST_F(Cpu6502, ShouldImplementBRK) {
     assembler.lookupAddress(returnTo);
 
     const uint8_t sp = core.o_debug_s;
-    const uint8_t p = C | I;
+    const uint8_t p = U|C|I;
 
     testBench.tick(9);
 
@@ -53,7 +53,7 @@ TEST_F(Cpu6502, ShouldImplementBRK) {
             .signal({0}).repeat(5)
             .signal({returnTo.hi()}).repeat(2)
             .signal({returnTo.lo()}).repeat(2)
-            .signal({p}).repeat(2)
+            .signal({p|B}).repeat(2)        // B (BREAK) should be added to value written to stack
             .signal({0}).repeat(7)
         .port(o_address)
             .signal({
@@ -77,8 +77,9 @@ TEST_F(Cpu6502, ShouldImplementBRK) {
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 
-    // processor flags should be unaffected, apart from B=Break
-    EXPECT_EQ(p | B, core.o_debug_p);
+    // processor flags should be unaffected
+    // (B should not be set in P register)
+    EXPECT_EQ(U|I|C, core.o_debug_p);
 }
 
 TEST_F(Cpu6502, ShouldImplementRTI) {
@@ -92,7 +93,7 @@ TEST_F(Cpu6502, ShouldImplementRTI) {
         .org(0x1234)
         .label("init")
             .SEC()                  // non-zero Processor Status (P)
-            .SEI()                  // P = I | C
+            .SEI()                  // P = U|I|C
         .label("start")
             .BRK()
         .label("return_to")
@@ -173,7 +174,7 @@ TEST_F(Cpu6502, ShouldImplementRTI) {
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 
     // processor flags should be restored
-    EXPECT_EQ(I | C, core.o_debug_p);
+    EXPECT_EQ(U|I|C, core.o_debug_p);
 }
 
 TEST_F(Cpu6502, ShouldImplementIRQ) {
@@ -186,6 +187,7 @@ TEST_F(Cpu6502, ShouldImplementIRQ) {
             .NOP()
         .org(0x1234)
         .label("init")
+            .CLI()
             .SEC()                  // non-zero Processor Status (P)
             .SED()
         .label("start")
@@ -203,7 +205,7 @@ TEST_F(Cpu6502, ShouldImplementIRQ) {
     helperSkipResetVector();
 
     // skip init section
-    testBench.tick(4);
+    testBench.tick(6);
     testBench.trace.clear();
 
     // capture information from the assembler / simulated core
@@ -217,7 +219,7 @@ TEST_F(Cpu6502, ShouldImplementIRQ) {
     assembler.lookupAddress(returnTo);
 
     const uint8_t sp = core.o_debug_s;
-    const uint8_t p = C | D;
+    const uint8_t p = U|C|D;
 
     // activate the IRQ
     testBench.tick(1);
@@ -343,6 +345,7 @@ TEST_F(Cpu6502, ShouldNotIgnoreIRQWhenReturningFromIRQ) {
             .NOP()
         .org(0x1234)
         .label("init")
+            .CLI()
             .SEC()                  // non-zero Processor Status (P)
             .SED()
         .label("start")
@@ -364,7 +367,7 @@ TEST_F(Cpu6502, ShouldNotIgnoreIRQWhenReturningFromIRQ) {
     helperSkipResetVector();
 
     // skip init section
-    testBench.tick(4);
+    testBench.tick(6);
     testBench.trace.clear();
 
     // capture information from the assembler / simulated core
@@ -378,7 +381,7 @@ TEST_F(Cpu6502, ShouldNotIgnoreIRQWhenReturningFromIRQ) {
     assembler.lookupAddress(returnTo);
 
     const uint8_t sp = core.o_debug_s;
-    const uint8_t p = C | D;
+    const uint8_t p = U | C | D;
 
     // activate and simulate IRQ
     testBench.tick(1);
@@ -441,6 +444,7 @@ TEST_F(Cpu6502, ShouldImplementNMI) {
             .NOP()
         .org(0x1234)
         .label("init")
+            .CLI()
             .SEC()                  // non-zero Processor Status (P)
             .SED()
         .label("start")
@@ -460,7 +464,7 @@ TEST_F(Cpu6502, ShouldImplementNMI) {
     helperSkipResetVector();
 
     // skip init section
-    testBench.tick(4);
+    testBench.tick(6);
     testBench.trace.clear();
 
     // capture information from the assembler / simulated core
@@ -474,7 +478,7 @@ TEST_F(Cpu6502, ShouldImplementNMI) {
     assembler.lookupAddress(returnTo);
 
     const uint8_t sp = core.o_debug_s;
-    const uint8_t p = C | D;
+    const uint8_t p = U|C|D;
 
     // activate the NMI
     core.i_nmi_n = 0;
@@ -620,6 +624,7 @@ TEST_F(Cpu6502, ShouldIgnoreNMIStillLowWhenReturningFromNMI) {
             .NOP()
         .org(0x1234)
         .label("init")
+            .CLI()
             .SEC()                  // non-zero Processor Status (P)
             .SED()
         .label("start")
@@ -642,7 +647,7 @@ TEST_F(Cpu6502, ShouldIgnoreNMIStillLowWhenReturningFromNMI) {
     helperSkipResetVector();
 
     // skip init section
-    testBench.tick(4);
+    testBench.tick(6);
     testBench.trace.clear();
 
     // capture information from the assembler / simulated core
@@ -655,7 +660,7 @@ TEST_F(Cpu6502, ShouldIgnoreNMIStillLowWhenReturningFromNMI) {
     cpu6502::assembler::Address returnTo("return_to");
     assembler.lookupAddress(returnTo);
 
-    const uint8_t p = C | D;
+    const uint8_t p = U | C | D;
 
     // activate the NMI
     core.i_nmi_n = 0;
@@ -683,6 +688,7 @@ TEST_F(Cpu6502, ShouldPrioritiseNMIoverIRQ) {
             .NOP()
         .org(0x1234)
         .label("init")
+            .CLI()
             .SEC()                  // non-zero Processor Status (P)
             .SED()
         .label("start")
@@ -702,7 +708,7 @@ TEST_F(Cpu6502, ShouldPrioritiseNMIoverIRQ) {
     helperSkipResetVector();
 
     // skip init section
-    testBench.tick(4);
+    testBench.tick(6);
     testBench.trace.clear();
 
     // capture information from the assembler / simulated core
@@ -716,7 +722,7 @@ TEST_F(Cpu6502, ShouldPrioritiseNMIoverIRQ) {
     assembler.lookupAddress(returnTo);
 
     const uint8_t sp = core.o_debug_s;
-    const uint8_t p = C | D;
+    const uint8_t p = U | C | D;
 
     // activate the NMI
     core.i_nmi_n = 0;
@@ -774,6 +780,7 @@ TEST_F(Cpu6502, ShouldRetriggerNMIafterReturningFromNMI) {
             .NOP()
         .org(0x1234)
         .label("init")
+            .CLI()
             .SEC()                  // non-zero Processor Status (P)
             .SED()
         .label("start")
@@ -796,7 +803,7 @@ TEST_F(Cpu6502, ShouldRetriggerNMIafterReturningFromNMI) {
     helperSkipResetVector();
 
     // skip init section
-    testBench.tick(4);
+    testBench.tick(6);
     testBench.trace.clear();
 
     // capture information from the assembler / simulated core
@@ -809,7 +816,7 @@ TEST_F(Cpu6502, ShouldRetriggerNMIafterReturningFromNMI) {
     cpu6502::assembler::Address returnTo("return_to");
     assembler.lookupAddress(returnTo);
 
-    const uint8_t p = C | D;
+    const uint8_t p = U | C | D;
 
     // activate the NMI
     core.i_nmi_n = 0;

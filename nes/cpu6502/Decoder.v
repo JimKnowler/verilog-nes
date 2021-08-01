@@ -1233,7 +1233,7 @@ begin
             begin
                 o_rw = RW_WRITE;
                 o_p_db = 1;
-                o_1_db4 = 1;                // force BREAK bit in 
+                o_1_db4 = 1;                // force BREAK bit in P written to stack
                 next_opcode();
                 load_s_from_add(w_phi2);
             end
@@ -1794,6 +1794,11 @@ begin
             begin
                 o_rw = RW_WRITE;
                 o_p_db = 1;
+
+                if (r_hw_interrupt == HW_INTERRUPT_NONE)
+                begin
+                    o_1_db4 = 1;        // force B (BREAK) bit in P written to stack
+                end
             end
         end
         JSR_a:
@@ -2248,11 +2253,6 @@ begin
             load_pch_from_dl(w_phi2);
         
             case (r_hw_interrupt)
-            HW_INTERRUPT_NONE:
-            begin
-                // using a BRK instruction
-                o_db4_b = 1;
-            end
             HW_INTERRUPT_IRQ, HW_INTERRUPT_NMI, HW_INTERRUPT_RESET:
             begin
                 // hardware interrupt
