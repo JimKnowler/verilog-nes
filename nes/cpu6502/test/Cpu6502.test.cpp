@@ -30,14 +30,18 @@ TEST_F(Cpu6502, ShouldImplementResetVector) {
         .port(o_address)
             .signal({
                 0x0000, 0x0000,             // PC, PC
-                0x01FF, 0x01FE, 0x01FD,     // SP, SP-1, SP-2
+                0x0100, 0x01FF, 0x01FE,     // SP, SP-1, SP-2
                 0xFFFC, 0xFFFD,             // Reset Vector (low byte), Reset Vector (high byte)
                 0x8012,                     // The reset vector (pointing at NOP)
                 0x8013,                     // NOP incrememting PC
             }).repeatEachStep(2)
+        .port(o_debug_p)
+            .signal({U}).repeat(7)
+            .signal({U|I}).repeat(2)        // based on feedback from nestest - I is set during RESET vector
+            .concat().repeatEachStep(2)
         .port(o_debug_s)
-            .signal({0xFF}).repeat(5)
-            .signal({0xFC}).repeat(4)       // store SP-3 after 3rd push
+            .signal({0x00}).repeat(5)
+            .signal({0xFD}).repeat(4)       // store SP-3 after 3rd push
             .concat().repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
@@ -61,14 +65,18 @@ TEST_F(Cpu6502, ShouldImplementResetVectorWhileIRQ) {
         .port(o_address)
             .signal({
                 0x0000, 0x0000,             // PC, PC
-                0x01FF, 0x01FE, 0x01FD,     // SP, SP-1, SP-2
+                0x0100, 0x01FF, 0x01FE,     // SP, SP-1, SP-2
                 0xFFFC, 0xFFFD,             // Reset Vector (low byte), Reset Vector (high byte)
                 0x8012,                     // The reset vector (pointing at NOP)
                 0x8013,                     // NOP incrememting PC
             }).repeatEachStep(2)
+        .port(o_debug_p)
+            .signal({U}).repeat(7)
+            .signal({U|I}).repeat(2)        // based on feedback from nestest - I is set during RESET vector
+            .concat().repeatEachStep(2)
         .port(o_debug_s)
-            .signal({0xFF}).repeat(5)
-            .signal({0xFC}).repeat(4)       // store SP-3 after 3rd push
+            .signal({0x00}).repeat(5)
+            .signal({0xFD}).repeat(4)       // store SP-3 after 3rd push
             .concat().repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
@@ -92,14 +100,18 @@ TEST_F(Cpu6502, ShouldImplementResetVectorWhileNMI) {
         .port(o_address)
             .signal({
                 0x0000, 0x0000,             // PC, PC
-                0x01FF, 0x01FE, 0x01FD,     // SP, SP-1, SP-2
+                0x0100, 0x01FF, 0x01FE,     // SP, SP-1, SP-2
                 0xFFFC, 0xFFFD,             // Reset Vector (low byte), Reset Vector (high byte)
                 0x8012,                     // The reset vector (pointing at NOP)
                 0x8013,                     // NOP incrememting PC
             }).repeatEachStep(2)
+        .port(o_debug_p)
+            .signal({U}).repeat(7)
+            .signal({U|I}).repeat(2)        // based on feedback from nestest - I is set during RESET vector
+            .concat().repeatEachStep(2)
         .port(o_debug_s)
-            .signal({0xFF}).repeat(5)
-            .signal({0xFC}).repeat(4)       // store SP-3 after 3rd push
+            .signal({0x00}).repeat(5)
+            .signal({0xFD}).repeat(4)       // store SP-3 after 3rd push
             .concat().repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
