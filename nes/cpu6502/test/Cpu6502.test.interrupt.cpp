@@ -330,7 +330,7 @@ TEST_F(Cpu6502, ShouldIgnoreIRQWhenProcessorStatusHasI) {
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 
-    EXPECT_EQ(I, core.o_debug_p);
+    EXPECT_EQ(I|U, core.o_debug_p);
 }
 
 TEST_F(Cpu6502, ShouldNotIgnoreIRQWhenReturningFromIRQ) {
@@ -564,7 +564,7 @@ TEST_F(Cpu6502, ShouldNotIgnoreNMIWhenProcessorStatusHasI) {
     assembler.lookupAddress(returnTo);
 
     const uint8_t sp = core.o_debug_s;
-    const uint8_t p = C | D | I;
+    const uint8_t p = U|C|D|I;
 
     // activate the NMI
     core.i_nmi_n = 0;
