@@ -33,7 +33,7 @@ TEST_F(ProcessorStatus, ShouldConstruct) {
 TEST_F(ProcessorStatus, ShouldReset) {
     testBench.reset();
 
-    EXPECT_EQ(0, testBench.core().o_p);
+    EXPECT_EQ(U, testBench.core().o_p);
 }
 
 TEST_F(ProcessorStatus, ShouldLoadNFromNegativeDB7) {
@@ -50,7 +50,7 @@ TEST_F(ProcessorStatus, ShouldLoadNFromNegativeDB7) {
     testBench.tick();
 
     Trace expected = TraceBuilder()
-        .port(o_p).signal({0,N,N}).repeatEachStep(2);
+        .port(o_p).signal({U,U|N,U|N}).repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -69,7 +69,7 @@ TEST_F(ProcessorStatus, ShouldNotLoadNFromPositiveDB7) {
     testBench.tick();
 
     Trace expected = TraceBuilder()
-        .port(o_p).signal({0}).repeat(6); 
+        .port(o_p).signal({U}).repeat(6); 
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -88,7 +88,7 @@ TEST_F(ProcessorStatus, ShouldLoadZFromDBZ) {
     testBench.tick();
 
     Trace expected = TraceBuilder()
-        .port(o_p).signal({0,Z,Z}).repeatEachStep(2);
+        .port(o_p).signal({U,U|Z,U|Z}).repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -107,7 +107,7 @@ TEST_F(ProcessorStatus, ShouldClearZFromDBZ) {
     testBench.tick();
 
     Trace expected = TraceBuilder()
-        .port(o_p).signal({0}).repeat(6);
+        .port(o_p).signal({U}).repeat(6);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -126,7 +126,7 @@ TEST_F(ProcessorStatus, ShouldSetZFromDB1) {
     testBench.tick();
 
     Trace expected = TraceBuilder()
-        .port(o_p).signal({0,Z,Z}).repeatEachStep(2);
+        .port(o_p).signal({U,U|Z,U|Z}).repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -148,7 +148,7 @@ TEST_F(ProcessorStatus, ShouldClearZFromDB1) {
     testBench.tick();
 
     Trace expected = TraceBuilder()
-        .port(o_p).signal({0,Z,0,0}).repeatEachStep(2);
+        .port(o_p).signal({U,U|Z,U,U}).repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -167,7 +167,7 @@ TEST_F(ProcessorStatus, ShouldLoadCFromACR) {
     testBench.tick();
 
     Trace expected = TraceBuilder()
-        .port(o_p).signal({0,C,C}).repeatEachStep(2);
+        .port(o_p).signal({U,U|C,U|C}).repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -186,7 +186,7 @@ TEST_F(ProcessorStatus, ShouldNotLoadCfromZeroACR) {
     testBench.tick();
 
     Trace expected = TraceBuilder()
-        .port(o_p).signal({0}).repeatEachStep(6);
+        .port(o_p).signal({U}).repeatEachStep(6);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -205,7 +205,7 @@ TEST_F(ProcessorStatus, ShouldSetCFromIR5) {
     testBench.tick();
 
     Trace expected = TraceBuilder()
-        .port(o_p).signal({0,C,C}).repeatEachStep(2);
+        .port(o_p).signal({U,U|C,U|C}).repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -228,7 +228,7 @@ TEST_F(ProcessorStatus, ShouldClearCFromIR5) {
     testBench.tick();
 
     Trace expected = TraceBuilder()
-        .port(o_p).signal({0,C,0,0}).repeatEachStep(2);
+        .port(o_p).signal({U,U|C,U,U}).repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -247,7 +247,7 @@ TEST_F(ProcessorStatus, ShouldSetCFromDB0) {
     testBench.tick();
 
     Trace expected = TraceBuilder()
-        .port(o_p).signal({0,C,C}).repeatEachStep(2);
+        .port(o_p).signal({U,U|C,U|C}).repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -270,7 +270,7 @@ TEST_F(ProcessorStatus, ShouldClearCFromDB0) {
     testBench.tick();
 
     Trace expected = TraceBuilder()
-        .port(o_p).signal({0,C,0,0}).repeatEachStep(2);
+        .port(o_p).signal({U,U|C,U,U}).repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -289,7 +289,7 @@ TEST_F(ProcessorStatus, ShouldSetIFromIR5) {
     testBench.tick();
 
     Trace expected = TraceBuilder()
-        .port(o_p).signal({0,I,I}).repeatEachStep(2);
+        .port(o_p).signal({U,U|I,U|I}).repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -311,7 +311,7 @@ TEST_F(ProcessorStatus, ShouldClearIFromIR5) {
     testBench.tick();
 
     Trace expected = TraceBuilder()
-        .port(o_p).signal({0,I,0,0}).repeatEachStep(2);
+        .port(o_p).signal({U,U|I,U,U}).repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -330,7 +330,7 @@ TEST_F(ProcessorStatus, ShouldSetIFromDB2) {
     testBench.tick();
 
     Trace expected = TraceBuilder()
-        .port(o_p).signal({0,I,I}).repeatEachStep(2);
+        .port(o_p).signal({U,U|I,U|I}).repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -352,7 +352,7 @@ TEST_F(ProcessorStatus, ShouldClearIFromDB2) {
     testBench.tick();
 
     Trace expected = TraceBuilder()
-        .port(o_p).signal({0,I,0,0}).repeatEachStep(2);
+        .port(o_p).signal({U,U|I,U,U}).repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -371,7 +371,7 @@ TEST_F(ProcessorStatus, ShouldSetDFromDB3) {
     testBench.tick();
 
     Trace expected = TraceBuilder()
-        .port(o_p).signal({0,D,D}).repeatEachStep(2);
+        .port(o_p).signal({U,U|D,U|D}).repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -393,7 +393,7 @@ TEST_F(ProcessorStatus, ShouldClearDFromDB3) {
     testBench.tick();
 
     Trace expected = TraceBuilder()
-        .port(o_p).signal({0,D,0,0}).repeatEachStep(2);
+        .port(o_p).signal({U,U|D,U,U}).repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -413,7 +413,7 @@ TEST_F(ProcessorStatus, ShouldSetDFromIR5) {
     testBench.tick();
 
     Trace expected = TraceBuilder()
-        .port(o_p).signal({0,D,D}).repeatEachStep(2);
+        .port(o_p).signal({U,U|D,U|D}).repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -436,7 +436,7 @@ TEST_F(ProcessorStatus, ShouldClearDFromIR5) {
     testBench.tick();
 
     Trace expected = TraceBuilder()
-        .port(o_p).signal({0,D,0,0}).repeatEachStep(2);
+        .port(o_p).signal({U,U|D,U,U}).repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -455,7 +455,7 @@ TEST_F(ProcessorStatus, ShouldSetBFromDB4) {
     testBench.tick();
 
     Trace expected = TraceBuilder()
-        .port(o_p).signal({0,B,B}).repeatEachStep(2);
+        .port(o_p).signal({U,U|B,U|B}).repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -477,7 +477,7 @@ TEST_F(ProcessorStatus, ShouldClearBFromDB4) {
     testBench.tick();
 
     Trace expected = TraceBuilder()
-        .port(o_p).signal({0,B,0,0}).repeatEachStep(2);
+        .port(o_p).signal({U,U|B,U,U}).repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -496,7 +496,7 @@ TEST_F(ProcessorStatus, ShouldSetVFromDB6) {
     testBench.tick();
 
     Trace expected = TraceBuilder()
-        .port(o_p).signal({0,V,V}).repeatEachStep(2);
+        .port(o_p).signal({U,U|V,U|V}).repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -518,7 +518,7 @@ TEST_F(ProcessorStatus, ShouldClearVFromDB6) {
     testBench.tick();
 
     Trace expected = TraceBuilder()
-        .port(o_p).signal({0,V,0,0}).repeatEachStep(2);
+        .port(o_p).signal({U,U|V,U,U}).repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -537,7 +537,7 @@ TEST_F(ProcessorStatus, ShouldSetVFromAVR) {
     testBench.tick();
 
     Trace expected = TraceBuilder()
-        .port(o_p).signal({0,V,V}).repeatEachStep(2);
+        .port(o_p).signal({U,U|V,U|V}).repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -559,7 +559,7 @@ TEST_F(ProcessorStatus, ShouldClearVFromAVR) {
     testBench.tick();
 
     Trace expected = TraceBuilder()
-        .port(o_p).signal({0,V,0,0}).repeatEachStep(2);
+        .port(o_p).signal({U,U|V,U,U}).repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -579,5 +579,5 @@ TEST_F(ProcessorStatus, ShouldNotLoadWhenClockDisabled) {
 
     testBench.tick();
 
-    EXPECT_EQ(0, core.o_p);
+    EXPECT_EQ(U, core.o_p);
 }
