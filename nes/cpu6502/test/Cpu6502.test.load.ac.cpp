@@ -2,9 +2,9 @@
 
 namespace {
     const std::map<uint8_t, uint8_t> kTestCasesLDA = {
-        {0x00, Z},
-        {1<<7, N},
-        {1, 0}
+        {0x00, U|Z},
+        {1<<7, U|N},
+        {1, U}
     };
 }
 
@@ -46,6 +46,7 @@ TEST_F(Cpu6502, ShouldImplementLDAiProcessorStatus) {
         sram.clear(0);
     
         Assembler()
+            .CLI()
             .LDA().immediate(kTestData)
             .NOP()
             .compileTo(sram);
@@ -53,7 +54,7 @@ TEST_F(Cpu6502, ShouldImplementLDAiProcessorStatus) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(3);
+        testBench.tick(5);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -81,6 +82,7 @@ TEST_F(Cpu6502, ShouldImplementLDAaProcessorStatus) {
         sram.clear(0);
         
         Assembler()
+            .CLI()
             .LDA().a(kTestAddress)
             .NOP()
             .compileTo(sram);
@@ -90,7 +92,7 @@ TEST_F(Cpu6502, ShouldImplementLDAaProcessorStatus) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(6);
+        testBench.tick(8);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -124,6 +126,7 @@ TEST_F(Cpu6502, ShouldImplementLDAabsoluteIndexedWithXProcessorStatusWithoutCarr
         const uint8_t kX = 3;
     
         Assembler()
+                .CLI()
                 .LDX().immediate(kX)
                 .LDA().a("M").x()
                 .NOP()
@@ -136,7 +139,7 @@ TEST_F(Cpu6502, ShouldImplementLDAabsoluteIndexedWithXProcessorStatusWithoutCarr
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(8);
+        testBench.tick(10);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -170,6 +173,7 @@ TEST_F(Cpu6502, ShouldImplementLDAabsoluteIndexedWithXProcessorStatusWithCarry) 
         const uint8_t kX = 4;
     
         Assembler()
+                .CLI()
                 .LDX().immediate(kX)
                 .LDA().a("M").x()
                 .NOP()
@@ -182,7 +186,7 @@ TEST_F(Cpu6502, ShouldImplementLDAabsoluteIndexedWithXProcessorStatusWithCarry) 
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(9);
+        testBench.tick(11);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -216,6 +220,7 @@ TEST_F(Cpu6502, ShouldImplementLDAabsoluteIndexedWithYProcessorStatusWithoutCarr
         const uint8_t kY = 3;
     
         Assembler()
+                .CLI()
                 .LDY().immediate(kY)
                 .LDA().a("M").y()
                 .NOP()
@@ -228,7 +233,7 @@ TEST_F(Cpu6502, ShouldImplementLDAabsoluteIndexedWithYProcessorStatusWithoutCarr
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(8);
+        testBench.tick(10);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -262,6 +267,7 @@ TEST_F(Cpu6502, ShouldImplementLDAabsoluteIndexedWithYProcessorStatusWithCarry) 
         const uint8_t kY = 4;
     
         Assembler()
+                .CLI()
                 .LDY().immediate(kY)
                 .LDA().a("M").y()
                 .NOP()
@@ -274,7 +280,7 @@ TEST_F(Cpu6502, ShouldImplementLDAabsoluteIndexedWithYProcessorStatusWithCarry) 
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(9);
+        testBench.tick(11);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -434,6 +440,7 @@ TEST_F(Cpu6502, ShouldImplementLDAZeroPageIndirectIndexedWithYProcessorStatus) {
                 .byte(kTestData)
             .org(0xABCD)
             .label("init")
+                .CLI()
                 .LDY().immediate(kTestOffset)
             .label("start")
                 .LDA().zpIndirect(kTestAddressIndirect).y()
@@ -445,7 +452,7 @@ TEST_F(Cpu6502, ShouldImplementLDAZeroPageIndirectIndexedWithYProcessorStatus) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(9);
+        testBench.tick(11);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -493,6 +500,7 @@ TEST_F(Cpu6502, ShouldImplementLDAzeropageProcessorStatus) {
         sram.clear(0);
     
         Assembler()
+                .CLI()
                 .LDA().zp(kTestAddress)
                 .NOP()
             .org(0x0000 + kTestAddress)
@@ -502,7 +510,7 @@ TEST_F(Cpu6502, ShouldImplementLDAzeropageProcessorStatus) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(5);
+        testBench.tick(7);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }

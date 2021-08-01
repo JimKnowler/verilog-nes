@@ -2,9 +2,9 @@
 
 namespace {
     const std::map<uint8_t, uint8_t> kTestCasesLDX = {
-        {0x00, Z},
-        {1<<7, N},
-        {1, 0}
+        {0x00, U|Z},
+        {1<<7, U|N},
+        {1, U}
     };
 }
 
@@ -46,6 +46,7 @@ TEST_F(Cpu6502, ShouldImplementLDXiProcessorStatus) {
         sram.clear(0);
     
         Assembler()
+            .CLI()
             .LDX().immediate(kTestData)
             .NOP()
             .compileTo(sram);
@@ -53,7 +54,7 @@ TEST_F(Cpu6502, ShouldImplementLDXiProcessorStatus) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(3);
+        testBench.tick(5);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -81,6 +82,7 @@ TEST_F(Cpu6502, ShouldImplementLDXaProcessorStatus) {
         sram.clear(0);
         
         Assembler()
+            .CLI()
             .LDX().a(kTestAddress)
             .NOP()
             .compileTo(sram);
@@ -90,7 +92,7 @@ TEST_F(Cpu6502, ShouldImplementLDXaProcessorStatus) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(6);
+        testBench.tick(8);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -124,6 +126,7 @@ TEST_F(Cpu6502, ShouldImplementLDXabsoluteIndexedWithYProcessorStatusWithoutCarr
         const uint8_t kY = 3;
     
         Assembler()
+                .CLI()
                 .LDY().immediate(kY)
                 .LDX().a("M").y()
                 .NOP()
@@ -136,7 +139,7 @@ TEST_F(Cpu6502, ShouldImplementLDXabsoluteIndexedWithYProcessorStatusWithoutCarr
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(8);
+        testBench.tick(10);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -170,6 +173,7 @@ TEST_F(Cpu6502, ShouldImplementLDXabsoluteIndexedWithYProcessorStatusWithCarry) 
         const uint8_t kY = 4;
     
         Assembler()
+                .CLI()
                 .LDY().immediate(kY)
                 .LDX().a("M").y()
                 .NOP()
@@ -182,7 +186,7 @@ TEST_F(Cpu6502, ShouldImplementLDXabsoluteIndexedWithYProcessorStatusWithCarry) 
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(9);
+        testBench.tick(11);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
@@ -230,6 +234,7 @@ TEST_F(Cpu6502, ShouldImplementLDXzeropageProcessorStatus) {
         sram.clear(0);
     
         Assembler()
+                .CLI()
                 .LDX().zp(kTestAddress)
                 .NOP()
             .org(0x0000 + kTestAddress)
@@ -239,7 +244,7 @@ TEST_F(Cpu6502, ShouldImplementLDXzeropageProcessorStatus) {
         testBench.reset();
         helperSkipResetVector();
 
-        testBench.tick(5);
+        testBench.tick(7);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
