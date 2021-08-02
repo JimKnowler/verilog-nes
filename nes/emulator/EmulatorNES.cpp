@@ -103,6 +103,10 @@ namespace emulator {
         }
 
         void update() {
+            if (GetKey(olc::ESCAPE).bReleased) {
+                exit(0);
+            }
+
             if (GetKey(olc::V).bReleased) {
                 toggleDisplayVRAM();
             }
