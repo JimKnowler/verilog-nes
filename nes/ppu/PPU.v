@@ -164,7 +164,7 @@ PPUTileAddress ppuTileAddress(
 );
 
 // background attribute table
-reg [7:0] r_video_background_attribute_lookup;
+reg [1:0] r_video_background_attribute_next;
 reg [1:0] r_video_background_attribute;
 
 wire [13:0] w_address_background_attribute;
@@ -569,21 +569,7 @@ begin
             r_video_address <= w_address_background_tile;
             r_video_rd_n <= 0;
 
-            // load the background attribute table with the correct 2bits for the current tile position
-            if (w_attribute_table_offset_x) 
-            begin
-                if (w_attribute_table_offset_y)
-                    r_video_background_attribute <= r_video_background_attribute_lookup[7:6];
-                else
-                    r_video_background_attribute <= r_video_background_attribute_lookup[3:2];
-            end
-            else
-            begin
-                if (w_attribute_table_offset_y)
-                    r_video_background_attribute <= r_video_background_attribute_lookup[5:4];
-                else
-                    r_video_background_attribute <= r_video_background_attribute_lookup[1:0];
-            end
+            r_video_background_attribute <= r_video_background_attribute_next;
         end
         1: begin
             r_video_background_tile <= i_vram_data;         
@@ -595,7 +581,23 @@ begin
             r_video_rd_n <= 0;   
         end
         3: begin
-            r_video_background_attribute_lookup <= i_vram_data;
+            // load the background attribute table with the correct 2bits for the current tile position
+            if (w_attribute_table_offset_x) 
+            begin
+                if (w_attribute_table_offset_y)
+                    r_video_background_attribute_next <= i_vram_data[7:6];
+                else
+                    r_video_background_attribute_next <= i_vram_data[3:2];
+            end
+            else
+            begin
+                if (w_attribute_table_offset_y)
+                    r_video_background_attribute_next <= i_vram_data[5:4];
+                else
+                    r_video_background_attribute_next <= i_vram_data[1:0];
+            end
+
+
             r_video_rd_n <= 1;
         end
         4: begin
