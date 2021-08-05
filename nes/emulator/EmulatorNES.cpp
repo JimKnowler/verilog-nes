@@ -35,7 +35,8 @@ namespace emulator {
         bool OnUserCreate() override {
             initSimulation();
 
-            initMario();
+            //initMario();
+            initDonkeyKong();
 
             reset();
 
@@ -682,6 +683,18 @@ namespace emulator {
 
             // CHR - pattern table
             auto chr = loadBinaryFile("roms/supermario/chr_rom_bank_0.bin");
+            vram.write(0x0000, chr);
+        }
+
+        void initDonkeyKong() {
+            // PRG - game code
+
+            // load bank 0 -> 0xC000:0xFFFF
+            auto bank0 = loadBinaryFile("roms/donkeykong/prg_rom_bank_0.6502.bin");
+            sram.write(0xC000, bank0);
+
+            // CHR - pattern table
+            auto chr = loadBinaryFile("roms/donkeykong/chr_rom_bank_0.bin");
             vram.write(0x0000, chr);
         }
 
