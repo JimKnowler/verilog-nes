@@ -174,7 +174,7 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  STY_zp_x = 8'h94, STA_zp_x = 8'h95, STX_zp_y = 8'h96,
                  ORA_zp_x = 8'h15, AND_zp_x = 8'h35, EOR_zp_x = 8'h55,
                  ADC_zp_x = 8'h75, CMP_zp_x = 8'hD5, SBC_zp_x = 8'hF5,
-                 DEC_zp_x = 8'hD6;
+                 DEC_zp_x = 8'hD6, INC_zp_x = 8'hF6;
 
 // RW pin
 localparam RW_READ = 1;
@@ -1046,7 +1046,7 @@ begin
         ASL_ax, LSR_ax,
         DEC_ax, INC_ax,
         CMP_zp, CPX_zp, CPY_zp,
-        DEC_zp_x:
+        DEC_zp_x, INC_zp_x:
         begin
             // Read PC+1
             output_pch_on_abh(1);
@@ -1325,7 +1325,7 @@ begin
         STY_zp_x, STA_zp_x, STX_zp_y,
         ORA_zp_x, AND_zp_x, EOR_zp_x,
         ADC_zp_x, CMP_zp_x, SBC_zp_x,
-        DEC_zp_x:
+        DEC_zp_x, INC_zp_x:
         begin
             retain_pc(1);
 
@@ -1821,7 +1821,7 @@ begin
 
             next_opcode();
         end
-        DEC_zp_x:
+        DEC_zp_x, INC_zp_x:
         begin
             retain_pc(1);
 
@@ -2091,15 +2091,25 @@ begin
 
             output_add_on_abh(1);
         end
-        DEC_zp_x:
+        DEC_zp_x, INC_zp_x:
         begin
             retain_pc(1);
 
             o_rw = RW_WRITE;
             
             load_add_from_dl(1);
-            o_0_add = 0;
-            o_sb_add = 1;       // 0xff on sb
+
+            case (w_ir)
+            DEC_zp_x: begin
+                o_0_add = 0;
+                o_sb_add = 1;       // 0xff on sb
+            end
+            INC_zp_x: begin
+                o_1_addc = 1;
+            end
+            default: begin
+            end
+            endcase
         end
         default:
         begin
@@ -2295,7 +2305,7 @@ begin
 
             o_rw = RW_WRITE;
         end
-        DEC_zp_x:
+        DEC_zp_x, INC_zp_x:
         begin
             retain_pc(1);
 
