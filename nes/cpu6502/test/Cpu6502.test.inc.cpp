@@ -967,3 +967,207 @@ TEST_F(Cpu6502, ShouldImplementINCabsoluteIndexedWithXProcessorStatusWithCarry) 
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
+
+TEST_F(Cpu6502, ShouldImplementADCzeropageIndexedWithX) {
+    sram.clear(0);
+    
+    const uint8_t kTestDataA = 0b10110011;
+    const uint8_t kTestAddressZeroPage = 0x42;
+    const uint8_t kX = 0xFE;
+    const uint16_t kTestAddressIndexed = 0x0000 + ((kTestAddressZeroPage + kX) % 0x0100);
+    const uint8_t kTestDataI = 0b10010110;
+    const uint8_t kExpectedData = kTestDataA + kTestDataI;
+    
+    Assembler assembler;
+    assembler
+        .byte(0)
+        .org(kTestAddressIndexed)
+            .byte(kTestDataI)
+        .org(1234)
+        .label("init")
+            .LDA().immediate(kTestDataA)
+            .LDX().immediate(kX)
+        .label("start")
+            .ADC().zp(kTestAddressZeroPage).x()
+            .NOP()
+        .org(0xfffc)
+        .word("init")
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    cpu6502::assembler::Address addressStart("start");
+    assembler.lookupAddress(addressStart);
+
+    // skip LDA + LDX
+    testBench.tick(4);
+    testBench.trace.clear();
+
+    // simulate ADC and NOP
+    testBench.tick(6);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(6)
+        .port(o_rw).signal("11")
+                    .repeat(6)
+        .port(o_sync).signal("100010").repeatEachStep(2)
+        .port(o_address).signal({
+                            // ADC
+                            addressStart.byteIndex(),
+                            addressStart.byteIndex() + 1u,
+                            0x0000 + kTestAddressZeroPage,
+                            kTestAddressIndexed,
+
+                            // NOP
+                            addressStart.byteIndex() + 2u,
+                            addressStart.byteIndex() + 3u,
+                        })
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({kTestDataA}).repeat(5).repeatEachStep(2)
+                         .signal({kExpectedData}).repeatEachStep(2)
+        .port(o_debug_x).signal({kX}).repeat(6).repeatEachStep(2)
+        .port(o_debug_y).signal({0x00}).repeat(6).repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldImplementADCzeropageIndexedWithXProcessorStatus) {
+    const uint8_t kTestAddressZeroPage = 0x53;
+    const uint8_t kX = 0xFE;
+    const uint16_t kTestAddressIndexed = 0x0000 + ((kTestAddressZeroPage + kX) % 0x0100);
+
+    for (auto& testCase : kTestCasesADCWithoutCarryIn) {
+        const uint8_t kTestDataA = testCase.first.first;
+        const uint8_t kTestDataI = testCase.first.second;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler assembler;
+        assembler
+            .byte(0)
+            .org(kTestAddressIndexed)
+                .byte(kTestDataI)
+            .org(1234)
+            .label("init")
+                .CLI()
+                .LDX().immediate(kX)
+                .LDA().immediate(kTestDataA)
+            .label("start")
+                .ADC().zp(kTestAddressZeroPage).x()
+                .NOP()
+            .org(0xfffc)
+            .word("init")
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(12);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementADCzeropageIndexedWithXWithCarryIn) {
+    sram.clear(0);
+    
+    const uint8_t kTestDataA = 0b10110011;
+    const uint8_t kTestAddressZeroPage = 0x42;
+    const uint8_t kX = 0xFE;
+    const uint16_t kTestAddressIndexed = 0x0000 + ((kTestAddressZeroPage + kX) % 0x0100);
+    const uint8_t kTestDataI = 0b10010110;
+    const uint8_t kExpectedData = kTestDataA + kTestDataI + 1;
+    
+    Assembler assembler;
+    assembler
+        .byte(0)
+        .org(kTestAddressIndexed)
+            .byte(kTestDataI)
+        .org(1234)
+        .label("init")
+            .SEC()
+            .LDA().immediate(kTestDataA)
+            .LDX().immediate(kX)
+        .label("start")
+            .ADC().zp(kTestAddressZeroPage).x()
+            .NOP()
+        .org(0xfffc)
+        .word("init")
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    cpu6502::assembler::Address addressStart("start");
+    assembler.lookupAddress(addressStart);
+
+    // skip SEC + LDA + LDX
+    testBench.tick(6);
+    testBench.trace.clear();
+
+    // simulate ADC and NOP
+    testBench.tick(6);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(6)
+        .port(o_rw).signal("11")
+                    .repeat(6)
+        .port(o_sync).signal("100010").repeatEachStep(2)
+        .port(o_address).signal({
+                            // ADC
+                            addressStart.byteIndex(),
+                            addressStart.byteIndex() + 1u,
+                            0x0000 + kTestAddressZeroPage,
+                            kTestAddressIndexed,
+
+                            // NOP
+                            addressStart.byteIndex() + 2u,
+                            addressStart.byteIndex() + 3u,
+                        })
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({kTestDataA}).repeat(5).repeatEachStep(2)
+                         .signal({kExpectedData}).repeatEachStep(2)
+        .port(o_debug_x).signal({kX}).repeat(6).repeatEachStep(2)
+        .port(o_debug_y).signal({0x00}).repeat(6).repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldImplementADCzeropageIndexedWithXProcessorStatusWithCarryIn) {
+    const uint8_t kTestAddressZeroPage = 0x53;
+    const uint8_t kX = 0xFE;
+    const uint16_t kTestAddressIndexed = 0x0000 + ((kTestAddressZeroPage + kX) % 0x0100);
+
+    for (auto& testCase : kTestCasesADCWithCarryIn) {
+        const uint8_t kTestDataA = testCase.first.first;
+        const uint8_t kTestDataI = testCase.first.second;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler assembler;
+        assembler
+            .byte(0)
+            .org(kTestAddressIndexed)
+                .byte(kTestDataI)
+            .org(1234)
+            .label("init")
+                .CLI()
+                .SEC()
+                .LDX().immediate(kX)
+                .LDA().immediate(kTestDataA)
+            .label("start")
+                .ADC().zp(kTestAddressZeroPage).x()
+                .NOP()
+            .org(0xfffc)
+            .word("init")
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(14);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
