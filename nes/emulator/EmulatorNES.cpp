@@ -12,7 +12,7 @@
 using namespace nestestbench;
 using namespace memory;
 
-#define LOG_CPU(msg, ...)   //printf(msg, __VA_ARGS__) 
+#define LOG_CPU(msg, ...)   printf(msg, __VA_ARGS__) 
 #define LOG_BUS(msg, ...)   //printf(msg, __VA_ARGS__)
 
 namespace {

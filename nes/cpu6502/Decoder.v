@@ -169,7 +169,8 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  LSR_zp = 8'h46, ASL_zp = 8'h06,
                  ASL_ax = 8'h1E, LSR_ax = 8'h5E,
                  DEC_ax = 8'hDE, INC_ax = 8'hFE,
-                 CMP_zp = 8'hC5, CPX_zp = 8'hE4, CPY_zp = 8'hC4;
+                 CMP_zp = 8'hC5, CPX_zp = 8'hE4, CPY_zp = 8'hC4,
+                 LDY_zp_x = 8'hB4;
 
 // RW pin
 localparam RW_READ = 1;
@@ -667,7 +668,7 @@ begin
                 load_z_n_from_db(1);
             end
         end
-        LDA_a, LDX_a, LDY_a, LDA_zp_ind_y, LDA_zp, LDX_zp, LDY_zp:
+        LDA_a, LDX_a, LDY_a, LDA_zp_ind_y, LDA_zp, LDX_zp, LDY_zp, LDY_zp_x:
         begin
             if (w_phi1)
             begin
@@ -681,7 +682,7 @@ begin
                 case (w_ir)
                 LDA_a, LDA_zp_ind_y, LDA_zp: o_sb_ac = 1;
                 LDX_a, LDX_zp: o_sb_x = 1;
-                LDY_a, LDY_zp: o_sb_y = 1;
+                LDY_a, LDY_zp, LDY_zp_x: o_sb_y = 1;
                 default: begin
                 end
                 endcase
@@ -1027,7 +1028,7 @@ begin
         INC_zp, DEC_zp,
         EOR_zp, AND_zp,
         ROR_ax, ROL_ax,
-        LDA_zp, LDX_zp, LDY_zp,
+        LDA_zp, LDX_zp, LDY_zp, LDY_zp_x,
         ADC_zp, ADC_ax, ADC_ay,
         BIT_zp, ROL_zp, ROR_zp,
         LSR_zp, ASL_zp,
@@ -1307,6 +1308,18 @@ begin
 
             load_add_from_dl(1);
             o_1_addc = 1;
+        end
+        LDY_zp_x:
+        begin
+            retain_pc(1);
+
+            output_0_on_abh(1);
+            output_dl_on_abl(1);
+
+            load_add_from_dl(1);
+            o_0_add = 0;
+            o_x_sb = 1;
+            o_sb_add = 1;
         end
         LDA_a, LDX_a, LDY_a,
         STA_a, STX_a, STY_a,
@@ -1773,6 +1786,15 @@ begin
             
             // load BASE ADDRESS HI from DL into ALU
             load_add_from_dl(1);
+        end
+        LDY_zp_x:
+        begin
+            retain_pc(1);
+
+            output_0_on_abh(1);
+            output_add_on_abl(1);
+
+            next_opcode();
         end
         default:
         begin

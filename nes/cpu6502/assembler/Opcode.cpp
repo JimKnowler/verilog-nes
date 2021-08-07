@@ -114,6 +114,8 @@ namespace cpu6502 { namespace assembler {
             case kZeroPage:
             case kZeroPage|kIndirect|kIndexedWithY:
             case kZeroPage|kIndirect|kIndexedWithX:
+            case kZeroPage|kIndexedWithX:
+            case kZeroPage|kIndexedWithY:
                 assert(0 == m_address.hi());
                 bytes.push_back(m_address.lo());
                 break;
