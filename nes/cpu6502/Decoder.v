@@ -173,7 +173,7 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  LDY_zp_x = 8'hB4, LDA_zp_x = 8'hB5, LDX_zp_y = 8'hB6,
                  STY_zp_x = 8'h94, STA_zp_x = 8'h95, STX_zp_y = 8'h96,
                  ORA_zp_x = 8'h15, AND_zp_x = 8'h35, EOR_zp_x = 8'h55,
-                 ADC_zp_x = 8'h75;
+                 ADC_zp_x = 8'h75, CMP_zp_x = 8'hD5;
 
 // RW pin
 localparam RW_READ = 1;
@@ -698,7 +698,7 @@ begin
         ADC_a, ADC_zp_x,
         SBC_a, SBC_ax, SBC_ay,
         AND_a, EOR_a, ORA_a,
-        CMP_ax, CMP_ay,
+        CMP_ax, CMP_ay, CMP_zp_x,
         AND_ax, AND_ay, AND_zp, AND_zp_x,
         ORA_ax, ORA_ay, ORA_zp_x,
         EOR_ax, EOR_ay, EOR_zp, EOR_zp_x:
@@ -744,7 +744,7 @@ begin
                     // carry in
                     o_1_addc = i_p[C];
                 end
-                CMP_a, CPX_a, CPY_a, CMP_ax, CMP_ay: begin
+                CMP_a, CPX_a, CPY_a, CMP_ax, CMP_ay, CMP_zp_x: begin
                     // subtraction as 2's complement addition
                     o_db_n_add = 1;
                     o_1_addc = 1;
@@ -775,7 +775,7 @@ begin
 
                 // load carry/overflow flags
                 case (w_ir)
-                CMP_a, CPX_a, CPY_a, CMP_ax, CMP_ay:
+                CMP_a, CPX_a, CPY_a, CMP_ax, CMP_ay, CMP_zp_x:
                 begin
                     // C flag
                     o_acr_c = 1;
@@ -1038,7 +1038,7 @@ begin
         LDY_zp_x, LDA_zp_x, LDX_zp_y,
         STY_zp_x, STA_zp_x, STX_zp_y,
         ORA_zp_x, AND_zp_x, EOR_zp_x,
-        ADC_zp_x,
+        ADC_zp_x, CMP_zp_x,
         ADC_zp, ADC_ax, ADC_ay,
         BIT_zp, ROL_zp, ROR_zp,
         LSR_zp, ASL_zp,
@@ -1322,7 +1322,7 @@ begin
         LDY_zp_x, LDA_zp_x, LDX_zp_y,
         STY_zp_x, STA_zp_x, STX_zp_y,
         ORA_zp_x, AND_zp_x, EOR_zp_x,
-        ADC_zp_x:
+        ADC_zp_x, CMP_zp_x:
         begin
             retain_pc(1);
 
@@ -1809,7 +1809,7 @@ begin
         end
         LDY_zp_x, LDA_zp_x, LDX_zp_y,
         ORA_zp_x, AND_zp_x, EOR_zp_x,
-        ADC_zp_x:
+        ADC_zp_x, CMP_zp_x:
         begin
             retain_pc(1);
 
