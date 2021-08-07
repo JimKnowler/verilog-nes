@@ -6,4 +6,5 @@ OPCODE_IMPL(STA, {
     addAddressingMode(kAbsolute|kIndexedWithY, 0x99);
     addAddressingMode(kZeroPage, 0x85);
     addAddressingMode(kZeroPage|kIndirect|kIndexedWithY, 0x91);
+    addAddressingMode(kZeroPage|kIndexedWithX, 0x95);
 });

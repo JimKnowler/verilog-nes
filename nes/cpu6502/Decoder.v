@@ -170,7 +170,8 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  ASL_ax = 8'h1E, LSR_ax = 8'h5E,
                  DEC_ax = 8'hDE, INC_ax = 8'hFE,
                  CMP_zp = 8'hC5, CPX_zp = 8'hE4, CPY_zp = 8'hC4,
-                 LDY_zp_x = 8'hB4, LDA_zp_x = 8'hB5, LDX_zp_y = 8'hB6;
+                 LDY_zp_x = 8'hB4, LDA_zp_x = 8'hB5, LDX_zp_y = 8'hB6,
+                 STY_zp_x = 8'h94, STA_zp_x = 8'h95, STX_zp_y = 8'h96;
 
 // RW pin
 localparam RW_READ = 1;
@@ -1030,6 +1031,7 @@ begin
         ROR_ax, ROL_ax,
         LDA_zp, LDX_zp, LDY_zp,
         LDY_zp_x, LDA_zp_x, LDX_zp_y,
+        STY_zp_x, STA_zp_x, STX_zp_y,
         ADC_zp, ADC_ax, ADC_ay,
         BIT_zp, ROL_zp, ROR_zp,
         LSR_zp, ASL_zp,
@@ -1310,7 +1312,8 @@ begin
             load_add_from_dl(1);
             o_1_addc = 1;
         end
-        LDY_zp_x, LDA_zp_x, LDX_zp_y:
+        LDY_zp_x, LDA_zp_x, LDX_zp_y,
+        STY_zp_x, STA_zp_x, STX_zp_y:
         begin
             retain_pc(1);
 
@@ -1319,14 +1322,14 @@ begin
 
             load_add_from_dl(1);
             o_0_add = 0;
-            if (i_ir == LDX_zp_y)
-            begin
+            case (i_ir)
+            LDX_zp_y, STX_zp_y: begin
                 o_y_sb = 1;
             end
-            else
-            begin
+            default: begin
                 o_x_sb = 1;
             end
+            endcase
             o_sb_add = 1;
         end
         LDA_a, LDX_a, LDY_a,
@@ -1801,6 +1804,25 @@ begin
 
             output_0_on_abh(1);
             output_add_on_abl(1);
+
+            next_opcode();
+        end
+        STY_zp_x, STA_zp_x, STX_zp_y:
+        begin
+            retain_pc(1);
+
+            output_0_on_abh(1);
+            output_add_on_abl(1);
+
+            o_rw = RW_WRITE;
+
+            case (i_ir)
+            STY_zp_x:   o_y_sb = 1;
+            STX_zp_y:   o_x_sb = 1;
+            default:    o_ac_sb = 1;
+            endcase
+
+            o_sb_db = 1;
 
             next_opcode();
         end
