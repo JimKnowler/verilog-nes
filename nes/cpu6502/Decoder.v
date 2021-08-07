@@ -170,7 +170,7 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  ASL_ax = 8'h1E, LSR_ax = 8'h5E,
                  DEC_ax = 8'hDE, INC_ax = 8'hFE,
                  CMP_zp = 8'hC5, CPX_zp = 8'hE4, CPY_zp = 8'hC4,
-                 LDY_zp_x = 8'hB4;
+                 LDY_zp_x = 8'hB4, LDA_zp_x = 8'hB5, LDX_zp_y = 8'hB6;
 
 // RW pin
 localparam RW_READ = 1;
@@ -668,7 +668,7 @@ begin
                 load_z_n_from_db(1);
             end
         end
-        LDA_a, LDX_a, LDY_a, LDA_zp_ind_y, LDA_zp, LDX_zp, LDY_zp, LDY_zp_x:
+        LDA_a, LDX_a, LDY_a, LDA_zp_ind_y, LDA_zp, LDX_zp, LDY_zp, LDY_zp_x, LDA_zp_x, LDX_zp_y:
         begin
             if (w_phi1)
             begin
@@ -680,8 +680,8 @@ begin
                 output_add_on_sb(1);
 
                 case (w_ir)
-                LDA_a, LDA_zp_ind_y, LDA_zp: o_sb_ac = 1;
-                LDX_a, LDX_zp: o_sb_x = 1;
+                LDA_a, LDA_zp_ind_y, LDA_zp, LDA_zp_x: o_sb_ac = 1;
+                LDX_a, LDX_zp, LDX_zp_y: o_sb_x = 1;
                 LDY_a, LDY_zp, LDY_zp_x: o_sb_y = 1;
                 default: begin
                 end
@@ -1028,7 +1028,8 @@ begin
         INC_zp, DEC_zp,
         EOR_zp, AND_zp,
         ROR_ax, ROL_ax,
-        LDA_zp, LDX_zp, LDY_zp, LDY_zp_x,
+        LDA_zp, LDX_zp, LDY_zp,
+        LDY_zp_x, LDA_zp_x, LDX_zp_y,
         ADC_zp, ADC_ax, ADC_ay,
         BIT_zp, ROL_zp, ROR_zp,
         LSR_zp, ASL_zp,
@@ -1309,7 +1310,7 @@ begin
             load_add_from_dl(1);
             o_1_addc = 1;
         end
-        LDY_zp_x:
+        LDY_zp_x, LDA_zp_x, LDX_zp_y:
         begin
             retain_pc(1);
 
@@ -1318,7 +1319,14 @@ begin
 
             load_add_from_dl(1);
             o_0_add = 0;
-            o_x_sb = 1;
+            if (i_ir == LDX_zp_y)
+            begin
+                o_y_sb = 1;
+            end
+            else
+            begin
+                o_x_sb = 1;
+            end
             o_sb_add = 1;
         end
         LDA_a, LDX_a, LDY_a,
@@ -1787,7 +1795,7 @@ begin
             // load BASE ADDRESS HI from DL into ALU
             load_add_from_dl(1);
         end
-        LDY_zp_x:
+        LDY_zp_x, LDA_zp_x, LDX_zp_y:
         begin
             retain_pc(1);
 

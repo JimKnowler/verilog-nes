@@ -5,4 +5,5 @@ OPCODE_IMPL(LDX, {
     addAddressingMode(kAbsolute, 0xAE);
     addAddressingMode(kAbsolute|kIndexedWithY, 0xBE);
     addAddressingMode(kZeroPage, 0xA6);
+    addAddressingMode(kZeroPage|kIndexedWithY, 0xB6);
 });

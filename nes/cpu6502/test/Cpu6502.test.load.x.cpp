@@ -248,3 +248,80 @@ TEST_F(Cpu6502, ShouldImplementLDXzeropageProcessorStatus) {
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
+
+TEST_F(Cpu6502, ShouldImplementLDXzeropageIndexedWithY) {
+    sram.clear(0);
+    
+    const uint8_t kTestAddress = 0x94;
+    const uint8_t kTestData = 0x57;
+    const uint8_t kY = 0xfe;
+    const uint16_t kTestAddressIndexed = 0x0000 + ((kTestAddress + kY) % 0x100);
+
+    Assembler()
+            .LDY().immediate(kY)
+            .LDX().zp(kTestAddress).y()
+            .NOP()
+        .org(kTestAddressIndexed)
+        .byte(kTestData)
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    // skip LDY
+    testBench.tick(2);
+    testBench.trace.clear();
+
+    // simulate LDX/NOP
+    testBench.tick(6);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(6)
+        .port(o_rw).signal("11")
+                    .repeat(6)
+        .port(o_sync).signal("100010").repeatEachStep(2)
+        .port(o_address).signal({
+                            // LDX
+                            2, 
+                            3, 
+                            kTestAddress, 
+                            kTestAddressIndexed, 
+                            // NOP
+                            4, 
+                            5})
+                        .repeatEachStep(2)
+        .port(o_debug_x).signal({0x00}).repeat(5)
+                        .signal({kTestData})
+                        .concat().repeatEachStep(2)
+        .port(o_debug_ac).signal({0x00}).repeat(12)
+        .port(o_debug_y).signal({kY}).repeat(12);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldImplementLDXzeropageIndexedWithYProcessorStatus) {
+    const uint8_t kTestAddress = 0x78;
+    const uint8_t kY = 0x11;
+
+    for (auto& testCase : kTestCasesLDX) {
+        const uint8_t kTestData = testCase.first;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+        
+        sram.clear(0);
+    
+        Assembler()
+                .CLI()
+                .LDY().immediate(kY)
+                .LDX().zp(kTestAddress).y()
+                .NOP()
+            .org(0x0000 + kTestAddress + kY)
+            .byte(kTestData)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(10);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
