@@ -171,7 +171,8 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  DEC_ax = 8'hDE, INC_ax = 8'hFE,
                  CMP_zp = 8'hC5, CPX_zp = 8'hE4, CPY_zp = 8'hC4,
                  LDY_zp_x = 8'hB4, LDA_zp_x = 8'hB5, LDX_zp_y = 8'hB6,
-                 STY_zp_x = 8'h94, STA_zp_x = 8'h95, STX_zp_y = 8'h96;
+                 STY_zp_x = 8'h94, STA_zp_x = 8'h95, STX_zp_y = 8'h96,
+                 ORA_zp_x = 8'h15, AND_zp_x = 8'h35, EOR_zp_x = 8'h55;
 
 // RW pin
 localparam RW_READ = 1;
@@ -669,7 +670,8 @@ begin
                 load_z_n_from_db(1);
             end
         end
-        LDA_a, LDX_a, LDY_a, LDA_zp_ind_y, LDA_zp, LDX_zp, LDY_zp, LDY_zp_x, LDA_zp_x, LDX_zp_y:
+        LDA_a, LDX_a, LDY_a, LDA_zp_ind_y, LDA_zp, LDX_zp, LDY_zp, 
+        LDY_zp_x, LDA_zp_x, LDX_zp_y:
         begin
             if (w_phi1)
             begin
@@ -695,9 +697,9 @@ begin
         ADC_a, SBC_a, SBC_ax, SBC_ay,
         AND_a, EOR_a, ORA_a,
         CMP_ax, CMP_ay,
-        AND_ax, AND_ay, AND_zp,
-        ORA_ax, ORA_ay,
-        EOR_ax, EOR_ay, EOR_zp:
+        AND_ax, AND_ay, AND_zp, AND_zp_x,
+        ORA_ax, ORA_ay, ORA_zp_x,
+        EOR_ax, EOR_ay, EOR_zp, EOR_zp_x:
         begin
             if (w_phi1)
             begin
@@ -714,15 +716,15 @@ begin
                 o_sb_add = 1;
 
                 case (w_ir)
-                AND_a, AND_ax, AND_ay, AND_zp: begin
+                AND_a, AND_ax, AND_ay, AND_zp, AND_zp_x: begin
                     o_db_add = 1;
                     o_ands = 1;
                 end
-                EOR_a, EOR_ax, EOR_ay, EOR_zp: begin
+                EOR_a, EOR_ax, EOR_ay, EOR_zp, EOR_zp_x: begin
                     o_db_add = 1;
                     o_eors = 1;
                 end
-                ORA_a, ORA_ax, ORA_ay: begin
+                ORA_a, ORA_ax, ORA_ay, ORA_zp_x: begin
                     o_db_add = 1;
                     o_ors = 1;
                 end
@@ -758,9 +760,9 @@ begin
 
                 // load Accumulator from SB
                 case (w_ir)
-                AND_a, AND_ax, AND_ay, AND_zp,
-                EOR_a, EOR_ax, EOR_ay, EOR_zp,
-                ORA_a, ORA_ax, ORA_ay,
+                AND_a, AND_ax, AND_ay, AND_zp, AND_zp_x,
+                EOR_a, EOR_ax, EOR_ay, EOR_zp, EOR_zp_x,
+                ORA_a, ORA_ax, ORA_ay, ORA_zp_x,
                 ADC_a,
                 SBC_a, SBC_ax, SBC_ay: begin
                     o_sb_ac = 1;
@@ -1032,6 +1034,7 @@ begin
         LDA_zp, LDX_zp, LDY_zp,
         LDY_zp_x, LDA_zp_x, LDX_zp_y,
         STY_zp_x, STA_zp_x, STX_zp_y,
+        ORA_zp_x, AND_zp_x, EOR_zp_x,
         ADC_zp, ADC_ax, ADC_ay,
         BIT_zp, ROL_zp, ROR_zp,
         LSR_zp, ASL_zp,
@@ -1313,7 +1316,8 @@ begin
             o_1_addc = 1;
         end
         LDY_zp_x, LDA_zp_x, LDX_zp_y,
-        STY_zp_x, STA_zp_x, STX_zp_y:
+        STY_zp_x, STA_zp_x, STX_zp_y,
+        ORA_zp_x, AND_zp_x, EOR_zp_x:
         begin
             retain_pc(1);
 
@@ -1798,7 +1802,8 @@ begin
             // load BASE ADDRESS HI from DL into ALU
             load_add_from_dl(1);
         end
-        LDY_zp_x, LDA_zp_x, LDX_zp_y:
+        LDY_zp_x, LDA_zp_x, LDX_zp_y,
+        ORA_zp_x, AND_zp_x, EOR_zp_x:
         begin
             retain_pc(1);
 

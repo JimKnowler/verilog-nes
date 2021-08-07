@@ -6,4 +6,5 @@ OPCODE_IMPL(ADC, {
     addAddressingMode(kAbsolute|kIndexedWithX, 0x7D);
     addAddressingMode(kAbsolute|kIndexedWithY, 0x79);
     addAddressingMode(kZeroPage, 0x65);
+    addAddressingMode(kZeroPage|kIndexedWithX, 0x75);
 });
