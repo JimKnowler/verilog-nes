@@ -12,7 +12,7 @@
 using namespace nestestbench;
 using namespace memory;
 
-#define LOG_CPU(msg, ...)   printf(msg, __VA_ARGS__) 
+#define LOG_CPU(msg, ...)   //printf(msg, __VA_ARGS__) 
 #define LOG_BUS(msg, ...)   //printf(msg, __VA_ARGS__)
 
 namespace {
@@ -37,6 +37,7 @@ namespace emulator {
 
             //initMario();
             initDonkeyKong();
+            //initDuckHunt();
 
             reset();
 
@@ -433,7 +434,7 @@ namespace emulator {
             }
 
             bool isProbablyNotConfiguredYet() const {
-                return (colours[1] == colours[2]) && (colours[2] == colours[3]);
+                return (colours[1] == colours[2]) && (colours[2] == colours[3]) && (colours[1] == 0);
             }
         };
 
@@ -695,6 +696,18 @@ namespace emulator {
 
             // CHR - pattern table
             auto chr = loadBinaryFile("roms/donkeykong/chr_rom_bank_0.bin");
+            vram.write(0x0000, chr);
+        }
+
+        void initDuckHunt() {
+            // PRG - game code
+
+            // load bank 0 -> 0xC000:0xFFFF
+            auto bank0 = loadBinaryFile("roms/duckhunt/prg_rom_bank_0.6502.bin");
+            sram.write(0xC000, bank0);
+
+            // CHR - pattern table
+            auto chr = loadBinaryFile("roms/duckhunt/chr_rom_bank_0.bin");
             vram.write(0x0000, chr);
         }
 
