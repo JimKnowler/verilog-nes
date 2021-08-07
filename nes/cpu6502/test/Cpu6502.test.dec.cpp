@@ -999,5 +999,103 @@ TEST_F(Cpu6502, ShouldImplementSBCzeropageIndexedWithXProcessorStatusWithCarryIn
     }
 }
 
+TEST_F(Cpu6502, ShouldImplementDECzeropageIndexedWithX) {
+    sram.clear(0);
+    
+    const uint8_t kTestAddressZeroPage = 0x42;
+    const uint8_t kX = 0xFE;
+    const uint16_t kTestAddressIndexed = 0x0000 + ((kTestAddressZeroPage + kX) % 0x0100);
+    const uint8_t kTestDataM = 0x75;
+    
+    Assembler assembler;
+    assembler
+        .byte(0)
+        .org(kTestAddressIndexed)
+            .byte(kTestDataM)
+        .org(1234)
+        .label("init")
+            .LDX().immediate(kX)
+        .label("start")
+            .DEC().zp(kTestAddressZeroPage).x()
+            .NOP()
+        .org(0xfffc)
+        .word("init")
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    cpu6502::assembler::Address addressStart("start");
+    assembler.lookupAddress(addressStart);
+
+    // skip LDX
+    testBench.tick(2);
+    testBench.trace.clear();
+
+    // simulate DEC and NOP
+    testBench.tick(8);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(8)
+        .port(o_rw).signal("11110011")
+                    .repeatEachStep(2)
+        .port(o_sync).signal("10000010").repeatEachStep(2)
+        .port(o_address).signal({
+                            // SBC
+                            addressStart.byteIndex(),
+                            addressStart.byteIndex() + 1u,
+                            0x0000 + kTestAddressZeroPage,
+                            kTestAddressIndexed,
+                            kTestAddressIndexed,
+                            kTestAddressIndexed,
+
+                            // NOP
+                            addressStart.byteIndex() + 2u,
+                            addressStart.byteIndex() + 3u,
+                        })
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({0x00}).repeat(8).repeatEachStep(2)
+        .port(o_debug_x).signal({kX}).repeat(8).repeatEachStep(2)
+        .port(o_debug_y).signal({0x00}).repeat(8).repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+
+    EXPECT_THAT(kTestDataM-1, sram.read(kTestAddressIndexed));
+}
+
+TEST_F(Cpu6502, ShouldImplementDECzeropageIndexedWithXProcessorStatus) {
+    const uint8_t kTestAddressZeroPage = 0x53;
+    const uint8_t kX = 0x7F;
+    const uint16_t kTestAddressIndexed = 0x0000 + ((kTestAddressZeroPage + kX) % 0x0100);
+
+    for (auto& testCase : kTestCasesDEC) {
+        const uint8_t kTestData = testCase.first;
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler assembler;
+        assembler
+            .byte(0)
+            .org(kTestAddressIndexed)
+                .byte(kTestData)
+            .org(1234)
+            .label("init")
+                .CLI()
+                .LDX().immediate(kX)
+            .label("start")
+                .DEC().zp(kTestAddressZeroPage).x()
+                .NOP()
+            .org(0xfffc)
+            .word("init")
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(12);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
 
 // TODO: SBC a,x + SBC a,y with 'carry in'

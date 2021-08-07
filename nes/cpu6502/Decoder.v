@@ -173,7 +173,8 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  LDY_zp_x = 8'hB4, LDA_zp_x = 8'hB5, LDX_zp_y = 8'hB6,
                  STY_zp_x = 8'h94, STA_zp_x = 8'h95, STX_zp_y = 8'h96,
                  ORA_zp_x = 8'h15, AND_zp_x = 8'h35, EOR_zp_x = 8'h55,
-                 ADC_zp_x = 8'h75, CMP_zp_x = 8'hD5, SBC_zp_x = 8'hF5;
+                 ADC_zp_x = 8'h75, CMP_zp_x = 8'hD5, SBC_zp_x = 8'hF5,
+                 DEC_zp_x = 8'hD6;
 
 // RW pin
 localparam RW_READ = 1;
@@ -1044,7 +1045,8 @@ begin
         LSR_zp, ASL_zp,
         ASL_ax, LSR_ax,
         DEC_ax, INC_ax,
-        CMP_zp, CPX_zp, CPY_zp:
+        CMP_zp, CPX_zp, CPY_zp,
+        DEC_zp_x:
         begin
             // Read PC+1
             output_pch_on_abh(1);
@@ -1322,7 +1324,8 @@ begin
         LDY_zp_x, LDA_zp_x, LDX_zp_y,
         STY_zp_x, STA_zp_x, STX_zp_y,
         ORA_zp_x, AND_zp_x, EOR_zp_x,
-        ADC_zp_x, CMP_zp_x, SBC_zp_x:
+        ADC_zp_x, CMP_zp_x, SBC_zp_x,
+        DEC_zp_x:
         begin
             retain_pc(1);
 
@@ -1818,6 +1821,15 @@ begin
 
             next_opcode();
         end
+        DEC_zp_x:
+        begin
+            retain_pc(1);
+
+            output_0_on_abh(1);
+            output_add_on_abl(1);
+
+            load_add_from_dl(1);
+        end
         STY_zp_x, STA_zp_x, STX_zp_y:
         begin
             retain_pc(1);
@@ -2079,6 +2091,16 @@ begin
 
             output_add_on_abh(1);
         end
+        DEC_zp_x:
+        begin
+            retain_pc(1);
+
+            o_rw = RW_WRITE;
+            
+            load_add_from_dl(1);
+            o_0_add = 0;
+            o_sb_add = 1;       // 0xff on sb
+        end
         default:
         begin
         end
@@ -2272,6 +2294,24 @@ begin
             end
 
             o_rw = RW_WRITE;
+        end
+        DEC_zp_x:
+        begin
+            retain_pc(1);
+
+            o_rw = RW_WRITE;
+            
+            output_add_on_sb(1);
+
+            o_sb_db = 1;
+
+            o_db_add = 1;
+            o_0_add = 1;
+            o_sums = 1;
+            
+            load_z_n_from_db(1);
+
+            next_opcode();
         end
         default:
         begin
