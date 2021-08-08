@@ -14,6 +14,7 @@ using namespace memory;
 
 #define LOG_CPU(msg, ...)   //printf(msg, __VA_ARGS__) 
 #define LOG_BUS(msg, ...)   //printf(msg, __VA_ARGS__)
+#define LOG_CONTROLLER(msg, ...) printf(msg, __VA_ARGS__)
 
 namespace {
     const uint32_t kScreenWidth = 1300;
@@ -78,6 +79,9 @@ namespace emulator {
 
         int vramDisplay = 0;
 
+        uint8_t controller1 = 0;                    // state of buttons for controller1 (1 = pressed)
+        int lastControllerClk = 1;
+
         void reset() {
             testBench.reset();
 
@@ -113,9 +117,11 @@ namespace emulator {
                 toggleDisplayVRAM();
             }
 
+            /*
             if (GetKey(olc::P).bReleased) {
                 printPalette();
             }
+            */
 
             switch (mode) {
                 case kRun:
@@ -580,6 +586,10 @@ namespace emulator {
 
             // only log this on ticks when CPU clock enable is active
             LOG_CPU("CPU - IR:0x%02X address:0x%04X rw:%d\n", core.o_cpu_debug_ir, core.o_cpu_debug_address, core.o_cpu_debug_rw);
+
+            if (core.o_cpu_debug_address == 0x4016) {
+                LOG_CONTROLLER("controller - RW [%d] controller1 [%d]\n", core.o_cpu_debug_rw, core.i_controller_1);
+            }
             
             if (core.o_cpu_debug_error == 1) {
                 printf("error! tick (%d) frame (%d)\n", numTicks, numFrames);
@@ -668,7 +678,39 @@ namespace emulator {
                     core.i_data_patterntable = 0xFF;
                     core.i_data_nametable = 0xFF;
                 }
+
+                // controller
+
+                core.i_controller_1 = controller1 & 0x01;           // read lsb
+
+                int controllerClk = core.o_controller_clk;
+
+                if (core.o_controller_latch) {
+                    readController1();
+
+                    LOG_CONTROLLER("controller - latch [%u]\n", controller1);
+                } else {
+                    if ((controllerClk == 1) && (lastControllerClk == 0)) {
+                        LOG_CONTROLLER("controller - shift [%u]\n", controller1);
+                        controller1 >>= 1;
+                    }
+                }
+
+                lastControllerClk = controllerClk;
             });
+        }
+
+        void readController1() {
+            int a = GetKey(olc::U).bHeld ? 1 : 0;
+            int b = GetKey(olc::I).bHeld ? 1 << 1: 0;
+            int select = GetKey(olc::O).bHeld ? 1 << 2 : 0;
+            int start = GetKey(olc::P).bHeld ? 1 << 3 : 0;
+            int up = GetKey(olc::UP).bHeld ? 1 << 4 : 0;
+            int down = GetKey(olc::DOWN).bHeld ? 1 << 5 : 0;
+            int left = GetKey(olc::LEFT).bHeld ? 1 << 6 : 0;
+            int right = GetKey(olc::RIGHT).bHeld ? 1 << 7 : 0;
+            
+            controller1 = a | b | select | start | up | down | left | right;
         }
 
         void initMario() {
