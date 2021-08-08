@@ -18,7 +18,15 @@ module NES(
     output o_video_visible,             // is current pixel visible
 
     //////////////////////////////
-    // CPU memory
+    // Controller
+    //////////////////////////////
+
+    output o_controller_latch,          // latch (high) signal for controllers
+    output o_controller_clk,            // clk (rising edge) signal for controller shift registers
+    input i_controller_1,               // input for serial data from controller 1
+
+    //////////////////////////////
+    // CPU memory access
     //////////////////////////////
 
     // RAM (read / write)
@@ -34,7 +42,7 @@ module NES(
     input [7:0] i_data_prg,
 
     //////////////////////////////
-    // PPU memory
+    // PPU memory access
     //////////////////////////////
 
     // pattern table
@@ -50,9 +58,9 @@ module NES(
     output o_rw_nametable,
     output [13:0] o_address_nametable,
 
-    //
+    //////////////////////////////
     // CPU Debugging
-    // 
+    //////////////////////////////
 
     output [7:0] o_cpu_debug_ir,
     output o_cpu_debug_error,
@@ -61,9 +69,9 @@ module NES(
     output [3:0] o_cpu_debug_tcu,
     output o_cpu_debug_clk_en,
 
-    //
+    //////////////////////////////
     // PPU Debugging
-    //
+    //////////////////////////////
 
     output [7:0] o_ppu_debug_ppumask,
     output [7:0] o_ppu_debug_ppuctrl,
@@ -86,6 +94,9 @@ module NES(
     output [31:0] o_ppu_debug_palette_7,
     output [5:0] o_ppu_debug_colour_index
 );
+    localparam [15:0] ADDRESS_JOY1 = 16'h4016;
+    localparam RW_READ = 1;
+
     wire w_ce_cpu;
 
     ClockEnable clockEnable(
@@ -99,6 +110,9 @@ module NES(
     wire [7:0] w_cpu_data_input;
     wire [7:0] w_cpu_data_output;
     wire w_nmi_n;
+
+    wire w_out0;
+    wire w_oe1_n;
     
     /* verilator lint_off UNUSED */
     wire w_sync;
@@ -118,6 +132,7 @@ module NES(
     /* verilator lint_on UNUSED */
 
     Cpu2A03 cpu2A03(
+        // 6502
         .i_clk(i_clk),
         .i_reset_n(i_reset_n),
         .i_clk_en(w_ce_cpu),
@@ -128,6 +143,12 @@ module NES(
         .i_irq_n(1),
         .i_nmi_n(w_nmi_n),
         .o_sync(w_sync),
+
+        // controller
+        .o_out0(w_out0),
+        .o_oe1_n(w_oe1_n),
+
+        // debug
         .o_debug_bus_db(w_debug_bus_db),
         .o_debug_bus_adl(w_debug_bus_adl),
         .o_debug_bus_adh(w_debug_bus_adh),
@@ -242,7 +263,10 @@ module NES(
         .o_rs_ppu(w_rs_ppu),
         .o_data_ppu(w_data_cpu_ppu),
         .i_data_ppu(w_data_ppu_cpu),
-        .o_rw_ppu(w_rw_ppu)
+        .o_rw_ppu(w_rw_ppu),
+        // Controller
+        .i_oe1_n(w_oe1_n),
+        .i_controller_1(i_controller_1)
     );
 
     PPUMemoryMap ppuMemoryMap(
@@ -268,10 +292,11 @@ module NES(
         .o_address_nametable(o_address_nametable)
     );
 
-
     assign o_cpu_debug_rw = w_cpu_rw;
     assign o_cpu_debug_address = w_cpu_address;
     assign o_cpu_debug_clk_en = w_ce_cpu;
     assign o_ppu_debug_vram_address = w_ppu_vram_address;
 
+    assign o_controller_latch = w_out0;
+    assign o_controller_clk = !((w_cpu_rw == RW_READ) && (w_cpu_address == ADDRESS_JOY1));
 endmodule

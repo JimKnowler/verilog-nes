@@ -33,6 +33,7 @@ namespace {
         void SetUp() override {
             auto& core = testBench.core();
             core.i_clk_en = 1;
+            core.i_oe1_n = 1;
 
             testBench.setClockPolarity(1);
             testBench.reset();
@@ -228,6 +229,24 @@ TEST_F(CPUMemoryMap, ShouldOnlyEnableChipSelectsWhenClockIsEnabled) {
     }
 }
 
+TEST_F(CPUMemoryMap, ShouldReadFromController1) {
+    auto& core = testBench.core();
+    core.i_oe1_n = 0;
+    core.i_address_cpu = 0x4016;            // Register JOY1
+    core.i_rw_cpu = RW_READ;
+
+    core.i_controller_1 = 0;
+    core.eval();
+    EXPECT_EQ(1, core.o_data_cpu);      // read inverted value from controller 1
+    EXPECT_EQ(0, core.o_cs_prg);
+    EXPECT_EQ(0, core.o_cs_ram);
+
+    core.i_controller_1 = 1;
+    core.eval();
+    EXPECT_EQ(0, core.o_data_cpu);      // read inverted value from controller 1
+    EXPECT_EQ(0, core.o_cs_prg);
+    EXPECT_EQ(0, core.o_cs_ram);
+}
 
 // TODO: cartridge space for mappers at 0x4020
 //      https://wiki.nesdev.com/w/index.php/CPU_memory_map

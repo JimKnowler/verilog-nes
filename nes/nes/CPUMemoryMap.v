@@ -29,7 +29,11 @@ module CPUMemoryMap(
     output [2:0] o_rs_ppu,
     output [7:0] o_data_ppu,
     input [7:0] i_data_ppu,
-    output o_rw_ppu
+    output o_rw_ppu,
+
+    // connections for controllers
+    input i_oe1_n,
+    input i_controller_1
 );
 
 localparam [1:0] ADDRESS_RANGE_NONE = 0;
@@ -94,6 +98,11 @@ begin
             begin
                 r_data = i_data_prg;
             end
+        end
+
+        if ((i_oe1_n == 0) && (i_rw_cpu == RW_READ))
+        begin
+            r_data[0] = ~i_controller_1;
         end
     end
 end

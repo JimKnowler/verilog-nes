@@ -16,6 +16,10 @@ module Cpu2A03(
     input i_nmi_n,
     output o_sync,
 
+    // controller ports
+    output o_out0,              // strobe signal for both controller ports
+    output o_oe1_n,             // enable output of controller 1
+
     // 6502 debug ports
     output [7:0] o_debug_bus_db,
     output [7:0] o_debug_bus_adl,
@@ -37,6 +41,10 @@ module Cpu2A03(
 
 localparam [15:0] ADDRESS_OAMDMA = 16'h4014; 
 localparam [15:0] ADDRESS_OAMDATA = 16'h2004;
+localparam [15:0] ADDRESS_JOY1 = 16'h4016;
+
+localparam RW_WRITE = 0;
+localparam RW_READ = 1;
 
 reg [1:0] r_state;
 localparam [1:0] STATE_CPU = 0;
@@ -49,6 +57,9 @@ wire [7:0] w_o_data_cpu;
 reg [7:0] r_o_data;
 
 reg r_clk_en_cpu;
+
+reg r_out0;
+reg r_oe1_n;
 
 always @(*)
 begin
@@ -81,11 +92,11 @@ begin
     STATE_CPU:
         r_rw = r_rw_cpu;
     STATE_OAMDMA_START:
-        r_rw = 1;
+        r_rw = RW_READ;
     STATE_OAMDMA_READ:
-        r_rw = 1;
+        r_rw = RW_READ;
     STATE_OAMDMA_WRITE:
-        r_rw = 0;
+        r_rw = RW_WRITE;
     endcase
 end
 
@@ -196,9 +207,40 @@ begin
     endcase
 end
 
+always @(negedge i_reset_n or negedge i_clk)
+begin
+    if (!i_reset_n)
+    begin
+        r_out0 <= 0;
+    end
+    else if (i_clk_en)
+    begin
+        if (r_rw_cpu == RW_WRITE)
+        begin
+            if (w_address_cpu == ADDRESS_JOY1)
+            begin
+                r_out0 <= w_o_data_cpu[0];
+            end
+        end
+    end
+end
+
+always @(*)
+begin
+    r_oe1_n = 1;
+
+    if (i_clk_en && (r_rw_cpu == RW_READ) && (w_address_cpu == ADDRESS_JOY1))
+    begin
+        r_oe1_n = 0;
+    end
+end
+
 assign o_address = r_address;
 assign o_data = r_o_data;
 assign o_rw = r_rw;
 assign o_sync = r_sync;
+
+assign o_out0 = r_out0;
+assign o_oe1_n = r_oe1_n;
 
 endmodule
