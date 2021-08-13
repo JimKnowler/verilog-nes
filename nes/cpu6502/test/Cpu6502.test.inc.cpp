@@ -1214,7 +1214,7 @@ TEST_F(Cpu6502, ShouldImplementINCzeropageIndexedWithX) {
                     .repeatEachStep(2)
         .port(o_sync).signal("10000010").repeatEachStep(2)
         .port(o_address).signal({
-                            // SBC
+                            // INC
                             addressStart.byteIndex(),
                             addressStart.byteIndex() + 1u,
                             0x0000 + kTestAddressZeroPage,

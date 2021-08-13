@@ -175,7 +175,9 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  ORA_zp_x = 8'h15, AND_zp_x = 8'h35, EOR_zp_x = 8'h55,
                  ADC_zp_x = 8'h75, CMP_zp_x = 8'hD5, SBC_zp_x = 8'hF5,
                  DEC_zp_x = 8'hD6, INC_zp_x = 8'hF6,
-                 SBC_zp = 8'hE5;
+                 SBC_zp = 8'hE5,
+                 ASL_zp_x = 8'h16, ROL_zp_x = 8'h36,
+                 LSR_zp_x = 8'h56, ROR_zp_x = 8'h76;
 
 // RW pin
 localparam RW_READ = 1;
@@ -1048,7 +1050,8 @@ begin
         DEC_ax, INC_ax,
         CMP_zp, CPX_zp, CPY_zp,
         DEC_zp_x, INC_zp_x,
-        SBC_zp:
+        SBC_zp,
+        ASL_zp_x, ROL_zp_x, LSR_zp_x, ROR_zp_x:
         begin
             // Read PC+1
             output_pch_on_abh(1);
@@ -1327,7 +1330,8 @@ begin
         STY_zp_x, STA_zp_x, STX_zp_y,
         ORA_zp_x, AND_zp_x, EOR_zp_x,
         ADC_zp_x, CMP_zp_x, SBC_zp_x,
-        DEC_zp_x, INC_zp_x:
+        DEC_zp_x, INC_zp_x,
+        ASL_zp_x, ROL_zp_x, LSR_zp_x, ROR_zp_x:
         begin
             retain_pc(1);
 
@@ -1823,7 +1827,8 @@ begin
 
             next_opcode();
         end
-        DEC_zp_x, INC_zp_x:
+        DEC_zp_x, INC_zp_x,
+        ASL_zp_x, ROL_zp_x, LSR_zp_x, ROR_zp_x:
         begin
             retain_pc(1);
 
@@ -2093,25 +2098,84 @@ begin
 
             output_add_on_abh(1);
         end
-        DEC_zp_x, INC_zp_x:
+        DEC_zp_x, INC_zp_x,
+        ASL_zp_x, ROL_zp_x, LSR_zp_x, ROR_zp_x:
         begin
             retain_pc(1);
 
             o_rw = RW_WRITE;
             
-            load_add_from_dl(1);
+            if (w_phi1)
+            begin
+                o_dl_db = 1;
+                o_sb_db = 1;
+                
+                case (w_ir)
+                ROR_zp_x, LSR_zp_x:
+                begin
+                    // shift right
+                    o_sb_add = 1;
 
-            case (w_ir)
-            DEC_zp_x: begin
-                o_0_add = 0;
-                o_sb_add = 1;       // 0xff on sb
+                    o_srs = 1;    
+                end
+                ROL_zp_x, ASL_zp_x:
+                begin
+                    // shift left
+                
+                    // load accumulator into both A and B registers
+                    o_db_add = 1;
+                    o_sb_add = 1;
+
+                    // sum
+                    o_sums = 1;
+                end
+                DEC_zp_x:
+                begin
+                    // decrement
+                    o_sums = 1;
+                    o_db_add = 1;
+                    
+                    o_adl_add = 1;  // 0xFF from precharge mosfets
+                end
+                INC_zp_x:
+                begin
+                    // increment
+                    o_sums = 1;
+                    o_db_add = 1;
+                    o_1_addc = 1;
+                    o_0_add = 1;
+                end
+                default: begin
+                end
+                endcase
+
+                case (w_ir)
+                ROR_zp_x, ROL_zp_x: begin
+                    // use CARRY flag to drive CARRY_IN on accumulator
+                    o_1_addc = i_p[C];
+                end
+                default: begin
+                end
+                endcase
             end
-            INC_zp_x: begin
-                o_1_addc = 1;
+            else
+            begin
+                output_add_on_sb(1);
+                
+                case (w_ir)
+                ROR_zp_x, LSR_zp_x,
+                ROL_zp_x, ASL_zp_x:
+                begin
+                    // load carry flag from result
+                    o_acr_c = 1;
+                end
+                default: begin
+                end
+                endcase
+
+                o_sb_db = 1;
+                load_z_n_from_db(1);
             end
-            default: begin
-            end
-            endcase
         end
         default:
         begin
@@ -2307,7 +2371,8 @@ begin
 
             o_rw = RW_WRITE;
         end
-        DEC_zp_x, INC_zp_x:
+        DEC_zp_x, INC_zp_x,
+        ASL_zp_x, ROL_zp_x, LSR_zp_x, ROR_zp_x:
         begin
             retain_pc(1);
 
@@ -2316,12 +2381,6 @@ begin
             output_add_on_sb(1);
 
             o_sb_db = 1;
-
-            o_db_add = 1;
-            o_0_add = 1;
-            o_sums = 1;
-            
-            load_z_n_from_db(1);
 
             next_opcode();
         end
