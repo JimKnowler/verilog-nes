@@ -174,7 +174,8 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  STY_zp_x = 8'h94, STA_zp_x = 8'h95, STX_zp_y = 8'h96,
                  ORA_zp_x = 8'h15, AND_zp_x = 8'h35, EOR_zp_x = 8'h55,
                  ADC_zp_x = 8'h75, CMP_zp_x = 8'hD5, SBC_zp_x = 8'hF5,
-                 DEC_zp_x = 8'hD6, INC_zp_x = 8'hF6;
+                 DEC_zp_x = 8'hD6, INC_zp_x = 8'hF6,
+                 SBC_zp = 8'hE5;
 
 // RW pin
 localparam RW_READ = 1;
@@ -697,7 +698,7 @@ begin
         end
         CMP_a, CPX_a, CPY_a,
         ADC_a, ADC_zp_x,
-        SBC_a, SBC_ax, SBC_ay, SBC_zp_x,
+        SBC_a, SBC_ax, SBC_ay, SBC_zp_x, SBC_zp,
         AND_a, EOR_a, ORA_a,
         CMP_ax, CMP_ay, CMP_zp_x,
         AND_ax, AND_ay, AND_zp, AND_zp_x,
@@ -738,7 +739,7 @@ begin
                     // carry in
                     o_1_addc = i_p[C];
                 end
-                SBC_a, SBC_ax, SBC_ay, SBC_zp_x: begin
+                SBC_a, SBC_ax, SBC_ay, SBC_zp_x, SBC_zp: begin
                     o_db_n_add = 1;
                     o_sums = 1;
                     
@@ -767,7 +768,7 @@ begin
                 EOR_a, EOR_ax, EOR_ay, EOR_zp, EOR_zp_x,
                 ORA_a, ORA_ax, ORA_ay, ORA_zp_x,
                 ADC_a, ADC_zp_x,
-                SBC_a, SBC_ax, SBC_ay, SBC_zp_x: begin
+                SBC_a, SBC_ax, SBC_ay, SBC_zp_x, SBC_zp: begin
                     o_sb_ac = 1;
                 end
                 default: begin
@@ -782,7 +783,7 @@ begin
                     o_acr_c = 1;
                 end
                 ADC_a, ADC_zp_x,
-                SBC_a, SBC_ax, SBC_ay, SBC_zp_x: 
+                SBC_a, SBC_ax, SBC_ay, SBC_zp_x, SBC_zp: 
                 begin
                     // C + V flags
                     o_acr_c = 1;
@@ -1046,7 +1047,8 @@ begin
         ASL_ax, LSR_ax,
         DEC_ax, INC_ax,
         CMP_zp, CPX_zp, CPY_zp,
-        DEC_zp_x, INC_zp_x:
+        DEC_zp_x, INC_zp_x,
+        SBC_zp:
         begin
             // Read PC+1
             output_pch_on_abh(1);
@@ -1274,7 +1276,7 @@ begin
             load_add_from_sb(1);
         end
         ORA_zp, LDA_zp, LDX_zp, LDY_zp, BIT_zp,
-        CMP_zp, CPX_zp, CPY_zp:
+        CMP_zp, CPX_zp, CPY_zp, SBC_zp:
         begin
             retain_pc(1);
             output_0_on_abh(w_phi1);

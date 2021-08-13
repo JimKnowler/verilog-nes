@@ -215,7 +215,6 @@ TEST_F(Cpu6502, ShouldImplementSBCimmediateWithCarryIn) {
     const uint8_t kTestData1 = 0x22;
     const uint8_t kTestData2 = 0x11;
 
-    // todo: compare this to real 6502
     const uint8_t kExpectedData = kTestData1 - kTestData2;
 
     Assembler()
@@ -1088,6 +1087,162 @@ TEST_F(Cpu6502, ShouldImplementDECzeropageIndexedWithXProcessorStatus) {
                 .NOP()
             .org(0xfffc)
             .word("init")
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(12);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+// SBC zeropage
+TEST_F(Cpu6502, ShouldImplementSBCzeropage) {
+    sram.clear(0);
+    
+    const uint8_t kTestData1 = 0x45;
+    const uint8_t kTestAddressZeroPage = 0x80;
+    const uint8_t kTestData2 = 0x22;
+    const uint8_t kExpectedData = kTestData1 - kTestData2 - 1;
+
+    Assembler()
+            .LDA().immediate(kTestData1)
+            .SBC().zp(kTestAddressZeroPage)
+            .NOP()
+        .org(0x0000 + kTestAddressZeroPage)
+        .byte(kTestData2)
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    // skip LDAimmediate
+    testBench.tick(2);
+    testBench.trace.clear();
+
+    // simulate SBC + NOP
+    testBench.tick(5);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(5)
+        .port(o_rw).signal("11")
+                    .repeat(5)
+        .port(o_sync).signal("10010").repeatEachStep(2)
+        .port(o_address).signal({
+                            // SBC zp
+                            2, 
+                            3, 
+                            0x0000 + kTestAddressZeroPage, 
+                            // NOP
+                            4, 
+                            5})
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({kTestData1}).repeat(8)
+                         .signal({kExpectedData}).repeat(2)
+        .port(o_debug_x).signal({0x00}).repeat(10)
+        .port(o_debug_y).signal({0x00}).repeat(10);
+        
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldImplementSBCzeropageProcessorStatus) {
+    for (auto& testCase : kTestCasesSBC) {
+        const uint8_t kTestData1 = testCase.first.first;
+        const uint8_t kTestData2 = testCase.first.second;
+        const uint8_t kTestAddressZeroPage = 0x90;
+        
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+                .CLI()
+                .LDA().immediate(kTestData1)
+                .SBC().zp(kTestAddressZeroPage)
+                .NOP()
+            .org(0x0000 + kTestAddressZeroPage)
+            .byte(kTestData2)
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(10);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementSBCzeropageWithCarryIn) {
+    sram.clear(0);
+    
+    const uint8_t kTestData1 = 0x22;
+    const uint8_t kTestData2 = 0x11;
+    const uint8_t kTestAddressZeroPage = 0x80;
+
+    const uint8_t kExpectedData = kTestData1 - kTestData2;
+
+    Assembler()
+            .LDA().immediate(kTestData1)
+            .SEC()
+            .SBC().zp(0x0000 + kTestAddressZeroPage)
+            .NOP()
+        .org(0x0000 + kTestAddressZeroPage)
+        .byte(kTestData2)
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    // skip LDAimmediate & SEC
+    testBench.tick(4);
+    testBench.trace.clear();
+
+    // simulate SBC + NOP
+    testBench.tick(5);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(5)
+        .port(o_rw).signal("11")
+                    .repeat(5)
+        .port(o_sync).signal("10010").repeatEachStep(2)
+        .port(o_address).signal({
+                            // SBC
+                            3, 
+                            4,
+                            0x0000 + kTestAddressZeroPage,
+                            // NOP
+                            5, 
+                            6
+                        })
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({kTestData1}).repeat(8)
+                         .signal({kExpectedData}).repeat(2)
+        .port(o_debug_x).signal({0x00}).repeat(10)
+        .port(o_debug_y).signal({0x00}).repeat(10);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldImplementSBCzeropageProcessorStatusWithCarryIn) {
+    for (auto& testCase : kTestCasesSBCWithCarryIn) {
+        const uint8_t kTestData1 = testCase.first.first;
+        const uint8_t kTestData2 = testCase.first.second;
+        const uint8_t kTestAddressZeroPage = 0x78;
+        
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+    
+        Assembler()
+                .CLI()
+                .LDA().immediate(kTestData1)
+                .SEC()
+                .SBC().zp(kTestAddressZeroPage)
+                .NOP()
+            .org(0x0000 + kTestAddressZeroPage)
+            .byte(kTestData2)
             .compileTo(sram);
 
         testBench.reset();
