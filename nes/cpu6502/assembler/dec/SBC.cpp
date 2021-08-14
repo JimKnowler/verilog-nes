@@ -8,4 +8,5 @@ OPCODE_IMPL(SBC, {
     addAddressingMode(kZeroPage|kIndexedWithX, 0xF5);
     addAddressingMode(kZeroPage, 0xE5);
     addAddressingMode(kZeroPage|kIndirect|kIndexedWithY, 0xF1);
+    addAddressingMode(kZeroPage|kIndirect|kIndexedWithX, 0xE1);
 });
