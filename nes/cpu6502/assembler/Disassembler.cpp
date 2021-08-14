@@ -16,7 +16,8 @@ namespace cpu6502 { namespace assembler {
             { kZeroPage | kIndexedWithX | kIndirect, 2 },
             { kZeroPage | kIndexedWithX, 2 },
             { kZeroPage | kIndexedWithY, 2 },
-            { kZeroPage | kIndirect | kIndexedWithY, 2 }
+            { kZeroPage | kIndirect | kIndexedWithY, 2 },
+            { kIndirect, 3 }
         };
     }
 
@@ -109,6 +110,9 @@ namespace cpu6502 { namespace assembler {
                         break;
                     case kZeroPage | kIndirect | kIndexedWithY:
                         success &= parseOpcodeZeroPageIndirectIndexedWithY(parseOpcodeInfo, disassembledOpcode);
+                        break;
+                    case kIndirect:
+                        success &= parseOpcodeIndirect(parseOpcodeInfo, disassembledOpcode);
                         break;
                     default:
                         printf("unsupported addressing mode [%u]\n", unsigned(opcodeInfo.addressingMode));
@@ -281,6 +285,17 @@ namespace cpu6502 { namespace assembler {
         
         char buffer[16];
         sprintf(buffer, "($0x%02X),y", address);
+        outOpcode.labelOperands = buffer;
+
+        return true;
+    }
+
+    bool Disassembler::parseOpcodeIndirect(const ParseOpcodeInfo& info, DisassembledOpcode& outOpcode) {
+        uint8_t addressLow = info.sram.read(info.pc + 1);
+        uint8_t addressHigh = info.sram.read(info.pc + 2);
+        
+        char buffer[16];
+        sprintf(buffer, "($0x%02X%02X)", addressHigh, addressLow);
         outOpcode.labelOperands = buffer;
 
         return true;

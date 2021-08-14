@@ -55,7 +55,7 @@ namespace cpu6502 {
             bool parseOpcodeZeroPageIndexedWithX(const ParseOpcodeInfo& info, DisassembledOpcode& outOpcode);
             bool parseOpcodeZeroPageIndexedWithY(const ParseOpcodeInfo& info, DisassembledOpcode& outOpcode);
             bool parseOpcodeZeroPageIndirectIndexedWithY(const ParseOpcodeInfo& info, DisassembledOpcode& outOpcode);
-
+            bool parseOpcodeIndirect(const ParseOpcodeInfo& info, DisassembledOpcode& outOpcode);
         };
 
     }
