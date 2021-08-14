@@ -180,7 +180,8 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  LSR_zp_x = 8'h56, ROR_zp_x = 8'h76,
                  ADC_zp_ind_y = 8'h71, CMP_zp_ind_y = 8'hD1,
                  SBC_zp_ind_y = 8'hF1, 
-                 ORA_zp_ind_y = 8'h11, AND_zp_ind_y = 8'h31, EOR_zp_ind_y = 8'h51;
+                 ORA_zp_ind_y = 8'h11, AND_zp_ind_y = 8'h31, EOR_zp_ind_y = 8'h51,
+                 ORA_zp_ind_x = 8'h01;
 
 // RW pin
 localparam RW_READ = 1;
@@ -577,7 +578,8 @@ begin
         ORA_zp, ADC_zp,
         ADC_ax, ADC_ay, ADC_zp_ind_y,
         CMP_zp, CPX_zp, CPY_zp,
-        ORA_zp_ind_y, AND_zp_ind_y, EOR_zp_ind_y:
+        ORA_zp_ind_y, AND_zp_ind_y, EOR_zp_ind_y,
+        ORA_zp_ind_x:
         begin
             if (w_phi1)
             begin
@@ -602,7 +604,7 @@ begin
                     o_db_add = 1;
                     o_eors = 1;
                 end
-                ORA_i, ORA_zp, ORA_zp_ind_y: begin
+                ORA_i, ORA_zp, ORA_zp_ind_y, ORA_zp_ind_x: begin
                     o_db_add = 1;
                     o_ors = 1;
                 end
@@ -670,7 +672,8 @@ begin
                 case (w_ir)
                 AND_i, EOR_i, ORA_i, ADC_i, SBC_i,
                 ORA_zp, ADC_zp, ADC_ax, ADC_ay, ADC_zp_ind_y,
-                ORA_zp_ind_y, AND_zp_ind_y, EOR_zp_ind_y: begin
+                ORA_zp_ind_y, AND_zp_ind_y, EOR_zp_ind_y,
+                ORA_zp_ind_x: begin
                     o_sb_ac = 1;
                 end
                 default: begin
@@ -1159,7 +1162,8 @@ begin
             end 
         end
         LDA_zp_ind_y, ADC_zp_ind_y, CMP_zp_ind_y, SBC_zp_ind_y,
-        ORA_zp_ind_y, AND_zp_ind_y, EOR_zp_ind_y:
+        ORA_zp_ind_y, AND_zp_ind_y, EOR_zp_ind_y,
+        ORA_zp_ind_x:
         begin
             // load page zero indirect address
             output_pch_on_abh(1);
@@ -1457,6 +1461,21 @@ begin
             o_sums = 1;
             o_0_add = 1;
         end
+        ORA_zp_ind_x:
+        begin
+            retain_pc(1);
+
+            // output 0, BAL
+            output_0_on_abh(1);
+            output_dl_on_abl(1);
+
+            // start adding x to BAL
+            o_dl_db = 1;
+            o_db_add = 1;
+            o_x_sb = 1;
+            o_sb_add = 1;
+            o_sums = 1;
+        end
         INC_zp, DEC_zp, EOR_zp, AND_zp, ADC_zp, ROL_zp, ROR_zp, LSR_zp, ASL_zp:
         begin
             retain_pc(1);
@@ -1732,6 +1751,22 @@ begin
             o_0_add = 0;                // cancel this signal set in load_add_from_dl
             o_y_sb = 1;
             o_sb_add = 1;
+        end
+        ORA_zp_ind_x:
+        begin
+            retain_pc(1);
+
+            // output 0, BAL+x on address bus = fetch low order byte of effective address
+            output_0_on_abh(1);
+            output_add_on_abl(1);
+
+            // increment ADD by 1 to get BAL+x+1
+            o_sums = 1;
+            o_0_add = 1;
+            o_1_addc = 1;
+            output_add_on_sb(1);
+            o_sb_db = 1;
+            o_db_add = 1;
         end
         INC_zp, DEC_zp, ROL_zp, ROR_zp, LSR_zp, ASL_zp:
         begin
@@ -2092,6 +2127,15 @@ begin
                 next_opcode();
             end
         end
+        ORA_zp_ind_x:
+        begin
+            retain_pc(1);
+
+            output_0_on_abh(1);
+            output_add_on_abl(1);           // BAL + x + 1
+
+            load_add_from_dl(1);            // cache low order byte of effective address
+        end
         INC_zp, DEC_zp, ROL_zp, ROR_zp, LSR_zp, ASL_zp:
         begin
             retain_pc(1);
@@ -2302,6 +2346,16 @@ begin
             retain_pc(1);
 
             output_add_on_abh(1);
+
+            next_opcode();
+        end
+        ORA_zp_ind_x:
+        begin
+            retain_pc(1);
+
+            output_add_on_abl(1);
+            o_dl_adh = 1;
+            o_adh_abh = 1;
 
             next_opcode();
         end
