@@ -612,3 +612,74 @@ TEST_F(Cpu6502, ShouldImplementSTXzeropageIndexedWithY) {
 
     EXPECT_EQ(kTestData, sram.read(kTestAddressIndexed));
 }
+
+TEST_F(Cpu6502, ShouldImplementSTAZeroPageIndirectIndexedWithX) {
+    sram.clear(0);
+    
+    const uint8_t kTestAddressZeroPage = 0x42;
+    const uint8_t kTestOffset = 0x40;
+    const uint16_t kTestAddressZeroPageWithOffset = 0x0000 + uint8_t(kTestAddressZeroPage + kTestOffset);
+    const uint16_t kTestAddress = 0x1230;    
+    const uint8_t kTestData = 0x50;
+
+    Assembler assembler;
+    assembler
+        .NOP()
+        .org(kTestAddressZeroPageWithOffset)
+            .word(kTestAddress)
+        .org(kTestAddress)
+            .byte(0xff)
+        .org(0xABCD)
+        .label("init")
+            .LDX().immediate(kTestOffset)
+            .LDA().immediate(kTestData)
+        .label("start")
+            .STA().zpIndirect(kTestAddressZeroPage).x()
+            .NOP()
+        .org(0xFFFC)
+        .word("init")
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    cpu6502::assembler::Address addressStart("start");
+    assembler.lookupAddress(addressStart);
+
+    // simulate LDX, LDA
+    testBench.tick(4);
+    testBench.trace.clear();
+
+    // simulate STA (zp,x)
+    testBench.tick(8);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(8)
+        .port(o_rw).signal("11").repeat(5)
+                    .signal("00")
+                    .signal("11").repeat(2)
+        .port(o_sync).signal("10000010").repeatEachStep(2)
+        .port(o_debug_tcu).signal({0,1,2,3,4,5,0,1}).repeatEachStep(2)
+        .port(o_address).signal({
+                            // STA (zp,x)
+                            addressStart.byteIndex(),
+                            addressStart.byteIndex() + 1u,
+                            0x0000 + kTestAddressZeroPage,
+                            kTestAddressZeroPageWithOffset,
+                            kTestAddressZeroPageWithOffset + 1u,
+                            kTestAddress,
+
+                            // NOP
+                            addressStart.byteIndex() + 2u,
+                            addressStart.byteIndex() + 3u
+                        })
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({kTestData}).repeat(8)
+                        .repeatEachStep(2)
+        .port(o_debug_y).signal({0x00}).repeat(8).repeatEachStep(2)
+        .port(o_debug_x).signal({kTestOffset}).repeat(8).repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+
+    EXPECT_THAT(sram.read(kTestAddress), kTestData);
+}

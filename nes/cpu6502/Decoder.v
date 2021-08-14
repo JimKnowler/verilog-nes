@@ -183,7 +183,7 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  ORA_zp_ind_y = 8'h11, AND_zp_ind_y = 8'h31, EOR_zp_ind_y = 8'h51,
                  ORA_zp_ind_x = 8'h01, AND_zp_ind_x = 8'h21, EOR_zp_ind_x = 8'h41,
                  ADC_zp_ind_x = 8'h61, SBC_zp_ind_x = 8'hE1, CMP_zp_ind_x = 8'hC1,
-                 LDA_zp_ind_x = 8'hA1;
+                 LDA_zp_ind_x = 8'hA1, STA_zp_ind_x = 8'h81;
 
 // RW pin
 localparam RW_READ = 1;
@@ -1169,7 +1169,7 @@ begin
         ORA_zp_ind_y, AND_zp_ind_y, EOR_zp_ind_y,
         ORA_zp_ind_x, AND_zp_ind_x, EOR_zp_ind_x,
         ADC_zp_ind_x, SBC_zp_ind_x, CMP_zp_ind_x,
-        LDA_zp_ind_x:
+        LDA_zp_ind_x, STA_zp_ind_x:
         begin
             // load page zero indirect address
             output_pch_on_abh(1);
@@ -1469,7 +1469,7 @@ begin
         end
         ORA_zp_ind_x, AND_zp_ind_x, EOR_zp_ind_x,
         ADC_zp_ind_x, SBC_zp_ind_x, CMP_zp_ind_x,
-        LDA_zp_ind_x:
+        LDA_zp_ind_x, STA_zp_ind_x:
         begin
             retain_pc(1);
 
@@ -1762,7 +1762,7 @@ begin
         end
         ORA_zp_ind_x, AND_zp_ind_x, EOR_zp_ind_x,
         ADC_zp_ind_x, SBC_zp_ind_x, CMP_zp_ind_x,
-        LDA_zp_ind_x:
+        LDA_zp_ind_x, STA_zp_ind_x:
         begin
             retain_pc(1);
 
@@ -2139,7 +2139,7 @@ begin
         end
         ORA_zp_ind_x, AND_zp_ind_x, EOR_zp_ind_x,
         ADC_zp_ind_x, SBC_zp_ind_x, CMP_zp_ind_x,
-        LDA_zp_ind_x:
+        LDA_zp_ind_x, STA_zp_ind_x:
         begin
             retain_pc(1);
 
@@ -2363,13 +2363,19 @@ begin
         end
         ORA_zp_ind_x, AND_zp_ind_x, EOR_zp_ind_x,
         ADC_zp_ind_x, SBC_zp_ind_x, CMP_zp_ind_x,
-        LDA_zp_ind_x:
+        LDA_zp_ind_x, STA_zp_ind_x:
         begin
             retain_pc(1);
 
             output_add_on_abl(1);
             o_dl_adh = 1;
             o_adh_abh = 1;
+
+            if (w_ir == STA_zp_ind_x)
+            begin
+                o_rw = RW_WRITE;
+                o_ac_db = 1;
+            end
 
             next_opcode();
         end
