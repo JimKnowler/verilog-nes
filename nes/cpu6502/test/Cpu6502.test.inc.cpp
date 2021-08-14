@@ -1604,7 +1604,6 @@ TEST_F(Cpu6502, ShouldImplementADCZeroPageIndirectIndexedWithXProcessorStatus) {
     }
 }
 
-
 TEST_F(Cpu6502, ShouldImplementADCZeroPageIndirectIndexedWithXProcessorStatusWithCarryIn) {
     for (auto& testCase : kTestCasesADCWithCarryIn) {
         const uint8_t kTestData1 = testCase.first.first;

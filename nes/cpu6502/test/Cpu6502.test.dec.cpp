@@ -1475,4 +1475,159 @@ TEST_F(Cpu6502, ShouldImplementSBCZeroPageIndirectIndexedWithYProcessorStatusWit
     }
 }
 
+TEST_F(Cpu6502, ShouldImplementSBCZeroPageIndirectIndexedWithX) {
+    sram.clear(0);
+    
+    const uint8_t kTestAddressZeroPage = 0x42;
+    const uint8_t kTestOffset = 0x40;
+    const uint16_t kTestAddressZeroPageWithOffset = 0x0000 + uint8_t(kTestAddressZeroPage + kTestOffset);
+    const uint16_t kTestAddress = 0x1230;    
+    const uint8_t kTestData = 0x50;
+    const uint8_t kTestPreloadA = 0x33;
+    const uint8_t kExpected = uint8_t(kTestPreloadA - kTestData - 1);
+
+    Assembler assembler;
+    assembler
+        .NOP()
+        .org(kTestAddressZeroPageWithOffset)
+            .word(kTestAddress)
+        .org(kTestAddress)
+            .byte(kTestData)
+        .org(0xABCD)
+        .label("init")
+            .LDX().immediate(kTestOffset)
+            .LDA().immediate(kTestPreloadA)
+        .label("start")
+            .SBC().zpIndirect(kTestAddressZeroPage).x()
+            .NOP()
+        .org(0xFFFC)
+        .word("init")
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    cpu6502::assembler::Address addressStart("start");
+    assembler.lookupAddress(addressStart);
+
+    // simulate LDY, LDA (init)
+    testBench.tick(4);
+    testBench.trace.clear();
+
+    // simulate SBC (zp,x)
+    testBench.tick(8);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(8)
+        .port(o_rw).signal("11")
+                    .repeat(8)
+        .port(o_sync).signal("10000010").repeatEachStep(2)
+        .port(o_debug_tcu).signal({0,1,2,3,4,5,0,1}).repeatEachStep(2)
+        .port(o_address).signal({
+                            // SBC (zp,x)
+                            addressStart.byteIndex(),
+                            addressStart.byteIndex() + 1u,
+                            0x0000 + kTestAddressZeroPage,
+                            kTestAddressZeroPageWithOffset,
+                            kTestAddressZeroPageWithOffset + 1u,
+                            kTestAddress,
+
+                            // NOP
+                            addressStart.byteIndex() + 2u,
+                            addressStart.byteIndex() + 3u
+                        })
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({kTestPreloadA}).repeat(7)
+                         .signal({kExpected}).repeat(1)
+                        .concat()
+                        .repeatEachStep(2)
+        .port(o_debug_y).signal({0x00}).repeat(8).repeatEachStep(2)
+        .port(o_debug_x).signal({kTestOffset}).repeat(8).repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldImplementSBCZeroPageIndirectIndexedWithXProcessorStatus) {
+    for (auto& testCase : kTestCasesSBCWithoutCarryIn) {
+        const uint8_t kTestData1 = testCase.first.first;
+        const uint8_t kTestData2 = testCase.first.second;
+        
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+
+        const uint8_t kTestAddressZeroPage = 0x42;
+        const uint8_t kTestOffset = 0x40;
+        const uint16_t kTestAddressZeroPageWithOffset = 0x0000 + uint8_t(kTestAddressZeroPage + kTestOffset);
+        const uint16_t kTestAddress = 0x1230;    
+
+        Assembler assembler;
+        assembler
+                .NOP()
+            .org(kTestAddressZeroPageWithOffset)
+                .word(kTestAddress)
+            .org(kTestAddress)
+                .byte(kTestData2)            
+            .org(0xABCD)
+            .label("init")
+                .CLI()
+                .LDX().immediate(kTestOffset)
+                .LDA().immediate(kTestData1)
+            .label("start")
+                .SBC().zpIndirect(kTestAddressZeroPage).x()
+                .NOP()
+            .org(0xFFFC)
+            .word("init")
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(14);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementSBCZeroPageIndirectIndexedWithXProcessorStatusWithCarryIn) {
+    for (auto& testCase : kTestCasesSBCWithCarryIn) {
+        const uint8_t kTestData1 = testCase.first.first;
+        const uint8_t kTestData2 = testCase.first.second;
+        
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+
+        const uint8_t kTestAddressZeroPage = 0x42;
+        const uint8_t kTestOffset = 0x40;
+        const uint16_t kTestAddressZeroPageWithOffset = 0x0000 + uint8_t(kTestAddressZeroPage + kTestOffset);
+        const uint16_t kTestAddress = 0x1230;    
+
+        Assembler assembler;
+        assembler
+                .NOP()
+            .org(kTestAddressZeroPageWithOffset)
+                .word(kTestAddress)
+            .org(kTestAddress)
+                .byte(kTestData2)            
+            .org(0xABCD)
+            .label("init")
+                .CLI()
+                .SEC()
+                .LDX().immediate(kTestOffset)
+                .LDA().immediate(kTestData1)
+            .label("start")
+                .SBC().zpIndirect(kTestAddressZeroPage).x()
+                .NOP()
+            .org(0xFFFC)
+            .word("init")
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(16);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
 // TODO: SBC a,x + SBC a,y with 'carry in'
