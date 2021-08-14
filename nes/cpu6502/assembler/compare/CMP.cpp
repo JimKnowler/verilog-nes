@@ -7,4 +7,5 @@ OPCODE_IMPL(CMP, {
     addAddressingMode(kAbsolute|kIndexedWithY, 0xD9);
     addAddressingMode(kZeroPage, 0xC5);
     addAddressingMode(kZeroPage|kIndexedWithX, 0xD5);
+    addAddressingMode(kZeroPage|kIndirect|kIndexedWithY, 0xD1);
 });

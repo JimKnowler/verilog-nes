@@ -966,3 +966,178 @@ TEST_F(Cpu6502, ShouldImplementCMPzeropageIndexedWithXProcessorStatus) {
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }
+
+TEST_F(Cpu6502, ShouldImplementCMPZeroPageIndirectIndexedWithY) {
+    sram.clear(0);
+    
+    const uint8_t kTestAddressIndirect = 42;
+    const uint16_t kTestAddress = 0x1230;
+    const uint8_t kTestOffset = 0x4;
+    const uint8_t kTestData = 0x50;
+    const uint8_t kTestPreloadA = 0x33;
+
+    Assembler assembler;
+    assembler
+        .NOP()
+        .org(0x0000 + kTestAddressIndirect)
+            .word(kTestAddress)
+        .org(kTestAddress + kTestOffset)
+            .byte(kTestData)
+        .org(0xABCD)
+        .label("init")
+            .LDY().immediate(kTestOffset)
+            .LDA().immediate(kTestPreloadA)
+        .label("start")
+            .CMP().zpIndirect(kTestAddressIndirect).y()
+            .NOP()
+        .org(0xFFFC)
+        .word("init")
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    cpu6502::assembler::Address addressStart("start");
+    assembler.lookupAddress(addressStart);
+
+    // simulate LDY, LDA (init)
+    testBench.tick(4);
+    testBench.trace.clear();
+
+    // simulate CMP (zp),y
+    testBench.tick(7);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(7)
+        .port(o_rw).signal("11")
+                    .repeat(7)
+        .port(o_sync).signal("1000010").repeatEachStep(2)
+        .port(o_debug_tcu).signal({0,1,2,3,4,0,1}).repeatEachStep(2)
+        .port(o_address).signal({
+                            // CMP (zp),y
+                            addressStart.byteIndex(),
+                            addressStart.byteIndex()+1u,
+                            0x0000 + kTestAddressIndirect,
+                            0x0001 + kTestAddressIndirect,
+                            kTestAddress + kTestOffset,
+
+                            // NOP
+                            addressStart.byteIndex() + 2u,
+                            addressStart.byteIndex() + 3u
+                        })
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({kTestPreloadA}).repeat(7)
+                        .repeatEachStep(2)
+        .port(o_debug_x).signal({0x00}).repeat(7).repeatEachStep(2)
+        .port(o_debug_y).signal({kTestOffset}).repeat(7).repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldImplementCMPZeroPageIndirectIndexedWithYWithCarry) {
+    sram.clear(0);
+    
+    const uint8_t kTestAddressIndirect = 42;
+    const uint16_t kTestAddress = 0x1230;
+    const uint8_t kTestOffset = 0xF4;
+    const uint8_t kTestData = 0x50;
+    const uint8_t kTestPreloadA = 0x35;
+
+    Assembler assembler;
+    assembler
+        .NOP()
+        .org(0x0000 + kTestAddressIndirect)
+            .word(kTestAddress)
+        .org(kTestAddress + kTestOffset)
+            .byte(kTestData)
+        .org(0xABCD)
+        .label("init")
+            .LDY().immediate(kTestOffset)
+            .LDA().immediate(kTestPreloadA)
+        .label("start")
+            .CMP().zpIndirect(kTestAddressIndirect).y()
+            .NOP()
+        .org(0xFFFC)
+        .word("init")
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    cpu6502::assembler::Address addressStart("start");
+    assembler.lookupAddress(addressStart);
+
+    // simulate LDY, LDA (init)
+    testBench.tick(4);
+    testBench.trace.clear();
+
+    // simulate CMP (zp),y
+    testBench.tick(8);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(8)
+        .port(o_rw).signal("11")
+                    .repeat(8)
+        .port(o_sync).signal("10000010").repeatEachStep(2)
+        .port(o_debug_tcu).signal({0,1,2,3,4,5,0,1}).repeatEachStep(2)
+        .port(o_address).signal({
+                            // CMP (zp),y
+                            addressStart.byteIndex(),
+                            addressStart.byteIndex()+1u,
+                            0x0000 + kTestAddressIndirect,
+                            0x0001 + kTestAddressIndirect,
+                            (kTestAddress & 0xff00) + ((kTestAddress + kTestOffset) & 0x00ff),  // without carry
+                            kTestAddress + kTestOffset,                                         // with carry
+
+                            // NOP
+                            addressStart.byteIndex() + 2u,
+                            addressStart.byteIndex() + 3u
+                        })
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({kTestPreloadA}).repeat(8)
+                        .repeatEachStep(2)
+        .port(o_debug_x).signal({0x00}).repeat(8).repeatEachStep(2)
+        .port(o_debug_y).signal({kTestOffset}).repeat(8).repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldImplementCMPZeroPageIndirectIndexedWithYProcessorStatus) {
+    for (auto& testCase : kTestCasesCMP) {
+        const uint8_t kTestData1 = testCase.first.first;
+        const uint8_t kTestData2 = testCase.first.second;
+        
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+
+        const uint8_t kTestAddressIndirect = 42;
+        const uint16_t kTestAddress = 0x1230;
+        const uint8_t kTestOffset = 0x04;
+
+        Assembler assembler;
+        assembler
+            .NOP()
+            .org(0x0000 + kTestAddressIndirect)
+                .word(kTestAddress)
+            .org(kTestAddress + kTestOffset)
+                .byte(kTestData2)
+            .org(0xABCD)
+            .label("init")
+                .CLI()
+                .LDY().immediate(kTestOffset)
+                .LDA().immediate(kTestData1)
+            .label("start")
+                .CMP().zpIndirect(kTestAddressIndirect).y()
+                .NOP()
+            .org(0xFFFC)
+            .word("init")
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(13);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}

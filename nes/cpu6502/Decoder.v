@@ -178,7 +178,7 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  SBC_zp = 8'hE5,
                  ASL_zp_x = 8'h16, ROL_zp_x = 8'h36,
                  LSR_zp_x = 8'h56, ROR_zp_x = 8'h76,
-                 ADC_zp_ind_y = 8'h71;
+                 ADC_zp_ind_y = 8'h71, CMP_zp_ind_y = 8'hD1;
 
 // RW pin
 localparam RW_READ = 1;
@@ -571,7 +571,7 @@ begin
         case (w_ir)
         AND_i, EOR_i, ORA_i, 
         ADC_i, SBC_i,
-        CMP_i, CPX_i, CPY_i,
+        CMP_i, CPX_i, CPY_i, CMP_zp_ind_y,
         ORA_zp, ADC_zp,
         ADC_ax, ADC_ay, ADC_zp_ind_y,
         CMP_zp, CPX_zp, CPY_zp:
@@ -626,7 +626,8 @@ begin
                     o_avr_v = 1;
                 end
                 CMP_i, CPX_i, CPY_i,
-                CMP_zp, CPX_zp, CPY_zp: begin
+                CMP_zp, CPX_zp, CPY_zp,
+                CMP_zp_ind_y: begin
                     // subtraction as 2's complement addition
                     o_db_n_add = 1;
                     o_1_addc = 1;
@@ -643,7 +644,7 @@ begin
                 case (w_ir)
                 ADC_i, ADC_zp, ADC_ax, ADC_ay, ADC_zp_ind_y,
                 SBC_i, CMP_i, CPX_i, CPY_i,
-                CMP_zp, CPX_zp, CPY_zp: begin
+                CMP_zp, CPX_zp, CPY_zp, CMP_zp_ind_y: begin
                     // C flag
                     o_acr_c = 1;
                 end
@@ -1152,7 +1153,7 @@ begin
                 next_opcode();
             end 
         end
-        LDA_zp_ind_y, ADC_zp_ind_y:
+        LDA_zp_ind_y, ADC_zp_ind_y, CMP_zp_ind_y:
         begin
             // load page zero indirect address
             output_pch_on_abh(1);
@@ -1433,7 +1434,7 @@ begin
                 next_opcode();
             end
         end
-        LDA_zp_ind_y, ADC_zp_ind_y:
+        LDA_zp_ind_y, ADC_zp_ind_y, CMP_zp_ind_y:
         begin
             retain_pc(1);
 
@@ -1707,7 +1708,7 @@ begin
             o_sb_add = 1;
             o_sums = 1;
         end
-        LDA_zp_ind_y, ADC_zp_ind_y:
+        LDA_zp_ind_y, ADC_zp_ind_y, CMP_zp_ind_y:
         begin
             retain_pc(1);
 
@@ -2060,7 +2061,7 @@ begin
 
             o_1_addc = r_last_acr;
         end
-        LDA_zp_ind_y,ADC_zp_ind_y:
+        LDA_zp_ind_y, ADC_zp_ind_y, CMP_zp_ind_y:
         begin
             retain_pc(1);
 
@@ -2286,7 +2287,7 @@ begin
 
             next_opcode();            
         end
-        LDA_zp_ind_y, ADC_zp_ind_y:
+        LDA_zp_ind_y, ADC_zp_ind_y, CMP_zp_ind_y:
         begin
             retain_pc(1);
 
