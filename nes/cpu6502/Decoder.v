@@ -182,7 +182,8 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  SBC_zp_ind_y = 8'hF1, 
                  ORA_zp_ind_y = 8'h11, AND_zp_ind_y = 8'h31, EOR_zp_ind_y = 8'h51,
                  ORA_zp_ind_x = 8'h01, AND_zp_ind_x = 8'h21, EOR_zp_ind_x = 8'h41,
-                 ADC_zp_ind_x = 8'h61, SBC_zp_ind_x = 8'hE1, CMP_zp_ind_x = 8'hC1;
+                 ADC_zp_ind_x = 8'h61, SBC_zp_ind_x = 8'hE1, CMP_zp_ind_x = 8'hC1,
+                 LDA_zp_ind_x = 8'hA1;
 
 // RW pin
 localparam RW_READ = 1;
@@ -688,7 +689,7 @@ begin
             end
         end
         LDA_a, LDX_a, LDY_a, LDA_zp_ind_y, LDA_zp, LDX_zp, LDY_zp, 
-        LDY_zp_x, LDA_zp_x, LDX_zp_y:
+        LDY_zp_x, LDA_zp_x, LDX_zp_y, LDA_zp_ind_x:
         begin
             if (w_phi1)
             begin
@@ -700,7 +701,7 @@ begin
                 output_add_on_sb(1);
 
                 case (w_ir)
-                LDA_a, LDA_zp_ind_y, LDA_zp, LDA_zp_x: o_sb_ac = 1;
+                LDA_a, LDA_zp_ind_y, LDA_zp, LDA_zp_x, LDA_zp_ind_x: o_sb_ac = 1;
                 LDX_a, LDX_zp, LDX_zp_y: o_sb_x = 1;
                 LDY_a, LDY_zp, LDY_zp_x: o_sb_y = 1;
                 default: begin
@@ -1167,7 +1168,8 @@ begin
         LDA_zp_ind_y, ADC_zp_ind_y, CMP_zp_ind_y, SBC_zp_ind_y,
         ORA_zp_ind_y, AND_zp_ind_y, EOR_zp_ind_y,
         ORA_zp_ind_x, AND_zp_ind_x, EOR_zp_ind_x,
-        ADC_zp_ind_x, SBC_zp_ind_x, CMP_zp_ind_x:
+        ADC_zp_ind_x, SBC_zp_ind_x, CMP_zp_ind_x,
+        LDA_zp_ind_x:
         begin
             // load page zero indirect address
             output_pch_on_abh(1);
@@ -1466,7 +1468,8 @@ begin
             o_0_add = 1;
         end
         ORA_zp_ind_x, AND_zp_ind_x, EOR_zp_ind_x,
-        ADC_zp_ind_x, SBC_zp_ind_x, CMP_zp_ind_x:
+        ADC_zp_ind_x, SBC_zp_ind_x, CMP_zp_ind_x,
+        LDA_zp_ind_x:
         begin
             retain_pc(1);
 
@@ -1758,7 +1761,8 @@ begin
             o_sb_add = 1;
         end
         ORA_zp_ind_x, AND_zp_ind_x, EOR_zp_ind_x,
-        ADC_zp_ind_x, SBC_zp_ind_x, CMP_zp_ind_x:
+        ADC_zp_ind_x, SBC_zp_ind_x, CMP_zp_ind_x,
+        LDA_zp_ind_x:
         begin
             retain_pc(1);
 
@@ -2134,7 +2138,8 @@ begin
             end
         end
         ORA_zp_ind_x, AND_zp_ind_x, EOR_zp_ind_x,
-        ADC_zp_ind_x, SBC_zp_ind_x, CMP_zp_ind_x:
+        ADC_zp_ind_x, SBC_zp_ind_x, CMP_zp_ind_x,
+        LDA_zp_ind_x:
         begin
             retain_pc(1);
 
@@ -2357,7 +2362,8 @@ begin
             next_opcode();
         end
         ORA_zp_ind_x, AND_zp_ind_x, EOR_zp_ind_x,
-        ADC_zp_ind_x, SBC_zp_ind_x, CMP_zp_ind_x:
+        ADC_zp_ind_x, SBC_zp_ind_x, CMP_zp_ind_x,
+        LDA_zp_ind_x:
         begin
             retain_pc(1);
 
