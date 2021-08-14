@@ -976,7 +976,7 @@ TEST_F(Cpu6502, ShouldImplementADCzeropageIndexedWithX) {
     const uint8_t kX = 0xFE;
     const uint16_t kTestAddressIndexed = 0x0000 + ((kTestAddressZeroPage + kX) % 0x0100);
     const uint8_t kTestDataI = 0b10010110;
-    const uint8_t kExpectedData = kTestDataA + kTestDataI;
+    const uint8_t kExpectedData = uint8_t(kTestDataA + kTestDataI);
     
     Assembler assembler;
     assembler
@@ -1077,7 +1077,7 @@ TEST_F(Cpu6502, ShouldImplementADCzeropageIndexedWithXWithCarryIn) {
     const uint8_t kX = 0xFE;
     const uint16_t kTestAddressIndexed = 0x0000 + ((kTestAddressZeroPage + kX) % 0x0100);
     const uint8_t kTestDataI = 0b10010110;
-    const uint8_t kExpectedData = kTestDataA + kTestDataI + 1;
+    const uint8_t kExpectedData = uint8_t(kTestDataA + kTestDataI + 1);
     
     Assembler assembler;
     assembler
@@ -1267,6 +1267,226 @@ TEST_F(Cpu6502, ShouldImplementINCzeropageIndexedWithXProcessorStatus) {
         helperSkipResetVector();
 
         testBench.tick(12);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementADCZeroPageIndirectIndexedWithY) {
+    sram.clear(0);
+    
+    const uint8_t kTestAddressIndirect = 42;
+    const uint16_t kTestAddress = 0x1230;
+    const uint8_t kTestOffset = 0x4;
+    const uint8_t kTestData = 0x50;
+    const uint8_t kTestPreloadA = 0x33;
+
+    Assembler assembler;
+    assembler
+        .NOP()
+        .org(0x0000 + kTestAddressIndirect)
+            .word(kTestAddress)
+        .org(kTestAddress + kTestOffset)
+            .byte(kTestData)
+        .org(0xABCD)
+        .label("init")
+            .LDY().immediate(kTestOffset)
+            .LDA().immediate(kTestPreloadA)
+        .label("start")
+            .ADC().zpIndirect(kTestAddressIndirect).y()
+            .NOP()
+        .org(0xFFFC)
+        .word("init")
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    cpu6502::assembler::Address addressStart("start");
+    assembler.lookupAddress(addressStart);
+
+    // simulate LDY, LDA (init)
+    testBench.tick(4);
+    testBench.trace.clear();
+
+    // simulate ADC (zp),y
+    testBench.tick(7);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(7)
+        .port(o_rw).signal("11")
+                    .repeat(7)
+        .port(o_sync).signal("1000010").repeatEachStep(2)
+        .port(o_debug_tcu).signal({0,1,2,3,4,0,1}).repeatEachStep(2)
+        .port(o_address).signal({
+                            // ADC (zp),y
+                            addressStart.byteIndex(),
+                            addressStart.byteIndex()+1u,
+                            0x0000 + kTestAddressIndirect,
+                            0x0001 + kTestAddressIndirect,
+                            kTestAddress + kTestOffset,
+
+                            // NOP
+                            addressStart.byteIndex() + 2u,
+                            addressStart.byteIndex() + 3u
+                        })
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({kTestPreloadA}).repeat(6)
+                         .signal({kTestData + kTestPreloadA}).repeat(1)
+                        .concat()
+                        .repeatEachStep(2)
+        .port(o_debug_x).signal({0x00}).repeat(7).repeatEachStep(2)
+        .port(o_debug_y).signal({kTestOffset}).repeat(7).repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldImplementADCZeroPageIndirectIndexedWithYWithCarry) {
+    sram.clear(0);
+    
+    const uint8_t kTestAddressIndirect = 42;
+    const uint16_t kTestAddress = 0x1230;
+    const uint8_t kTestOffset = 0xF4;
+    const uint8_t kTestData = 0x50;
+    const uint8_t kTestPreloadA = 0x35;
+
+    Assembler assembler;
+    assembler
+        .NOP()
+        .org(0x0000 + kTestAddressIndirect)
+            .word(kTestAddress)
+        .org(kTestAddress + kTestOffset)
+            .byte(kTestData)
+        .org(0xABCD)
+        .label("init")
+            .LDY().immediate(kTestOffset)
+            .LDA().immediate(kTestPreloadA)
+        .label("start")
+            .ADC().zpIndirect(kTestAddressIndirect).y()
+            .NOP()
+        .org(0xFFFC)
+        .word("init")
+        .compileTo(sram);
+
+    helperSkipResetVector();
+
+    cpu6502::assembler::Address addressStart("start");
+    assembler.lookupAddress(addressStart);
+
+    // simulate LDY, LDA (init)
+    testBench.tick(4);
+    testBench.trace.clear();
+
+    // simulate ADC (zp),y
+    testBench.tick(8);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-")
+                    .repeat(8)
+        .port(o_rw).signal("11")
+                    .repeat(8)
+        .port(o_sync).signal("10000010").repeatEachStep(2)
+        .port(o_debug_tcu).signal({0,1,2,3,4,5,0,1}).repeatEachStep(2)
+        .port(o_address).signal({
+                            // ADC (zp),y
+                            addressStart.byteIndex(),
+                            addressStart.byteIndex()+1u,
+                            0x0000 + kTestAddressIndirect,
+                            0x0001 + kTestAddressIndirect,
+                            (kTestAddress & 0xff00) + ((kTestAddress + kTestOffset) & 0x00ff),  // without carry
+                            kTestAddress + kTestOffset,                                         // with carry
+
+                            // NOP
+                            addressStart.byteIndex() + 2u,
+                            addressStart.byteIndex() + 3u
+                        })
+                        .repeatEachStep(2)
+        .port(o_debug_ac).signal({kTestPreloadA}).repeat(7)
+                         .signal({kTestData + kTestPreloadA}).repeat(1)
+                        .concat()
+                        .repeatEachStep(2)
+        .port(o_debug_x).signal({0x00}).repeat(8).repeatEachStep(2)
+        .port(o_debug_y).signal({kTestOffset}).repeat(8).repeatEachStep(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Cpu6502, ShouldImplementADCZeroPageIndirectIndexedWithYProcessorStatus) {
+    for (auto& testCase : kTestCasesADCWithoutCarryIn) {
+        const uint8_t kTestData1 = testCase.first.first;
+        const uint8_t kTestData2 = testCase.first.second;
+        
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+
+        const uint8_t kTestAddressIndirect = 42;
+        const uint16_t kTestAddress = 0x1230;
+        const uint8_t kTestOffset = 0x04;
+
+        Assembler assembler;
+        assembler
+            .NOP()
+            .org(0x0000 + kTestAddressIndirect)
+                .word(kTestAddress)
+            .org(kTestAddress + kTestOffset)
+                .byte(kTestData1)
+            .org(0xABCD)
+            .label("init")
+                .CLI()
+                .LDY().immediate(kTestOffset)
+                .LDA().immediate(kTestData2)
+            .label("start")
+                .ADC().zpIndirect(kTestAddressIndirect).y()
+                .NOP()
+            .org(0xFFFC)
+            .word("init")
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(13);
+        EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
+    }
+}
+
+TEST_F(Cpu6502, ShouldImplementADCZeroPageIndirectIndexedWithYProcessorStatusWithCarryIn) {
+    for (auto& testCase : kTestCasesADCWithCarryIn) {
+        const uint8_t kTestData1 = testCase.first.first;
+        const uint8_t kTestData2 = testCase.first.second;
+        
+        const uint8_t kExpectedProcessorStatus = testCase.second;
+
+        sram.clear(0);
+
+        const uint8_t kTestAddressIndirect = 42;
+        const uint16_t kTestAddress = 0x1230;
+        const uint8_t kTestOffset = 0x04;
+
+        Assembler assembler;
+        assembler
+            .NOP()
+            .org(0x0000 + kTestAddressIndirect)
+                .word(kTestAddress)
+            .org(kTestAddress + kTestOffset)
+                .byte(kTestData1)
+            .org(0xABCD)
+            .label("init")
+                .CLI()
+                .SEC()
+                .LDY().immediate(kTestOffset)
+                .LDA().immediate(kTestData2)
+            .label("start")
+                .ADC().zpIndirect(kTestAddressIndirect).y()
+                .NOP()
+            .org(0xFFFC)
+            .word("init")
+            .compileTo(sram);
+
+        testBench.reset();
+        helperSkipResetVector();
+
+        testBench.tick(15);
         EXPECT_EQ(kExpectedProcessorStatus, testBench.core().o_debug_p);
     }
 }

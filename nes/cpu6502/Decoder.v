@@ -177,7 +177,8 @@ localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,
                  DEC_zp_x = 8'hD6, INC_zp_x = 8'hF6,
                  SBC_zp = 8'hE5,
                  ASL_zp_x = 8'h16, ROL_zp_x = 8'h36,
-                 LSR_zp_x = 8'h56, ROR_zp_x = 8'h76;
+                 LSR_zp_x = 8'h56, ROR_zp_x = 8'h76,
+                 ADC_zp_ind_y = 8'h71;
 
 // RW pin
 localparam RW_READ = 1;
@@ -572,7 +573,7 @@ begin
         ADC_i, SBC_i,
         CMP_i, CPX_i, CPY_i,
         ORA_zp, ADC_zp,
-        ADC_ax, ADC_ay,
+        ADC_ax, ADC_ay, ADC_zp_ind_y,
         CMP_zp, CPX_zp, CPY_zp:
         begin
             if (w_phi1)
@@ -602,7 +603,7 @@ begin
                     o_db_add = 1;
                     o_ors = 1;
                 end
-                ADC_i, ADC_zp, ADC_ax, ADC_ay: begin
+                ADC_i, ADC_zp, ADC_ax, ADC_ay, ADC_zp_ind_y: begin
                     o_db_add = 1;
                     o_sums = 1;
 
@@ -640,7 +641,7 @@ begin
             begin
                 // PHI2
                 case (w_ir)
-                ADC_i, ADC_zp, ADC_ax, ADC_ay,
+                ADC_i, ADC_zp, ADC_ax, ADC_ay, ADC_zp_ind_y,
                 SBC_i, CMP_i, CPX_i, CPY_i,
                 CMP_zp, CPX_zp, CPY_zp: begin
                     // C flag
@@ -651,7 +652,7 @@ begin
                 endcase
 
                 case (w_ir)
-                ADC_i, ADC_zp, ADC_ax, ADC_ay,
+                ADC_i, ADC_zp, ADC_ax, ADC_ay, ADC_zp_ind_y,
                 SBC_i: begin
                     // V flag
                     o_avr_v = 1;
@@ -664,7 +665,7 @@ begin
                 
                 case (w_ir)
                 AND_i, EOR_i, ORA_i, ADC_i, SBC_i,
-                ORA_zp, ADC_zp, ADC_ax, ADC_ay: begin
+                ORA_zp, ADC_zp, ADC_ax, ADC_ay, ADC_zp_ind_y: begin
                     o_sb_ac = 1;
                 end
                 default: begin
@@ -1151,7 +1152,7 @@ begin
                 next_opcode();
             end 
         end
-        LDA_zp_ind_y:
+        LDA_zp_ind_y, ADC_zp_ind_y:
         begin
             // load page zero indirect address
             output_pch_on_abh(1);
@@ -1432,7 +1433,7 @@ begin
                 next_opcode();
             end
         end
-        LDA_zp_ind_y:
+        LDA_zp_ind_y, ADC_zp_ind_y:
         begin
             retain_pc(1);
 
@@ -1706,7 +1707,7 @@ begin
             o_sb_add = 1;
             o_sums = 1;
         end
-        LDA_zp_ind_y:
+        LDA_zp_ind_y, ADC_zp_ind_y:
         begin
             retain_pc(1);
 
@@ -2059,7 +2060,7 @@ begin
 
             o_1_addc = r_last_acr;
         end
-        LDA_zp_ind_y:
+        LDA_zp_ind_y,ADC_zp_ind_y:
         begin
             retain_pc(1);
 
@@ -2285,7 +2286,7 @@ begin
 
             next_opcode();            
         end
-        LDA_zp_ind_y:
+        LDA_zp_ind_y, ADC_zp_ind_y:
         begin
             retain_pc(1);
 
