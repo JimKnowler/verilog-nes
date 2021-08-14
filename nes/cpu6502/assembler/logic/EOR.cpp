@@ -7,4 +7,5 @@ OPCODE_IMPL(EOR, {
     addAddressingMode(kAbsolute|kIndexedWithY, 0x59);
     addAddressingMode(kZeroPage, 0x45);
     addAddressingMode(kZeroPage|kIndexedWithX, 0x55);
+    addAddressingMode(kZeroPage|kIndirect|kIndexedWithY, 0x51);
 });

@@ -7,4 +7,5 @@ OPCODE_IMPL(ORA, {
     addAddressingMode(kAbsolute|kIndexedWithY, 0x19);
     addAddressingMode(kZeroPage, 0x05);
     addAddressingMode(kZeroPage|kIndexedWithX, 0x15);
+    addAddressingMode(kZeroPage|kIndirect|kIndexedWithY, 0x11);
 });
