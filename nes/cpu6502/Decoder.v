@@ -1722,11 +1722,17 @@ begin
         JMP_indirect:
         begin
             // Indirect address = Fetch low order effective address byte
-
             output_pch_on_abh(1);
             output_pcl_on_abl(1);
             retain_pc(1);
-            increment_pc(1);
+            
+            // increment LSB
+            output_add_on_sb(1);
+            o_sb_db = 1;
+            o_db_add = 1;
+            o_sums = 1;
+            o_0_add = 1;
+            o_1_addc = 1;
         end
         STA_zp_ind_y:
         begin
@@ -2068,14 +2074,14 @@ begin
 
             if (w_phi1)
             begin
-                output_pch_on_abh(w_phi1);
-                output_pcl_on_abl(w_phi1);
+                output_pch_on_abh(1);
+                output_add_on_abl(1);
                 load_add_from_dl(1);        // address lo
             end
             else
             begin
-                load_pcl_from_add(w_phi2);
-                load_pch_from_dl(w_phi2);
+                load_pcl_from_add(1);
+                load_pch_from_dl(1);
             end
 
             next_opcode();
