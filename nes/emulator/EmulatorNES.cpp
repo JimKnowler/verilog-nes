@@ -36,8 +36,8 @@ namespace emulator {
         bool OnUserCreate() override {
             initSimulation();
 
-            //initMario();
-            initDonkeyKong();
+            initMario();
+            //initDonkeyKong();
             //initDuckHunt();
 
             reset();
@@ -578,6 +578,9 @@ namespace emulator {
             auto& core = testBench.core();
 
             testBench.tick();
+
+            // todo: add support for disabling trace on testbench
+            testBench.trace.clear();
 
             if ((core.o_video_x == 0) && (core.o_video_y == 0)) {
                 numFrames +=1;
