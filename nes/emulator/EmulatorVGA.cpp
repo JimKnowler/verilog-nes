@@ -119,6 +119,9 @@ namespace emulator {
         void simulateTick() {
             testBench.tick();
 
+            // todo: add support to gtestverilog for disabling trace
+            testBench.trace.clear();
+
             writeCurrentPixel();
         }
 
