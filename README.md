@@ -90,6 +90,16 @@ Implemented with the [OneLoneCoder Pixel Game Engine](https://github.com/OneLone
     - can be driven directly from Arduino without FPGA in between
       - FPGA SPI protocol could be used to disconnect FPGA from memory bus (i.e. set memory bus I/O pins to high-Z)
 
+# Debugger
+
+Debugger interface for interacting with CPU6502 / NES, intended for use with SPI comms.
+
+## Build 
+> bazel build //nes:test-debugger --incompatible_require_linker_input_cc_api=false
+
+## Run
+> ./bazel-bin/nes/test-debugger
+
 # Work Remaining
 
 - Draw circuit diagrams

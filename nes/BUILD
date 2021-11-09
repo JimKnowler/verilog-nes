@@ -162,7 +162,8 @@ cc_test(
         exclude = [
             "emulator/**/*",
             "ppu/**/*",
-            "nes/**/*"
+            "nes/**/*",
+            "debugger/**/*"
         ]
     ) + [
         ":Cpu6502TestBench",
@@ -245,7 +246,6 @@ gtest_verilog_testbench(
     name = "Shift8TestBench",
     deps = [":Shift8"]
 )
-
 
 verilator_cc_library(
     name = "PPUAttributeAddress",
@@ -353,7 +353,8 @@ cc_test(
         exclude = [
             "emulator/**/*",
             "cpu6502/**/*",
-            "nes/**/*"
+            "nes/**/*",
+            "debugger/**/*"
         ]
     ) + [
         ":PaletteLookupRGBTestBench",
@@ -465,7 +466,8 @@ cc_test(
         exclude = [
             "emulator/**/*",
             "cpu6502/test/**/*",
-            "ppu/**/*"
+            "ppu/**/*",
+            "debugger/**/*"
         ]
     ) + [
         ":ClockEnableTestBench",
@@ -500,7 +502,8 @@ cc_binary(
             "**/test/**/*",
             "**/*.test.cpp",
             "emulator/EmulatorVGA.cpp",
-            "emulator/EmulatorNES.cpp"
+            "emulator/EmulatorNES.cpp",
+            "debugger/**/*"
         ]
     ) + [
         ":Cpu6502TestBench"
@@ -543,7 +546,8 @@ cc_binary(
             "**/*.test.cpp",
             "emulator/EmulatorCPU.cpp",
             "emulator/EmulatorNES.cpp",
-            "emulator/RendererCPU.cpp"
+            "emulator/RendererCPU.cpp",
+            "debugger/**/*"
         ]
     ) + [
         ":VGAExampleTestBench",
@@ -572,7 +576,8 @@ cc_binary(
             "**/*.test.cpp",
             "emulator/EmulatorVGA.cpp",
             "emulator/EmulatorCPU.cpp",
-            "emulator/RendererCPU.cpp"
+            "emulator/RendererCPU.cpp",
+            "debugger/**/*"
         ]
     ) + [
         ":NESTestBench"
@@ -585,4 +590,39 @@ cc_binary(
         "-framework OpenGL",
         "-framework GLUT"
     ]
+)
+
+verilator_cc_library(
+    name = "Debugger",
+    srcs = ["debugger/Debugger.v"]
+)
+
+gtest_verilog_testbench(
+    name = "DebuggerTestBench",
+    deps = [":Debugger"]
+)
+
+cc_test(
+    name = "test-debugger",
+    srcs = glob(
+        include =[
+            "**/*.cpp",
+            "**/*.h",
+            "**/*.hpp",
+            "**/*.inl"
+        ],
+        exclude = [
+            "emulator/**/*",
+            "cpu6502/**/*",
+            "ppu/**/*",
+            "nes/**/*"
+        ]
+    ) + [
+        ":DebuggerTestBench"
+    ],
+    deps = [
+        "@com_google_googletest//:gtest",
+        "@gtestverilog//gtestverilog:lib",
+        ":Debugger"
+    ],
 )
