@@ -38,18 +38,18 @@ TEST_F(Debugger, ShouldReset) {
 
     auto& core = testBench.core();
     EXPECT_EQ(core.o_cmd, NOP);
-    EXPECT_EQ(core.o_cmd_num_bytes, 0);
+    EXPECT_EQ(core.o_cmd_bytes_remaining, 0);
 }
 
 TEST_F(Debugger, ShouldImplementCmdNOP) {
     auto& core = testBench.core();
 
     core.i_rx_dv = 1;
-    core.i_rx = NOP;
+    core.i_rx_byte = NOP;
     testBench.step();
 
     EXPECT_EQ(core.o_cmd, NOP);
-    EXPECT_EQ(core.o_cmd_num_bytes, 0);
+    EXPECT_EQ(core.o_cmd_bytes_remaining, 0);
 }
 
 TEST_F(Debugger, ShouldImplementCmdEcho) {
@@ -62,32 +62,32 @@ TEST_F(Debugger, ShouldImplementCmdEcho) {
 
     // receive cmd echo
     core.i_rx_dv = 1;
-    core.i_rx = ECHO;
+    core.i_rx_byte = ECHO;
     testBench.tick();
 
     // gap before next byte received
     core.i_rx_dv = 0;
-    core.i_rx = 0;
+    core.i_rx_byte = 0;
     testBench.tick();
 
     // receive byte to echo
     core.i_rx_dv = 1;
-    core.i_rx = kTestValue;
+    core.i_rx_byte = kTestValue;
     testBench.tick();
 
     // gap before next byte received
     core.i_rx_dv = 0;
-    core.i_rx = 0;
+    core.i_rx_byte = 0;
     testBench.tick();
 
     // send byte back
     core.i_rx_dv = 1;
-    core.i_rx = 0;
+    core.i_rx_byte = 0;
     testBench.tick();
 
     // returned to NOP (idle) state
     core.i_rx_dv = 0;
-    core.i_rx = 0;
+    core.i_rx_byte = 0;
     testBench.tick();
 
     Trace expected = TraceBuilder()
@@ -96,7 +96,15 @@ TEST_F(Debugger, ShouldImplementCmdEcho) {
         .port(o_cmd).signal({NOP})
                     .signal({ECHO}).repeat(5)
                     .signal({NOP})
-                    .concat().repeatEachStep(2);
+                    .concat().repeatEachStep(2)
+        .port(o_tx_dv).signal("0").repeat(5)
+                      .signal("1")
+                      .signal("0")
+                      .concat().repeatEachStep(2)
+        .port(o_tx_byte).signal({0}).repeat(5)
+                        .signal({kTestValue})
+                        .signal({0})
+                        .concat().repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
