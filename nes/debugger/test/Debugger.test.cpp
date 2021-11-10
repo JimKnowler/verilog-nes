@@ -185,12 +185,9 @@ TEST_F(Debugger, ShouldImplementMemoryRead) {
     auto& core = testBench.core();
 
     testBench.setCallbackSimulateCombinatorial([kTestBytes, &core]{
-        if (core.o_mem_en == 0) {
+        if ((core.o_mem_en == 0) || (core.i_clk == 1)) {
             return;
         }
-
-        // todo: check core.i_clk before changing value
-        core.i_mem_data = 0xFF;
 
         int index = core.o_mem_address - kTestAddress;
         if ((index >= 0) && (index < kTestNumBytes)) {
@@ -214,71 +211,80 @@ TEST_F(Debugger, ShouldImplementMemoryRead) {
     helperIdleTick();
     // receive number of bytes to read (low byte)
     helperReceiveByte(kTestNumBytes);
-    helperIdleTick();
+    helperIdleTick(2);
     // read test data from memory + transmit it
     for (int i=0; i<kTestNumBytes; i++) {
         helperReceiveByte(0);
-        helperIdleTick();
+        helperIdleTick(2);
     }
 
     Trace expected = TraceBuilder()
         .port(i_clk).signal("-_")
-                    .repeat(19)
+                    .repeat(24)
         .port(o_cmd).signal({NOP})
-                    .signal({MEM_READ}).repeat(17)
+                    .signal({MEM_READ}).repeat(22)
                     .signal({NOP})
                     .concat().repeatEachStep(2)
         .port(i_rx_dv)
                     .signal("0")
-                    .signal("10").repeat(9)
+                    .signal("10").repeat(4)
+                    .signal("100").repeat(5)
                     .concat().repeatEachStep(2)
-        .port(o_tx_dv).signal("0").repeat(10)
-                      .signal("10").repeat(4)
-                      .signal("0")
+        .port(o_tx_dv).signal("0").repeat(9)
+                      .signal("001").repeat(4)
+                      .signal("0").repeat(3)
                       .concat().repeatEachStep(2)
-        .port(o_tx_byte).signal({0}).repeat(10)
+        .port(o_tx_byte).signal({0}).repeat(9)
                         .signal({
+                            0,
+                            0,
                             kTestBytes[0],
+                            0,
                             0,
                             kTestBytes[1],
                             0,
+                            0,
                             kTestBytes[2],
                             0,
-                            kTestBytes[3],
                             0,
-                            0
+                            kTestBytes[3],
                         })
+                        .signal({0}).repeat(3)
                         .concat().repeatEachStep(2)
         .port(o_mem_rw) 
-                        .signal("1").repeat(19)     // always READ
+                        .signal("1").repeat(24)     // always READ
                         .concat().repeatEachStep(2)
         .port(o_mem_en)
                         .signal("0").repeat(9)
-                        .signal("10").repeat(5)
+                        .signal("100").repeat(4)
+                        .signal("0").repeat(3)
                         .concat().repeatEachStep(2)
         .port(o_mem_address)
                         .signal({0}).repeat(9)
                         .signal({
                             kTestAddress,
                             0,
+                            0,
                             kTestAddress+1,
+                            0,
                             0,
                             kTestAddress+2,
                             0,
+                            0,
                             kTestAddress+3,
                             0,
-                            kTestAddress+4,     // internally reads an extra byte, but not TX'd back to controller
                             0
                         })
+                        .signal({0}).repeat(3)
                         .concat().repeatEachStep(2)
         .port(o_mem_data)
-                        .signal({0}).repeat(19)
+                        .signal({0}).repeat(24)
                         .concat().repeatEachStep(2);
                         
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+
+    std::cout << testBench.trace;
 }
-
-
 
 TEST_F(Debugger, ShouldSupportGapsBetweenRxBytes) {
     const int kTestValue = 42;
