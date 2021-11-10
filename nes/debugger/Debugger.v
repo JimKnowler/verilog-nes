@@ -81,6 +81,8 @@ begin
     end
     else
     begin
+        r_tx_dv <= 0;
+        
         if (i_rx_dv)
         begin
             if (r_cmd_num_bytes_remaining == 0)
@@ -144,9 +146,6 @@ begin
                         r_mem_en <= 1;
                     end
                     default: begin
-                        // transmit byte that was previously read from memory
-                        r_tx_dv <= 1;
-
                         // start read of next byte from local memory
                         r_mem_en <= 1;
                     end
@@ -160,7 +159,7 @@ begin
         end 
         else
         begin
-            r_tx_dv <= 0;
+            
             r_mem_rw <= RW_READ;
             r_mem_en <= 0;
 
@@ -181,6 +180,7 @@ begin
                     if (r_cmd_byte_index > 3)
                     begin
                         r_tx_byte <= i_mem_data;
+                        r_tx_dv <= 1;
                         r_mem_address <= r_mem_address + 1;
                     end
                 end

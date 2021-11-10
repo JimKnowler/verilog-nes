@@ -228,10 +228,15 @@ TEST_F(Debugger, ShouldImplementMemoryRead) {
                     .signal({MEM_READ}).repeat(17)
                     .signal({NOP})
                     .concat().repeatEachStep(2)
-        .port(o_tx_dv).signal("0").repeat(11)
+        .port(i_rx_dv)
+                    .signal("0")
+                    .signal("10").repeat(9)
+                    .concat().repeatEachStep(2)
+        .port(o_tx_dv).signal("0").repeat(10)
                       .signal("10").repeat(4)
+                      .signal("0")
                       .concat().repeatEachStep(2)
-        .port(o_tx_byte).signal({0}).repeat(11)
+        .port(o_tx_byte).signal({0}).repeat(10)
                         .signal({
                             kTestBytes[0],
                             0,
@@ -240,6 +245,7 @@ TEST_F(Debugger, ShouldImplementMemoryRead) {
                             kTestBytes[2],
                             0,
                             kTestBytes[3],
+                            0,
                             0
                         })
                         .concat().repeatEachStep(2)
