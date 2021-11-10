@@ -42,7 +42,8 @@ namespace {
     enum Command : uint8_t {
         NOP = 0,
         ECHO = 1,
-        MEM_WRITE = 2
+        MEM_WRITE = 2,
+        MEM_READ = 3
     };
 }
 
@@ -171,6 +172,101 @@ TEST_F(Debugger, ShouldImplementMemoryWrite) {
                             kTestBytes[2],
                             0
                         })
+                        .concat().repeatEachStep(2);
+                        
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Debugger, ShouldImplementMemoryRead) {
+    const uint16_t kTestAddress = 0xABCD;
+    const int kTestNumBytes = 4;
+    const uint16_t kTestBytes[kTestNumBytes] = { 0xD4, 0xC3, 0xB2, 0xA1 };
+
+    auto& core = testBench.core();
+
+    testBench.setCallbackSimulateCombinatorial([kTestBytes, &core]{
+        if (core.o_mem_en == 0) {
+            return;
+        }
+
+        // todo: check core.i_clk before changing value
+        core.i_mem_data = 0xFF;
+
+        int index = core.o_mem_address - kTestAddress;
+        if ((index >= 0) && (index < kTestNumBytes)) {
+            core.i_mem_data = kTestBytes[index];
+        }
+    });
+
+    // starts in NOP state
+    helperIdleTick();
+    // receive MEM_WRITE cmd
+    helperReceiveByte(MEM_READ);
+    helperIdleTick();
+    // receive address to write to (high byte)
+    helperReceiveByte((kTestAddress >> 8) & 0xff);
+    helperIdleTick();
+    // receive address to write to (low byte)
+    helperReceiveByte(kTestAddress & 0xff);
+    helperIdleTick();
+    // receive number of bytes to write (high byte)
+    helperReceiveByte(0);
+    helperIdleTick();
+    // receive number of bytes to read (low byte)
+    helperReceiveByte(kTestNumBytes);
+    helperIdleTick();
+    // read test data from memory + transmit it
+    for (int i=0; i<kTestNumBytes; i++) {
+        helperReceiveByte(0);
+        helperIdleTick();
+    }
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("-_")
+                    .repeat(19)
+        .port(o_cmd).signal({NOP})
+                    .signal({MEM_READ}).repeat(17)
+                    .signal({NOP})
+                    .concat().repeatEachStep(2)
+        .port(o_tx_dv).signal("0").repeat(11)
+                      .signal("10").repeat(4)
+                      .concat().repeatEachStep(2)
+        .port(o_tx_byte).signal({0}).repeat(11)
+                        .signal({
+                            kTestBytes[0],
+                            0,
+                            kTestBytes[1],
+                            0,
+                            kTestBytes[2],
+                            0,
+                            kTestBytes[3],
+                            0
+                        })
+                        .concat().repeatEachStep(2)
+        .port(o_mem_rw) 
+                        .signal("1").repeat(19)     // always READ
+                        .concat().repeatEachStep(2)
+        .port(o_mem_en)
+                        .signal("0").repeat(9)
+                        .signal("10").repeat(5)
+                        .concat().repeatEachStep(2)
+        .port(o_mem_address)
+                        .signal({0}).repeat(9)
+                        .signal({
+                            kTestAddress,
+                            0,
+                            kTestAddress+1,
+                            0,
+                            kTestAddress+2,
+                            0,
+                            kTestAddress+3,
+                            0,
+                            kTestAddress+4,     // internally reads an extra byte, but not TX'd back to controller
+                            0
+                        })
+                        .concat().repeatEachStep(2)
+        .port(o_mem_data)
+                        .signal({0}).repeat(19)
                         .concat().repeatEachStep(2);
                         
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
