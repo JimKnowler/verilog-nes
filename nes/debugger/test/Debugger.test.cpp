@@ -28,12 +28,12 @@ namespace {
             testBench.tick();
         }
 
-        void helperIdleTick() {
+        void helperIdleTick(int numTicks = 1) {
             auto& core = testBench.core();
 
             core.i_rx_dv = 0;
             core.i_rx_byte = 0;
-            testBench.tick();
+            testBench.tick(numTicks);
         }
 
         DebuggerTestBench testBench;
@@ -275,5 +275,41 @@ TEST_F(Debugger, ShouldImplementMemoryRead) {
                         .signal({0}).repeat(19)
                         .concat().repeatEachStep(2);
                         
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+
+
+TEST_F(Debugger, ShouldSupportGapsBetweenRxBytes) {
+    const int kTestValue = 42;
+
+    // starts in NOP state
+    helperIdleTick();
+    // receive ECHO cmd
+    helperReceiveByte(ECHO);
+    helperIdleTick(2);
+    // receive value to echo
+    helperReceiveByte(kTestValue);
+    helperIdleTick(3);
+    // send echo value back + return to NOP state
+    helperReceiveByte(0);
+    helperIdleTick();
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("-_")
+                    .repeat(10)
+        .port(o_cmd).signal({NOP})
+                    .signal({ECHO}).repeat(8)
+                    .signal({NOP})
+                    .concat().repeatEachStep(2)
+        .port(o_tx_dv).signal("0").repeat(5)
+                      .signal("1")
+                      .signal("0").repeat(4)
+                      .concat().repeatEachStep(2)
+        .port(o_tx_byte).signal({0}).repeat(5)
+                        .signal({kTestValue})
+                        .signal({0}).repeat(4)
+                        .concat().repeatEachStep(2);
+
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }

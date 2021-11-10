@@ -23,9 +23,7 @@ module Debugger(
     output          o_mem_en,           // memory enable - 1 when active
     output [7:0]    o_mem_data,         // data writing to memory
 
-    /* verilator lint_off UNUSED */
     input [7:0]     i_mem_data,         // data read from memory
-    /* verilator lint_on UNUSED */
 
     // current state
     output [7:0]    o_cmd,              // current command
@@ -64,6 +62,8 @@ reg r_mem_rw;
 reg r_mem_en;
 reg [7:0] r_mem_data;
 
+reg r_rx_dv_delay;
+
 always @(posedge i_clk or negedge i_reset_n)
 begin
     if (!i_reset_n)
@@ -82,6 +82,7 @@ begin
     else
     begin
         r_tx_dv <= 0;
+        r_rx_dv_delay <= i_rx_dv;
 
         if (i_rx_dv)
         begin
@@ -156,7 +157,7 @@ begin
                 endcase
             end
         end 
-        else
+        else if (r_rx_dv_delay)
         begin
             r_mem_rw <= RW_READ;
             r_mem_en <= 0;
