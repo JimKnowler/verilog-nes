@@ -82,7 +82,7 @@ begin
     else
     begin
         r_tx_dv <= 0;
-        
+
         if (i_rx_dv)
         begin
             if (r_cmd_num_bytes_remaining == 0)
@@ -116,7 +116,6 @@ begin
                 CMD_ECHO: begin
                     case (r_cmd_byte_index)
                     0: r_tx_byte <= i_rx_byte;
-                    1: r_tx_dv <= 1;
                     default: begin
                     end
                     endcase
@@ -159,7 +158,6 @@ begin
         end 
         else
         begin
-            
             r_mem_rw <= RW_READ;
             r_mem_en <= 0;
 
@@ -170,6 +168,12 @@ begin
             else 
             begin
                 case (r_cmd)
+                CMD_ECHO: begin
+                    if (r_cmd_byte_index == 1)
+                    begin 
+                        r_tx_dv <= 1;
+                    end
+                end
                 CMD_MEM_WRITE: begin
                     if (r_cmd_byte_index > 4)
                     begin

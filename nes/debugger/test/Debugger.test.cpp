@@ -92,13 +92,13 @@ TEST_F(Debugger, ShouldImplementCmdEcho) {
                     .signal({ECHO}).repeat(5)
                     .signal({NOP})
                     .concat().repeatEachStep(2)
-        .port(o_tx_dv).signal("0").repeat(5)
+        .port(o_tx_dv).signal("0").repeat(4)
                       .signal("1")
-                      .signal("0")
+                      .signal("0").repeat(2)
                       .concat().repeatEachStep(2)
-        .port(o_tx_byte).signal({0}).repeat(5)
+        .port(o_tx_byte).signal({0}).repeat(4)
                         .signal({kTestValue})
-                        .signal({0})
+                        .signal({0}).repeat(2)
                         .concat().repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
