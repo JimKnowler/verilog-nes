@@ -20,12 +20,29 @@ namespace {
         void TearDown() override {
         }
 
+        void helperReceiveByte(int value) {
+            auto& core = testBench.core();
+
+            core.i_rx_dv = 1;
+            core.i_rx_byte = value;
+            testBench.tick();
+        }
+
+        void helperIdleTick() {
+            auto& core = testBench.core();
+
+            core.i_rx_dv = 0;
+            core.i_rx_byte = 0;
+            testBench.tick();
+        }
+
         DebuggerTestBench testBench;
     };
 
     enum Command : uint8_t {
         NOP = 0,
-        ECHO = 1
+        ECHO = 1,
+        MEM_WRITE = 2
     };
 }
 
@@ -53,42 +70,19 @@ TEST_F(Debugger, ShouldImplementCmdNOP) {
 }
 
 TEST_F(Debugger, ShouldImplementCmdEcho) {
-    auto& core = testBench.core();
-
     const int kTestValue = 42;
 
     // starts in NOP state
-    testBench.tick();
-
-    // receive cmd echo
-    core.i_rx_dv = 1;
-    core.i_rx_byte = ECHO;
-    testBench.tick();
-
-    // gap before next byte received
-    core.i_rx_dv = 0;
-    core.i_rx_byte = 0;
-    testBench.tick();
-
-    // receive byte to echo
-    core.i_rx_dv = 1;
-    core.i_rx_byte = kTestValue;
-    testBench.tick();
-
-    // gap before next byte received
-    core.i_rx_dv = 0;
-    core.i_rx_byte = 0;
-    testBench.tick();
-
-    // send byte back
-    core.i_rx_dv = 1;
-    core.i_rx_byte = 0;
-    testBench.tick();
-
-    // returned to NOP (idle) state
-    core.i_rx_dv = 0;
-    core.i_rx_byte = 0;
-    testBench.tick();
+    helperIdleTick();
+    // receive ECHO cmd
+    helperReceiveByte(ECHO);
+    helperIdleTick();
+    // receive value to echo
+    helperReceiveByte(kTestValue);
+    helperIdleTick();
+    // send echo value back + return to NOP state
+    helperReceiveByte(0);
+    helperIdleTick();
 
     Trace expected = TraceBuilder()
         .port(i_clk).signal("-_")
@@ -109,3 +103,75 @@ TEST_F(Debugger, ShouldImplementCmdEcho) {
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
+TEST_F(Debugger, ShouldImplementMemoryWrite) {
+    const uint16_t kTestAddress = 0xCDEF;
+    const int kTestNumBytes = 3;
+    const uint16_t kTestBytes[kTestNumBytes] = { 0xA1, 0xB2, 0x42 };
+
+    // starts in NOP state
+    helperIdleTick();
+    // receive MEM_WRITE cmd
+    helperReceiveByte(MEM_WRITE);
+    helperIdleTick();
+    // receive address to write to (high byte)
+    helperReceiveByte((kTestAddress >> 8) & 0xff);
+    helperIdleTick();
+    // receive address to write to (low byte)
+    helperReceiveByte(kTestAddress & 0xff);
+    helperIdleTick();
+    // receive number of bytes to write (high byte)
+    helperReceiveByte(0);
+    helperIdleTick();
+    // receive number of bytes to write (low byte)
+    helperReceiveByte(kTestNumBytes);
+    helperIdleTick();
+    // receive test data
+    for (int i=0; i<kTestNumBytes; i++) {
+        helperReceiveByte(kTestBytes[i]);
+        helperIdleTick();
+    }
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("-_")
+                    .repeat(17)
+        .port(o_cmd).signal({NOP})
+                    .signal({MEM_WRITE}).repeat(15)
+                    .signal({NOP})
+                    .concat().repeatEachStep(2)
+        .port(o_tx_dv).signal("0").repeat(17)
+                      .concat().repeatEachStep(2)
+        .port(o_tx_byte).signal({0}).repeat(17)
+                        .concat().repeatEachStep(2)
+        .port(o_mem_en)
+                        .signal("0").repeat(11)
+                        .signal("10").repeat(3)
+                        .concat().repeatEachStep(2)
+        .port(o_mem_rw) 
+                        .signal("1").repeat(11)
+                        .signal("01").repeat(3)
+                        .concat().repeatEachStep(2)   // 0 when writing to memory
+        .port(o_mem_address)
+                        .signal({0}).repeat(11)
+                        .signal({
+                            kTestAddress,
+                            0,
+                            kTestAddress+1,
+                            0,
+                            kTestAddress+2,
+                            0
+                        })
+                        .concat().repeatEachStep(2)
+        .port(o_mem_data)
+                        .signal({0}).repeat(11)
+                        .signal({
+                            kTestBytes[0],
+                            0,
+                            kTestBytes[1],
+                            0,
+                            kTestBytes[2],
+                            0
+                        })
+                        .concat().repeatEachStep(2);
+                        
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
