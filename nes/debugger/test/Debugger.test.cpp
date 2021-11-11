@@ -282,8 +282,6 @@ TEST_F(Debugger, ShouldImplementMemoryRead) {
                         .concat().repeatEachStep(2);
                         
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
-
-    std::cout << testBench.trace;
 }
 
 TEST_F(Debugger, ShouldSupportGapsBetweenRxBytes) {
