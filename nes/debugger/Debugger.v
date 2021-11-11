@@ -25,9 +25,9 @@ module Debugger(
 
     input [7:0]     i_mem_data,         // data read from memory
 
-    // current state
-    output [7:0]    o_cmd,              // current command
-    output [15:0]   o_cmd_bytes_remaining     // number of bytes left for current command
+    // debug state
+    output [7:0]    o_debug_cmd,                    // current command
+    output [15:0]   o_debug_cmd_bytes_remaining     // number of bytes left for current command
 );
 
 localparam RW_READ = 1;
@@ -221,8 +221,8 @@ begin
     end
 end
 
-assign o_cmd = r_cmd;
-assign o_cmd_bytes_remaining = r_cmd_num_bytes_remaining;
+assign o_debug_cmd = r_cmd;
+assign o_debug_cmd_bytes_remaining = r_cmd_num_bytes_remaining;
 
 assign o_tx_dv = r_tx_dv;
 assign o_tx_byte = (r_tx_dv) ? r_tx_byte : 8'd0;

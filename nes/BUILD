@@ -602,6 +602,31 @@ gtest_verilog_testbench(
     deps = [":Debugger"]
 )
 
+verilator_cc_library(
+    name = "Memory",
+    srcs = ["debugger/simulation/Memory.v"]
+)
+
+gtest_verilog_testbench(
+    name = "MemoryTestBench",
+    deps = [":Memory"]
+)
+
+verilator_cc_library(
+    name = "DebuggerTop",
+    srcs = [
+        "debugger/DebuggerTop.v",
+        "debugger/Debugger.v",
+        "debugger/simulation/Memory.v",
+        "debugger/SPIPeripheral.v"
+    ]
+)
+
+gtest_verilog_testbench(
+    name = "DebuggerTopTestBench",
+    deps = [":DebuggerTop"]
+)
+
 cc_test(
     name = "test-debugger",
     srcs = glob(
@@ -618,11 +643,15 @@ cc_test(
             "nes/**/*"
         ]
     ) + [
-        ":DebuggerTestBench"
+        ":DebuggerTestBench",
+        ":DebuggerTopTestBench",
+        ":MemoryTestBench"
     ],
     deps = [
         "@com_google_googletest//:gtest",
         "@gtestverilog//gtestverilog:lib",
-        ":Debugger"
+        ":Debugger",
+        ":DebuggerTop",
+        ":Memory"
     ],
 )

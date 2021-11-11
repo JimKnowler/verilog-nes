@@ -55,8 +55,8 @@ TEST_F(Debugger, ShouldReset) {
     testBench.reset();
 
     auto& core = testBench.core();
-    EXPECT_EQ(core.o_cmd, NOP);
-    EXPECT_EQ(core.o_cmd_bytes_remaining, 0);
+    EXPECT_EQ(core.o_debug_cmd, NOP);
+    EXPECT_EQ(core.o_debug_cmd_bytes_remaining, 0);
 }
 
 TEST_F(Debugger, ShouldImplementCmdNOP) {
@@ -66,8 +66,8 @@ TEST_F(Debugger, ShouldImplementCmdNOP) {
     core.i_rx_byte = NOP;
     testBench.step();
 
-    EXPECT_EQ(core.o_cmd, NOP);
-    EXPECT_EQ(core.o_cmd_bytes_remaining, 0);
+    EXPECT_EQ(core.o_debug_cmd, NOP);
+    EXPECT_EQ(core.o_debug_cmd_bytes_remaining, 0);
 }
 
 TEST_F(Debugger, ShouldImplementCmdEcho) {
@@ -88,7 +88,7 @@ TEST_F(Debugger, ShouldImplementCmdEcho) {
     Trace expected = TraceBuilder()
         .port(i_clk).signal("-_")
                     .repeat(7)
-        .port(o_cmd).signal({NOP})
+        .port(o_debug_cmd).signal({NOP})
                     .signal({ECHO}).repeat(5)
                     .signal({NOP})
                     .concat().repeatEachStep(2)
@@ -135,7 +135,7 @@ TEST_F(Debugger, ShouldImplementMemoryWrite) {
     Trace expected = TraceBuilder()
         .port(i_clk).signal("-_")
                     .repeat(17)
-        .port(o_cmd).signal({NOP})
+        .port(o_debug_cmd).signal({NOP})
                     .signal({MEM_WRITE}).repeat(15)
                     .signal({NOP})
                     .concat().repeatEachStep(2)
@@ -221,7 +221,7 @@ TEST_F(Debugger, ShouldImplementMemoryRead) {
     Trace expected = TraceBuilder()
         .port(i_clk).signal("-_")
                     .repeat(24)
-        .port(o_cmd).signal({NOP})
+        .port(o_debug_cmd).signal({NOP})
                     .signal({MEM_READ}).repeat(22)
                     .signal({NOP})
                     .concat().repeatEachStep(2)
@@ -302,7 +302,7 @@ TEST_F(Debugger, ShouldSupportGapsBetweenRxBytes) {
     Trace expected = TraceBuilder()
         .port(i_clk).signal("-_")
                     .repeat(10)
-        .port(o_cmd).signal({NOP})
+        .port(o_debug_cmd).signal({NOP})
                     .signal({ECHO}).repeat(8)
                     .signal({NOP})
                     .concat().repeatEachStep(2)
