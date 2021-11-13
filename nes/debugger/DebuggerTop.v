@@ -65,7 +65,7 @@ wire [15:0] w_debug_cmd_bytes_remaining;
 
 Debugger debugger(
     .i_clk(i_clk),
-    .i_reset_n(i_reset_n),
+    .i_reset_n(i_reset_n & ~i_spi_cs_n),
     
     .i_rx_dv(w_rx_dv),
     .i_rx_byte(w_rx_byte),
