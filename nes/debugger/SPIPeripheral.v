@@ -38,7 +38,8 @@ module SPIPeripheral (
     output          o_debug_rx_buffered_0,
     output [2:0]    o_debug_rx_bit_index,
     output [2:0]    o_debug_tx_bit_index,
-    output          o_debug_active
+    output          o_debug_active,
+    output [7:0]    o_debug_tx_byte_buffered
 );
 
 reg [2:0] r_rx_bit_index;
@@ -54,6 +55,9 @@ reg r_active;
 reg [2:0] r_tx_bit_index;  // index into byte being serialised
 reg r_tx_cipo;             // current bit being serialised to controller
 
+reg [7:0] r_tx_byte_buffered;
+reg r_tx_byte_has_buffered;
+
 // FPGA Clock domain - receive tx_byte when i_tx_dv is pulsed
 always @(posedge i_clk or negedge i_reset_n)
 begin
@@ -67,35 +71,53 @@ begin
         begin
             r_tx_byte <= i_tx_byte;
         end
+        else if (r_tx_byte_has_buffered)
+        begin
+           r_tx_byte <= 0; 
+        end
     end
 end
 
 // SPI clock domain - send serialised data on CIPO
-always @(posedge i_spi_clk or negedge i_reset_n)
+always @(posedge i_spi_clk or negedge i_reset_n or posedge i_spi_cs_n)
 begin
-    if (!i_reset_n)
+    if ((!i_reset_n) || (i_spi_cs_n == 1'b1))
     begin
         r_active <= 0;
         r_tx_bit_index <= 3'b111;
         r_tx_cipo <= 0;
+
+        r_tx_byte_has_buffered <= 0;
+        r_tx_byte_buffered <= 0;
     end
     else
     begin
+        r_tx_byte_has_buffered <= 0;
+
         if (i_spi_cs_n == 1'b0)
         begin
             r_active <= 1;
             r_tx_bit_index <= r_tx_bit_index - 1;
-            r_tx_cipo <= r_tx_byte[r_tx_bit_index];
 
-            // todo: when does active return to 0?
+            if (r_tx_bit_index == 3'b111)
+            begin
+                // first bit, cache the tx byte for transmission
+                r_tx_byte_buffered <= r_tx_byte;
+                r_tx_byte_has_buffered <= 1;
+                r_tx_cipo <= r_tx_byte[r_tx_bit_index];
+            end
+            else
+            begin
+                r_tx_cipo <= r_tx_byte_buffered[r_tx_bit_index];
+            end
         end
     end
 end
 
 // SPI clock domain - read serialised data from COPI
-always @(negedge i_spi_clk or negedge i_reset_n)
+always @(negedge i_spi_clk or negedge i_reset_n or posedge i_spi_cs_n)
 begin
-    if (!i_reset_n)
+    if ((!i_reset_n) || (i_spi_cs_n == 1'b1))
     begin
         r_rx_bit_index <= 3'b111;
         r_rx_byte <= 8'h00;
@@ -158,5 +180,6 @@ assign o_debug_rx_buffered_0 = r_rx_buffered_0;
 assign o_debug_rx_bit_index = r_rx_bit_index;
 assign o_debug_tx_bit_index = r_tx_bit_index;
 assign o_debug_active = r_active;
+assign o_debug_tx_byte_buffered = r_tx_byte_buffered;
 
 endmodule

@@ -27,6 +27,7 @@ wire w_debug_rx_buffered_2;
 wire [2:0] w_debug_tx_bit_index;
 wire [2:0] w_debug_rx_bit_index;
 wire w_debug_active;
+wire [7:0] w_debug_tx_byte_buffered;
 /* verilator lint_on UNUSED */
 
 SPIPeripheral spi(
@@ -48,7 +49,8 @@ SPIPeripheral spi(
     .o_debug_rx_buffered_2(w_debug_rx_buffered_2),
     .o_debug_tx_bit_index(w_debug_tx_bit_index),
     .o_debug_rx_bit_index(w_debug_rx_bit_index),
-    .o_debug_active(w_debug_active)
+    .o_debug_active(w_debug_active),
+    .o_debug_tx_byte_buffered(w_debug_tx_byte_buffered)
 );
 
 wire [15:0] w_mem_address;
