@@ -44,8 +44,8 @@ namespace {
         ECHO = 1,
         MEM_WRITE = 2,
         MEM_READ = 3,
-        VAL_WRITE = 4,
-        VAL_READ = 5
+        VALUE_WRITE = 4,
+        VALUE_READ = 5
     };
 
     uint8_t hi(uint16_t value) {
@@ -343,7 +343,7 @@ TEST_F(Debugger, ShouldImplementValueWrite) {
     // starts in NOP state
     helperIdleTick();
     // receive cmd
-    helperReceiveByte(VAL_WRITE);
+    helperReceiveByte(VALUE_WRITE);
     helperIdleTick();
     // receive valueId to write to (high byte)
     helperReceiveByte(hi(kTestValueID));
@@ -363,7 +363,7 @@ TEST_F(Debugger, ShouldImplementValueWrite) {
                     .repeat(11)
         .port(o_debug_cmd)
                     .signal({NOP})
-                    .signal({VAL_WRITE}).repeat(9)
+                    .signal({VALUE_WRITE}).repeat(9)
                     .signal({NOP})
                     .concat().repeatEachStep(2)
         .port(o_tx_dv).signal("0").repeat(11)
@@ -391,6 +391,86 @@ TEST_F(Debugger, ShouldImplementValueWrite) {
                             kTestValue,
                             0
                         })
+                        .concat().repeatEachStep(2)
+        .port(o_mem_en)
+                        .signal("0").repeat(11).repeatEachStep(2);
+                        
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Debugger, ShouldImplementValueRead) {
+    const uint16_t kTestValueID = 0xABCD;
+    const uint16_t kTestValue = 0x1234;
+
+    auto& core = testBench.core();
+
+    testBench.setCallbackSimulateCombinatorial([&core]{
+        if (core.o_value_en == 0) {
+            core.i_value_data = 0;
+            return;
+        }
+
+        core.i_value_data = kTestValue;
+    });
+
+    // starts in NOP state
+    helperIdleTick();
+
+    // receive cmd
+    helperReceiveByte(VALUE_READ);
+    helperIdleTick();
+    // receive value ID to write to (high byte)
+    helperReceiveByte(hi(kTestValueID));
+    helperIdleTick();
+    // receive value ID to write to (low byte)
+    helperReceiveByte(lo(kTestValueID));
+    helperIdleTick();
+    // transmit value (high byte)
+    helperReceiveByte(0);
+    helperIdleTick();
+    // transmit value (low byte)
+    helperReceiveByte(0);
+    helperIdleTick();
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("-_")
+                    .repeat(11)
+        .port(o_debug_cmd).signal({NOP})
+                    .signal({VALUE_READ}).repeat(9)
+                    .signal({NOP})
+                    .concat().repeatEachStep(2)
+        .port(i_rx_dv)
+                    .signal("0")
+                    .signal("10").repeat(5)
+                    .concat().repeatEachStep(2)
+        .port(o_tx_dv).signal("0").repeat(6)
+                      .signal("10").repeat(2)
+                      .signal("0")
+                      .concat().repeatEachStep(2)
+        .port(o_tx_byte).signal({0}).repeat(6)
+                        .signal({
+                            hi(kTestValue),
+                            0,
+                            lo(kTestValue),
+                            0,
+                            0
+                        })
+                        .concat().repeatEachStep(2)
+        .port(o_value_rw) 
+                        .signal("1").repeat(11)
+                        .concat().repeatEachStep(2)
+        .port(o_value_en)
+                        .signal("0").repeat(5)
+                        .signal("1")
+                        .signal("0").repeat(5)
+                        .concat().repeatEachStep(2)
+        .port(o_value_id)
+                        .signal({0}).repeat(5)
+                        .signal({kTestValueID})
+                        .signal({0}).repeat(5)
+                        .concat().repeatEachStep(2)
+        .port(o_value_data)
+                        .signal({0}).repeat(11)
                         .concat().repeatEachStep(2)
         .port(o_mem_en)
                         .signal("0").repeat(11).repeatEachStep(2);

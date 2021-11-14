@@ -56,12 +56,12 @@ localparam [7:0] CMD_MEM_READ = 3;      // >= 5 BYTES:  CMD,
                                         //              RX (num bytes hi), 
                                         //              RX (num bytes lo),
                                         //              TX x n (data)
-localparam [7:0] CMD_VAL_WRITE = 4;     // 5 bytes:     CMD,
+localparam [7:0] CMD_VALUE_WRITE = 4;   // 5 bytes:     CMD,
                                         //              RX (valueId hi)
                                         //              RX (valueId lo)
                                         //              RX (value hi)
                                         //              RX (value lo)
-localparam [7:0] CMD_VAL_READ = 5;      // 5 bytes:     CMD,
+localparam [7:0] CMD_VALUE_READ = 5;    // 5 bytes:     CMD,
                                         //              RX (valueId hi)
                                         //              RX (valueId lo)
                                         //              TX (value hi)
@@ -137,7 +137,8 @@ begin
                     //       memory region length is received
                     r_cmd_num_bytes_remaining <= 4;
                 end
-                CMD_VAL_WRITE: begin
+                CMD_VALUE_WRITE,
+                CMD_VALUE_READ: begin
                     r_cmd_num_bytes_remaining <= 4;
                 end
                 default: begin
@@ -189,7 +190,7 @@ begin
                     end
                     endcase
                 end
-                CMD_VAL_WRITE: begin
+                CMD_VALUE_WRITE: begin
                     case (r_cmd_byte_index)
                     0: r_value_id[15:8] <= i_rx_byte;               // valueID hi
                     1: r_value_id[7:0] <= i_rx_byte;                // valueID hi
@@ -197,6 +198,21 @@ begin
                     3: begin
                         r_value_data[7:0] <= i_rx_byte;             // value lo
                         r_value_rw <= RW_WRITE;
+                        r_value_en <= 1;
+                    end
+                    default: begin
+                        
+                    end
+                    endcase
+                end
+                CMD_VALUE_READ: begin
+                    case (r_cmd_byte_index)
+                    0: r_value_id[15:8] <= i_rx_byte;               // valueID hi
+                    1: begin
+                        r_value_id[7:0] <= i_rx_byte;               // valueID lo
+
+                        // setup local read from value
+                        r_value_rw <= RW_READ;
                         r_value_en <= 1;
                     end
                     default: begin
@@ -239,6 +255,24 @@ begin
                     begin
                         r_mem_address <= r_mem_address + 1;
                     end
+                end
+                CMD_VALUE_READ: begin
+                    case (r_cmd_byte_index)
+                    2: begin
+                        r_value_data <= i_value_data;
+
+                        // setup high byte
+                        r_tx_dv <= 1;
+                        r_tx_byte <= i_value_data[15:8];
+                    end
+                    3: begin
+                        // setup low byte
+                        r_tx_dv <= 1;
+                        r_tx_byte <= r_value_data[7:0];
+                    end
+                    default: begin
+                    end
+                    endcase
                 end
                 default: begin
                 end
