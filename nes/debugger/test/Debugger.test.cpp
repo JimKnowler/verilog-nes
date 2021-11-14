@@ -43,8 +43,18 @@ namespace {
         NOP = 0,
         ECHO = 1,
         MEM_WRITE = 2,
-        MEM_READ = 3
+        MEM_READ = 3,
+        VAL_WRITE = 4,
+        VAL_READ = 5
     };
+
+    uint8_t hi(uint16_t value) {
+        return (value >> 8) & 0xff;
+    }
+
+    uint8_t lo(uint16_t value) {
+        return value & 0xff;
+    }
 }
 
 TEST_F(Debugger, ShouldConstruct) {
@@ -99,7 +109,11 @@ TEST_F(Debugger, ShouldImplementCmdEcho) {
         .port(o_tx_byte).signal({0}).repeat(4)
                         .signal({kTestValue})
                         .signal({0}).repeat(2)
-                        .concat().repeatEachStep(2);
+                        .concat().repeatEachStep(2)
+        .port(o_mem_en)
+                        .signal("0").repeat(7).repeatEachStep(2)
+        .port(o_value_en)
+                        .signal("0").repeat(7).repeatEachStep(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -115,10 +129,10 @@ TEST_F(Debugger, ShouldImplementMemoryWrite) {
     helperReceiveByte(MEM_WRITE);
     helperIdleTick();
     // receive address to write to (high byte)
-    helperReceiveByte((kTestAddress >> 8) & 0xff);
+    helperReceiveByte(hi(kTestAddress));
     helperIdleTick();
     // receive address to write to (low byte)
-    helperReceiveByte(kTestAddress & 0xff);
+    helperReceiveByte(lo(kTestAddress));
     helperIdleTick();
     // receive number of bytes to write (high byte)
     helperReceiveByte(0);
@@ -172,7 +186,9 @@ TEST_F(Debugger, ShouldImplementMemoryWrite) {
                             kTestBytes[2],
                             0
                         })
-                        .concat().repeatEachStep(2);
+                        .concat().repeatEachStep(2)
+        .port(o_value_en)
+                        .signal("0").repeat(17).repeatEachStep(2);
                         
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -201,10 +217,10 @@ TEST_F(Debugger, ShouldImplementMemoryRead) {
     helperReceiveByte(MEM_READ);
     helperIdleTick();
     // receive address to write to (high byte)
-    helperReceiveByte((kTestAddress >> 8) & 0xff);
+    helperReceiveByte(hi(kTestAddress));
     helperIdleTick();
     // receive address to write to (low byte)
-    helperReceiveByte(kTestAddress & 0xff);
+    helperReceiveByte(lo(kTestAddress));
     helperIdleTick();
     // receive number of bytes to write (high byte)
     helperReceiveByte(0);
@@ -279,7 +295,9 @@ TEST_F(Debugger, ShouldImplementMemoryRead) {
                         .concat().repeatEachStep(2)
         .port(o_mem_data)
                         .signal({0}).repeat(24)
-                        .concat().repeatEachStep(2);
+                        .concat().repeatEachStep(2)
+        .port(o_value_en)
+                        .signal("0").repeat(24).repeatEachStep(2);
                         
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
@@ -315,5 +333,67 @@ TEST_F(Debugger, ShouldSupportGapsBetweenRxBytes) {
                         .signal({0}).repeat(4)
                         .concat().repeatEachStep(2);
 
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(Debugger, ShouldImplementValueWrite) {
+    const uint16_t kTestValueID = 0x1234;
+    const uint16_t kTestValue = 0xABCD;
+
+    // starts in NOP state
+    helperIdleTick();
+    // receive cmd
+    helperReceiveByte(VAL_WRITE);
+    helperIdleTick();
+    // receive valueId to write to (high byte)
+    helperReceiveByte(hi(kTestValueID));
+    helperIdleTick();
+    // receive valudId to write to (low byte)
+    helperReceiveByte(lo(kTestValueID));
+    helperIdleTick();
+    // receive value to write (high byte)
+    helperReceiveByte(hi(kTestValue));
+    helperIdleTick();
+    // receive value to write (low byte)
+    helperReceiveByte(lo(kTestValue));
+    helperIdleTick();
+    
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("-_")
+                    .repeat(11)
+        .port(o_debug_cmd)
+                    .signal({NOP})
+                    .signal({VAL_WRITE}).repeat(9)
+                    .signal({NOP})
+                    .concat().repeatEachStep(2)
+        .port(o_tx_dv).signal("0").repeat(11)
+                      .concat().repeatEachStep(2)
+        .port(o_tx_byte).signal({0}).repeat(11)
+                        .concat().repeatEachStep(2)
+        .port(o_value_en)
+                        .signal("0").repeat(9)
+                        .signal("10")
+                        .concat().repeatEachStep(2)
+        .port(o_value_rw) 
+                        .signal("1").repeat(9)
+                        .signal("01")
+                        .concat().repeatEachStep(2)   // 0 when writing to memory
+        .port(o_value_id)
+                        .signal({0}).repeat(9)
+                        .signal({
+                            kTestValueID,
+                            0
+                        })
+                        .concat().repeatEachStep(2)
+        .port(o_value_data)
+                        .signal({0}).repeat(9)
+                        .signal({
+                            kTestValue,
+                            0
+                        })
+                        .concat().repeatEachStep(2)
+        .port(o_mem_en)
+                        .signal("0").repeat(11).repeatEachStep(2);
+                        
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }

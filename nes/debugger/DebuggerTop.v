@@ -59,6 +59,17 @@ wire w_mem_en;
 wire [7:0] w_mem_data_wr;
 wire [7:0] w_mem_data_rd;
 
+// TODO: use these
+/* verilator lint_off UNUSED */
+/* verilator lint_off UNDRIVEN */
+wire [15:0] w_value_id;
+wire w_value_rw;
+wire w_value_en;
+wire [15:0] w_value_data_wr;
+wire [15:0] w_value_data_rd;
+/* verilator lint_on UNUSED */
+/* verilator lint_on UNDRIVEN */
+
 // unused DEBUG pins
 /* verilator lint_off UNUSED */
 wire [7:0] w_debug_cmd;
@@ -80,6 +91,12 @@ Debugger debugger(
     .o_mem_en(w_mem_en),
     .o_mem_data(w_mem_data_wr),
     .i_mem_data(w_mem_data_rd),
+
+    .o_value_id(w_value_id),
+    .o_value_rw(w_value_rw),
+    .o_value_en(w_value_en),
+    .o_value_data(w_value_data_wr),
+    .i_value_data(w_value_data_rd),
 
     .o_debug_cmd(w_debug_cmd),
     .o_debug_cmd_bytes_remaining(w_debug_cmd_bytes_remaining)
