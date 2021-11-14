@@ -17,8 +17,6 @@ localparam NUM_VALUES = 16;
 
 reg [15:0] r_values [NUM_VALUES-1:0];
 
-reg [15:0] r_data;
-
 always @(posedge i_clk)
 begin
     if (i_ena)
@@ -27,17 +25,10 @@ begin
         begin
             // write to values
             r_values[i_id[3:0]] <= i_data;
-            // cache for read
-            r_data <= i_data;
-        end
-        else
-        begin
-            // read from values
-            r_data <= r_values[i_id[3:0]];
         end
     end
 end
 
-assign o_data = r_data;
+assign o_data = i_ena ? r_values[i_id[3:0]] : 0;
 
 endmodule
