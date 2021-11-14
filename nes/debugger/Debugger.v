@@ -28,9 +28,7 @@ module Debugger(
     output          o_value_rw,         // read=1/write=0
     output          o_value_en,         // value enable - 1 when active
     output [15:0]   o_value_data,       // data written to a value
-    /* verilator lint_off UNUSED */
     input [15:0]    i_value_data,       // data read from a value
-    /* verilator lint_on UNUSED */
 
     // debug state
     output [7:0]    o_debug_cmd,                    // current command

@@ -618,7 +618,8 @@ verilator_cc_library(
         "debugger/DebuggerTop.v",
         "debugger/Debugger.v",
         "debugger/simulation/Memory.v",
-        "debugger/SPIPeripheral.v"
+        "debugger/simulation/Values.v",
+        "debugger/SPIPeripheral.v"        
     ]
 )
 

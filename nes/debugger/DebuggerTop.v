@@ -13,6 +13,8 @@ module DebuggerTop(
     input           i_spi_copi      // SPI CPOI: only process when cs is negative
 );
 
+localparam RW_WRITE = 0;
+
 wire [7:0] w_rx_byte;
 wire w_rx_dv;
 
@@ -59,16 +61,11 @@ wire w_mem_en;
 wire [7:0] w_mem_data_wr;
 wire [7:0] w_mem_data_rd;
 
-// TODO: use these
-/* verilator lint_off UNUSED */
-/* verilator lint_off UNDRIVEN */
 wire [15:0] w_value_id;
 wire w_value_rw;
 wire w_value_en;
 wire [15:0] w_value_data_wr;
 wire [15:0] w_value_data_rd;
-/* verilator lint_on UNUSED */
-/* verilator lint_on UNDRIVEN */
 
 // unused DEBUG pins
 /* verilator lint_off UNUSED */
@@ -103,19 +100,30 @@ Debugger debugger(
 );
 
 reg r_is_mem_wen;
+reg r_is_value_wen;
 
 always @(*)
 begin
-    r_is_mem_wen = (w_mem_rw == 0);
+    r_is_mem_wen = (w_mem_rw == RW_WRITE);
+    r_is_value_wen = (w_value_rw == RW_WRITE);
 end
 
 Memory memory (
-  .i_clk(i_clk),              // input wire clka
-  .i_ena(w_mem_en),           // input wire ena
-  .i_wea(r_is_mem_wen),       // input wire [0 : 0] wea
-  .i_addr(w_mem_address),     // input wire [15 : 0] addra
-  .i_data(w_mem_data_wr),     // input wire [7 : 0] dina
-  .o_data(w_mem_data_rd)      // output wire [7 : 0] douta
+  .i_clk(i_clk),
+  .i_ena(w_mem_en),
+  .i_wea(r_is_mem_wen),
+  .i_addr(w_mem_address),
+  .i_data(w_mem_data_wr),
+  .o_data(w_mem_data_rd)
+);
+
+Values values (
+    .i_clk(i_clk),
+    .i_ena(w_value_en),
+    .i_wea(r_is_value_wen),
+    .i_id(w_value_id),
+    .i_data(w_value_data_wr),
+    .o_data(w_value_data_rd)
 );
 
 endmodule
