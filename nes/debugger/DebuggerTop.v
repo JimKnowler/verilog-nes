@@ -3,7 +3,8 @@
  */
 
 module DebuggerTop(
-    input   i_clk,
+    input   i_clk_100mhz,
+    //input   i_clk_5mhz,
     input   i_reset_n,
     
     // SPI interface
@@ -33,7 +34,7 @@ wire [7:0] w_debug_tx_byte_buffered;
 /* verilator lint_on UNUSED */
 
 SPIPeripheral spi(
-    .i_clk(i_clk),
+    .i_clk(i_clk_100mhz),
     .i_reset_n(i_reset_n),
     
     .o_rx_byte(w_rx_byte),
@@ -74,7 +75,7 @@ wire [15:0] w_debug_cmd_bytes_remaining;
 /* verilator lint_on UNUSED */
 
 Debugger debugger(
-    .i_clk(i_clk),
+    .i_clk(i_clk_100mhz),
     .i_reset_n(i_reset_n & ~i_spi_cs_n),
     
     .i_rx_dv(w_rx_dv),
@@ -109,7 +110,7 @@ begin
 end
 
 Memory memory (
-  .i_clk(i_clk),
+  .i_clk(i_clk_100mhz),
   .i_ena(w_mem_en),
   .i_wea(r_is_mem_wen),
   .i_addr(w_mem_address),
@@ -118,7 +119,7 @@ Memory memory (
 );
 
 Values values (
-    .i_clk(i_clk),
+    .i_clk(i_clk_100mhz),
     .i_ena(w_value_en),
     .i_wea(r_is_value_wen),
     .i_id(w_value_id),

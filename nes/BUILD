@@ -613,6 +613,16 @@ gtest_verilog_testbench(
 )
 
 verilator_cc_library(
+    name = "Sync",
+    srcs = ["debugger/Sync.v"]
+)
+
+gtest_verilog_testbench(
+    name = "SyncTestBench",
+    deps = [":Sync"]
+)
+
+verilator_cc_library(
     name = "DebuggerTop",
     srcs = [
         "debugger/DebuggerTop.v",
@@ -646,13 +656,15 @@ cc_test(
     ) + [
         ":DebuggerTestBench",
         ":DebuggerTopTestBench",
-        ":MemoryTestBench"
+        ":MemoryTestBench",
+        ":SyncTestBench"
     ],
     deps = [
         "@com_google_googletest//:gtest",
         "@gtestverilog//gtestverilog:lib",
         ":Debugger",
         ":DebuggerTop",
-        ":Memory"
+        ":Memory",
+        ":Sync"
     ],
 )
