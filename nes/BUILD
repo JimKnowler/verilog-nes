@@ -628,9 +628,10 @@ verilator_cc_library(
         "debugger/DebuggerTop.v",
         "debugger/Debugger.v",
         "debugger/simulation/Memory.v",
-        "debugger/simulation/Values.v",
-        "debugger/SPIPeripheral.v"        
-    ]
+        "debugger/Values.v",
+        "debugger/SPIPeripheral.v",
+        "debugger/Sync.v"
+    ] + cpu6502_srcs
 )
 
 gtest_verilog_testbench(
