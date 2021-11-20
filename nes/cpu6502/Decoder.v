@@ -94,20 +94,11 @@ localparam I = 2;       // Interrupt Mask
 localparam N = 7;       // Negative
 localparam V = 6;       // Overflow
 
-// register clock phase - so that Decoder can use clock
-//    phase in combinatorial logic, without risking timing
-//    issues with any of the latches (ABH/ABH/DL/etc)
-reg r_clk;
-always @(posedge i_clk or negedge i_clk)
-begin
-    r_clk <= i_clk;
-end
-
 // PHI 1 and PHI 2 clock phases
 wire w_phi1;
 wire w_phi2;
-assign w_phi1 = (r_clk == 0);
-assign w_phi2 = (r_clk == 1);
+assign w_phi1 = (i_clk == 0);
+assign w_phi2 = (i_clk == 1);
 
 // Opcodes
 localparam [7:0] BRK = 8'h00,       NOP = 8'hEA,

@@ -18,9 +18,16 @@ reg [7:0] r_address;
 
 always @(posedge i_clk or negedge i_reset_n)
 begin
-    if (i_load && i_clk_en)
+    if (!i_reset_n)
     begin
-        r_address <= i_address;
+        r_address <= 0;
+    end
+    else
+    begin
+        if (i_load && i_clk_en)
+        begin
+            r_address <= i_address;
+        end
     end
 end
 

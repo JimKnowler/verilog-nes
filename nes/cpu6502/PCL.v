@@ -26,7 +26,7 @@ module PCL(
     output [7:0] o_pcl
 );
 
-reg [8:0] r_pcls;       // output of PCLS
+reg [7:0] r_pcls;       // output of PCLS
 reg [8:0] r_pcls_inc;   // output of increment logic
                         // NOTE: 8th bit => carry out
 reg [7:0] r_pcl;        // output of PCL
@@ -34,7 +34,7 @@ reg [7:0] r_pcl;        // output of PCL
 // PCLS
 always @(i_pcl_pcl or i_adl_pcl or i_adl or r_pcl)
 begin
-    r_pcls[8] = 0;
+    r_pcls[7:0] = 0;
 
     if (i_pcl_pcl)
         r_pcls[7:0] = r_pcl;
@@ -45,7 +45,7 @@ end
 // Increment Logic
 always @(r_pcls or i_i_pc)
 begin
-    r_pcls_inc = r_pcls + { 8'b0, i_i_pc };
+    r_pcls_inc = { 1'b0, r_pcls } + { 8'b0, i_i_pc };
 end
 
 // Carry Out
