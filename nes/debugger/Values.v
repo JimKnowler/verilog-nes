@@ -45,11 +45,11 @@ localparam VALUEID_CPU_IRQ_N = 5;
 localparam VALUEID_CPU_NMI_N = 6;
 localparam VALUEID_CPU_SYNC = 7;
 localparam VALUEID_CPU_REG_A = 8;
-localparam VALUEID_CPU_REG_X = 8;
-localparam VALUEID_CPU_REG_Y = 8;
-localparam VALUEID_CPU_REG_S = 8;
-localparam VALUEID_CPU_REG_P = 8;
-localparam VALUEID_CPU_REG_IR = 8;
+localparam VALUEID_CPU_REG_X = 9;
+localparam VALUEID_CPU_REG_Y = 10;
+localparam VALUEID_CPU_REG_S = 11;
+localparam VALUEID_CPU_REG_P = 12;
+localparam VALUEID_CPU_REG_IR = 13;
 
 localparam NUM_VALUES = 16;
 
