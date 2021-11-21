@@ -122,28 +122,28 @@ Memory memory (
 // Synchronisation between 100mhz and 5mhz clocks
 //
 
-wire w_start_step_100mhz;
-wire w_start_step_5mhz;
+wire w_cpu_step_100mhz;
+wire w_cpu_step_5mhz;
 
 Sync syncFrom100Mhz(
     .i_clk(i_clk_100mhz),
     .i_reset_n(i_reset_n),
-    .i_data(w_start_step_100mhz),
+    .i_data(w_cpu_step_100mhz),
     
     .i_sync_clk(i_clk_5mhz),
-    .o_sync_posedge(w_start_step_5mhz)
+    .o_sync_posedge(w_cpu_step_5mhz)
 );
 
-reg r_step_completed_5mhz;
-wire w_step_completed_100mhz;
+reg r_cpu_step_completed_5mhz;
+wire w_cpu_step_completed_100mhz;
 
 Sync syncTo100Mhz(
     .i_clk(i_clk_5mhz),
     .i_reset_n(i_reset_n),
-    .i_data(r_step_completed_5mhz),
+    .i_data(r_cpu_step_completed_5mhz),
     
     .i_sync_clk(i_clk_100mhz),
-    .o_sync_posedge(w_step_completed_100mhz)
+    .o_sync_posedge(w_cpu_step_completed_100mhz)
 );
 
 //
@@ -178,7 +178,7 @@ begin
     end
     else
     begin
-        if (w_start_step_5mhz)
+        if (w_cpu_step_5mhz)
         begin
             r_clk_en_cpu <= 1;
         end
@@ -188,11 +188,11 @@ begin
 
             if (r_clk_en_cpu == 1)
             begin
-                r_step_completed_5mhz <= 1;
+                r_cpu_step_completed_5mhz <= 1;
             end
             else
             begin
-                r_step_completed_5mhz <= 0;
+                r_cpu_step_completed_5mhz <= 0;
             end
         end
     end
@@ -247,8 +247,8 @@ Values values (
     .i_cpu_reg_p(w_cpu_reg_p),
     .i_cpu_reg_ir(w_cpu_reg_ir),
     
-    .o_cpu_start_step(w_start_step_100mhz),
-    .i_cpu_step_completed(w_step_completed_100mhz)
+    .o_cpu_step(w_cpu_step_100mhz),
+    .i_cpu_step_completed(w_cpu_step_completed_100mhz)
 );
 
 endmodule

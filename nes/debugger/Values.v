@@ -1,6 +1,6 @@
 /*
- * Write: VALUDID_CPU_START_STEP = 1, to trigger a single step of CPU
- * Read: VALUEID_CPU_START_STEP, =1 while stepping, =0 when finished stepping
+ * Write: VALUEID_CPU_STEP = 1, to trigger a single step of CPU
+ * Read: VALUEID_CPU_STEP, ==1 while stepping, ==0 when finished stepping
  * Read: VALUDID_CPU_xxxx to read state of CPU
  */
 
@@ -30,12 +30,12 @@ module Values(
     
 
     // CPU step control signals
-    output o_cpu_start_step,
+    output o_cpu_step,
     input i_cpu_step_completed
 );
 
-// start a CPU step
-localparam VALUEID_CPU_START_STEP = 1;
+// single step the CPU
+localparam VALUEID_CPU_STEP = 1;
 
 // Retrieve CPU values
 localparam VALUEID_CPU_ADDRESS = 2;
@@ -51,9 +51,7 @@ localparam VALUEID_CPU_REG_S = 11;
 localparam VALUEID_CPU_REG_P = 12;
 localparam VALUEID_CPU_REG_IR = 13;
 
-localparam NUM_VALUES = 16;
-
-reg r_cpu_start_step;
+reg r_cpu_step;
 
 reg [15:0] r_value;
 
@@ -61,22 +59,22 @@ always @(posedge i_clk or negedge i_reset_n)
 begin
     if (!i_reset_n)
     begin
-        r_cpu_start_step <= 0;
+        r_cpu_step <= 0;
     end
     else
     begin
         if (i_cpu_step_completed == 1)
         begin
-            r_cpu_start_step <= 0;
+            r_cpu_step <= 0;
         end
                 
         if (i_ena)
         begin
             if (i_wea)
             begin
-                if (i_id == VALUEID_CPU_START_STEP)
+                if (i_id == VALUEID_CPU_STEP)
                 begin
-                    r_cpu_start_step <= (i_data == 1);
+                    r_cpu_step <= (i_data == 1);
                 end
             end
         end
@@ -86,8 +84,8 @@ end
 always @(*)
 begin
     case (i_id)
-    VALUEID_CPU_START_STEP: begin
-        r_value = { 15'd0, r_cpu_start_step };
+    VALUEID_CPU_STEP: begin
+        r_value = { 15'd0, r_cpu_step };
     end
     VALUEID_CPU_ADDRESS: begin
         r_value = i_cpu_address;
@@ -131,6 +129,6 @@ begin
 end
 
 assign o_data = i_ena ? r_value : 0;
-assign o_cpu_start_step = r_cpu_start_step;
+assign o_cpu_step = r_cpu_step;
 
 endmodule
