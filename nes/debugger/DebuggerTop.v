@@ -167,6 +167,8 @@ wire [7:0] w_cpu_reg_p;
 wire [7:0] w_cpu_reg_ir;
 /* verilator lint_on UNUSED */
 
+wire w_cpu_reset_n;
+
 always @(posedge i_clk_5mhz or negedge i_reset_n)
 begin
     if (!i_reset_n)
@@ -201,7 +203,7 @@ end
 /* verilator lint_off PINMISSING */
 Cpu6502 cpu6502(
     .i_clk(i_clk_5mhz),
-    .i_reset_n(i_reset_n),
+    .i_reset_n(i_reset_n & w_cpu_reset_n),
     .i_clk_en(r_clk_en_cpu),
     .o_rw(w_rw_cpu),
     .o_address(w_address_cpu),
@@ -248,7 +250,9 @@ Values values (
     .i_cpu_reg_ir(w_cpu_reg_ir),
     
     .o_cpu_step(w_cpu_step_100mhz),
-    .i_cpu_step_completed(w_cpu_step_completed_100mhz)
+    .i_cpu_step_completed(w_cpu_step_completed_100mhz),
+
+    .o_cpu_reset_n(w_cpu_reset_n)
 );
 
 endmodule

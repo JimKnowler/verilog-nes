@@ -31,11 +31,15 @@ module Values(
 
     // CPU step control signals
     output o_cpu_step,
-    input i_cpu_step_completed
+    input i_cpu_step_completed,
+
+    // CPU reset_n signal
+    output o_cpu_reset_n
 );
 
 // single step the CPU
 localparam VALUEID_CPU_STEP = 1;
+localparam VALUEID_CPU_RESET_N = 14;
 
 // Retrieve CPU values
 localparam VALUEID_CPU_ADDRESS = 2;
@@ -52,6 +56,7 @@ localparam VALUEID_CPU_REG_P = 12;
 localparam VALUEID_CPU_REG_IR = 13;
 
 reg r_cpu_step;
+reg r_cpu_reset_n;
 
 reg [15:0] r_value;
 
@@ -60,6 +65,7 @@ begin
     if (!i_reset_n)
     begin
         r_cpu_step <= 0;
+        r_cpu_reset_n <= 1;
     end
     else
     begin
@@ -72,10 +78,16 @@ begin
         begin
             if (i_wea)
             begin
-                if (i_id == VALUEID_CPU_STEP)
-                begin
+                case (i_id)
+                VALUEID_CPU_STEP: begin
                     r_cpu_step <= (i_data == 1);
                 end
+                VALUEID_CPU_RESET_N: begin
+                    r_cpu_reset_n <= (i_data == 1);
+                end
+                default: begin
+                end
+                endcase
             end
         end
     end
@@ -86,6 +98,9 @@ begin
     case (i_id)
     VALUEID_CPU_STEP: begin
         r_value = { 15'd0, r_cpu_step };
+    end
+    VALUEID_CPU_RESET_N: begin
+        r_value = { 15'd0, r_cpu_reset_n };
     end
     VALUEID_CPU_ADDRESS: begin
         r_value = i_cpu_address;
@@ -130,5 +145,6 @@ end
 
 assign o_data = i_ena ? r_value : 0;
 assign o_cpu_step = r_cpu_step;
+assign o_cpu_reset_n = r_cpu_reset_n;
 
 endmodule
