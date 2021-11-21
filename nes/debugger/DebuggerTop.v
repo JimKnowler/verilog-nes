@@ -237,7 +237,7 @@ Values values (
     .o_data(w_value_data_rd),
 
     .i_cpu_address(w_address_cpu),
-    .i_cpu_data(w_o_data_cpu),
+    .i_cpu_data((w_rw_cpu == RW_WRITE) ? w_o_data_cpu : r_i_data_cpu),
     .i_cpu_rw(w_rw_cpu),
     .i_cpu_irq_n(r_irq_n),
     .i_cpu_nmi_n(r_nmi_n),
