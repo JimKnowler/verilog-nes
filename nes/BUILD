@@ -623,6 +623,16 @@ gtest_verilog_testbench(
 )
 
 verilator_cc_library(
+    name = "DebuggerMCU",
+    srcs = ["debugger/DebuggerMCU.v"]
+)
+
+gtest_verilog_testbench(
+    name = "DebuggerMCUTestBench",
+    deps = [":DebuggerMCU"]
+)
+
+verilator_cc_library(
     name = "DebuggerTop",
     srcs = [
         "debugger/DebuggerTop.v",
@@ -630,7 +640,8 @@ verilator_cc_library(
         "debugger/simulation/Memory.v",
         "debugger/Values.v",
         "debugger/SPIPeripheral.v",
-        "debugger/Sync.v"
+        "debugger/Sync.v",
+        "debugger/DebuggerMCU.v"
     ] + cpu6502_srcs
 )
 
@@ -658,7 +669,8 @@ cc_test(
         ":DebuggerTestBench",
         ":DebuggerTopTestBench",
         ":MemoryTestBench",
-        ":SyncTestBench"
+        ":SyncTestBench",
+        ":DebuggerMCUTestBench"
     ],
     deps = [
         "@com_google_googletest//:gtest",
@@ -666,6 +678,7 @@ cc_test(
         ":Debugger",
         ":DebuggerTop",
         ":Memory",
-        ":Sync"
+        ":Sync",
+        ":DebuggerMCU"
     ],
 )

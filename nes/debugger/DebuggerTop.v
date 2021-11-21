@@ -56,11 +56,11 @@ SPIPeripheral spi(
     .o_debug_tx_byte_buffered(w_debug_tx_byte_buffered)
 );
 
-wire [15:0] w_mem_address;
-wire w_mem_rw;
-wire w_mem_en;
-wire [7:0] w_mem_data_wr;
-wire [7:0] w_mem_data_rd;
+wire [15:0] w_debugger_mem_address;
+wire w_debugger_mem_rw;
+wire w_debugger_mem_en;
+wire [7:0] w_debugger_mem_data_wr;
+wire [7:0] w_debugger_mem_data_rd;
 
 wire [15:0] w_value_id;
 wire w_value_rw;
@@ -84,11 +84,11 @@ Debugger debugger(
     .o_tx_dv(w_tx_dv),
     .o_tx_byte(w_tx_byte),
     
-    .o_mem_address(w_mem_address),
-    .o_mem_rw(w_mem_rw),
-    .o_mem_en(w_mem_en),
-    .o_mem_data(w_mem_data_wr),
-    .i_mem_data(w_mem_data_rd),
+    .o_mem_address(w_debugger_mem_address),
+    .o_mem_rw(w_debugger_mem_rw),
+    .o_mem_en(w_debugger_mem_en),
+    .o_mem_data(w_debugger_mem_data_wr),
+    .i_mem_data(w_debugger_mem_data_rd),
 
     .o_value_id(w_value_id),
     .o_value_rw(w_value_rw),
@@ -98,24 +98,6 @@ Debugger debugger(
 
     .o_debug_cmd(w_debug_cmd),
     .o_debug_cmd_bytes_remaining(w_debug_cmd_bytes_remaining)
-);
-
-reg r_is_mem_wen;
-reg r_is_value_wen;
-
-always @(*)
-begin
-    r_is_mem_wen = (w_mem_rw == RW_WRITE);
-    r_is_value_wen = (w_value_rw == RW_WRITE);
-end
-
-Memory memory (
-  .i_clk(i_clk_100mhz),
-  .i_ena(w_mem_en),
-  .i_wea(r_is_mem_wen),
-  .i_addr(w_mem_address),
-  .i_data(w_mem_data_wr),
-  .o_data(w_mem_data_rd)
 );
 
 //
@@ -150,22 +132,20 @@ Sync syncTo100Mhz(
 // 6502 CPU
 //
 
-/* verilator lint_off UNUSED */
-reg r_clk_en_cpu;
-wire w_rw_cpu;
-wire [15:0] w_address_cpu;
-reg [7:0] r_i_data_cpu;
-wire [7:0] w_o_data_cpu;
-reg r_irq_n;
-reg r_nmi_n;
-wire w_sync_cpu;
+reg r_cpu_clk_en;
+wire w_cpu_rw;
+wire [15:0] w_cpu_address;
+wire [7:0] w_cpu_data_rd;
+wire [7:0] w_cpu_data_wr;
+reg r_cpu_irq_n;
+reg r_cpu_nmi_n;
+wire w_cpu_sync;
 wire [7:0] w_cpu_reg_a;
 wire [7:0] w_cpu_reg_x;
 wire [7:0] w_cpu_reg_y;
 wire [7:0] w_cpu_reg_s;
 wire [7:0] w_cpu_reg_p;
 wire [7:0] w_cpu_reg_ir;
-/* verilator lint_on UNUSED */
 
 wire w_cpu_reset_n;
 
@@ -173,22 +153,21 @@ always @(posedge i_clk_5mhz or negedge i_reset_n)
 begin
     if (!i_reset_n)
     begin
-        r_clk_en_cpu <= 0;
-        r_i_data_cpu <= 0;
-        r_irq_n <= 1;
-        r_nmi_n <= 1;
+        r_cpu_clk_en <= 0;
+        r_cpu_irq_n <= 1;
+        r_cpu_nmi_n <= 1;
     end
     else
     begin
         if (w_cpu_step_5mhz)
         begin
-            r_clk_en_cpu <= 1;
+            r_cpu_clk_en <= 1;
         end
         else
         begin
-            r_clk_en_cpu <= 0;
+            r_cpu_clk_en <= 0;
 
-            if (r_clk_en_cpu == 1)
+            if (r_cpu_clk_en == 1)
             begin
                 r_cpu_step_completed_5mhz <= 1;
             end
@@ -204,14 +183,14 @@ end
 Cpu6502 cpu6502(
     .i_clk(i_clk_5mhz),
     .i_reset_n(i_reset_n & w_cpu_reset_n),
-    .i_clk_en(r_clk_en_cpu),
-    .o_rw(w_rw_cpu),
-    .o_address(w_address_cpu),
-    .i_data(r_i_data_cpu),
-    .o_data(w_o_data_cpu),
-    .i_irq_n(r_irq_n),
-    .i_nmi_n(r_nmi_n),
-    .o_sync(w_sync_cpu),
+    .i_clk_en(r_cpu_clk_en),
+    .o_rw(w_cpu_rw),
+    .o_address(w_cpu_address),
+    .i_data(w_cpu_data_rd),
+    .o_data(w_cpu_data_wr),
+    .i_irq_n(r_cpu_irq_n),
+    .i_nmi_n(r_cpu_nmi_n),
+    .o_sync(w_cpu_sync),
 
     .o_debug_ac(w_cpu_reg_a),
     .o_debug_x(w_cpu_reg_x),
@@ -226,22 +205,29 @@ Cpu6502 cpu6502(
 // Values - control CPU step + read CPU values
 //
 
+reg r_is_value_wea;
+
+always @(*)
+begin
+    r_is_value_wea = (w_value_rw == RW_WRITE);
+end
+
 Values values (
     .i_clk(i_clk_100mhz),
     .i_reset_n(i_reset_n),
 
     .i_ena(w_value_en),
-    .i_wea(r_is_value_wen),
+    .i_wea(r_is_value_wea),
     .i_id(w_value_id),
     .i_data(w_value_data_wr),
     .o_data(w_value_data_rd),
 
-    .i_cpu_address(w_address_cpu),
-    .i_cpu_data((w_rw_cpu == RW_WRITE) ? w_o_data_cpu : r_i_data_cpu),
-    .i_cpu_rw(w_rw_cpu),
-    .i_cpu_irq_n(r_irq_n),
-    .i_cpu_nmi_n(r_nmi_n),
-    .i_cpu_sync(w_sync_cpu),
+    .i_cpu_address(w_cpu_address),
+    .i_cpu_data((w_cpu_rw == RW_WRITE) ? w_cpu_data_wr : w_cpu_data_rd),
+    .i_cpu_rw(w_cpu_rw),
+    .i_cpu_irq_n(r_cpu_irq_n),
+    .i_cpu_nmi_n(r_cpu_nmi_n),
+    .i_cpu_sync(w_cpu_sync),
     .i_cpu_reg_a(w_cpu_reg_a),
     .i_cpu_reg_x(w_cpu_reg_x),
     .i_cpu_reg_y(w_cpu_reg_y),
@@ -253,6 +239,47 @@ Values values (
     .i_cpu_step_completed(w_cpu_step_completed_100mhz),
 
     .o_cpu_reset_n(w_cpu_reset_n)
+);
+
+//
+// Memory 
+//
+
+wire w_mem_en;
+wire w_mem_wea;
+wire [15:0] w_mem_address;
+wire [7:0] w_mem_data_rd;
+wire [7:0] w_mem_data_wr;
+
+DebuggerMCU mcu(
+    .i_clk(i_clk_100mhz),
+    .i_reset_n(i_reset_n),
+
+    .i_cpu_rw(w_cpu_rw),
+    .i_cpu_address(w_cpu_address),
+    .i_cpu_data(w_cpu_data_wr),
+    .o_cpu_data(w_cpu_data_rd),
+
+    .i_debugger_en(w_debugger_mem_en),
+    .i_debugger_rw(w_debugger_mem_rw),
+    .i_debugger_address(w_debugger_mem_address),
+    .i_debugger_data(w_debugger_mem_data_wr),
+    .o_debugger_data(w_debugger_mem_data_rd),
+
+    .o_mem_en(w_mem_en),
+    .o_mem_wea(w_mem_wea),
+    .o_mem_address(w_mem_address),
+    .o_mem_data(w_mem_data_wr),
+    .i_mem_data(w_mem_data_rd)
+);
+
+Memory memory (
+  .i_clk(i_clk_100mhz),
+  .i_ena(w_mem_en),
+  .i_wea(w_mem_wea),
+  .i_addr(w_mem_address),
+  .i_data(w_mem_data_wr),
+  .o_data(w_mem_data_rd)
 );
 
 endmodule
