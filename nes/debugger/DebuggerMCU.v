@@ -3,6 +3,9 @@ module DebuggerMCU(
     input i_reset_n,
 
     // CPU memory access
+    /* verilator lint_off SYNCASYNCNET */
+    input i_cpu_en,
+    /* verilator lint_on SYNCASYNCNET */
     input i_cpu_rw,
     input [15:0] i_cpu_address,
     input [7:0] i_cpu_data,
@@ -42,7 +45,7 @@ begin
         begin
             r_debugger_data <= i_mem_data;
         end
-        else
+        else if (i_cpu_en)
         begin
             r_cpu_data <= i_mem_data;
         end
@@ -65,7 +68,7 @@ begin
         o_debugger_data = i_mem_data;
         o_mem_data = i_debugger_data;
     end
-    else
+    else if (i_cpu_en)
     begin
         o_mem_wea = (i_cpu_rw == RW_WRITE);
         o_mem_address = i_cpu_address;

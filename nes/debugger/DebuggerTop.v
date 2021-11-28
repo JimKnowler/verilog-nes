@@ -255,6 +255,7 @@ DebuggerMCU mcu(
     .i_clk(i_clk_100mhz),
     .i_reset_n(i_reset_n),
 
+    .i_cpu_en(i_clk_5mhz),              // NOTE: 6502 CPU memory access during phi2 (clock high)
     .i_cpu_rw(w_cpu_rw),
     .i_cpu_address(w_cpu_address),
     .i_cpu_data(w_cpu_data_wr),

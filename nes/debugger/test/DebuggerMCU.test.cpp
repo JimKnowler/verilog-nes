@@ -73,6 +73,7 @@ TEST_F(DebuggerMCU, ShouldImplementCpuRead) {
     uint16_t kTestAddress = 0x1234;
     uint8_t kTestData = 0x42;
 
+    core.i_cpu_en = 1;
     core.i_cpu_rw = RW_READ;
     core.i_cpu_address = kTestAddress;
     core.i_mem_data = kTestData;
@@ -90,6 +91,7 @@ TEST_F(DebuggerMCU, ShouldImplementCpuWrite) {
     uint16_t kTestAddress = 0xABCD;
     uint8_t kTestData = 0xEA;
 
+    core.i_cpu_en = 1;
     core.i_cpu_rw = RW_WRITE;
     core.i_cpu_address = kTestAddress;
     core.i_cpu_data = kTestData;
@@ -118,6 +120,7 @@ TEST_F(DebuggerMCU, ShouldReturnLastDebuggerReadWhileCpuIsReading) {
     uint8_t kTestDataCpu = 0xEA;
 
     core.i_debugger_en = 0;
+    core.i_cpu_en = 1;
     core.i_cpu_rw = RW_READ;
     core.i_cpu_address = kTestAddressCpu;
     core.i_mem_data = kTestDataCpu;
@@ -137,6 +140,7 @@ TEST_F(DebuggerMCU, ShouldReturnLastCpuReadWhileDebuggerIsReading) {
     uint8_t kTestDataCpu = 0x34;
 
     core.i_debugger_en = 0;
+    core.i_cpu_en = 1;
     core.i_cpu_rw = RW_READ;
     core.i_cpu_address = kTestAddressCpu;
     core.i_mem_data = kTestDataCpu;
@@ -146,6 +150,7 @@ TEST_F(DebuggerMCU, ShouldReturnLastCpuReadWhileDebuggerIsReading) {
     uint16_t kTestAddressDebugger = 0x1234;
     uint8_t kTestDataDebugger = 0x42;
 
+    core.i_cpu_en = 0;
     core.i_debugger_en = 1;
     core.i_debugger_rw = RW_READ;
     core.i_debugger_address = kTestAddressDebugger;
