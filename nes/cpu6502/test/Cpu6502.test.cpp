@@ -139,6 +139,10 @@ TEST_F(Cpu6502, ShouldImplementNOP) {
 TEST_F(Cpu6502, ShouldIncrementProgramCounter) {
     sram.clear(NOP());
 
+    // reset vector
+    sram.write(0xfffc, 0);
+    sram.write(0xfffd, 0);
+
     helperSkipResetVector();
 
     const int kNumClockTicks = 4096;
@@ -146,5 +150,8 @@ TEST_F(Cpu6502, ShouldIncrementProgramCounter) {
 
     testBench.tick(kNumClockTicks);
 
-    EXPECT_EQ(helperGetPC(), 0xEAEA + (kNumClockTicks/kNumClockTicksPerNOP));    
+    const uint16_t kExpectedAddress = (kNumClockTicks/kNumClockTicksPerNOP);
+
+    EXPECT_EQ(helperGetPC(), kExpectedAddress);
+    EXPECT_EQ(testBench.core().o_address, kExpectedAddress);   
 }
