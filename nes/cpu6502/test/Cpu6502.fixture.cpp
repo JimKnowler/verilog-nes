@@ -55,3 +55,11 @@ void Cpu6502::helperSkipResetVector() {
     testBench.tick(7);
     testBench.trace.clear();
 }
+
+uint16_t Cpu6502::helperGetPC() {
+    auto& core = testBench.core();
+
+    uint16_t pc = (core.o_debug_pch << 8) + core.o_debug_pcl;
+
+    return pc;
+}

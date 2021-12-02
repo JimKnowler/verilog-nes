@@ -67,6 +67,8 @@ public:
 
     template <class OPCODE>
     void helperTestStore(const TestAbsoluteIndexed<OPCODE>& test);
+
+    uint16_t helperGetPC();
 };
 
 // inlined template implementations

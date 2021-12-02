@@ -135,3 +135,16 @@ TEST_F(Cpu6502, ShouldImplementNOP) {
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
+
+TEST_F(Cpu6502, ShouldIncrementProgramCounter) {
+    sram.clear(NOP());
+
+    helperSkipResetVector();
+
+    const int kNumClockTicks = 4096;
+    const int kNumClockTicksPerNOP = 2;
+
+    testBench.tick(kNumClockTicks);
+
+    EXPECT_EQ(helperGetPC(), 0xEAEA + (kNumClockTicks/kNumClockTicksPerNOP));    
+}
