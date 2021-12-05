@@ -43,7 +43,10 @@ end
 // Increment Logic
 always @(*)
 begin
-    r_pchs_inc = r_pchs + { 7'b0, i_pclc };
+    if (i_pclc)
+        r_pchs_inc = r_pchs + 1;
+    else 
+        r_pchs_inc = r_pchs;
 end
 
 // Program counter High Register
