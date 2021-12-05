@@ -30,7 +30,7 @@ reg [7:0] r_pchs_inc;       // output of increment logic
 reg [7:0] r_pch;            // output of PCH
 
 // PCHS
-always @(i_pch_pch or i_adh_pch or i_adh or r_pch)
+always @(*)
 begin
     if (i_pch_pch)
         r_pchs = r_pch;
@@ -41,7 +41,7 @@ begin
 end
 
 // Increment Logic
-always @(r_pchs or i_pclc)
+always @(*)
 begin
     r_pchs_inc = r_pchs + { 7'b0, i_pclc };
 end

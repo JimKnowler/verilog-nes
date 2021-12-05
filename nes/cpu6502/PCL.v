@@ -32,7 +32,7 @@ reg [8:0] r_pcls_inc;   // output of increment logic
 reg [7:0] r_pcl;        // output of PCL
 
 // PCLS
-always @(i_pcl_pcl or i_adl_pcl or i_adl or r_pcl)
+always @(*)
 begin
     r_pcls[7:0] = 0;
 
@@ -43,18 +43,16 @@ begin
 end
 
 // Increment Logic
-always @(r_pcls or i_i_pc)
+always @(*)
 begin
     r_pcls_inc = { 1'b0, r_pcls } + { 8'b0, i_i_pc };
 end
 
 // Carry Out
-always @(r_pcls_inc)
+always @(*)
 begin
     o_pclc = r_pcls_inc[8];
 end
-
-wire [7:0] w_pcls_inc_output = r_pcls_inc[7:0];
 
 // Program Counter Low Register
 always @(negedge i_clk or negedge i_reset_n)
@@ -62,7 +60,7 @@ begin
     if (!i_reset_n)
         r_pcl <= 0;
     else if (i_clk_en)
-        r_pcl <= w_pcls_inc_output;
+        r_pcl <= r_pcls_inc[7:0];
 end
 
 assign o_pcl = r_pcl;
