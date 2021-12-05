@@ -45,7 +45,7 @@ end
 // Increment Logic
 always @(*)
 begin
-    r_pcls_inc = { 1'b0, r_pcls } + { 8'b0, i_i_pc };
+    r_pcls_inc = r_pcls + { 7'b0, i_i_pc };
 end
 
 // Carry Out
