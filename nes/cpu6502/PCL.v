@@ -20,16 +20,17 @@ module PCL(
 
     // increment logic
     input i_i_pc,           // increment
-    output reg o_pclc,      // carry out
+    output o_pclc,          // carry out
 
     // program counter low register
     output [7:0] o_pcl
 );
 
 reg [7:0] r_pcls;       // output of PCLS
-reg [8:0] r_pcls_inc;   // output of increment logic
+reg [7:0] r_pcls_inc;   // output of increment logic
                         // NOTE: 8th bit => carry out
 reg [7:0] r_pcl;        // output of PCL
+reg r_pclc;             // carry out
 
 // PCLS
 always @(*)
@@ -46,12 +47,7 @@ end
 always @(*)
 begin
     r_pcls_inc = r_pcls + { 7'b0, i_i_pc };
-end
-
-// Carry Out
-always @(*)
-begin
-    o_pclc = r_pcls_inc[8];
+    r_pclc = (i_i_pc == 1) && (r_pcls == 8'hff);
 end
 
 // Program Counter Low Register
@@ -64,5 +60,6 @@ begin
 end
 
 assign o_pcl = r_pcl;
+assign o_pclc = r_pclc;
 
 endmodule
