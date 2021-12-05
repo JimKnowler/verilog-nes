@@ -28,7 +28,6 @@ module Decoder(
     output reg o_pcl_pcl,
     output reg o_adl_pcl,
     output reg o_i_pc,
-    output reg o_pclc,
     output reg o_pcl_adl,
     output reg o_pcl_db,
     output reg o_pch_pch,
@@ -494,7 +493,6 @@ begin
     o_pcl_pcl = 0;
     o_adl_pcl = 0;
     o_i_pc = 0;
-    o_pclc = 0;
     o_pcl_adl = 0;
     o_pcl_db = 0;
     o_pch_pch = 0;

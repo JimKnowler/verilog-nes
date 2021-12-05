@@ -168,7 +168,6 @@ Decoder decoder(
     .o_pcl_pcl(w_pcl_pcl),
     .o_adl_pcl(w_adl_pcl),
     .o_i_pc(w_i_pc),
-    .o_pclc(w_pclc),
     .o_pcl_adl(w_pcl_adl),
     .o_pcl_db(w_pcl_db),
     .o_pch_pch(w_pch_pch),
