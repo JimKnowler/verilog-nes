@@ -1,10 +1,6 @@
 module NES(
-    /* verilator lint_off UNUSED */
-    /* verilator lint_off UNDRIVEN */
     input i_clk,                            // 5 MHz
     input i_reset_n,
-    /* verilator lint_on UNUSED */
-    /* verilator lint_on UNDRIVEN */
 
     //////////////////////////////
     // Video output
