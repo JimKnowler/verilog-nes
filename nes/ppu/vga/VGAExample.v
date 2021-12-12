@@ -1,13 +1,15 @@
 module VGAExample
 #(
-    parameter WIDTH = 360,   
-    parameter HEIGHT = 260,
-    parameter WIDTH_VISIBLE = 320,
-    parameter HEIGHT_VISIBLE = 240,
-    parameter FRONT_PORCH_X = 20,
-    parameter BACK_PORCH_X = 12,
+    // default VGA settings for 640x480@60Hz
+    // http://tinyvga.com/vga-timing/640x480@60Hz
+    parameter WIDTH = 800,   
+    parameter HEIGHT = 525,
+    parameter WIDTH_VISIBLE = 640,
+    parameter HEIGHT_VISIBLE = 480,
+    parameter FRONT_PORCH_X = 16,
+    parameter BACK_PORCH_X = 48,
     parameter FRONT_PORCH_Y = 10,
-    parameter BACK_PORCH_Y = 5,
+    parameter BACK_PORCH_Y = 33,
 
     parameter PIXEL_BITWIDTH = 11,
     parameter RGB_BITWIDTH = 8
@@ -38,6 +40,7 @@ module VGAExample
         .WIDTH(WIDTH),
         .HEIGHT(HEIGHT),
         .WIDTH_VISIBLE(WIDTH_VISIBLE),
+        .HEIGHT_VISIBLE(HEIGHT_VISIBLE),
         .PIXEL_BITWIDTH(PIXEL_BITWIDTH)
     ) vga_generator (
         .i_clk(i_clk),
