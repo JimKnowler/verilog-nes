@@ -243,13 +243,39 @@ NESDebuggerValues values (
 
 //
 // Memory 
-//
+// NOTE: 4 x memory pools
 
-wire w_mem_en;
-wire w_mem_wea;
-wire [15:0] w_mem_address;
-wire [7:0] w_mem_data_rd;
-wire [7:0] w_mem_data_wr;
+// PRG - CPU6502 program
+wire w_mem_prg_en;
+wire w_mem_prg_wea;
+wire [15:0] w_mem_prg_address;
+wire [7:0] w_mem_prg_data_rd;
+wire [7:0] w_mem_prg_data_wr;
+
+/* verilator lint_off UNDRIVEN */
+/* verilator lint_off UNUSED */
+// RAM - R/W RAM for CPU6502
+wire w_mem_ram_en;
+wire w_mem_ram_wea;
+wire [15:0] w_mem_ram_address;
+wire [7:0] w_mem_ram_data_rd;
+wire [7:0] w_mem_ram_data_wr;
+
+// PATTERNTABLE - graphics data for PPU
+wire w_mem_patterntable_en;
+wire w_mem_patterntable_wea;
+wire [15:0] w_mem_patterntable_address;
+wire [7:0] w_mem_patterntable_data_rd;
+wire [7:0] w_mem_patterntable_data_wr;
+
+// NAMETABLE - background tile data, managed by PPU
+wire w_mem_nametable_en;
+wire w_mem_nametable_wea;
+wire [15:0] w_mem_nametable_address;
+wire [7:0] w_mem_nametable_data_rd;
+wire [7:0] w_mem_nametable_data_wr;
+/* verilator lint_on UNDRIVEN */
+/* verilator lint_off UNUSED */
 
 NESDebuggerMCU mcu(
     .i_clk(i_clk_100mhz),
@@ -267,20 +293,48 @@ NESDebuggerMCU mcu(
     .i_debugger_data(w_debugger_mem_data_wr),
     .o_debugger_data(w_debugger_mem_data_rd),
 
-    .o_mem_en(w_mem_en),
-    .o_mem_wea(w_mem_wea),
-    .o_mem_address(w_mem_address),
-    .o_mem_data(w_mem_data_wr),
-    .i_mem_data(w_mem_data_rd)
+    // PRG memory
+    .o_mem_prg_en(w_mem_prg_en),
+    .o_mem_prg_wea(w_mem_prg_wea),
+    .o_mem_prg_address(w_mem_prg_address),
+    .o_mem_prg_data(w_mem_prg_data_wr),
+    .i_mem_prg_data(w_mem_prg_data_rd)
 );
 
-Memory memory (
+Memory memory_prg (
   .i_clk(i_clk_100mhz),
-  .i_ena(w_mem_en),
-  .i_wea(w_mem_wea),
-  .i_addr(w_mem_address),
-  .i_data(w_mem_data_wr),
-  .o_data(w_mem_data_rd)
+  .i_ena(w_mem_prg_en),
+  .i_wea(w_mem_prg_wea),
+  .i_addr(w_mem_prg_address),
+  .i_data(w_mem_prg_data_wr),
+  .o_data(w_mem_prg_data_rd)
+);
+
+Memory memory_ram (
+  .i_clk(i_clk_100mhz),
+  .i_ena(w_mem_ram_en),
+  .i_wea(w_mem_ram_wea),
+  .i_addr(w_mem_ram_address),
+  .i_data(w_mem_ram_data_wr),
+  .o_data(w_mem_ram_data_rd)
+);
+
+Memory memory_patterntable (
+  .i_clk(i_clk_100mhz),
+  .i_ena(w_mem_patterntable_en),
+  .i_wea(w_mem_patterntable_wea),
+  .i_addr(w_mem_patterntable_address),
+  .i_data(w_mem_patterntable_data_wr),
+  .o_data(w_mem_patterntable_data_rd)
+);
+
+Memory memory_nametable (
+  .i_clk(i_clk_100mhz),
+  .i_ena(w_mem_nametable_en),
+  .i_wea(w_mem_nametable_wea),
+  .i_addr(w_mem_nametable_address),
+  .i_data(w_mem_nametable_data_wr),
+  .o_data(w_mem_nametable_data_rd)
 );
 
 endmodule

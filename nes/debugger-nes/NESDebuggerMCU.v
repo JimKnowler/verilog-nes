@@ -18,12 +18,12 @@ module NESDebuggerMCU(
     input [7:0] i_debugger_data,
     output reg [7:0] o_debugger_data,
 
-    // memory
-    output reg o_mem_en,
-    output reg o_mem_wea,
-    output reg [15:0] o_mem_address,
-    output reg [7:0] o_mem_data,
-    input [7:0] i_mem_data
+    // PRG memory
+    output reg o_mem_prg_en,
+    output reg o_mem_prg_wea,
+    output reg [15:0] o_mem_prg_address,
+    output reg [7:0] o_mem_prg_data,
+    input [7:0] i_mem_prg_data
 );
 
 localparam RW_WRITE = 0;
@@ -43,18 +43,18 @@ begin
     begin
         if (i_debugger_en)
         begin
-            r_debugger_data <= i_mem_data;
+            r_debugger_data <= i_mem_prg_data;
         end
         else if (i_cpu_en)
         begin
-            r_cpu_data <= i_mem_data;
+            r_cpu_data <= i_mem_prg_data;
         end
     end
 end
 
 always @(*)
 begin
-    o_mem_en = 1;
+    o_mem_prg_en = 1;
 
     o_debugger_data = r_debugger_data;
     o_cpu_data = r_cpu_data;
@@ -63,17 +63,17 @@ begin
     begin
         // debugger takes precedence over CPU
 
-        o_mem_wea = (i_debugger_rw == RW_WRITE);
-        o_mem_address = i_debugger_address;
-        o_debugger_data = i_mem_data;
-        o_mem_data = i_debugger_data;
+        o_mem_prg_wea = (i_debugger_rw == RW_WRITE);
+        o_mem_prg_address = i_debugger_address;
+        o_debugger_data = i_mem_prg_data;
+        o_mem_prg_data = i_debugger_data;
     end
     else if (i_cpu_en)
     begin
-        o_mem_wea = (i_cpu_rw == RW_WRITE);
-        o_mem_address = i_cpu_address;
-        o_cpu_data = i_mem_data;
-        o_mem_data = i_cpu_data;
+        o_mem_prg_wea = (i_cpu_rw == RW_WRITE);
+        o_mem_prg_address = i_cpu_address;
+        o_cpu_data = i_mem_prg_data;
+        o_mem_prg_data = i_cpu_data;
     end
 end
 
