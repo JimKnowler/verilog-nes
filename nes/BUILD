@@ -163,7 +163,7 @@ cc_test(
             "emulator/**/*",
             "ppu/**/*",
             "nes/**/*",
-            "debugger/**/*"
+            "debugger-cpu/**/*"
         ]
     ) + [
         ":Cpu6502TestBench",
@@ -354,7 +354,7 @@ cc_test(
             "emulator/**/*",
             "cpu6502/**/*",
             "nes/**/*",
-            "debugger/**/*"
+            "debugger-cpu/**/*"
         ]
     ) + [
         ":PaletteLookupRGBTestBench",
@@ -467,7 +467,7 @@ cc_test(
             "emulator/**/*",
             "cpu6502/test/**/*",
             "ppu/**/*",
-            "debugger/**/*"
+            "debugger-cpu/**/*"
         ]
     ) + [
         ":ClockEnableTestBench",
@@ -503,7 +503,7 @@ cc_binary(
             "**/*.test.cpp",
             "emulator/EmulatorVGA.cpp",
             "emulator/EmulatorNES.cpp",
-            "debugger/**/*"
+            "debugger-cpu/**/*"
         ]
     ) + [
         ":Cpu6502TestBench"
@@ -547,7 +547,7 @@ cc_binary(
             "emulator/EmulatorCPU.cpp",
             "emulator/EmulatorNES.cpp",
             "emulator/RendererCPU.cpp",
-            "debugger/**/*"
+            "debugger-cpu/**/*"
         ]
     ) + [
         ":VGAExampleTestBench",
@@ -577,7 +577,7 @@ cc_binary(
             "emulator/EmulatorVGA.cpp",
             "emulator/EmulatorCPU.cpp",
             "emulator/RendererCPU.cpp",
-            "debugger/**/*"
+            "debugger-cpu/**/*"
         ]
     ) + [
         ":NESTestBench"
@@ -594,7 +594,7 @@ cc_binary(
 
 verilator_cc_library(
     name = "Debugger",
-    srcs = ["debugger/Debugger.v"]
+    srcs = ["debugger-cpu/Debugger.v"]
 )
 
 gtest_verilog_testbench(
@@ -604,7 +604,7 @@ gtest_verilog_testbench(
 
 verilator_cc_library(
     name = "Memory",
-    srcs = ["debugger/simulation/Memory.v"]
+    srcs = ["debugger-cpu/simulation/Memory.v"]
 )
 
 gtest_verilog_testbench(
@@ -614,7 +614,7 @@ gtest_verilog_testbench(
 
 verilator_cc_library(
     name = "Sync",
-    srcs = ["debugger/Sync.v"]
+    srcs = ["debugger-cpu/Sync.v"]
 )
 
 gtest_verilog_testbench(
@@ -624,7 +624,7 @@ gtest_verilog_testbench(
 
 verilator_cc_library(
     name = "DebuggerMCU",
-    srcs = ["debugger/DebuggerMCU.v"]
+    srcs = ["debugger-cpu/DebuggerMCU.v"]
 )
 
 gtest_verilog_testbench(
@@ -635,13 +635,13 @@ gtest_verilog_testbench(
 verilator_cc_library(
     name = "DebuggerTop",
     srcs = [
-        "debugger/DebuggerTop.v",
-        "debugger/Debugger.v",
-        "debugger/simulation/Memory.v",
-        "debugger/Values.v",
-        "debugger/SPIPeripheral.v",
-        "debugger/Sync.v",
-        "debugger/DebuggerMCU.v"
+        "debugger-cpu/DebuggerTop.v",
+        "debugger-cpu/Debugger.v",
+        "debugger-cpu/simulation/Memory.v",
+        "debugger-cpu/Values.v",
+        "debugger-cpu/SPIPeripheral.v",
+        "debugger-cpu/Sync.v",
+        "debugger-cpu/DebuggerMCU.v"
     ] + cpu6502_srcs
 )
 
@@ -651,7 +651,7 @@ gtest_verilog_testbench(
 )
 
 cc_test(
-    name = "test-debugger",
+    name = "test-debugger-cpu",
     srcs = glob(
         include =[
             "**/*.cpp",

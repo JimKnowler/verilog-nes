@@ -37,8 +37,11 @@ module Values(
     output o_cpu_reset_n
 );
 
-// single step the CPU
+// Single Step CPU clock cycle by writing 1
+//  - step is complete when this value reads as 0
 localparam VALUEID_CPU_STEP = 1;
+
+// Set the value of RESET_N pin on the CPU 
 localparam VALUEID_CPU_RESET_N = 14;
 
 // Retrieve CPU values
