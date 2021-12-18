@@ -1,10 +1,10 @@
 /*
- * Debugger
+ * CPUDebugger
  *
  * implementation of Debug Protocol for reading/writing 16bit memory regions + 16bit values
  */
 
-module Debugger(
+module CPUDebugger(
     input           i_clk,
     input           i_reset_n,
 

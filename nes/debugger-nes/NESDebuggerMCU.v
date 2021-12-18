@@ -1,4 +1,4 @@
-module DebuggerMCU(
+module NESDebuggerMCU(
     input i_clk,
     input i_reset_n,
 

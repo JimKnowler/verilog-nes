@@ -4,7 +4,7 @@
  * Read: VALUDID_CPU_xxxx to read state of CPU
  */
 
-module Values(
+module NESDebuggerValues(
     input i_clk,
     input i_reset_n,
 

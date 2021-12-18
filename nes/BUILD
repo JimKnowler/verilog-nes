@@ -163,7 +163,9 @@ cc_test(
             "emulator/**/*",
             "ppu/**/*",
             "nes/**/*",
-            "debugger-cpu/**/*"
+            "debugger-cpu/**/*",
+            "debugger-nes/**/*",
+            "debugger-common/**/*"
         ]
     ) + [
         ":Cpu6502TestBench",
@@ -354,7 +356,9 @@ cc_test(
             "emulator/**/*",
             "cpu6502/**/*",
             "nes/**/*",
-            "debugger-cpu/**/*"
+            "debugger-cpu/**/*",
+            "debugger-nes/**/*",
+            "debugger-common/**/*"
         ]
     ) + [
         ":PaletteLookupRGBTestBench",
@@ -467,7 +471,9 @@ cc_test(
             "emulator/**/*",
             "cpu6502/test/**/*",
             "ppu/**/*",
-            "debugger-cpu/**/*"
+            "debugger-cpu/**/*",
+            "debugger-nes/**/*",
+            "debugger-common/**/*"
         ]
     ) + [
         ":ClockEnableTestBench",
@@ -503,7 +509,9 @@ cc_binary(
             "**/*.test.cpp",
             "emulator/EmulatorVGA.cpp",
             "emulator/EmulatorNES.cpp",
-            "debugger-cpu/**/*"
+            "debugger-cpu/**/*",
+            "debugger-nes/**/*",
+            "debugger-common/**/*"
         ]
     ) + [
         ":Cpu6502TestBench"
@@ -547,7 +555,9 @@ cc_binary(
             "emulator/EmulatorCPU.cpp",
             "emulator/EmulatorNES.cpp",
             "emulator/RendererCPU.cpp",
-            "debugger-cpu/**/*"
+            "debugger-cpu/**/*",
+            "debugger-nes/**/*",
+            "debugger-common/**/*"
         ]
     ) + [
         ":VGAExampleTestBench",
@@ -577,7 +587,9 @@ cc_binary(
             "emulator/EmulatorVGA.cpp",
             "emulator/EmulatorCPU.cpp",
             "emulator/RendererCPU.cpp",
-            "debugger-cpu/**/*"
+            "debugger-cpu/**/*",
+            "debugger-nes/**/*",
+            "debugger-common/**/*"
         ]
     ) + [
         ":NESTestBench"
@@ -592,19 +604,13 @@ cc_binary(
     ]
 )
 
-verilator_cc_library(
-    name = "Debugger",
-    srcs = ["debugger-cpu/Debugger.v"]
-)
-
-gtest_verilog_testbench(
-    name = "DebuggerTestBench",
-    deps = [":Debugger"]
-)
+#
+# Debugger Common
+#
 
 verilator_cc_library(
     name = "Memory",
-    srcs = ["debugger-cpu/simulation/Memory.v"]
+    srcs = ["debugger-common/simulation/Memory.v"]
 )
 
 gtest_verilog_testbench(
@@ -614,7 +620,7 @@ gtest_verilog_testbench(
 
 verilator_cc_library(
     name = "Sync",
-    srcs = ["debugger-cpu/Sync.v"]
+    srcs = ["debugger-common/Sync.v"]
 )
 
 gtest_verilog_testbench(
@@ -622,32 +628,75 @@ gtest_verilog_testbench(
     deps = [":Sync"]
 )
 
+cc_test(
+    name = "test-debugger-common",
+    srcs = glob(
+        include =[
+            "**/*.cpp",
+            "**/*.h",
+            "**/*.hpp",
+            "**/*.inl"
+        ],
+        exclude = [
+            "emulator/**/*",
+            "cpu6502/**/*",
+            "ppu/**/*",
+            "nes/**/*",
+            "debugger-cpu/**/*",
+            "debugger-nes/**/*"
+        ]
+    ) + [
+        ":MemoryTestBench",
+        ":SyncTestBench",
+    ],
+    deps = [
+        "@com_google_googletest//:gtest",
+        "@gtestverilog//gtestverilog:lib",
+        ":Memory",
+        ":Sync"
+    ],
+)
+
+#
+# Debugger CPU
+#
+
 verilator_cc_library(
-    name = "DebuggerMCU",
-    srcs = ["debugger-cpu/DebuggerMCU.v"]
+    name = "CPUDebugger",
+    srcs = ["debugger-cpu/CPUDebugger.v"]
 )
 
 gtest_verilog_testbench(
-    name = "DebuggerMCUTestBench",
-    deps = [":DebuggerMCU"]
+    name = "CPUDebuggerTestBench",
+    deps = [":CPUDebugger"]
 )
 
 verilator_cc_library(
-    name = "DebuggerTop",
+    name = "CPUDebuggerMCU",
+    srcs = ["debugger-cpu/CPUDebuggerMCU.v"]
+)
+
+gtest_verilog_testbench(
+    name = "CPUDebuggerMCUTestBench",
+    deps = [":CPUDebuggerMCU"]
+)
+
+verilator_cc_library(
+    name = "CPUDebuggerTop",
     srcs = [
-        "debugger-cpu/DebuggerTop.v",
-        "debugger-cpu/Debugger.v",
-        "debugger-cpu/simulation/Memory.v",
-        "debugger-cpu/Values.v",
-        "debugger-cpu/SPIPeripheral.v",
-        "debugger-cpu/Sync.v",
-        "debugger-cpu/DebuggerMCU.v"
+        "debugger-cpu/CPUDebuggerTop.v",
+        "debugger-cpu/CPUDebugger.v",
+        "debugger-cpu/CPUDebuggerMCU.v",
+        "debugger-cpu/CPUDebuggerValues.v",
+        "debugger-common/simulation/Memory.v",
+        "debugger-common/SPIPeripheral.v",
+        "debugger-common/Sync.v"        
     ] + cpu6502_srcs
 )
 
 gtest_verilog_testbench(
-    name = "DebuggerTopTestBench",
-    deps = [":DebuggerTop"]
+    name = "CPUDebuggerTopTestBench",
+    deps = [":CPUDebuggerTop"]
 )
 
 cc_test(
@@ -663,22 +712,93 @@ cc_test(
             "emulator/**/*",
             "cpu6502/**/*",
             "ppu/**/*",
-            "nes/**/*"
+            "nes/**/*",
+            "debugger-nes/**/*",
+            "debugger-common/**/*"
         ]
     ) + [
-        ":DebuggerTestBench",
-        ":DebuggerTopTestBench",
-        ":MemoryTestBench",
-        ":SyncTestBench",
-        ":DebuggerMCUTestBench"
+        ":CPUDebuggerTestBench",
+        ":CPUDebuggerTopTestBench",
+        ":CPUDebuggerMCUTestBench"
     ],
     deps = [
         "@com_google_googletest//:gtest",
         "@gtestverilog//gtestverilog:lib",
-        ":Debugger",
-        ":DebuggerTop",
-        ":Memory",
-        ":Sync",
-        ":DebuggerMCU"
+        ":CPUDebugger",
+        ":CPUDebuggerTop",
+        ":CPUDebuggerMCU"
+    ],
+)
+
+#
+# Debugger NES
+#
+
+verilator_cc_library(
+    name = "NESDebugger",
+    srcs = ["debugger-nes/NESDebugger.v"]
+)
+
+gtest_verilog_testbench(
+    name = "NESDebuggerTestBench",
+    deps = [":NESDebugger"]
+)
+
+verilator_cc_library(
+    name = "NESDebuggerMCU",
+    srcs = ["debugger-nes/NESDebuggerMCU.v"]
+)
+
+gtest_verilog_testbench(
+    name = "NESDebuggerMCUTestBench",
+    deps = [":NESDebuggerMCU"]
+)
+
+verilator_cc_library(
+    name = "NESDebuggerTop",
+    srcs = [
+        "debugger-nes/NESDebuggerTop.v",
+        "debugger-nes/NESDebugger.v",
+        "debugger-nes/NESDebuggerMCU.v",
+        "debugger-nes/NESDebuggerValues.v",
+        "debugger-common/simulation/Memory.v",
+        "debugger-common/SPIPeripheral.v",
+        "debugger-common/Sync.v"        
+    ] + cpu6502_srcs
+)
+
+gtest_verilog_testbench(
+    name = "NESDebuggerTopTestBench",
+    deps = [":NESDebuggerTop"]
+)
+
+cc_test(
+    name = "test-debugger-nes",
+    srcs = glob(
+        include =[
+            "**/*.cpp",
+            "**/*.h",
+            "**/*.hpp",
+            "**/*.inl"
+        ],
+        exclude = [
+            "emulator/**/*",
+            "cpu6502/**/*",
+            "ppu/**/*",
+            "nes/**/*",
+            "debugger-cpu/**/*",
+            "debugger-common/**/*"
+        ]
+    ) + [
+        ":NESDebuggerTestBench",
+        ":NESDebuggerTopTestBench",
+        ":NESDebuggerMCUTestBench"
+    ],
+    deps = [
+        "@com_google_googletest//:gtest",
+        "@gtestverilog//gtestverilog:lib",
+        ":NESDebugger",
+        ":NESDebuggerTop",
+        ":NESDebuggerMCU"
     ],
 )

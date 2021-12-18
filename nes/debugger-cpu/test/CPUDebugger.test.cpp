@@ -4,11 +4,11 @@ using namespace testing;
 #include "gtestverilog/gtestverilog.h"
 using namespace gtestverilog;
 
-#include "nes/DebuggerTestBench.h"
-using namespace debuggertestbench;
+#include "nes/CPUDebuggerTestBench.h"
+using namespace cpudebuggertestbench;
 
 namespace {
-    class Debugger : public ::testing::Test {
+    class CPUDebugger : public ::testing::Test {
     public:
         void SetUp() override {
             testBench.setClockPolarity(0);
@@ -36,7 +36,7 @@ namespace {
             testBench.tick(numTicks);
         }
 
-        DebuggerTestBench testBench;
+        CPUDebuggerTestBench testBench;
     };
 
     enum Command : uint8_t {
@@ -57,11 +57,11 @@ namespace {
     }
 }
 
-TEST_F(Debugger, ShouldConstruct) {
+TEST_F(CPUDebugger, ShouldConstruct) {
 
 }
 
-TEST_F(Debugger, ShouldReset) {
+TEST_F(CPUDebugger, ShouldReset) {
     testBench.reset();
 
     auto& core = testBench.core();
@@ -69,7 +69,7 @@ TEST_F(Debugger, ShouldReset) {
     EXPECT_EQ(core.o_debug_cmd_bytes_remaining, 0);
 }
 
-TEST_F(Debugger, ShouldImplementCmdNOP) {
+TEST_F(CPUDebugger, ShouldImplementCmdNOP) {
     auto& core = testBench.core();
 
     core.i_rx_dv = 1;
@@ -80,7 +80,7 @@ TEST_F(Debugger, ShouldImplementCmdNOP) {
     EXPECT_EQ(core.o_debug_cmd_bytes_remaining, 0);
 }
 
-TEST_F(Debugger, ShouldImplementCmdEcho) {
+TEST_F(CPUDebugger, ShouldImplementCmdEcho) {
     const int kTestValue = 42;
 
     // starts in NOP state
@@ -118,7 +118,7 @@ TEST_F(Debugger, ShouldImplementCmdEcho) {
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
-TEST_F(Debugger, ShouldImplementMemoryWrite) {
+TEST_F(CPUDebugger, ShouldImplementMemoryWrite) {
     const uint16_t kTestAddress = 0xCDEF;
     const int kTestNumBytes = 3;
     const uint16_t kTestBytes[kTestNumBytes] = { 0xA1, 0xB2, 0x42 };
@@ -193,7 +193,7 @@ TEST_F(Debugger, ShouldImplementMemoryWrite) {
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
-TEST_F(Debugger, ShouldImplementMemoryRead) {
+TEST_F(CPUDebugger, ShouldImplementMemoryRead) {
     const uint16_t kTestAddress = 0xABCD;
     const int kTestNumBytes = 4;
     const uint16_t kTestBytes[kTestNumBytes] = { 0xD4, 0xC3, 0xB2, 0xA1 };
@@ -302,7 +302,7 @@ TEST_F(Debugger, ShouldImplementMemoryRead) {
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
-TEST_F(Debugger, ShouldSupportGapsBetweenRxBytes) {
+TEST_F(CPUDebugger, ShouldSupportGapsBetweenRxBytes) {
     const int kTestValue = 42;
 
     // starts in NOP state
@@ -336,7 +336,7 @@ TEST_F(Debugger, ShouldSupportGapsBetweenRxBytes) {
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
-TEST_F(Debugger, ShouldImplementValueWrite) {
+TEST_F(CPUDebugger, ShouldImplementValueWrite) {
     const uint16_t kTestValueID = 0x1234;
     const uint16_t kTestValue = 0xABCD;
 
@@ -398,7 +398,7 @@ TEST_F(Debugger, ShouldImplementValueWrite) {
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
-TEST_F(Debugger, ShouldImplementValueRead) {
+TEST_F(CPUDebugger, ShouldImplementValueRead) {
     const uint16_t kTestValueID = 0xABCD;
     const uint16_t kTestValue = 0x1234;
 

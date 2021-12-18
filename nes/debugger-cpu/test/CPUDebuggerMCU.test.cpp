@@ -4,11 +4,11 @@ using namespace testing;
 #include "gtestverilog/gtestverilog.h"
 using namespace gtestverilog;
 
-#include "nes/DebuggerMCUTestBench.h"
-using namespace debuggermcutestbench;
+#include "nes/CPUDebuggerMCUTestBench.h"
+using namespace cpudebuggermcutestbench;
 
 namespace {
-    class DebuggerMCU : public ::testing::Test {
+    class CPUDebuggerMCU : public ::testing::Test {
     public:
         void SetUp() override {
             testBench.reset();
@@ -18,20 +18,20 @@ namespace {
         void TearDown() override {
         }
 
-        DebuggerMCUTestBench testBench;
+        CPUDebuggerMCUTestBench testBench;
     };
 
     const int RW_READ = 1;
     const int RW_WRITE = 0;
 }
 
-TEST_F(DebuggerMCU, ShouldConstruct) {
+TEST_F(CPUDebuggerMCU, ShouldConstruct) {
     auto& core = testBench.core();
 
     EXPECT_EQ(core.i_debugger_en, 0);
 }
 
-TEST_F(DebuggerMCU, ShouldImplementDebuggerRead) {
+TEST_F(CPUDebuggerMCU, ShouldImplementDebuggerRead) {
     auto& core = testBench.core();
 
     uint16_t kTestAddress = 0x1234;
@@ -49,7 +49,7 @@ TEST_F(DebuggerMCU, ShouldImplementDebuggerRead) {
     EXPECT_EQ(core.o_debugger_data, kTestData);
 }
 
-TEST_F(DebuggerMCU, ShouldImplementDebuggerWrite) {
+TEST_F(CPUDebuggerMCU, ShouldImplementDebuggerWrite) {
     auto& core = testBench.core();
 
     uint16_t kTestAddress = 0xABCD;
@@ -67,7 +67,7 @@ TEST_F(DebuggerMCU, ShouldImplementDebuggerWrite) {
     EXPECT_EQ(core.o_mem_data, kTestData);
 }
 
-TEST_F(DebuggerMCU, ShouldImplementCpuRead) {
+TEST_F(CPUDebuggerMCU, ShouldImplementCpuRead) {
     auto& core = testBench.core();
 
     uint16_t kTestAddress = 0x1234;
@@ -85,7 +85,7 @@ TEST_F(DebuggerMCU, ShouldImplementCpuRead) {
     EXPECT_EQ(core.o_cpu_data, kTestData);
 }
 
-TEST_F(DebuggerMCU, ShouldImplementCpuWrite) {
+TEST_F(CPUDebuggerMCU, ShouldImplementCpuWrite) {
     auto& core = testBench.core();
 
     uint16_t kTestAddress = 0xABCD;
@@ -103,7 +103,7 @@ TEST_F(DebuggerMCU, ShouldImplementCpuWrite) {
     EXPECT_EQ(core.o_mem_data, kTestData);
 }
 
-TEST_F(DebuggerMCU, ShouldReturnLastDebuggerReadWhileCpuIsReading) {
+TEST_F(CPUDebuggerMCU, ShouldReturnLastDebuggerReadWhileCpuIsReading) {
     auto& core = testBench.core();
 
     uint16_t kTestAddressDebugger = 0x1234;
@@ -133,7 +133,7 @@ TEST_F(DebuggerMCU, ShouldReturnLastDebuggerReadWhileCpuIsReading) {
     EXPECT_EQ(core.o_debugger_data, kTestDataDebugger);
 }
 
-TEST_F(DebuggerMCU, ShouldReturnLastCpuReadWhileDebuggerIsReading) {
+TEST_F(CPUDebuggerMCU, ShouldReturnLastCpuReadWhileDebuggerIsReading) {
     auto& core = testBench.core();
 
     uint16_t kTestAddressCpu = 0xFEDC;

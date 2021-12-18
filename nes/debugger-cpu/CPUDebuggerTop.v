@@ -2,7 +2,7 @@
  * Top module for 6502 debugger
  */
 
-module DebuggerTop(
+module CPUDebuggerTop(
     input   i_clk_100mhz,
     input   i_clk_5mhz,
     input   i_reset_n,
@@ -74,7 +74,7 @@ wire [7:0] w_debug_cmd;
 wire [15:0] w_debug_cmd_bytes_remaining;
 /* verilator lint_on UNUSED */
 
-Debugger debugger(
+CPUDebugger debugger(
     .i_clk(i_clk_100mhz),
     .i_reset_n(i_reset_n & ~i_spi_cs_n),
     
@@ -202,7 +202,7 @@ Cpu6502 cpu6502(
 /* verilator lint_on PINMISSING */
 
 //
-// Values - control CPU step + read CPU values
+// CPUValues - control CPU step + read CPU values
 //
 
 reg r_is_value_wea;
@@ -212,7 +212,7 @@ begin
     r_is_value_wea = (w_value_rw == RW_WRITE);
 end
 
-Values values (
+CPUDebuggerValues values (
     .i_clk(i_clk_100mhz),
     .i_reset_n(i_reset_n),
 
@@ -251,7 +251,7 @@ wire [15:0] w_mem_address;
 wire [7:0] w_mem_data_rd;
 wire [7:0] w_mem_data_wr;
 
-DebuggerMCU mcu(
+CPUDebuggerMCU mcu(
     .i_clk(i_clk_100mhz),
     .i_reset_n(i_reset_n),
 
