@@ -143,7 +143,6 @@ wire [7:0] w_nes_ram_data_wr;
 
 // PATTERNTABLE - graphics data for PPU
 wire w_mem_patterntable_en;
-wire w_mem_patterntable_en;
 wire w_mem_patterntable_wea;
 wire [15:0] w_mem_patterntable_address;
 wire [7:0] w_mem_patterntable_data_rd;
