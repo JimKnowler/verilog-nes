@@ -64,6 +64,7 @@ module NES(
     output [15:0] o_cpu_debug_address,
     output [3:0] o_cpu_debug_tcu,
     output o_cpu_debug_clk_en,
+    output o_cpu_debug_sync,
 
     //////////////////////////////
     // PPU Debugging
@@ -292,6 +293,7 @@ module NES(
     assign o_cpu_debug_address = w_cpu_address;
     assign o_cpu_debug_clk_en = w_ce_cpu;
     assign o_ppu_debug_vram_address = w_ppu_vram_address;
+    assign o_cpu_debug_sync = w_sync;
 
     assign o_controller_latch = w_out0;
     assign o_controller_clk = !((w_cpu_rw == RW_READ) && (w_cpu_address == ADDRESS_JOY1));

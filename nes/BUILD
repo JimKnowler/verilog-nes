@@ -30,6 +30,15 @@ ppu_srcs = [
     "ppu/Shift16.v"
 ]
 
+nes_srcs = [
+    "nes/NES.v", 
+    "nes/Cpu2A03.v",
+    "nes/ClockEnable.v",
+    "nes/CPUMemoryMap.v",
+    "nes/PPUMemoryMap.v",
+    "ppu/PPUChipEnable.v"
+] + cpu6502_srcs + ppu_srcs
+
 verilator_cc_library(
     name = "Cpu6502",
     srcs = cpu6502_srcs,
@@ -434,13 +443,7 @@ gtest_verilog_testbench(
 
 verilator_cc_library(
     name = "NES",
-    srcs = ["nes/NES.v", 
-            "nes/Cpu2A03.v",
-            "nes/ClockEnable.v",
-            "nes/CPUMemoryMap.v",
-            "nes/PPUMemoryMap.v",
-            "ppu/PPUChipEnable.v"
-            ] + cpu6502_srcs + ppu_srcs,
+    srcs = nes_srcs
 )
 
 gtest_verilog_testbench(
@@ -753,7 +756,7 @@ verilator_cc_library(
         "debugger-common/simulation/Memory.v",
         "debugger-common/SPIPeripheral.v",
         "debugger-common/Sync.v"        
-    ] + cpu6502_srcs
+    ] + nes_srcs
 )
 
 gtest_verilog_testbench(

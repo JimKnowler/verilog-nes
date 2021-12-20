@@ -15,6 +15,7 @@ module NESDebuggerTop(
 );
 
 localparam RW_WRITE = 0;
+localparam RW_READ = 1;
 
 wire [7:0] w_rx_byte;
 wire w_rx_dv;
@@ -101,103 +102,123 @@ NESDebugger debugger(
 );
 
 //
-// Synchronisation between 100mhz and 5mhz clocks
+// Memory Pool Wiring
 //
 
-wire w_cpu_step_100mhz;
-wire w_cpu_step_5mhz;
+// wire used by debugger to select which memory pool it is accessing
+wire [1:0] w_debugger_memory_pool;
+localparam MEMORY_POOL_PRG = 0;
+localparam MEMORY_POOL_RAM = 1;
+localparam MEMORY_POOL_PATTERNTABLE = 2;
+localparam MEMORY_POOL_NAMETABLE = 3;
 
-Sync syncFrom100Mhz(
-    .i_clk(i_clk_100mhz),
-    .i_reset_n(i_reset_n),
-    .i_data(w_cpu_step_100mhz),
-    
-    .i_sync_clk(i_clk_5mhz),
-    .o_sync_posedge(w_cpu_step_5mhz)
-);
+// PRG - CPU6502 program
+wire w_mem_prg_en;
+wire w_mem_prg_wea;
+wire [15:0] w_mem_prg_address;
+wire [7:0] w_mem_prg_data_rd;
+wire [7:0] w_mem_prg_data_wr;
 
-reg r_cpu_step_completed_5mhz;
-wire w_cpu_step_completed_100mhz;
+wire w_nes_prg_en;
+wire w_nes_prg_rw;
+wire [15:0] w_nes_prg_address;
+wire [7:0] w_nes_prg_data_rd;
+wire [7:0] w_nes_prg_data_wr;
 
-Sync syncTo100Mhz(
-    .i_clk(i_clk_5mhz),
-    .i_reset_n(i_reset_n),
-    .i_data(r_cpu_step_completed_5mhz),
-    
-    .i_sync_clk(i_clk_100mhz),
-    .o_sync_posedge(w_cpu_step_completed_100mhz)
-);
+assign w_nes_prg_rw = RW_READ;
+assign w_nes_prg_data_wr = 0;
+
+// RAM - R/W RAM for CPU6502
+wire w_mem_ram_en;
+wire w_mem_ram_wea;
+wire [15:0] w_mem_ram_address;
+wire [7:0] w_mem_ram_data_rd;
+wire [7:0] w_mem_ram_data_wr;
+
+wire w_nes_ram_en;
+wire w_nes_ram_rw;
+wire [15:0] w_nes_ram_address;
+wire [7:0] w_nes_ram_data_rd;
+wire [7:0] w_nes_ram_data_wr;
+
+// PATTERNTABLE - graphics data for PPU
+wire w_mem_patterntable_en;
+wire w_mem_patterntable_en;
+wire w_mem_patterntable_wea;
+wire [15:0] w_mem_patterntable_address;
+wire [7:0] w_mem_patterntable_data_rd;
+wire [7:0] w_mem_patterntable_data_wr;
+
+wire w_nes_patterntable_en;
+wire w_nes_patterntable_rw;
+wire [13:0] w_nes_patterntable_address;
+wire [7:0] w_nes_patterntable_data_rd;
+wire [7:0] w_nes_patterntable_data_wr;
+
+assign w_nes_patterntable_rw = RW_READ;
+assign w_nes_patterntable_data_wr = 0;
+
+// NAMETABLE - background tile data, managed by PPU
+wire w_mem_nametable_en;
+wire w_mem_nametable_wea;
+wire [15:0] w_mem_nametable_address;
+wire [7:0] w_mem_nametable_data_rd;
+wire [7:0] w_mem_nametable_data_wr;
+
+wire w_nes_nametable_en;
+wire w_nes_nametable_rw;
+wire [13:0] w_nes_nametable_address;
+wire [7:0] w_nes_nametable_data_rd;
+wire [7:0] w_nes_nametable_data_wr;
 
 //
-// 6502 CPU
+// NES
 //
 
-reg r_cpu_clk_en;
-wire w_cpu_rw;
-wire [15:0] w_cpu_address;
-wire [7:0] w_cpu_data_rd;
-wire [7:0] w_cpu_data_wr;
-reg r_cpu_irq_n;
-reg r_cpu_nmi_n;
-wire w_cpu_sync;
-wire [7:0] w_cpu_reg_a;
-wire [7:0] w_cpu_reg_x;
-wire [7:0] w_cpu_reg_y;
-wire [7:0] w_cpu_reg_s;
-wire [7:0] w_cpu_reg_p;
-wire [7:0] w_cpu_reg_ir;
-
-wire w_cpu_reset_n;
-
-always @(posedge i_clk_5mhz or negedge i_reset_n)
-begin
-    if (!i_reset_n)
-    begin
-        r_cpu_clk_en <= 0;
-        r_cpu_irq_n <= 1;
-        r_cpu_nmi_n <= 1;
-    end
-    else
-    begin
-        if (w_cpu_step_5mhz)
-        begin
-            r_cpu_clk_en <= 1;
-        end
-        else
-        begin
-            r_cpu_clk_en <= 0;
-
-            if (r_cpu_clk_en == 1)
-            begin
-                r_cpu_step_completed_5mhz <= 1;
-            end
-            else
-            begin
-                r_cpu_step_completed_5mhz <= 0;
-            end
-        end
-    end
-end
+wire w_nes_reset_n;
 
 /* verilator lint_off PINMISSING */
-Cpu6502 cpu6502(
+NES nes(
     .i_clk(i_clk_5mhz),
-    .i_reset_n(i_reset_n & w_cpu_reset_n),
-    .i_clk_en(r_cpu_clk_en),
-    .o_rw(w_cpu_rw),
-    .o_address(w_cpu_address),
-    .i_data(w_cpu_data_rd),
-    .o_data(w_cpu_data_wr),
-    .i_irq_n(r_cpu_irq_n),
-    .i_nmi_n(r_cpu_nmi_n),
-    .o_sync(w_cpu_sync),
+    .i_reset_n(i_reset_n & w_nes_reset_n),
 
-    .o_debug_ac(w_cpu_reg_a),
-    .o_debug_x(w_cpu_reg_x),
-    .o_debug_y(w_cpu_reg_y),
-    .o_debug_s(w_cpu_reg_s),
-    .o_debug_p(w_cpu_reg_p),
-    .o_debug_ir(w_cpu_reg_ir)
+    // video output
+    // o_video_red
+    // o_video_green
+    // o_video_blue
+    // o_video_x
+    // o_video_y
+    // o_video_visible
+
+    // controller
+    // o_controller_latch
+    // o_controller_clk
+    // i_controller_1
+
+    // CPU memory access - RAM
+    .o_cs_ram(w_nes_ram_en),
+    .o_address_ram(w_nes_ram_address),
+    .o_rw_ram(w_nes_ram_rw),
+    .o_data_ram(w_nes_ram_data_wr),
+    .i_data_ram(w_nes_ram_data_rd),
+
+    // CPU memory access - PRG
+    .o_cs_prg(w_nes_prg_en),
+    .o_address_prg(w_nes_prg_address),
+    .i_data_prg(w_nes_prg_data_rd),
+
+    // PPU memory access - Pattern Table
+    .o_cs_patterntable(w_nes_patterntable_en),
+    .i_data_patterntable(w_nes_patterntable_data_rd),
+    .o_rw_patterntable(w_nes_patterntable_rw),
+    .o_address_patterntable(w_nes_patterntable_address),
+
+    // PPU memory access - Nametable
+    .o_cs_nametable(w_nes_nametable_en),
+    .i_data_nametable(w_nes_nametable_data_rd),
+    .o_data_nametable(w_nes_nametable_data_wr),
+    .o_rw_nametable(w_nes_nametable_rw),
+    .o_address_nametable(w_nes_nametable_address)
 );
 /* verilator lint_on PINMISSING */
 
@@ -222,83 +243,38 @@ NESDebuggerValues values (
     .i_data(w_value_data_wr),
     .o_data(w_value_data_rd),
 
-    .i_cpu_address(w_cpu_address),
-    .i_cpu_data((w_cpu_rw == RW_WRITE) ? w_cpu_data_wr : w_cpu_data_rd),
-    .i_cpu_rw(w_cpu_rw),
-    .i_cpu_irq_n(r_cpu_irq_n),
-    .i_cpu_nmi_n(r_cpu_nmi_n),
-    .i_cpu_sync(w_cpu_sync),
-    .i_cpu_reg_a(w_cpu_reg_a),
-    .i_cpu_reg_x(w_cpu_reg_x),
-    .i_cpu_reg_y(w_cpu_reg_y),
-    .i_cpu_reg_s(w_cpu_reg_s),
-    .i_cpu_reg_p(w_cpu_reg_p),
-    .i_cpu_reg_ir(w_cpu_reg_ir),
-    
-    .o_cpu_step(w_cpu_step_100mhz),
-    .i_cpu_step_completed(w_cpu_step_completed_100mhz),
-
-    .o_cpu_reset_n(w_cpu_reset_n)
+    .o_nes_reset_n(w_nes_reset_n),
+    .o_debugger_memory_pool(w_debugger_memory_pool)
 );
 
 //
-// Memory 
-// NOTE: 4 x memory pools
+// Memory
+//
 
-// PRG - CPU6502 program
-wire w_mem_prg_en;
-wire w_mem_prg_wea;
-wire [15:0] w_mem_prg_address;
-wire [7:0] w_mem_prg_data_rd;
-wire [7:0] w_mem_prg_data_wr;
-
-/* verilator lint_off UNDRIVEN */
-/* verilator lint_off UNUSED */
-// RAM - R/W RAM for CPU6502
-wire w_mem_ram_en;
-wire w_mem_ram_wea;
-wire [15:0] w_mem_ram_address;
-wire [7:0] w_mem_ram_data_rd;
-wire [7:0] w_mem_ram_data_wr;
-
-// PATTERNTABLE - graphics data for PPU
-wire w_mem_patterntable_en;
-wire w_mem_patterntable_wea;
-wire [15:0] w_mem_patterntable_address;
-wire [7:0] w_mem_patterntable_data_rd;
-wire [7:0] w_mem_patterntable_data_wr;
-
-// NAMETABLE - background tile data, managed by PPU
-wire w_mem_nametable_en;
-wire w_mem_nametable_wea;
-wire [15:0] w_mem_nametable_address;
-wire [7:0] w_mem_nametable_data_rd;
-wire [7:0] w_mem_nametable_data_wr;
-/* verilator lint_on UNDRIVEN */
-/* verilator lint_off UNUSED */
-
-NESDebuggerMCU mcu(
+NESDebuggerMCU mcu_prg(
     .i_clk(i_clk_100mhz),
     .i_reset_n(i_reset_n),
 
-    .i_cpu_en(i_clk_5mhz),              // NOTE: 6502 CPU memory access during phi2 (clock high)
-    .i_cpu_rw(w_cpu_rw),
-    .i_cpu_address(w_cpu_address),
-    .i_cpu_data(w_cpu_data_wr),
-    .o_cpu_data(w_cpu_data_rd),
+    // connection to NES
+    .i_nes_en(i_clk_5mhz & w_nes_prg_en),   // NOTE: 6502 CPU memory access during phi2 (clock high)
+    .i_nes_rw(w_nes_prg_rw),
+    .i_nes_address(w_nes_prg_address),
+    .i_nes_data(w_nes_prg_data_wr),
+    .o_nes_data(w_nes_prg_data_rd),
 
-    .i_debugger_en(w_debugger_mem_en),
+    // connections to debugger
+    .i_debugger_en(w_debugger_mem_en && (w_debugger_memory_pool == MEMORY_POOL_PRG)),
     .i_debugger_rw(w_debugger_mem_rw),
     .i_debugger_address(w_debugger_mem_address),
     .i_debugger_data(w_debugger_mem_data_wr),
     .o_debugger_data(w_debugger_mem_data_rd),
 
-    // PRG memory
-    .o_mem_prg_en(w_mem_prg_en),
-    .o_mem_prg_wea(w_mem_prg_wea),
-    .o_mem_prg_address(w_mem_prg_address),
-    .o_mem_prg_data(w_mem_prg_data_wr),
-    .i_mem_prg_data(w_mem_prg_data_rd)
+    // connections to PRG memory
+    .o_mem_en(w_mem_prg_en),
+    .o_mem_wea(w_mem_prg_wea),
+    .o_mem_address(w_mem_prg_address),
+    .o_mem_data(w_mem_prg_data_wr),
+    .i_mem_data(w_mem_prg_data_rd)
 );
 
 Memory memory_prg (
@@ -310,6 +286,32 @@ Memory memory_prg (
   .o_data(w_mem_prg_data_rd)
 );
 
+NESDebuggerMCU mcu_ram(
+    .i_clk(i_clk_100mhz),
+    .i_reset_n(i_reset_n),
+
+    // connection to NES
+    .i_nes_en(i_clk_5mhz & w_nes_ram_en),   // NOTE: 6502 CPU memory access during phi2 (clock high)
+    .i_nes_rw(w_nes_ram_rw),
+    .i_nes_address(w_nes_ram_address),
+    .i_nes_data(w_nes_ram_data_wr),
+    .o_nes_data(w_nes_ram_data_rd),
+
+    // connections to debugger
+    .i_debugger_en(w_debugger_mem_en && (w_debugger_memory_pool == MEMORY_POOL_RAM)),
+    .i_debugger_rw(w_debugger_mem_rw),
+    .i_debugger_address(w_debugger_mem_address),
+    .i_debugger_data(w_debugger_mem_data_wr),
+    .o_debugger_data(w_debugger_mem_data_rd),
+
+    // connections to RAM memory
+    .o_mem_en(w_mem_ram_en),
+    .o_mem_wea(w_mem_ram_wea),
+    .o_mem_address(w_mem_ram_address),
+    .o_mem_data(w_mem_ram_data_wr),
+    .i_mem_data(w_mem_ram_data_rd)
+);
+
 Memory memory_ram (
   .i_clk(i_clk_100mhz),
   .i_ena(w_mem_ram_en),
@@ -319,6 +321,32 @@ Memory memory_ram (
   .o_data(w_mem_ram_data_rd)
 );
 
+NESDebuggerMCU mcu_patterntable(
+    .i_clk(i_clk_100mhz),
+    .i_reset_n(i_reset_n),
+
+    // connection to NES
+    .i_nes_en(i_clk_5mhz & w_nes_patterntable_en),   // NOTE: 6502 CPU memory access during phi2 (clock high)
+    .i_nes_rw(w_nes_patterntable_rw),
+    .i_nes_address({2'b0, w_nes_patterntable_address}),
+    .i_nes_data(w_nes_patterntable_data_wr),
+    .o_nes_data(w_nes_patterntable_data_rd),
+
+    // connections to debugger
+    .i_debugger_en(w_debugger_mem_en && (w_debugger_memory_pool == MEMORY_POOL_PATTERNTABLE)),
+    .i_debugger_rw(w_debugger_mem_rw),
+    .i_debugger_address(w_debugger_mem_address),
+    .i_debugger_data(w_debugger_mem_data_wr),
+    .o_debugger_data(w_debugger_mem_data_rd),
+
+    // connections to PATTERNTABLE memory
+    .o_mem_en(w_mem_patterntable_en),
+    .o_mem_wea(w_mem_patterntable_wea),
+    .o_mem_address(w_mem_patterntable_address),
+    .o_mem_data(w_mem_patterntable_data_wr),
+    .i_mem_data(w_mem_patterntable_data_rd)
+);
+
 Memory memory_patterntable (
   .i_clk(i_clk_100mhz),
   .i_ena(w_mem_patterntable_en),
@@ -326,6 +354,32 @@ Memory memory_patterntable (
   .i_addr(w_mem_patterntable_address),
   .i_data(w_mem_patterntable_data_wr),
   .o_data(w_mem_patterntable_data_rd)
+);
+
+NESDebuggerMCU mcu_nametable(
+    .i_clk(i_clk_100mhz),
+    .i_reset_n(i_reset_n),
+
+    // connection to NES
+    .i_nes_en(i_clk_5mhz & w_nes_nametable_en),   // NOTE: 6502 CPU memory access during phi2 (clock high)
+    .i_nes_rw(w_nes_nametable_rw),
+    .i_nes_address({2'b0, w_nes_nametable_address}),
+    .i_nes_data(w_nes_nametable_data_wr),
+    .o_nes_data(w_nes_nametable_data_rd),
+
+    // connections to debugger
+    .i_debugger_en(w_debugger_mem_en && (w_debugger_memory_pool == MEMORY_POOL_NAMETABLE)),
+    .i_debugger_rw(w_debugger_mem_rw),
+    .i_debugger_address(w_debugger_mem_address),
+    .i_debugger_data(w_debugger_mem_data_wr),
+    .o_debugger_data(w_debugger_mem_data_rd),
+
+    // connections to NAMETABLE memory
+    .o_mem_en(w_mem_nametable_en),
+    .o_mem_wea(w_mem_nametable_wea),
+    .o_mem_address(w_mem_nametable_address),
+    .o_mem_data(w_mem_nametable_data_wr),
+    .i_mem_data(w_mem_nametable_data_rd)
 );
 
 Memory memory_nametable (

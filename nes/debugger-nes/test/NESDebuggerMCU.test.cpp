@@ -40,12 +40,12 @@ TEST_F(NESDebuggerMCU, ShouldImplementDebuggerRead) {
     core.i_debugger_en = 1;
     core.i_debugger_rw = RW_READ;
     core.i_debugger_address = kTestAddress;
-    core.i_mem_prg_data = kTestData;
+    core.i_mem_data = kTestData;
     core.eval();
 
-    EXPECT_EQ(core.o_mem_prg_en, 1);
-    EXPECT_EQ(core.o_mem_prg_wea, 0);
-    EXPECT_EQ(core.o_mem_prg_address, kTestAddress);
+    EXPECT_EQ(core.o_mem_en, 1);
+    EXPECT_EQ(core.o_mem_wea, 0);
+    EXPECT_EQ(core.o_mem_address, kTestAddress);
     EXPECT_EQ(core.o_debugger_data, kTestData);
 }
 
@@ -61,10 +61,10 @@ TEST_F(NESDebuggerMCU, ShouldImplementDebuggerWrite) {
     core.i_debugger_data = kTestData;
     core.eval();
 
-    EXPECT_EQ(core.o_mem_prg_en, 1);
-    EXPECT_EQ(core.o_mem_prg_wea, 1);
-    EXPECT_EQ(core.o_mem_prg_address, kTestAddress);
-    EXPECT_EQ(core.o_mem_prg_data, kTestData);
+    EXPECT_EQ(core.o_mem_en, 1);
+    EXPECT_EQ(core.o_mem_wea, 1);
+    EXPECT_EQ(core.o_mem_address, kTestAddress);
+    EXPECT_EQ(core.o_mem_data, kTestData);
 }
 
 TEST_F(NESDebuggerMCU, ShouldImplementCpuRead) {
@@ -73,16 +73,16 @@ TEST_F(NESDebuggerMCU, ShouldImplementCpuRead) {
     uint16_t kTestAddress = 0x1234;
     uint8_t kTestData = 0x42;
 
-    core.i_cpu_en = 1;
-    core.i_cpu_rw = RW_READ;
-    core.i_cpu_address = kTestAddress;
-    core.i_mem_prg_data = kTestData;
+    core.i_nes_en = 1;
+    core.i_nes_rw = RW_READ;
+    core.i_nes_address = kTestAddress;
+    core.i_mem_data = kTestData;
     core.eval();
 
-    EXPECT_EQ(core.o_mem_prg_en, 1);
-    EXPECT_EQ(core.o_mem_prg_wea, 0);
-    EXPECT_EQ(core.o_mem_prg_address, kTestAddress);
-    EXPECT_EQ(core.o_cpu_data, kTestData);
+    EXPECT_EQ(core.o_mem_en, 1);
+    EXPECT_EQ(core.o_mem_wea, 0);
+    EXPECT_EQ(core.o_mem_address, kTestAddress);
+    EXPECT_EQ(core.o_nes_data, kTestData);
 }
 
 TEST_F(NESDebuggerMCU, ShouldImplementCpuWrite) {
@@ -91,16 +91,16 @@ TEST_F(NESDebuggerMCU, ShouldImplementCpuWrite) {
     uint16_t kTestAddress = 0xABCD;
     uint8_t kTestData = 0xEA;
 
-    core.i_cpu_en = 1;
-    core.i_cpu_rw = RW_WRITE;
-    core.i_cpu_address = kTestAddress;
-    core.i_cpu_data = kTestData;
+    core.i_nes_en = 1;
+    core.i_nes_rw = RW_WRITE;
+    core.i_nes_address = kTestAddress;
+    core.i_nes_data = kTestData;
     core.eval();
 
-    EXPECT_EQ(core.o_mem_prg_en, 1);
-    EXPECT_EQ(core.o_mem_prg_wea, 1);
-    EXPECT_EQ(core.o_mem_prg_address, kTestAddress);
-    EXPECT_EQ(core.o_mem_prg_data, kTestData);
+    EXPECT_EQ(core.o_mem_en, 1);
+    EXPECT_EQ(core.o_mem_wea, 1);
+    EXPECT_EQ(core.o_mem_address, kTestAddress);
+    EXPECT_EQ(core.o_mem_data, kTestData);
 }
 
 TEST_F(NESDebuggerMCU, ShouldReturnLastDebuggerReadWhileCpuIsReading) {
@@ -112,7 +112,7 @@ TEST_F(NESDebuggerMCU, ShouldReturnLastDebuggerReadWhileCpuIsReading) {
     core.i_debugger_en = 1;
     core.i_debugger_rw = RW_READ;
     core.i_debugger_address = kTestAddressDebugger;
-    core.i_mem_prg_data = kTestDataDebugger;
+    core.i_mem_data = kTestDataDebugger;
     
     testBench.tick();
 
@@ -120,16 +120,16 @@ TEST_F(NESDebuggerMCU, ShouldReturnLastDebuggerReadWhileCpuIsReading) {
     uint8_t kTestDataCpu = 0xEA;
 
     core.i_debugger_en = 0;
-    core.i_cpu_en = 1;
-    core.i_cpu_rw = RW_READ;
-    core.i_cpu_address = kTestAddressCpu;
-    core.i_mem_prg_data = kTestDataCpu;
+    core.i_nes_en = 1;
+    core.i_nes_rw = RW_READ;
+    core.i_nes_address = kTestAddressCpu;
+    core.i_mem_data = kTestDataCpu;
     core.eval();
 
-    EXPECT_EQ(core.o_mem_prg_en, 1);
-    EXPECT_EQ(core.o_mem_prg_wea, 0);
-    EXPECT_EQ(core.o_mem_prg_address, kTestAddressCpu);
-    EXPECT_EQ(core.o_cpu_data, kTestDataCpu);
+    EXPECT_EQ(core.o_mem_en, 1);
+    EXPECT_EQ(core.o_mem_wea, 0);
+    EXPECT_EQ(core.o_mem_address, kTestAddressCpu);
+    EXPECT_EQ(core.o_nes_data, kTestDataCpu);
     EXPECT_EQ(core.o_debugger_data, kTestDataDebugger);
 }
 
@@ -140,27 +140,27 @@ TEST_F(NESDebuggerMCU, ShouldReturnLastCpuReadWhileDebuggerIsReading) {
     uint8_t kTestDataCpu = 0x34;
 
     core.i_debugger_en = 0;
-    core.i_cpu_en = 1;
-    core.i_cpu_rw = RW_READ;
-    core.i_cpu_address = kTestAddressCpu;
-    core.i_mem_prg_data = kTestDataCpu;
+    core.i_nes_en = 1;
+    core.i_nes_rw = RW_READ;
+    core.i_nes_address = kTestAddressCpu;
+    core.i_mem_data = kTestDataCpu;
     
     testBench.tick();
 
     uint16_t kTestAddressDebugger = 0x1234;
     uint8_t kTestDataDebugger = 0x42;
 
-    core.i_cpu_en = 0;
+    core.i_nes_en = 0;
     core.i_debugger_en = 1;
     core.i_debugger_rw = RW_READ;
     core.i_debugger_address = kTestAddressDebugger;
-    core.i_mem_prg_data = kTestDataDebugger;
+    core.i_mem_data = kTestDataDebugger;
     
     core.eval();
 
-    EXPECT_EQ(core.o_mem_prg_en, 1);
-    EXPECT_EQ(core.o_mem_prg_wea, 0);
-    EXPECT_EQ(core.o_mem_prg_address, kTestAddressDebugger);
+    EXPECT_EQ(core.o_mem_en, 1);
+    EXPECT_EQ(core.o_mem_wea, 0);
+    EXPECT_EQ(core.o_mem_address, kTestAddressDebugger);
     EXPECT_EQ(core.o_debugger_data, kTestDataDebugger);
-    EXPECT_EQ(core.o_cpu_data, kTestDataCpu);
+    EXPECT_EQ(core.o_nes_data, kTestDataCpu);
 }
