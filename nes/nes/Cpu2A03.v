@@ -61,6 +61,10 @@ reg r_clk_en_cpu;
 reg r_out0;
 reg r_oe1_n;
 
+reg [7:0] r_oamdma_counter;
+reg [15:0] r_oamdma_address;
+reg [7:0] r_oamdma_data;
+
 always @(*)
 begin
     case (r_state)
@@ -141,10 +145,6 @@ Cpu6502 cpu6502(
     .o_debug_p(o_debug_p),
     .o_debug_error(o_debug_error)
 );
-
-reg [7:0] r_oamdma_counter;
-reg [15:0] r_oamdma_address;
-reg [7:0] r_oamdma_data;
 
 always @(negedge i_reset_n or negedge i_clk)
 begin
