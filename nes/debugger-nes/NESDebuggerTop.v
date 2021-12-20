@@ -61,7 +61,7 @@ wire [15:0] w_debugger_mem_address;
 wire w_debugger_mem_rw;
 wire w_debugger_mem_en;
 wire [7:0] w_debugger_mem_data_wr;
-wire [7:0] w_debugger_mem_data_rd;
+reg [7:0] r_debugger_mem_data_rd;
 
 wire [15:0] w_value_id;
 wire w_value_rw;
@@ -89,7 +89,7 @@ NESDebugger debugger(
     .o_mem_rw(w_debugger_mem_rw),
     .o_mem_en(w_debugger_mem_en),
     .o_mem_data(w_debugger_mem_data_wr),
-    .i_mem_data(w_debugger_mem_data_rd),
+    .i_mem_data(r_debugger_mem_data_rd),
 
     .o_value_id(w_value_id),
     .o_value_rw(w_value_rw),
@@ -111,6 +111,23 @@ localparam MEMORY_POOL_PRG = 0;
 localparam MEMORY_POOL_RAM = 1;
 localparam MEMORY_POOL_PATTERNTABLE = 2;
 localparam MEMORY_POOL_NAMETABLE = 3;
+
+wire [7:0] w_debugger_mem_prg_data_rd;
+wire [7:0] w_debugger_mem_ram_data_rd;
+wire [7:0] w_debugger_mem_patterntable_data_rd;
+wire [7:0] w_debugger_mem_nametable_data_rd;
+
+always @(*)
+begin
+
+    case (w_debugger_memory_pool)
+    MEMORY_POOL_PRG: r_debugger_mem_data_rd = w_debugger_mem_prg_data_rd;
+    MEMORY_POOL_RAM: r_debugger_mem_data_rd = w_debugger_mem_ram_data_rd;
+    MEMORY_POOL_PATTERNTABLE: r_debugger_mem_data_rd = w_debugger_mem_patterntable_data_rd;
+    MEMORY_POOL_NAMETABLE: r_debugger_mem_data_rd = w_debugger_mem_nametable_data_rd;
+    default: r_debugger_mem_data_rd = 0;
+    endcase
+end
 
 // PRG - CPU6502 program
 wire w_mem_prg_en;
@@ -266,7 +283,7 @@ NESDebuggerMCU mcu_prg(
     .i_debugger_rw(w_debugger_mem_rw),
     .i_debugger_address(w_debugger_mem_address),
     .i_debugger_data(w_debugger_mem_data_wr),
-    .o_debugger_data(w_debugger_mem_data_rd),
+    .o_debugger_data(w_debugger_mem_prg_data_rd),
 
     // connections to PRG memory
     .o_mem_en(w_mem_prg_en),
@@ -301,7 +318,7 @@ NESDebuggerMCU mcu_ram(
     .i_debugger_rw(w_debugger_mem_rw),
     .i_debugger_address(w_debugger_mem_address),
     .i_debugger_data(w_debugger_mem_data_wr),
-    .o_debugger_data(w_debugger_mem_data_rd),
+    .o_debugger_data(w_debugger_mem_ram_data_rd),
 
     // connections to RAM memory
     .o_mem_en(w_mem_ram_en),
@@ -336,7 +353,7 @@ NESDebuggerMCU mcu_patterntable(
     .i_debugger_rw(w_debugger_mem_rw),
     .i_debugger_address(w_debugger_mem_address),
     .i_debugger_data(w_debugger_mem_data_wr),
-    .o_debugger_data(w_debugger_mem_data_rd),
+    .o_debugger_data(w_debugger_mem_patterntable_data_rd),
 
     // connections to PATTERNTABLE memory
     .o_mem_en(w_mem_patterntable_en),
@@ -371,7 +388,7 @@ NESDebuggerMCU mcu_nametable(
     .i_debugger_rw(w_debugger_mem_rw),
     .i_debugger_address(w_debugger_mem_address),
     .i_debugger_data(w_debugger_mem_data_wr),
-    .o_debugger_data(w_debugger_mem_data_rd),
+    .o_debugger_data(w_debugger_mem_nametable_data_rd),
 
     // connections to NAMETABLE memory
     .o_mem_en(w_mem_nametable_en),
