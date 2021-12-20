@@ -56,8 +56,11 @@ always @(*)
 begin
     o_mem_en = 1;
 
+    o_mem_wea = 0;
+    o_mem_address = 0;
     o_debugger_data = r_debugger_data;
     o_nes_data = r_nes_data;
+    o_mem_data = 0;
     
     if (i_debugger_en)
     begin
