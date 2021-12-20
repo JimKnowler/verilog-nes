@@ -170,7 +170,6 @@ wire [13:0] w_nes_patterntable_address;
 wire [7:0] w_nes_patterntable_data_rd;
 wire [7:0] w_nes_patterntable_data_wr;
 
-assign w_nes_patterntable_rw = RW_READ;
 assign w_nes_patterntable_data_wr = 0;
 
 // NAMETABLE - background tile data, managed by PPU
