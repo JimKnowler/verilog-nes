@@ -3,7 +3,6 @@
  */
 
 module NESDebuggerTop(
-    input   i_clk_100mhz,
     input   i_clk_5mhz,
     input   i_reset_n,
     
@@ -35,7 +34,7 @@ wire [7:0] w_debug_tx_byte_buffered;
 /* verilator lint_on UNUSED */
 
 SPIPeripheral spi(
-    .i_clk(i_clk_100mhz),
+    .i_clk(i_clk_5mhz),
     .i_reset_n(i_reset_n),
     
     .o_rx_byte(w_rx_byte),
@@ -76,7 +75,7 @@ wire [15:0] w_debug_cmd_bytes_remaining;
 /* verilator lint_on UNUSED */
 
 NESDebugger debugger(
-    .i_clk(i_clk_100mhz),
+    .i_clk(i_clk_5mhz),
     .i_reset_n(i_reset_n & ~i_spi_cs_n),
     
     .i_rx_dv(w_rx_dv),
@@ -250,7 +249,7 @@ begin
 end
 
 NESDebuggerValues values (
-    .i_clk(i_clk_100mhz),
+    .i_clk(i_clk_5mhz),
     .i_reset_n(i_reset_n),
 
     .i_ena(w_value_en),
@@ -268,7 +267,7 @@ NESDebuggerValues values (
 //
 
 NESDebuggerMCU mcu_prg(
-    .i_clk(i_clk_100mhz),
+    .i_clk(i_clk_5mhz),
     .i_reset_n(i_reset_n),
 
     // connection to NES
@@ -294,7 +293,7 @@ NESDebuggerMCU mcu_prg(
 );
 
 Memory memory_prg (
-  .i_clk(i_clk_100mhz),
+  .i_clk(i_clk_5mhz),
   .i_ena(w_mem_prg_en),
   .i_wea(w_mem_prg_wea),
   .i_addr(w_mem_prg_address),
@@ -303,7 +302,7 @@ Memory memory_prg (
 );
 
 NESDebuggerMCU mcu_ram(
-    .i_clk(i_clk_100mhz),
+    .i_clk(i_clk_5mhz),
     .i_reset_n(i_reset_n),
 
     // connection to NES
@@ -329,7 +328,7 @@ NESDebuggerMCU mcu_ram(
 );
 
 Memory memory_ram (
-  .i_clk(i_clk_100mhz),
+  .i_clk(i_clk_5mhz),
   .i_ena(w_mem_ram_en),
   .i_wea(w_mem_ram_wea),
   .i_addr(w_mem_ram_address),
@@ -338,7 +337,7 @@ Memory memory_ram (
 );
 
 NESDebuggerMCU mcu_patterntable(
-    .i_clk(i_clk_100mhz),
+    .i_clk(i_clk_5mhz),
     .i_reset_n(i_reset_n),
 
     // connection to NES
@@ -364,7 +363,7 @@ NESDebuggerMCU mcu_patterntable(
 );
 
 Memory memory_patterntable (
-  .i_clk(i_clk_100mhz),
+  .i_clk(i_clk_5mhz),
   .i_ena(w_mem_patterntable_en),
   .i_wea(w_mem_patterntable_wea),
   .i_addr(w_mem_patterntable_address),
@@ -373,7 +372,7 @@ Memory memory_patterntable (
 );
 
 NESDebuggerMCU mcu_nametable(
-    .i_clk(i_clk_100mhz),
+    .i_clk(i_clk_5mhz),
     .i_reset_n(i_reset_n),
 
     // connection to NES
@@ -399,7 +398,7 @@ NESDebuggerMCU mcu_nametable(
 );
 
 Memory memory_nametable (
-  .i_clk(i_clk_100mhz),
+  .i_clk(i_clk_5mhz),
   .i_ena(w_mem_nametable_en),
   .i_wea(w_mem_nametable_wea),
   .i_addr(w_mem_nametable_address),
