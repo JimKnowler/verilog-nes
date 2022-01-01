@@ -470,7 +470,6 @@ cc_test(
         ]
     ) + [
         ":ClockEnableTestBench",
-        ":MemoryControllerTestBench",
         ":Cpu2A03TestBench",
         ":PPUMemoryMapTestBench",
         ":CPUMemoryMapTestBench",
