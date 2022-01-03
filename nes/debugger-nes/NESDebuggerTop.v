@@ -234,6 +234,7 @@ NES nes(
     .o_rw_nametable(w_nes_nametable_rw),
     .o_address_nametable(w_nes_nametable_address)
 );
+
 /* verilator lint_on PINMISSING */
 
 //
@@ -270,7 +271,7 @@ NESDebuggerMCU mcu_prg(
     .i_reset_n(i_reset_n),
 
     // connection to NES
-    .i_nes_en(i_clk_5mhz & w_nes_prg_en),   // NOTE: 6502 CPU memory access during phi2 (clock high)
+    .i_nes_en(w_nes_prg_en),
     .i_nes_rw(w_nes_prg_rw),
     .i_nes_address(w_nes_prg_address),
     .i_nes_data(w_nes_prg_data_wr),
@@ -305,7 +306,7 @@ NESDebuggerMCU mcu_ram(
     .i_reset_n(i_reset_n),
 
     // connection to NES
-    .i_nes_en(i_clk_5mhz & w_nes_ram_en),   // NOTE: 6502 CPU memory access during phi2 (clock high)
+    .i_nes_en(w_nes_ram_en),
     .i_nes_rw(w_nes_ram_rw),
     .i_nes_address(w_nes_ram_address),
     .i_nes_data(w_nes_ram_data_wr),
@@ -340,7 +341,7 @@ NESDebuggerMCU mcu_patterntable(
     .i_reset_n(i_reset_n),
 
     // connection to NES
-    .i_nes_en(i_clk_5mhz & w_nes_patterntable_en),   // NOTE: 6502 CPU memory access during phi2 (clock high)
+    .i_nes_en(w_nes_patterntable_en),
     .i_nes_rw(w_nes_patterntable_rw),
     .i_nes_address({2'b0, w_nes_patterntable_address}),
     .i_nes_data(w_nes_patterntable_data_wr),
@@ -375,7 +376,7 @@ NESDebuggerMCU mcu_nametable(
     .i_reset_n(i_reset_n),
 
     // connection to NES
-    .i_nes_en(i_clk_5mhz & w_nes_nametable_en),   // NOTE: 6502 CPU memory access during phi2 (clock high)
+    .i_nes_en(w_nes_nametable_en),
     .i_nes_rw(w_nes_nametable_rw),
     .i_nes_address({2'b0, w_nes_nametable_address}),
     .i_nes_data(w_nes_nametable_data_wr),
