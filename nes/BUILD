@@ -39,6 +39,11 @@ nes_srcs = [
     "ppu/PPUChipEnable.v"
 ] + cpu6502_srcs + ppu_srcs
 
+vga_srcs = [
+    "ppu/vga/VGAGenerator.v",
+    "ppu/vga/VGAOutput.v"
+]
+
 verilator_cc_library(
     name = "Cpu6502",
     srcs = cpu6502_srcs,
@@ -767,7 +772,7 @@ verilator_cc_library(
         "debugger-common/simulation/Memory.v",
         "debugger-common/SPIPeripheral.v",
         "debugger-common/Sync.v"        
-    ] + nes_srcs
+    ] + nes_srcs + vga_srcs
 )
 
 gtest_verilog_testbench(
