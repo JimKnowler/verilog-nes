@@ -451,6 +451,16 @@ gtest_verilog_testbench(
     deps = [":NES"]
 )
 
+verilator_cc_library(
+    name = "VideoOutput",
+    srcs = ["nes/VideoOutput.v"]
+)
+
+gtest_verilog_testbench(
+    name = "VideoOutputTestBench",
+    deps = [":VideoOutput"]
+)
+
 cc_test(
     name = "test-nes",
     srcs = glob(
@@ -473,7 +483,8 @@ cc_test(
         ":Cpu2A03TestBench",
         ":PPUMemoryMapTestBench",
         ":CPUMemoryMapTestBench",
-        ":NESTestBench"
+        ":NESTestBench",
+        ":VideoOutputTestBench"
     ],
     deps = [
         "@com_google_googletest//:gtest",
@@ -482,7 +493,8 @@ cc_test(
         ":Cpu2A03",
         ":CPUMemoryMap",
         ":PPUMemoryMap",
-        ":NES"
+        ":NES",
+        ":VideoOutput"
     ],
 )
 

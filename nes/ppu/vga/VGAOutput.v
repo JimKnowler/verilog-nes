@@ -1,6 +1,6 @@
 // VGAOutput
 //
-// - Combine signals from VGAGeneator and an RGB Video Renderer to create output VGA signals
+// - Combine signals from VGAGenerator and an RGB Video Renderer to create output VGA signals
 // - Pure combinatorial logic
 // - Parameters default for VGA 640x480 @ 60Hz  (25.175MHz pixel clock)
 //   http://tinyvga.com/vga-timing/640x480@60Hz

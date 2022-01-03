@@ -1,6 +1,6 @@
 module VGAExample
 #(
-    // default VGA settings for 640x480@60Hz
+    // default VGA settings for 640x480@60Hz (pixel clock = 25.175 MHz)
     // http://tinyvga.com/vga-timing/640x480@60Hz
     parameter WIDTH = 800,   
     parameter HEIGHT = 525,
