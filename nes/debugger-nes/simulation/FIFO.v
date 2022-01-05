@@ -5,6 +5,8 @@
  */
 
 module FIFO(
+    /* verilator lint_off UNUSED */
+    /* verilator lint_off UNDRIVEN */
     input i_clk_5mhz,
     input i_clk_25mhz,
     input i_reset_n,
@@ -16,6 +18,8 @@ module FIFO(
 
     output o_pixel_valid,
     output [23:0] o_pixel_rgb
+    /* verilator lint_on UNUSED */
+    /* verilator lint_on UNDRIVEN */
 );
 
 // TODO: implement simulation

@@ -698,7 +698,7 @@ verilator_cc_library(
         "debugger-cpu/CPUDebuggerValues.v",
         "debugger-common/simulation/Memory.v",
         "debugger-common/SPIPeripheral.v",
-        "debugger-common/Sync.v"        
+        "debugger-common/Sync.v"     
     ] + cpu6502_srcs
 )
 
@@ -769,9 +769,11 @@ verilator_cc_library(
         "debugger-nes/NESDebugger.v",
         "debugger-nes/NESDebuggerMCU.v",
         "debugger-nes/NESDebuggerValues.v",
+        "debugger-nes/simulation/FIFO.v",
         "debugger-common/simulation/Memory.v",
         "debugger-common/SPIPeripheral.v",
-        "debugger-common/Sync.v"        
+        "debugger-common/Sync.v",
+        "nes/VideoOutput.v"
     ] + nes_srcs + vga_srcs
 )
 

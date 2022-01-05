@@ -199,18 +199,27 @@ wire [7:0] w_nes_nametable_data_wr;
 
 wire w_nes_reset_n;
 
+wire [7:0] w_nes_video_red;
+wire [7:0] w_nes_video_green;
+wire [7:0] w_nes_video_blue;
+/* verilator lint_off UNUSED */
+wire [8:0] w_nes_video_x;                   // note: could these be used to help validate input to FIFO?
+wire [8:0] w_nes_video_y;
+/* verilator lint_on UNUSED */
+wire w_nes_video_visible;
+
 /* verilator lint_off PINMISSING */
 NES nes(
     .i_clk(i_clk_5mhz),
     .i_reset_n(i_reset_n & w_nes_reset_n),
 
     // video output
-    // o_video_red
-    // o_video_green
-    // o_video_blue
-    // o_video_x
-    // o_video_y
-    // o_video_visible
+    .o_video_red(w_nes_video_red),
+    .o_video_green(w_nes_video_green),
+    .o_video_blue(w_nes_video_blue),
+    .o_video_x(w_nes_video_x),
+    .o_video_y(w_nes_video_y),
+    .o_video_visible(w_nes_video_visible),
 
     // controller
     // o_controller_latch
@@ -242,7 +251,6 @@ NES nes(
     .o_rw_nametable(w_nes_nametable_rw),
     .o_address_nametable(w_nes_nametable_address)
 );
-
 /* verilator lint_on PINMISSING */
 
 //
@@ -421,10 +429,14 @@ Memory memory_nametable (
 wire w_vga_visible;
 wire [10:0] w_vga_x;
 wire [10:0] w_vga_y;
+wire [7:0] w_vga_red;
+wire [7:0] w_vga_green;
+wire [7:0] w_vga_blue;
+wire w_vga_reset_n;
 
 VGAGenerator vga_generator(
     .i_clk(i_clk_25mhz),
-    .i_reset_n(i_reset_n),
+    .i_reset_n(w_vga_reset_n),
     .o_x(w_vga_x),
     .o_y(w_vga_y),
     .o_visible(w_vga_visible)
@@ -432,18 +444,65 @@ VGAGenerator vga_generator(
 
 VGAOutput vga_output(
     .i_clk(i_clk_25mhz),
-    .i_reset_n(i_reset_n),
+    .i_reset_n(w_vga_reset_n),
     .i_visible(w_vga_visible),
     .i_x(w_vga_x),
     .i_y(w_vga_y),
-    .i_red(255),
-    .i_green(0),
-    .i_blue(150),
+    .i_red(w_vga_red),
+    .i_green(w_vga_green),
+    .i_blue(w_vga_blue),
     .o_vga_red(o_vga_red),
     .o_vga_green(o_vga_green),
     .o_vga_blue(o_vga_blue),
     .o_vga_hsync(o_vga_hsync),
     .o_vga_vsync(o_vga_vsync)
 );
+
+
+//
+// CDC FIFO - Video signal from 5MHz CPU/PPU to 25MHz VGA
+//
+
+wire w_fifo_pixel_valid;
+wire [23:0] w_fifo_pixel_rgb;
+
+FIFO video_fifo(
+    .i_clk_5mhz(i_clk_5mhz),
+    .i_clk_25mhz(i_clk_25mhz),
+    .i_reset_n(i_reset_n),
+    
+    .i_video_valid(w_nes_video_visible),
+    .i_video_red(w_nes_video_red),
+    .i_video_green(w_nes_video_green),
+    .i_video_blue(w_nes_video_blue),
+
+    .o_pixel_valid(w_fifo_pixel_valid),
+    .o_pixel_rgb(w_fifo_pixel_rgb)
+);
+
+/* verilator lint_off PINMISSING */
+VideoOutput video_output(
+    .i_clk(i_clk_25mhz),
+    .i_reset_n(i_reset_n),
+
+    // data received from FIFO
+    .i_pixel_valid(w_fifo_pixel_valid),
+    .i_pixel_rgb(w_fifo_pixel_rgb),
+
+    // driving VGA pixel data
+    .o_vga_reset_n(w_vga_reset_n),
+    .i_vga_x(w_vga_x),
+    .o_vga_red(w_vga_red),
+    .o_vga_green(w_vga_green),
+    .o_vga_blue(w_vga_blue)
+
+    /*
+    // debug
+    output [8:0] o_debug_linebuffer_write_index,
+    output o_debug_linebuffer_front,
+    output o_debug_vga_visible
+    */
+);
+/* verilator lint_on PINMISSING */
 
 endmodule
