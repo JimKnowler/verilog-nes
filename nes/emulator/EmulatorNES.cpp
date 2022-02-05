@@ -126,7 +126,13 @@ namespace emulator {
             switch (mode) {
                 case kRun:
                 {
-                    // todo: replace by 30fps timer
+                    // todo: replace kNumTicksPerFrame by 30fps timer
+
+                    // simulate a NES screen refresh
+                    //const int kNumTicksPerFrame = 5000000/60;
+
+                    // simulate NES at ~1fps and watch video output 
+                    // rendering line by line
                     const int kNumTicksPerFrame = 2000;
                     
                     for (int i=0; i<kNumTicksPerFrame; i++) {
