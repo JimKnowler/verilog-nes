@@ -6,6 +6,12 @@ Building a [Nintendo Entertainment System](https://en.wikipedia.org/wiki/Nintend
 
 Aim: to play the original NES [Super Mario Bros](https://en.wikipedia.org/wiki/Super_Mario_Bros.) ROM.
 
+# Dependencies
+- Bazel
+   - https://docs.bazel.build/versions/main/install-os-x.html
+   - Note: Version 4.1.0 required for compatability with bazel integration with verilator https://github.com/kkiningh/rules_verilator
+- MacOS
+
 # 6502 cpu
 
 ## Build Unit Tests
