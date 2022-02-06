@@ -13,6 +13,7 @@ namespace {
         void SetUp() override {
             testBench.reset();
             testBench.trace.clear();
+            testBench.setClockPolarity(1);
         }
         
         void TearDown() override {
@@ -91,16 +92,57 @@ TEST_F(NESDebuggerMCU, ShouldImplementCpuWrite) {
     uint16_t kTestAddress = 0xABCD;
     uint8_t kTestData = 0xEA;
 
+    testBench.trace.clear();
+
+    // clock starts high
+    // NES memory write is not active yet
+    core.i_nes_en = 0;
+    core.i_nes_rw = RW_READ;
+    core.i_nes_address = 0;
+    core.i_nes_data = 0;
+    
+    // clock falling edge
+    testBench.step();
+
+    // clock rising edge
+    testBench.step();
+
+    // NES writes to memory while clock is high
     core.i_nes_en = 1;
     core.i_nes_rw = RW_WRITE;
     core.i_nes_address = kTestAddress;
     core.i_nes_data = kTestData;
-    core.eval();
 
-    EXPECT_EQ(core.o_mem_en, 1);
-    EXPECT_EQ(core.o_mem_wea, 1);
-    EXPECT_EQ(core.o_mem_address, kTestAddress);
-    EXPECT_EQ(core.o_mem_data, kTestData);
+    // clock falling edge
+    testBench.step();
+
+    // NES write completed when clock went low
+    core.i_nes_en = 0;
+    core.i_nes_rw = RW_READ;
+    core.i_nes_address = 0;
+    core.i_nes_data = 0;
+    
+    // clock rising edge
+    testBench.step();
+
+    // clock falling edge
+    testBench.step();
+
+    // clock rising edge
+    testBench.step();
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-_-_-")
+        .port(i_nes_en).signal("__-___")
+        .port(i_nes_rw).signal("--_---")
+        .port(i_nes_address).signal({0, 0, kTestAddress, 0, 0, 0})
+        .port(i_nes_data).signal({0, 0, kTestData, 0, 0, 0})
+        .port(o_mem_en).signal("__--__")
+        .port(o_mem_wea).signal("__--__")
+        .port(o_mem_address).signal({0, 0, kTestAddress, kTestAddress, 0, 0})
+        .port(o_mem_data).signal({0, 0, kTestData, kTestData, 0, 0});
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
 
 TEST_F(NESDebuggerMCU, ShouldReturnLastDebuggerReadWhileCpuIsReading) {
