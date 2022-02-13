@@ -617,10 +617,12 @@ namespace emulator {
             int red = core.o_video_red;
             int green = core.o_video_green;
             int blue = core.o_video_blue;
+            int visible = core.o_video_visible;
 
-
-            olc::Pixel pixel(red, green, blue);
-            pixels[x + (y*kNESWidth)] = pixel;
+            if (visible == 1) {
+                olc::Pixel pixel(red, green, blue);
+                pixels[x + (y*kNESWidth)] = pixel;
+            }
         }
 
         void initSimulation() {
