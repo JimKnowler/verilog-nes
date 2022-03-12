@@ -1,10 +1,25 @@
 # verilog-nes
 
-**< WORK IN PROGRESS >**
+## **< WORK IN PROGRESS >**
 
 Building a [Nintendo Entertainment System](https://en.wikipedia.org/wiki/Nintendo_Entertainment_System) in Verilog.
 
 Aim: to play the original NES [Super Mario Bros](https://en.wikipedia.org/wiki/Super_Mario_Bros.) ROM.
+
+
+## Current Status
+
+- 6502 CPU working and passing tests (for official opcodes)
+- OAM DMA working
+- PPU working - background layer only
+- Emulation
+   - Super Mario Bros - now able to reach splash screen
+- FPGA
+   - NES Running on ARTY A7 hardware
+   - Arduino based interface for uploading ROMs and debugging the NES design
+
+![Super Mario Bros - Splash Screen background layer rendering in Emulation on MacOS](./docs/emulator-nes-background.png)
+
 
 # Dependencies
 - Bazel
