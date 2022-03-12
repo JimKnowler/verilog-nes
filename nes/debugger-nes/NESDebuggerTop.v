@@ -213,6 +213,9 @@ NES nes(
     .i_clk(i_clk_5mhz),
     .i_reset_n(i_reset_n & w_nes_reset_n),
 
+    // clock enable
+    .i_ce(1),
+
     // video output
     .o_video_red(w_nes_video_red),
     .o_video_green(w_nes_video_green),
