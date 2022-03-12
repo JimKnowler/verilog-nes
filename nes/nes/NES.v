@@ -2,6 +2,9 @@ module NES(
     input i_clk,                            // 5 MHz
     input i_reset_n,
 
+    input i_ce,                         // clock enable for CPU + PPU
+                                        // NOTE: audio synthesis is independent of clock enable
+
     //////////////////////////////
     // Video output
     //////////////////////////////
@@ -100,7 +103,7 @@ module NES(
     ClockEnable clockEnable(
         .i_clk(i_clk),
         .i_reset_n(i_reset_n),
-        .i_ce(1),                           // todo: expose as module port
+        .i_ce(i_ce),
         .o_ce_cpu(w_ce_cpu),
         .o_ce_ppu(w_ce_ppu)
     );

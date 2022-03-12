@@ -628,6 +628,8 @@ namespace emulator {
         void initSimulation() {
             testBench.setClockPolarity(0);
 
+            testBench.core().i_ce = 1;
+
             sram.clear(0);
             vram.clear(0);
 
