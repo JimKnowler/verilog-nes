@@ -48,6 +48,7 @@ namespace {
 
             // enable chip select
             core.i_cs_n = 0;
+            core.i_ce = 1;
 
             vram.clear(0);
 

@@ -15,6 +15,8 @@ namespace {
 
             testBench.reset();
             testBench.trace.clear();
+
+            testBench.core().i_ce = 1;
         }
         
         void TearDown() override {

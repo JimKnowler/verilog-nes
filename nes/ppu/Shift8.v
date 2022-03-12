@@ -6,6 +6,8 @@ module Shift8(
     input i_clk,
     input i_reset_n,
 
+    input i_ce,
+
     input i_load,               // control - load value from i_data into most significant bit
     input i_data,               // input data - value to load into most-significant bit
 
@@ -25,7 +27,7 @@ begin
     begin
         r_data <= 0;
     end
-    else
+    else if (i_ce)
     begin
         if (i_shift)
         begin

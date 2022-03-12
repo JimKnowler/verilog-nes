@@ -200,7 +200,7 @@ module NES(
         .i_clk(i_clk),
         .i_reset_n(i_reset_n),
         .i_cs_n(~w_cs_ppu),
-        //.i_ce(w_ce_ppu),
+        .i_ce(w_ce_ppu),
         .o_int_n(w_nmi_n),
         .i_rs(w_rs_ppu),
         .i_data(w_data_cpu_ppu),

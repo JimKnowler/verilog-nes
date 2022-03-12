@@ -2,6 +2,8 @@ module Shift16(
     input i_clk,
     input i_reset_n,
 
+    input i_ce,
+
     input i_load,               // control - load value from i_data into low byte
     input [7:0] i_data,         // data - data to load into low byte
     
@@ -23,7 +25,7 @@ begin
     begin
         r_data <= 0;
     end
-    else
+    else if (i_ce)
     begin
         if (i_shift)
         begin

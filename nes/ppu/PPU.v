@@ -9,7 +9,7 @@ module PPU(
     input i_cs_n,
 
     // clock enable
-    //input i_ce,
+    input i_ce,
 
     // CPU interface
     output o_int_n,                     // ~Interrupt, to drive ~NMI on CPU
@@ -260,118 +260,121 @@ begin
         r_t <= 0;
         r_rasterizer_counter <= 0;
     end
-    else if ((i_cs_n == 0) && (i_rw == RW_WRITE))
+    else if (i_ce) 
     begin
-        case (i_rs)
-        RS_PPUCTRL: begin
-            r_ppuctrl <= i_data;
-            r_t[11:10] <= i_data[1:0];
-        end
-        RS_PPUMASK: begin
-            r_ppumask <= i_data;
-        end
-        RS_PPUDATA: begin
-            if ((r_ppuaddr >= 16'h3F00) && (r_ppuaddr <= 16'h3FFF)) 
-            begin
-                if (r_ppuaddr[1:0] == 0)
+        if ((i_cs_n == 0) && (i_rw == RW_WRITE))
+        begin
+            case (i_rs)
+            RS_PPUCTRL: begin
+                r_ppuctrl <= i_data;
+                r_t[11:10] <= i_data[1:0];
+            end
+            RS_PPUMASK: begin
+                r_ppumask <= i_data;
+            end
+            RS_PPUDATA: begin
+                if ((r_ppuaddr >= 16'h3F00) && (r_ppuaddr <= 16'h3FFF)) 
                 begin
-                    // sprite background colour entry is mirrored to background
-                    r_palette[r_ppuaddr[4:0] & ~5'h10] <= i_data;               // background
-                    r_palette[r_ppuaddr[4:0] | 5'h10] <= i_data;                // sprite
+                    if (r_ppuaddr[1:0] == 0)
+                    begin
+                        // sprite background colour entry is mirrored to background
+                        r_palette[r_ppuaddr[4:0] & ~5'h10] <= i_data;               // background
+                        r_palette[r_ppuaddr[4:0] | 5'h10] <= i_data;                // sprite
+                    end
+                    else
+                    begin
+                        r_palette[r_ppuaddr[4:0]] <= i_data;
+                    end
+                end
+            end
+            RS_OAMADDR: begin
+                r_oamaddr <= i_data;
+            end
+            RS_OAMDATA: begin
+                r_oamaddr <= r_oamaddr + 1;
+                r_oam[r_oamaddr] <= i_data;
+            end
+            RS_PPUSCROLL: begin
+                if (r_w == 0)
+                begin
+                    // load coarse x into t
+                    r_t[4:0] <= i_data[7:3];
+                    // load fine x into x
+                    r_x <= i_data[2:0];
+                end
+                else
+                begin                    
+                    // load y into t
+                    r_t[9:5] <= i_data[7:3];
+                    r_t[14:12] <= i_data[2:0];
+                end
+            end
+            RS_PPUADDR: begin
+                if (r_w == 0)
+                begin
+                    r_t[13:8] <= i_data[5:0];
+                    r_t[14] <= 0;
                 end
                 else
                 begin
-                    r_palette[r_ppuaddr[4:0]] <= i_data;
+                    r_t[7:0] <= i_data[7:0];
+
+                    // 'v' is made identical to final value of t
+                    r_v[7:0] <= i_data[7:0];
+                    r_v[14:8] <= r_t[14:8];
+                end     
+            end
+            default: begin
+            end
+            endcase
+        end
+        else if (w_is_rendering_enabled)
+        begin
+            if ((r_video_x > 0) && (r_video_x < 256))
+            begin
+                r_rasterizer_counter <= r_rasterizer_counter + 1;
+
+                if (r_rasterizer_counter == 3'b111)
+                begin
+                    // increment horiz position in v every 8th pixel
+                    r_v <= w_v_increment_x;
                 end
             end
-        end
-        RS_OAMADDR: begin
-            r_oamaddr <= i_data;
-        end
-        RS_OAMDATA: begin
-            r_oamaddr <= r_oamaddr + 1;
-            r_oam[r_oamaddr] <= i_data;
-        end
-        RS_PPUSCROLL: begin
-            if (r_w == 0)
+            
+            if (r_video_x == 256)
             begin
-                // load coarse x into t
-                r_t[4:0] <= i_data[7:3];
-                // load fine x into x
-                r_x <= i_data[2:0];
+                // dot 256 - increment v vertical position
+                r_v <= w_v_increment_y;
             end
-            else
-            begin                    
-                // load y into t
-                r_t[9:5] <= i_data[7:3];
-                r_t[14:12] <= i_data[2:0];
-            end
-        end
-        RS_PPUADDR: begin
-            if (r_w == 0)
+            
+            if (r_video_x == 257)
             begin
-                r_t[13:8] <= i_data[5:0];
-                r_t[14] <= 0;
+                // dot 257 - copy all hoizontal position bits from t to v    
+                r_v[4:0] <= r_t[4:0];
+                r_v[10] <= r_t[10];
+
+                // reset rasterizer counter
+                r_rasterizer_counter <= 0;
             end
-            else
-            begin
-                r_t[7:0] <= i_data[7:0];
 
-                // 'v' is made identical to final value of t
-                r_v[7:0] <= i_data[7:0];
-                r_v[14:8] <= r_t[14:8];
-            end     
-        end
-        default: begin
-        end
-        endcase
-    end
-    else if (w_is_rendering_enabled)
-    begin
-        if ((r_video_x > 0) && (r_video_x < 256))
-        begin
-            r_rasterizer_counter <= r_rasterizer_counter + 1;
-
-            if (r_rasterizer_counter == 3'b111)
+            if ((r_video_y == 261) && (r_video_x >= 280) && (r_video_x <= 304))
             begin
-                // increment horiz position in v every 8th pixel
-                r_v <= w_v_increment_x;
+                // dot 280...304 - of pre-render scanline (261) - copy vertical bits from t to v    
+                r_v[9:5] <= r_t[9:5];       // coarse y
+                r_v[14:11] <= r_t[14:11];   // fine y
             end
-        end
-        
-        if (r_video_x == 256)
-        begin
-            // dot 256 - increment v vertical position
-            r_v <= w_v_increment_y;
-        end
-        
-        if (r_video_x == 257)
-        begin
-            // dot 257 - copy all hoizontal position bits from t to v    
-            r_v[4:0] <= r_t[4:0];
-            r_v[10] <= r_t[10];
 
-            // reset rasterizer counter
-            r_rasterizer_counter <= 0;
-        end
-
-        if ((r_video_y == 261) && (r_video_x >= 280) && (r_video_x <= 304))
-        begin
-            // dot 280...304 - of pre-render scanline (261) - copy vertical bits from t to v    
-            r_v[9:5] <= r_t[9:5];       // coarse y
-            r_v[14:11] <= r_t[14:11];   // fine y
-        end
-
-        if ((r_video_x >= 321) && (r_video_x <= 336))
-        begin
-            r_rasterizer_counter <= r_rasterizer_counter + 1;            
-
-            if (r_rasterizer_counter == 3'b111)
+            if ((r_video_x >= 321) && (r_video_x <= 336))
             begin
-                // increment horiz position in v every 8th pixel
-                r_v <= w_v_increment_x;
-            end
-        end        
+                r_rasterizer_counter <= r_rasterizer_counter + 1;            
+
+                if (r_rasterizer_counter == 3'b111)
+                begin
+                    // increment horiz position in v every 8th pixel
+                    r_v <= w_v_increment_x;
+                end
+            end        
+        end
     end
 end
 
@@ -385,7 +388,7 @@ begin
     begin
         r_nmi_occurred <= 0;
     end
-    else
+    else if (i_ce)
     begin
         if ((i_cs_n == 0) && (i_rw == RW_READ) && (i_rs == RS_PPUSTATUS))
         begin
@@ -420,7 +423,7 @@ begin
         r_video_x <= -1;
         r_video_y <= 0;        
     end
-    else
+    else if (i_ce)
     begin
         if (r_video_x != (SCREEN_WIDTH-1))
         begin
@@ -454,22 +457,25 @@ begin
     begin
         r_ppuaddr <= 0;
     end
-    else if (i_cs_n == 0)
+    else if (i_ce)
     begin
-        if ((i_rw == RW_WRITE) && (i_rs == RS_PPUADDR))
+        if (i_cs_n == 0)
         begin
-            if (r_w == 0)
+            if ((i_rw == RW_WRITE) && (i_rs == RS_PPUADDR))
             begin
-                r_ppuaddr[15:8] <= i_data;
+                if (r_w == 0)
+                begin
+                    r_ppuaddr[15:8] <= i_data;
+                end
+                else
+                begin
+                    r_ppuaddr[7:0] <= i_data;
+                end
             end
-            else
+            else if (i_rs == RS_PPUDATA)
             begin
-                r_ppuaddr[7:0] <= i_data;
+                r_ppuaddr <= r_ppuaddr + ( r_ppuctrl[2] ? 32 : 1 );
             end
-        end
-        else if (i_rs == RS_PPUDATA)
-        begin
-            r_ppuaddr <= r_ppuaddr + ( r_ppuctrl[2] ? 32 : 1 );
         end
     end
 end
@@ -484,24 +490,27 @@ begin
     begin
         r_w <= 0;
     end
-    else if (i_cs_n == 0)
+    else if (i_ce)
     begin
-        if ((i_rw == RW_READ) && (i_rs == RS_PPUSTATUS))
+        if (i_cs_n == 0)
         begin
-            r_w <= 0;
-        end
-        else if (i_rw == RW_WRITE)
-        begin
-            case (i_rs)
-            RS_PPUSCROLL, RS_PPUADDR:
+            if ((i_rw == RW_READ) && (i_rs == RS_PPUSTATUS))
             begin
-                r_w <= !r_w;
+                r_w <= 0;
             end
-            default:
+            else if (i_rw == RW_WRITE)
             begin
+                case (i_rs)
+                RS_PPUSCROLL, RS_PPUADDR:
+                begin
+                    r_w <= !r_w;
+                end
+                default:
+                begin
+                end
+                endcase
+                
             end
-            endcase
-            
         end
     end
 end
@@ -522,106 +531,109 @@ begin
         r_video_buffer <= 0;
         r_video_io_is_active <= 0;
     end
-    else if ((i_cs_n == 0) && (i_rs == RS_PPUDATA))
+    else if (i_ce)
     begin
-        if (i_rw == RW_WRITE)
+        if ((i_cs_n == 0) && (i_rs == RS_PPUDATA))
         begin
-            if (r_ppuaddr < 16'h3f00)
+            if (i_rw == RW_WRITE)
             begin
-                // WRITE ppudata to video bus
-                r_video_we_n <= 0;
+                if (r_ppuaddr < 16'h3f00)
+                begin
+                    // WRITE ppudata to video bus
+                    r_video_we_n <= 0;
+                    r_video_buffer <= i_data;
+
+                    r_video_io_is_active <= 1;
+                end
+            end
+            else
+            begin
+                // READ ppudata from video bus into r_video_buffer
+                r_video_rd_n <= 0;
                 r_video_buffer <= i_data;
 
                 r_video_io_is_active <= 1;
             end
+
+            r_video_address <= r_ppuaddr[13:0];
         end
-        else
+        else if (r_video_io_is_active == 1)
         begin
-            // READ ppudata from video bus into r_video_buffer
-            r_video_rd_n <= 0;
-            r_video_buffer <= i_data;
-
-            r_video_io_is_active <= 1;
-        end
-
-        r_video_address <= r_ppuaddr[13:0];
-    end
-    else if (r_video_io_is_active == 1)
-    begin
-        if (!r_video_we_n)
-        begin
-            r_video_we_n <= 1;
-        end
-        else if (!r_video_rd_n)
-        begin
-            r_video_rd_n <= 1;
-            r_video_buffer <= i_vram_data;
-        end
-
-        r_video_io_is_active <= 0;
-    end
-    else if (w_is_rendering_background_enabled && (
-                ((r_video_y == 261) && (r_video_x >=321)) ||            // pre-render scanline
-                ((r_video_y < 240) && (r_video_x >= 1) && ((r_video_x <= 256 ) || (r_video_x >= 321) ))
-            ))
-    begin        
-        // background render read
-        case (r_rasterizer_counter)
-        0: begin
-            //  0,1 => nametable
-            r_video_address <= w_address_background_tile;
-            r_video_rd_n <= 0;
-
-            r_video_background_attribute <= r_video_background_attribute_next;
-        end
-        1: begin
-            r_video_background_tile <= i_vram_data;         
-            r_video_rd_n <= 1;
-        end 
-        2: begin
-            //  2,3 => attribute table    
-            r_video_address <= w_address_background_attribute;
-            r_video_rd_n <= 0;   
-        end
-        3: begin
-            // load the background attribute table with the correct 2bits for the current tile position
-            if (w_attribute_table_offset_x) 
+            if (!r_video_we_n)
             begin
-                if (w_attribute_table_offset_y)
-                    r_video_background_attribute_next <= i_vram_data[7:6];
-                else
-                    r_video_background_attribute_next <= i_vram_data[3:2];
+                r_video_we_n <= 1;
             end
-            else
+            else if (!r_video_rd_n)
             begin
-                if (w_attribute_table_offset_y)
-                    r_video_background_attribute_next <= i_vram_data[5:4];
-                else
-                    r_video_background_attribute_next <= i_vram_data[1:0];
+                r_video_rd_n <= 1;
+                r_video_buffer <= i_vram_data;
             end
 
+            r_video_io_is_active <= 0;
+        end
+        else if (w_is_rendering_background_enabled && (
+                    ((r_video_y == 261) && (r_video_x >=321)) ||            // pre-render scanline
+                    ((r_video_y < 240) && (r_video_x >= 1) && ((r_video_x <= 256 ) || (r_video_x >= 321) ))
+                ))
+        begin        
+            // background render read
+            case (r_rasterizer_counter)
+            0: begin
+                //  0,1 => nametable
+                r_video_address <= w_address_background_tile;
+                r_video_rd_n <= 0;
 
-            r_video_rd_n <= 1;
+                r_video_background_attribute <= r_video_background_attribute_next;
+            end
+            1: begin
+                r_video_background_tile <= i_vram_data;         
+                r_video_rd_n <= 1;
+            end 
+            2: begin
+                //  2,3 => attribute table    
+                r_video_address <= w_address_background_attribute;
+                r_video_rd_n <= 0;   
+            end
+            3: begin
+                // load the background attribute table with the correct 2bits for the current tile position
+                if (w_attribute_table_offset_x) 
+                begin
+                    if (w_attribute_table_offset_y)
+                        r_video_background_attribute_next <= i_vram_data[7:6];
+                    else
+                        r_video_background_attribute_next <= i_vram_data[3:2];
+                end
+                else
+                begin
+                    if (w_attribute_table_offset_y)
+                        r_video_background_attribute_next <= i_vram_data[5:4];
+                    else
+                        r_video_background_attribute_next <= i_vram_data[1:0];
+                end
+
+
+                r_video_rd_n <= 1;
+            end
+            4: begin
+                //  4,5 => pattern low 
+                r_video_address <= w_address_background_patterntable_low;
+                r_video_rd_n <= 0;   
+            end
+            5: begin
+                r_video_background_pattern_low <= i_vram_data;
+                r_video_rd_n <= 1;
+            end
+            6: begin
+                //  6,7 => pattern high 
+                r_video_address <= w_address_background_patterntable_high;
+                r_video_rd_n <= 0; 
+            end
+            7: begin
+                r_video_background_pattern_high <= i_vram_data;
+                r_video_rd_n <= 1;            
+            end
+            endcase
         end
-        4: begin
-            //  4,5 => pattern low 
-            r_video_address <= w_address_background_patterntable_low;
-            r_video_rd_n <= 0;   
-        end
-        5: begin
-            r_video_background_pattern_low <= i_vram_data;
-            r_video_rd_n <= 1;
-        end
-        6: begin
-            //  6,7 => pattern high 
-            r_video_address <= w_address_background_patterntable_high;
-            r_video_rd_n <= 0; 
-        end
-        7: begin
-            r_video_background_pattern_high <= i_vram_data;
-            r_video_rd_n <= 1;            
-        end
-        endcase
     end
 end
 
@@ -656,6 +668,7 @@ assign w_load_background_shift_registers = (r_rasterizer_counter == 0) && w_is_r
 Shift16 backgroundShiftPatternTableHigh(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
+    .i_ce(i_ce),
     .i_load(w_load_background_shift_registers),
     .i_data(r_video_background_pattern_high),
     .i_shift(w_shift_background_shift_registers),
@@ -667,6 +680,7 @@ Shift16 backgroundShiftPatternTableHigh(
 Shift16 backgroundShiftPatternTableLow(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
+    .i_ce(i_ce),
     .i_load(w_load_background_shift_registers),
     .i_data(r_video_background_pattern_low),
     .i_shift(w_shift_background_shift_registers),
@@ -680,6 +694,7 @@ wire [1:0] w_video_background_attribute_table;
 Shift8 backgroundShiftAttributeTableHigh(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
+    .i_ce(i_ce),
     .i_load(w_is_rasterizer_active),
     .i_data(r_video_background_attribute[1]),
     .i_shift(w_shift_background_shift_registers),
@@ -691,6 +706,7 @@ Shift8 backgroundShiftAttributeTableHigh(
 Shift8 backgroundShiftAttributeTableLow(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
+    .i_ce(i_ce),
     .i_load(w_is_rasterizer_active),
     .i_data(r_video_background_attribute[0]),
     .i_shift(w_shift_background_shift_registers),
