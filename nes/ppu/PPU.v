@@ -8,6 +8,9 @@ module PPU(
     // chip select
     input i_cs_n,
 
+    // clock enable
+    //input i_ce,
+
     // CPU interface
     output o_int_n,                     // ~Interrupt, to drive ~NMI on CPU
     input [2:0] i_rs,                   // register select

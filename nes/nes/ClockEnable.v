@@ -2,7 +2,10 @@ module ClockEnable
 (
     input i_clk,                    // input clock - PPU
     input i_reset_n,
-    output o_ce_cpu                 // output clock enable for CPU
+    input i_ce,                     // input clock enable
+
+    output o_ce_cpu,                // output clock enable for CPU
+    output o_ce_ppu                 // output clock enable for PPU
 );
 
 reg [1:0] r_counter;
@@ -15,13 +18,15 @@ begin
     end
     else
     begin
-        if (r_counter == 2)
-            r_counter <= 0;
-        else
-            r_counter <= r_counter + 1;
+        if (i_ce)
+            if (r_counter == 2)
+                r_counter <= 0;
+            else
+                r_counter <= r_counter + 1;
     end
 end
 
-assign o_ce_cpu = (r_counter == 2);
+assign o_ce_cpu = i_ce && (r_counter == 2);
+assign o_ce_ppu = i_ce;
 
 endmodule

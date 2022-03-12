@@ -14,6 +14,8 @@ namespace {
             testBench.setClockPolarity(1);
             testBench.reset();
             testBench.trace.clear();
+
+            testBench.core().i_ce = 1;
         }
         
         void TearDown() override {
@@ -39,7 +41,50 @@ TEST_F(ClockEnable, ShouldDivideClock) {
 
     Trace expected = TraceBuilder()
         .port(i_clk).signal("_-").repeat(6)
-        .port(o_ce_cpu).signal("____--").repeat(2);
+        .port(o_ce_cpu).signal("____--").repeat(2)
+        .port(o_ce_ppu).signal("------").repeat(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(ClockEnable, ShouldHandleClockDisable) {
+    testBench.core().i_ce = 0;
+
+    testBench.tick(6);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-").repeat(6)
+        .port(o_ce_cpu).signal("______").repeat(2)
+        .port(o_ce_ppu).signal("______").repeat(2);
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
+
+TEST_F(ClockEnable, ShouldHandleClockDisableAndEnable) {
+    auto& core = testBench.core();
+
+    core.i_ce = 0;
+    testBench.tick(3);
+
+    core.i_ce = 1;
+    testBench.tick(3);
+
+    core.i_ce = 0;
+    testBench.tick(3);
+
+    core.i_ce = 1;
+    testBench.tick(3);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-").repeat(12)
+        .port(o_ce_cpu)
+            .signal("______")
+            .signal("____--")
+            .concat().repeat(2)
+        .port(o_ce_ppu)
+            .signal("______")
+            .signal("------")
+            .concat().repeat(2);
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }

@@ -28,6 +28,14 @@ Aim: to play the original NES [Super Mario Bros](https://en.wikipedia.org/wiki/S
 ## Run Unit Tests
 > ./bazel-bin/nes/test-ppu
 
+# NES CPU + PPU
+
+## Build Unit Tests
+> bazel build //nes:test-nes --incompatible_require_linker_input_cc_api=false
+
+## Run Unit Tests
+> ./bazel-bin/nes/test-nes
+
 # VGA Output Emulator
 
 Currently supported on MacOSX.
