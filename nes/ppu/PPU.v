@@ -61,8 +61,6 @@ module PPU(
 // Screen Constants
 localparam [8:0] SCREEN_WIDTH = 341;
 localparam [8:0] SCREEN_HEIGHT = 262;
-localparam [8:0] SCREEN_VISIBLE_WIDTH = 256;
-localparam [8:0] SCREEN_VISIBLE_HEIGHT = 240;
 
 // RS - register select options
 localparam [2:0] RS_PPUCTRL = 0;

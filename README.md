@@ -22,9 +22,10 @@ Aim: to play the original NES [Super Mario Bros](https://en.wikipedia.org/wiki/S
 
 
 # Dependencies
-- Bazel
-   - https://docs.bazel.build/versions/main/install-os-x.html
-   - Note: Version 4.1.0 required for compatability with bazel integration with verilator https://github.com/kkiningh/rules_verilator
+- Bazel v5.0.0
+```bash
+  brew install bazel
+```
 - MacOS
 
 # 6502 cpu
