@@ -9,16 +9,24 @@ Aim: to play the original NES [Super Mario Bros](https://en.wikipedia.org/wiki/S
 
 ## Current Status
 
-- 6502 CPU working and passing tests (for official opcodes)
-- OAM DMA working
-- PPU working - background layer only
+- Implemented
+   - 6502 CPU working and passing tests (for official opcodes)
+   - OAM DMA working
+   - PPU background layer
 - Emulation
+   - Verilator emulation running in C++ with [PixelGameEngine](https://github.com/OneLoneCoder/olcPixelGameEngine) renderer from [OneLoneCoder](https://www.onelonecoder.com)
    - Super Mario Bros - now able to reach splash screen
 - FPGA
    - NES Running on ARTY A7 hardware
    - Arduino based interface for uploading ROMs and debugging the NES design
+   - Super Mario Bros - now able to reach splash screen
 
 ![Super Mario Bros - Splash Screen background layer rendering in Emulation on MacOS](./docs/emulator-nes-background.png)
+
+| | | |
+|-|-|-|
+| ![Super Mario Bros - Splash Screen background layer running on ARTY A7 hardware](./docs/fpga_splash_mario.jpeg) | ![Donkey Kong - splash Screen background layer running on ARTY A7 hardware](./docs/fpga_splash_donkeykong.jpeg)  | ![FPGA and Arduino setup](./docs/fpga_arduino_setup.jpeg)|
+
 
 
 # Dependencies
