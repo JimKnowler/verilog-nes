@@ -5,7 +5,7 @@ module VideoOutput
 
     parameter PIXEL_RGB_BITWIDTH = RGB_BITWIDTH * 3,
 
-    parameter [8:0] NES_VISIBLE_WIDTH = 256,    // NES video horizontal resolution
+    parameter [8:0] NES_VISIBLE_WIDTH = 255,    // NES video horizontal resolution
     parameter [PIXEL_BITWIDTH-1:0] VGA_VISIBLE_WIDTH = NES_VISIBLE_WIDTH * 2           // render each NES pixel twice
 )
 (

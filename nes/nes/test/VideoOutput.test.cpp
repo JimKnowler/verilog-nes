@@ -10,7 +10,7 @@ using namespace gtestverilog;
 using namespace videooutputtestbench;
 
 namespace {
-    const int NES_VISIBLE_WIDTH = 256;
+    const int NES_VISIBLE_WIDTH = 255;
     const int VGA_VISIBLE_WIDTH = NES_VISIBLE_WIDTH * 2;
     
     class VideoOutput : public ::testing::Test {
