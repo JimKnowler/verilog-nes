@@ -36,6 +36,13 @@ Aim: to play the original NES [Super Mario Bros](https://en.wikipedia.org/wiki/S
 ```
 - MacOS
 
+# C++ Debugging Bazel builds on MacOS
+
+- Add '--spawn_strategy=local' to make sure symbols are correctly included in your build
+   - When debugging in VSCode with a C++ config, you can see symbol values
+   - Breakpoints can be set in source files via VSCode
+   - When lldb stops execution at a breakpoint, VSCode is not currently able to load the correct source file - further investigation required
+
 # 6502 cpu
 
 ## Build Unit Tests
