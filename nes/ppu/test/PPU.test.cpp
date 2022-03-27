@@ -158,7 +158,8 @@ TEST_F(PPU, ShouldImplementPixelClock) {
 
     Trace expected = TraceBuilder()
         .port(o_video_visible)
-            .signal("1").repeat(SCREEN_VISIBLE_WIDTH)
+            .signal("0")                                    // first pixel in each row is not visible
+            .signal("1").repeat(SCREEN_VISIBLE_WIDTH-1)
             .signal("0").repeat(SCREEN_WIDTH - SCREEN_VISIBLE_WIDTH)
                 .concat()
                 .repeat(SCREEN_VISIBLE_HEIGHT)
