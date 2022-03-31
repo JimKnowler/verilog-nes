@@ -92,7 +92,8 @@ module NES(
     output [31:0] o_ppu_debug_palette_5,
     output [31:0] o_ppu_debug_palette_6,
     output [31:0] o_ppu_debug_palette_7,
-    output [5:0] o_ppu_debug_colour_index
+    output [5:0] o_ppu_debug_colour_index,
+    output [7:0] o_ppu_debug_i_vram_data
 );
     localparam [15:0] ADDRESS_JOY1 = 16'h4016;
     localparam RW_READ = 1;
@@ -302,6 +303,7 @@ module NES(
     assign o_cpu_debug_clk_en = w_ce_cpu;
     assign o_ppu_debug_vram_address = w_ppu_vram_address;
     assign o_cpu_debug_sync = w_sync;
+    assign o_ppu_debug_i_vram_data = w_ppu_vram_data_input;
 
     assign o_controller_latch = w_out0;
     assign o_controller_clk = !((w_cpu_rw == RW_READ) && (w_cpu_address == ADDRESS_JOY1));

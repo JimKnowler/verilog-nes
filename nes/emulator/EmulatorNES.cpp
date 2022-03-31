@@ -36,8 +36,8 @@ namespace emulator {
         bool OnUserCreate() override {
             initSimulation();
 
-            //initMario();
-            initDonkeyKong();
+            initMario();
+            //initDonkeyKong();
             //initDuckHunt();
 
             reset();
@@ -183,7 +183,7 @@ namespace emulator {
 
             // visual debug of VRAM
             const int kVramX = 700;
-            const int kVramY = 390;
+            const int kVramY = 400;
 
             switch (vramDisplay) {
                 case 0:
@@ -374,6 +374,11 @@ namespace emulator {
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
             
+            uint8_t vramData = core.o_ppu_debug_i_vram_data;
+            sprintf(buffer, " i vram data 0x%02x", vramData);
+            DrawString({x,y}, buffer, olc::BLACK);
+            y += kRowHeight;
+
             sprintf(buffer, "  scroll-x %03d", core.o_ppu_debug_ppuscroll_x);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
