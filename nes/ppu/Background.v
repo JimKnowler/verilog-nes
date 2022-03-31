@@ -203,7 +203,7 @@ Shift8 backgroundShiftAttributeTableLow(
 // note: take two cycles for each read/write
 // 
 
-always @(negedge i_reset_n or posedge i_clk)
+always @(negedge i_reset_n or negedge i_clk)
 begin
     if (!i_reset_n)
     begin
