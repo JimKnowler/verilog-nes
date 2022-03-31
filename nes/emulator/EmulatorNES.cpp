@@ -36,8 +36,8 @@ namespace emulator {
         bool OnUserCreate() override {
             initSimulation();
 
-            initMario();
-            //initDonkeyKong();
+            //initMario();
+            initDonkeyKong();
             //initDuckHunt();
 
             reset();

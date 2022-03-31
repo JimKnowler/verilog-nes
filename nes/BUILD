@@ -27,7 +27,8 @@ ppu_srcs = [
     "ppu/PPUTileAddress.v",
     "ppu/PPUPatternTableAddress.v",
     "ppu/Shift8.v",
-    "ppu/Shift16.v"
+    "ppu/Shift16.v",
+    "ppu/Background.v"
 ]
 
 nes_srcs = [
