@@ -31,7 +31,10 @@ begin
         if (i_load)
             r_data <= i_data;
         else if (i_shift)
+        begin
             r_data[7:1] <= r_data[6:0];
+            r_data[0] <= 0;
+        end
     end
 end
 

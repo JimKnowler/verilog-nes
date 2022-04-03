@@ -55,13 +55,17 @@ reg r_video_rd_n;
 reg [13:0] r_video_address;
 
 // Sprite Fetching
-reg [4:0] r_fetch_sprite_index;
+reg [2:0] r_fetch_sprite_index;
 reg [2:0] r_fetch_sprite_cycle; 
 
 reg [7:0] r_fetch_sprite_field_ycoord;
 reg [7:0] r_fetch_sprite_field_tile;
-reg [7:0] r_fetch_sprite_field_attributes;
-reg [7:0] r_fetch_sprite_field_xcoord;
+reg [7:0] r_fetch_sprite_field_attributes [7:0];
+reg [7:0] r_fetch_sprite_field_xcoord [7:0];
+
+// is rasterizer active
+reg r_is_rasterizer_active;
+assign r_is_rasterizer_active = (i_video_x > 0) && (i_video_x < 256);
 
 // 8x8 Sprite tile address lookup
 
@@ -71,7 +75,7 @@ wire [13:0] w_address_tile_hi;
 PPUSprite8x8TileAddress ppuSprite8x8TileAddressLo(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
-    .i_fine_y_offset({r_fetch_sprite_field_ycoord - i_video_y}[2:0]),
+    .i_fine_y_offset({r_fetch_sprite_field_ycoord - i_video_y}[2:0]),               // TODO: handle vertical flip
     .i_tile(r_fetch_sprite_field_tile),
     .i_bit_plane(0),
     .i_ppuctrl_s(i_ppuctrl_s),
@@ -81,7 +85,7 @@ PPUSprite8x8TileAddress ppuSprite8x8TileAddressLo(
 PPUSprite8x8TileAddress ppuSprite8x8TileAddressHi(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
-    .i_fine_y_offset({r_fetch_sprite_field_ycoord - i_video_y}[2:0]),
+    .i_fine_y_offset({r_fetch_sprite_field_ycoord - i_video_y}[2:0]),               // TODO: handle vertical flip
     .i_tile(r_fetch_sprite_field_tile),
     .i_bit_plane(1),
     .i_ppuctrl_s(i_ppuctrl_s),
@@ -95,24 +99,28 @@ PPUSprite8x8TileAddress ppuSprite8x8TileAddressHi(
 
 reg [7:0] r_bitfield_tile_shift_load_lo;        // control signal - load data into specified shift registers
 reg [7:0] r_bitfield_tile_shift_load_hi;        // control signal - load data into specified shift registers
-wire [7:0] w_bitfield_tile_shift_data_lo;        // data output from shift registers
-wire [7:0] w_bitfield_tile_shift_data_hi;        // data output from shift registers
+wire [7:0] w_bitfield_tile_shift_data_lo;       // data output from shift registers
+wire [7:0] w_bitfield_tile_shift_data_hi;       // data output from shift registers
+reg [7:0] r_bitfield_tile_shift_is_active;     // status signal - report when shift register has valid output data for current cycle
+
+genvar i;
 
 generate
-    genvar i;
-    for (i=0; i<8; i++) begin
+    for (i=0; i<8; i=i+1) begin
         /* verilator lint_off UNUSED */
         wire [7:0] w_debug_shift_data_lo;
         wire [7:0] w_debug_shift_data_hi;
         /* verilator lint_on UNUSED */
 
+        // TODO: logic for flipping i_vram_data if horizontally flipped (s reported by attribute byte)
+        
         ShiftParallelLoad8 shiftTileLo(
             .i_clk(i_clk),
             .i_reset_n(i_reset_n),
             .i_ce(i_ce),
             .i_load(r_bitfield_tile_shift_load_lo[i]),
             .i_data(i_vram_data),
-            .i_shift(0),                                    // TODO: control signal to shift data out of shift register
+            .i_shift(r_bitfield_tile_shift_is_active[i]),
             .o_shift_data(w_bitfield_tile_shift_data_lo[i]),
             
             .o_debug_data(w_debug_shift_data_lo)
@@ -124,17 +132,34 @@ generate
             .i_ce(i_ce),
             .i_load(r_bitfield_tile_shift_load_hi[i]),
             .i_data(i_vram_data),
-            .i_shift(0),                                    // TODO: control signal to shift data out of shift register
+            .i_shift(r_bitfield_tile_shift_is_active[i]),
             .o_shift_data(w_bitfield_tile_shift_data_hi[i]),
             
             .o_debug_data(w_debug_shift_data_hi)
         );
-    end
 
-    assign r_bitfield_tile_shift_load_lo[i] = ({i}[4:0] == r_fetch_sprite_index) && (r_fetch_sprite_cycle == 5);
-    assign r_bitfield_tile_shift_load_hi[i] = ({i}[4:0] == r_fetch_sprite_index) && (r_fetch_sprite_cycle == 7);
+        always @(*)
+        begin
+            r_bitfield_tile_shift_load_lo[i] = (i[2:0] == r_fetch_sprite_index) && (r_fetch_sprite_cycle == 5);
+            r_bitfield_tile_shift_load_hi[i] = (i[2:0] == r_fetch_sprite_index) && (r_fetch_sprite_cycle == 7);
+            r_bitfield_tile_shift_is_active[i] = (r_fetch_sprite_field_xcoord[i] == 0);
+        end
+    end
 endgenerate
 
+reg r_rasterizer_is_sprite_active;
+reg [2:0] r_rasterizer_sprite_index;
+
+SpriteRasterizerPriority spriteRasterizerPriority(
+    .i_clk(i_clk),
+    .i_reset_n(i_reset_n),
+
+    .i_bitfield_tile_data_valid(r_bitfield_tile_shift_is_active),
+    .i_bitfield_tile_data_lo(w_bitfield_tile_shift_data_lo),
+    .i_bitfield_tile_data_hi(w_bitfield_tile_shift_data_hi),
+    .o_is_sprite_active(r_rasterizer_is_sprite_active),
+    .o_sprite_index(r_rasterizer_sprite_index)
+);
 
 always @(negedge i_reset_n or negedge i_clk)
 begin
@@ -148,7 +173,7 @@ begin
         r_video_rd_n <= 1;
         r_video_address <= 0;
     end
-    else if (i_ce)
+    else if (i_ce & i_is_rendering_enabled)
     begin
         ////////////////////////////////////////////
         // cycles 1-64: clear secondary OAM to 0xFF
@@ -235,10 +260,10 @@ begin
             */
 
             case (r_fetch_sprite_cycle)
-            0: r_fetch_sprite_field_ycoord <= r_secondary_oam[(r_fetch_sprite_index << 2)];
+            0: r_fetch_sprite_field_ycoord <= r_secondary_oam[(r_fetch_sprite_index << 2) + 0];
             1: r_fetch_sprite_field_tile <= r_secondary_oam[(r_fetch_sprite_index << 2) + 1];
-            2: r_fetch_sprite_field_attributes <= r_secondary_oam[(r_fetch_sprite_index << 2) + 2];
-            3: r_fetch_sprite_field_xcoord <= r_secondary_oam[(r_fetch_sprite_index << 2) + 3];
+            2: r_fetch_sprite_field_attributes[r_fetch_sprite_index] <= r_secondary_oam[(r_fetch_sprite_index << 2) + 2];
+            3: r_fetch_sprite_field_xcoord[r_fetch_sprite_index] <= r_secondary_oam[(r_fetch_sprite_index << 2) + 3];
             4: begin
                 // setup tile read layer 0
                 r_video_rd_n <= 0;
@@ -272,20 +297,58 @@ begin
                 r_fetch_sprite_index <= r_fetch_sprite_index + 1;
         end
 
+        ////////////////////////////////////////////
+        // rendering
+
+        //  - while rasterization is active
+        //  - select first sprite in secondary oam that is active at current x
+        //    - output its' palette index
+        //    - output its' priority bit
+
+        if (r_is_rasterizer_active)
+        begin
+
+            // decrement xcoord fields for each sprite
+            // (we only consider sprites with xcoord == 0 for output)
+            if (r_fetch_sprite_field_xcoord[0] != 0)
+                r_fetch_sprite_field_xcoord[0] <= r_fetch_sprite_field_xcoord[0] - 1;
+            if (r_fetch_sprite_field_xcoord[1] != 0)
+                r_fetch_sprite_field_xcoord[1] <= r_fetch_sprite_field_xcoord[1] - 1;
+            if (r_fetch_sprite_field_xcoord[2] != 0)
+                r_fetch_sprite_field_xcoord[2] <= r_fetch_sprite_field_xcoord[2] - 1;
+            if (r_fetch_sprite_field_xcoord[3] != 0)
+                r_fetch_sprite_field_xcoord[3] <= r_fetch_sprite_field_xcoord[3] - 1;
+            if (r_fetch_sprite_field_xcoord[4] != 0)
+                r_fetch_sprite_field_xcoord[4] <= r_fetch_sprite_field_xcoord[4] - 1;
+            if (r_fetch_sprite_field_xcoord[5] != 0)
+                r_fetch_sprite_field_xcoord[5] <= r_fetch_sprite_field_xcoord[5] - 1;
+            if (r_fetch_sprite_field_xcoord[6] != 0)
+                r_fetch_sprite_field_xcoord[6] <= r_fetch_sprite_field_xcoord[6] - 1;
+            if (r_fetch_sprite_field_xcoord[7] != 0)
+                r_fetch_sprite_field_xcoord[7] <= r_fetch_sprite_field_xcoord[7] - 1;
+        end
     end
 end
 
 // combinatorial logic for output palette index
+
 reg [3:0] r_palette_index;
 
 always @(*)
 begin
     r_palette_index = 0;
 
-    // TODO: derive palette index from sprite rasterization
-    // if i_video_visible && i_is_rendering_sprites_enabled ..
-    //  r_palette_index= ??
+    if (r_is_rasterizer_active & r_rasterizer_is_sprite_active & i_is_rendering_enabled & i_is_rendering_sprites_enabled)
+    begin
+        r_palette_index = {
+            r_fetch_sprite_field_attributes[r_rasterizer_sprite_index][1:0], 
+            w_bitfield_tile_shift_data_hi[r_rasterizer_sprite_index],
+            w_bitfield_tile_shift_data_lo[r_rasterizer_sprite_index]
+        };
+    end
 end
+
+// TODO: add output of sprite foreground/background priority
 
 
 assign o_palette_index = r_palette_index;

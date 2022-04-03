@@ -672,6 +672,7 @@ namespace emulator {
                             LOG_BUS("read patterntable 0x%04X\n = 0x%02X", core.o_address_patterntable, core.i_data_patterntable);
                         } else {
                             LOG_BUS("???? write patterntable 0x%04X ???? - not supported!\n", core.o_address_patterntable);
+                            printf("write to patterntable not supported!\n");
                             exit(2);
                         }
                     }

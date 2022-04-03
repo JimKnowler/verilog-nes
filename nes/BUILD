@@ -31,6 +31,7 @@ ppu_srcs = [
     "ppu/Shift8.v",
     "ppu/Shift16.v",
     "ppu/ShiftParallelLoad8.v",
+    "ppu/SpriteRasterizerPriority.v",
     "ppu/Sprites.v"
 ]
 

@@ -440,7 +440,8 @@ Background background(
     .i_is_rendering_enabled(w_is_rendering_enabled),
     .i_is_rendering_background_enabled(w_is_rendering_background_enabled),
     .i_video_visible(w_video_visible),
-    .i_video_x(r_video_x),
+    .i_video_x( (r_video_x+1) % SCREEN_WIDTH),              // Offset Background by 1 pixel
+                                                            // to fix left edge, and to align with sprites
     .i_video_y(r_video_y),
     .i_ppuctrl_b(r_ppuctrl[4]),
     .i_w(r_w),
@@ -517,7 +518,7 @@ PaletteLookupRGB palette(
 assign o_int_n = r_int_n;
 assign o_data = r_data;
 
-assign o_vram_rd_n = r_video_rd_n & w_background_video_rd_n;
+assign o_vram_rd_n = r_video_rd_n & w_background_video_rd_n & w_sprites_video_rd_n;
 assign o_vram_we_n = r_video_we_n;
 assign o_video_x = r_video_x;
 assign o_video_y = r_video_y;
