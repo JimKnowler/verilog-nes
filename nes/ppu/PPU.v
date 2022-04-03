@@ -496,9 +496,7 @@ always @(*)
 begin
     // TODO: implement sprite render priority (this assumes that non-0 sprite pixels are always visible)
 
-    r_colour_index = r_palette[{1'b0, 
-                                (w_sprites_palette_index != 0) ? w_sprites_palette_index : w_background_palette_index
-                                }][5:0];
+    r_colour_index = r_palette[(w_sprites_palette_index != 0) ? {1'b1, w_sprites_palette_index} : {1'b0, w_background_palette_index}][5:0];
 end
 
 // conversion from colour index to RGB video output
