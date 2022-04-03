@@ -95,6 +95,8 @@ wire w_video_visible;
 reg [7:0] r_palette [31:0];
 
 // OAM sprite data
+// - 64 sprites
+// - 8 bytes per sprite
 reg [7:0] r_oamaddr;
 reg [7:0] r_oam [255:0];
 
@@ -459,11 +461,43 @@ Background background(
     .o_debug_x(w_debug_x)
 );
 
+
+// foreground rendering
+
+wire [3:0] w_sprites_palette_index;
+wire [13:0] w_sprites_video_address;
+wire w_sprites_video_rd_n;
+
+Sprites sprites(
+    .i_clk(i_clk),
+    .i_reset_n(i_reset_n),
+    .i_ce(i_ce),
+
+    .i_is_rendering_enabled(w_is_rendering_enabled),
+    .i_is_rendering_sprites_enabled(w_is_rendering_sprites_enabled),
+    .i_oam(r_oam),
+    .i_video_x(r_video_x),
+    .i_video_y(r_video_y),
+    .i_ppuctrl_s(r_ppuctrl[3]),
+
+    .i_vram_data(i_vram_data),
+    .o_video_address(w_sprites_video_address),
+    .o_video_rd_n(w_sprites_video_rd_n),
+    .o_palette_index(w_sprites_palette_index)
+
+);
+
+// convert background and sprite layers into an output colour
+
 reg [5:0] r_colour_index;
 
 always @(*)
 begin
-    r_colour_index = r_palette[{1'b0, w_background_palette_index}][5:0];
+    // TODO: implement sprite render priority (this assumes that non-0 sprite pixels are always visible)
+
+    r_colour_index = r_palette[{1'b0, 
+                                (w_sprites_palette_index != 0) ? w_sprites_palette_index : w_background_palette_index
+                                }][5:0];
 end
 
 // conversion from colour index to RGB video output
@@ -489,7 +523,9 @@ assign o_video_x = r_video_x;
 assign o_video_y = r_video_y;
 assign o_video_visible = w_video_visible;
 
-assign o_vram_address = (w_background_video_rd_n == 0) ? w_background_video_address : r_video_address;
+assign o_vram_address = (w_background_video_rd_n == 0) ? w_background_video_address : 
+                        (w_sprites_video_rd_n == 0) ? w_sprites_video_address :
+                        r_video_address;
 assign o_vram_data = (o_vram_we_n == 0) ? r_video_buffer : 0;
 
 assign o_debug_ppuctrl = r_ppuctrl;

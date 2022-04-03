@@ -1,3 +1,6 @@
+// parallel load
+// serial shift out
+
 module Shift16(
     input i_clk,
     input i_reset_n,

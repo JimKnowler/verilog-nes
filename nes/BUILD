@@ -19,16 +19,19 @@ cpu6502_srcs = [
 ]
 
 ppu_srcs = [
-    "ppu/PPU.v",
+    "ppu/Background.v",
     "ppu/PaletteLookupRGB.v",
+    "ppu/PPU.v",
     "ppu/PPUAttributeAddress.v",
     "ppu/PPUIncrementX.v",
     "ppu/PPUIncrementY.v",
     "ppu/PPUTileAddress.v",
     "ppu/PPUPatternTableAddress.v",
+    "ppu/PPUSprite8x8TileAddress.v",
     "ppu/Shift8.v",
     "ppu/Shift16.v",
-    "ppu/Background.v"
+    "ppu/ShiftParallelLoad8.v",
+    "ppu/Sprites.v"
 ]
 
 nes_srcs = [
