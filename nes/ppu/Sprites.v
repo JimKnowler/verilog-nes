@@ -75,7 +75,7 @@ wire [13:0] w_address_tile_hi;
 PPUSprite8x8TileAddress ppuSprite8x8TileAddressLo(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
-    .i_fine_y_offset({r_fetch_sprite_field_ycoord - i_video_y}[2:0]),               // TODO: handle vertical flip
+    .i_fine_y_offset({r_fetch_sprite_field_ycoord - i_video_y - 8'd2}[2:0]),               // TODO: handle vertical flip
     .i_tile(r_fetch_sprite_field_tile),
     .i_bit_plane(0),
     .i_ppuctrl_s(i_ppuctrl_s),
@@ -85,7 +85,7 @@ PPUSprite8x8TileAddress ppuSprite8x8TileAddressLo(
 PPUSprite8x8TileAddress ppuSprite8x8TileAddressHi(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
-    .i_fine_y_offset({r_fetch_sprite_field_ycoord - i_video_y}[2:0]),               // TODO: handle vertical flip
+    .i_fine_y_offset({r_fetch_sprite_field_ycoord - i_video_y - 8'd2}[2:0]),               // TODO: handle vertical flip
     .i_tile(r_fetch_sprite_field_tile),
     .i_bit_plane(1),
     .i_ppuctrl_s(i_ppuctrl_s),
@@ -219,7 +219,7 @@ begin
                 if (r_oam_field == OAM_FIELD_Y_COORD)
                 begin
                     // is y co-ord out of range?
-                    if (({1'b0, r_oam_buffer} < i_video_y) || ({1'b0, r_oam_buffer} >= (i_video_y+8)))
+                    if (((i_video_y+1) <= {1'b0, r_oam_buffer}) || ( (i_video_y+1) > ({1'b0, r_oam_buffer} + 8)))
                     begin
                         // skip to next entry in primary OAM
                         r_primary_oam_index <= r_primary_oam_index + 1;
