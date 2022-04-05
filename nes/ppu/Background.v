@@ -39,7 +39,6 @@ module Background(
 localparam [2:0] RS_PPUCTRL = 0;
 localparam [2:0] RS_PPUSCROLL = 5;
 localparam [2:0] RS_PPUADDR = 6;
-localparam [2:0] RS_PPUDATA = 7;
 
 // RW - read / write options
 localparam RW_WRITE = 0;
@@ -218,11 +217,7 @@ begin
     end
     else if (i_ce)
     begin
-        if ((i_cs_n == 0) && (i_rs == RS_PPUDATA))
-        begin
-            r_video_rd_n <= 1;
-        end
-        else if (i_is_rendering_background_enabled && (
+        if (i_is_rendering_background_enabled && (
                     ((i_video_y == 261) && (i_video_x >=321)) ||            // pre-render scanline
                     ((i_video_y < 240) && (i_video_x >= 1) && ((i_video_x <= 256 ) || (i_video_x >= 321) ))
                 ))
@@ -347,7 +342,8 @@ begin
             end
             endcase
         end
-        else if (i_is_rendering_enabled)
+        
+        if (i_is_rendering_enabled)
         begin
             if ((i_video_x > 0) && (i_video_x < 256))
             begin

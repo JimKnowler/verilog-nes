@@ -91,6 +91,8 @@ reg [8:0] r_video_x;
 reg [8:0] r_video_y;
 wire w_video_visible;
 
+wire w_sprite_zero_hit;
+
 // Palette entries for sprites + background
 reg [7:0] r_palette [31:0];
 
@@ -221,6 +223,12 @@ begin
             end
             endcase
         end
+
+        // sprite zero hit
+        if ((r_video_x == 1) && (r_video_y == (SCREEN_HEIGHT-1))) 
+            r_ppustatus[6] <= 0;
+        else if (w_is_rendering_enabled && w_is_rendering_background_enabled && w_is_rendering_sprites_enabled)
+            r_ppustatus[6] <= r_ppustatus[6] | w_sprite_zero_hit;
     end
 end
 
@@ -468,6 +476,8 @@ Background background(
 wire [3:0] w_sprites_palette_index;
 wire [13:0] w_sprites_video_address;
 wire w_sprites_video_rd_n;
+wire w_sprite_priority;
+wire w_sprite_zero;
 
 Sprites sprites(
     .i_clk(i_clk),
@@ -484,19 +494,26 @@ Sprites sprites(
     .i_vram_data(i_vram_data),
     .o_video_address(w_sprites_video_address),
     .o_video_rd_n(w_sprites_video_rd_n),
-    .o_palette_index(w_sprites_palette_index)
-
+    .o_palette_index(w_sprites_palette_index),
+    .o_priority(w_sprite_priority),
+    .o_sprite_zero(w_sprite_zero)
 );
+
+// detect sprite zero hit
+assign w_sprite_zero_hit = w_sprite_zero && (w_sprites_palette_index != 0) && (w_background_palette_index != 0);
 
 // convert background and sprite layers into an output colour
 
+reg [4:0] r_palette_index;
 reg [5:0] r_colour_index;
 
 always @(*)
 begin
-    // TODO: implement sprite render priority (this assumes that non-0 sprite pixels are always visible)
+    r_palette_index = ( ((w_sprites_palette_index != 0) && w_sprite_priority) || (w_background_palette_index == 0))
+                        ? {1'b1, w_sprites_palette_index}
+                        : {1'b0, w_background_palette_index};
 
-    r_colour_index = r_palette[(w_sprites_palette_index != 0) ? {1'b1, w_sprites_palette_index} : {1'b0, w_background_palette_index}][5:0];
+    r_colour_index = r_palette[r_palette_index][5:0];
 end
 
 // conversion from colour index to RGB video output

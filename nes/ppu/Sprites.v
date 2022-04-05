@@ -18,8 +18,9 @@ module Sprites(
     input [7:0] i_vram_data,
     output [13:0] o_video_address,
     output o_video_rd_n,
-
-    output [3:0] o_palette_index
+    output [3:0] o_palette_index,
+    output o_priority,
+    output o_sprite_zero
 );
 
 // Secondary OAM
@@ -62,6 +63,9 @@ reg [7:0] r_fetch_sprite_field_ycoord;
 reg [7:0] r_fetch_sprite_field_tile;
 reg [7:0] r_fetch_sprite_field_attributes [7:0];
 reg [7:0] r_fetch_sprite_field_xcoord [7:0];
+
+reg r_sprite_zero;
+reg r_sprite_zero_next_scanline;
 
 // is rasterizer active
 reg r_is_rasterizer_active;
@@ -170,6 +174,9 @@ begin
         r_primary_oam_index <= 0;
         r_secondary_oam_index <= 0;
 
+        r_sprite_zero <= 0;
+        r_sprite_zero_next_scanline <= 0;
+
         r_video_rd_n <= 1;
         r_video_address <= 0;
     end
@@ -182,6 +189,9 @@ begin
         begin
             // reset index used by secondary oam clear
             r_clear_secondary_oam_index <= 0;
+
+            // update r_sprite_zero for this scanline
+            r_sprite_zero <= r_sprite_zero_next_scanline;
         end
         else if (i_video_x < 65)
         begin
@@ -216,6 +226,9 @@ begin
 
                 r_oam_field <= r_oam_field + 1;
 
+                if (r_primary_oam_index == 0)
+                    r_sprite_zero_next_scanline <= 1;
+
                 if (r_oam_field == OAM_FIELD_Y_COORD)
                 begin
                     // is y co-ord out of range?
@@ -225,6 +238,9 @@ begin
                         r_primary_oam_index <= r_primary_oam_index + 1;
                         // start from Y COORD (first byte in OAM)
                         r_oam_field <= OAM_FIELD_Y_COORD;
+                        // sprite zero is not used
+                        if (r_primary_oam_index == 0)
+                            r_sprite_zero_next_scanline <= 0;
                     end
                 end
                 
@@ -333,10 +349,12 @@ end
 // combinatorial logic for output palette index
 
 reg [3:0] r_palette_index;
+reg r_priority;
 
 always @(*)
 begin
     r_palette_index = 0;
+    r_priority = 0;
 
     if (r_is_rasterizer_active & r_rasterizer_is_sprite_active & i_is_rendering_enabled & i_is_rendering_sprites_enabled)
     begin
@@ -345,15 +363,16 @@ begin
             w_bitfield_tile_shift_data_hi[r_rasterizer_sprite_index],
             w_bitfield_tile_shift_data_lo[r_rasterizer_sprite_index]
         };
+
+        r_priority = r_fetch_sprite_field_attributes[r_rasterizer_sprite_index][5] == 0;
     end
 end
-
-// TODO: add output of sprite foreground/background priority
-
 
 assign o_palette_index = r_palette_index;
 assign o_video_rd_n = r_video_rd_n;
 assign o_video_address = r_video_address;
+assign o_priority = r_priority;
+assign o_sprite_zero = r_sprite_zero && (r_rasterizer_sprite_index == 0);
 
 endmodule
 
