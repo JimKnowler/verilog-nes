@@ -76,10 +76,20 @@ assign r_is_rasterizer_active = (i_video_x > 0) && (i_video_x < 256);
 wire [13:0] w_address_tile_lo;
 wire [13:0] w_address_tile_hi;
 
+reg [2:0] r_fine_y_offset;
+always @(*)
+begin
+    r_fine_y_offset = {r_fetch_sprite_field_ycoord - i_video_y - 8'd2}[2:0];
+
+    // vertical flip
+    if (r_fetch_sprite_field_attributes[r_fetch_sprite_index][7] == 0)
+        r_fine_y_offset = 3'd7 - r_fine_y_offset; 
+end
+
 PPUSprite8x8TileAddress ppuSprite8x8TileAddressLo(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
-    .i_fine_y_offset({r_fetch_sprite_field_ycoord - i_video_y - 8'd2}[2:0]),               // TODO: handle vertical flip
+    .i_fine_y_offset(r_fine_y_offset),               // TODO: handle vertical flip
     .i_tile(r_fetch_sprite_field_tile),
     .i_bit_plane(0),
     .i_ppuctrl_s(i_ppuctrl_s),
@@ -89,7 +99,7 @@ PPUSprite8x8TileAddress ppuSprite8x8TileAddressLo(
 PPUSprite8x8TileAddress ppuSprite8x8TileAddressHi(
     .i_clk(i_clk),
     .i_reset_n(i_reset_n),
-    .i_fine_y_offset({r_fetch_sprite_field_ycoord - i_video_y - 8'd2}[2:0]),               // TODO: handle vertical flip
+    .i_fine_y_offset(r_fine_y_offset),               // TODO: handle vertical flip
     .i_tile(r_fetch_sprite_field_tile),
     .i_bit_plane(1),
     .i_ppuctrl_s(i_ppuctrl_s),
@@ -107,23 +117,30 @@ wire [7:0] w_bitfield_tile_shift_data_lo;       // data output from shift regist
 wire [7:0] w_bitfield_tile_shift_data_hi;       // data output from shift registers
 reg [7:0] r_bitfield_tile_shift_is_active;     // status signal - report when shift register has valid output data for current cycle
 
-genvar i;
+reg [7:0] r_shift_load_data;
+always @(*)
+begin
+    r_shift_load_data = i_vram_data;
 
+    // flip horizontal
+    if (r_fetch_sprite_field_attributes[r_fetch_sprite_index][6] == 1)
+        r_shift_load_data = {<<{i_vram_data}};      // SystemVerilog stream operator: https://www.amiq.com/consulting/2017/05/29/how-to-pack-data-using-systemverilog-streaming-operators/#reverse_bits
+end
+
+genvar i;
 generate
     for (i=0; i<8; i=i+1) begin
         /* verilator lint_off UNUSED */
         wire [7:0] w_debug_shift_data_lo;
         wire [7:0] w_debug_shift_data_hi;
         /* verilator lint_on UNUSED */
-
-        // TODO: logic for flipping i_vram_data if horizontally flipped (s reported by attribute byte)
         
         ShiftParallelLoad8 shiftTileLo(
             .i_clk(i_clk),
             .i_reset_n(i_reset_n),
             .i_ce(i_ce),
             .i_load(r_bitfield_tile_shift_load_lo[i]),
-            .i_data(i_vram_data),
+            .i_data(r_shift_load_data),
             .i_shift(r_bitfield_tile_shift_is_active[i]),
             .o_shift_data(w_bitfield_tile_shift_data_lo[i]),
             
@@ -135,7 +152,7 @@ generate
             .i_reset_n(i_reset_n),
             .i_ce(i_ce),
             .i_load(r_bitfield_tile_shift_load_hi[i]),
-            .i_data(i_vram_data),
+            .i_data(r_shift_load_data),
             .i_shift(r_bitfield_tile_shift_is_active[i]),
             .o_shift_data(w_bitfield_tile_shift_data_hi[i]),
             
