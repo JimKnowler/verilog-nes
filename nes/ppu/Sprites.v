@@ -79,7 +79,7 @@ wire [13:0] w_address_tile_hi;
 reg [2:0] r_fine_y_offset;
 always @(*)
 begin
-    r_fine_y_offset = {r_fetch_sprite_field_ycoord - i_video_y - 8'd2}[2:0];
+    r_fine_y_offset = {r_fetch_sprite_field_ycoord - i_video_y - 8'd1}[2:0];
 
     // vertical flip
     if (r_fetch_sprite_field_attributes[r_fetch_sprite_index][7] == 0)
