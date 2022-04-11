@@ -702,20 +702,29 @@ namespace emulator {
 
                 core.i_controller_1 = controller1 & 0x01;           // read lsb
 
-                int controllerClk = core.o_controller_clk;
+                // clk enable check is important here:
+                //    - perhaps latch the controller output values at I/O port on FPGA
+                if (core.o_cpu_debug_clk_en) {
+                    int controllerClk = core.o_controller_clk;
 
-                if (core.o_controller_latch) {
-                    readController1();
+                    if (core.o_controller_latch) {
+                        readController1();
 
-                    LOG_CONTROLLER("controller - latch [%u]\n", controller1);
-                } else {
-                    if ((controllerClk == 1) && (lastControllerClk == 0)) {
-                        LOG_CONTROLLER("controller - shift [%u]\n", controller1);
-                        controller1 >>= 1;
+                        LOG_CONTROLLER("controller - latch [%u]\n", controller1);
+                    } else {
+                        if ((controllerClk == 1) && (lastControllerClk == 0)) {
+                            LOG_CONTROLLER("controller - shift [%u]\n", controller1);
+
+                            // shift out first bit
+                            controller1 >>= 1;
+
+                            // simulate shifting in '1' (for unpressed button) at top of shift register
+                            controller1 |= (1<<7);
+                        }
                     }
-                }
 
-                lastControllerClk = controllerClk;
+                    lastControllerClk = controllerClk;
+                }
             });
         }
 
@@ -730,6 +739,9 @@ namespace emulator {
             int right = GetKey(olc::RIGHT).bHeld ? 1 << 7 : 0;
             
             controller1 = a | b | select | start | up | down | left | right;
+
+            // NES controller sends a 0 for each button that is pressed
+            controller1 = ~controller1;
         }
 
         void initMario() {
