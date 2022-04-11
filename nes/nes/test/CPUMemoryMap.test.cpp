@@ -34,6 +34,7 @@ namespace {
             auto& core = testBench.core();
             core.i_clk_en = 1;
             core.i_oe1_n = 1;
+            core.i_oe2_n = 1;
 
             testBench.setClockPolarity(1);
             testBench.reset();
@@ -237,13 +238,13 @@ TEST_F(CPUMemoryMap, ShouldReadFromController1) {
 
     core.i_controller_1 = 0;
     core.eval();
-    EXPECT_EQ(1, core.o_data_cpu);      // read inverted value from controller 1
+    EXPECT_EQ(0x41, core.o_data_cpu);      // read inverted value from controller 1, combined with open bus (0x40)
     EXPECT_EQ(0, core.o_cs_prg);
     EXPECT_EQ(0, core.o_cs_ram);
 
     core.i_controller_1 = 1;
     core.eval();
-    EXPECT_EQ(0, core.o_data_cpu);      // read inverted value from controller 1
+    EXPECT_EQ(0x40, core.o_data_cpu);      // read inverted value from controller 1, combined with open bus (0x40)
     EXPECT_EQ(0, core.o_cs_prg);
     EXPECT_EQ(0, core.o_cs_ram);
 }
