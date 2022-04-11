@@ -19,6 +19,7 @@ module Cpu2A03(
     // controller ports
     output o_out0,              // strobe signal for both controller ports
     output o_oe1_n,             // enable output of controller 1
+    output o_oe2_n,
 
     // 6502 debug ports
     output [7:0] o_debug_bus_db,
@@ -42,6 +43,7 @@ module Cpu2A03(
 localparam [15:0] ADDRESS_OAMDMA = 16'h4014; 
 localparam [15:0] ADDRESS_OAMDATA = 16'h2004;
 localparam [15:0] ADDRESS_JOY1 = 16'h4016;
+localparam [15:0] ADDRESS_JOY2 = 16'h4017;
 
 localparam RW_WRITE = 0;
 localparam RW_READ = 1;
@@ -60,6 +62,7 @@ reg r_clk_en_cpu;
 
 reg r_out0;
 reg r_oe1_n;
+reg r_oe2_n;
 
 reg [7:0] r_oamdma_counter;
 reg [15:0] r_oamdma_address;
@@ -228,10 +231,16 @@ end
 always @(*)
 begin
     r_oe1_n = 1;
+    r_oe2_n = 1;
 
     if (i_clk_en && (r_rw_cpu == RW_READ) && (w_address_cpu == ADDRESS_JOY1))
     begin
         r_oe1_n = 0;
+    end
+
+    if (i_clk_en && (r_rw_cpu == RW_READ) && (w_address_cpu == ADDRESS_JOY2))
+    begin
+        r_oe2_n = 0;
     end
 end
 
@@ -242,5 +251,6 @@ assign o_sync = r_sync;
 
 assign o_out0 = r_out0;
 assign o_oe1_n = r_oe1_n;
+assign o_oe2_n = r_oe2_n;
 
 endmodule

@@ -117,6 +117,7 @@ module NES(
 
     wire w_out0;
     wire w_oe1_n;
+    wire w_oe2_n;
     
     /* verilator lint_off UNUSED */
     wire w_sync;
@@ -151,6 +152,7 @@ module NES(
         // controller
         .o_out0(w_out0),
         .o_oe1_n(w_oe1_n),
+        .o_oe2_n(w_oe2_n),
 
         // debug
         .o_debug_bus_db(w_debug_bus_db),
@@ -272,6 +274,7 @@ module NES(
         .o_rw_ppu(w_rw_ppu),
         // Controller
         .i_oe1_n(w_oe1_n),
+        .i_oe2_n(w_oe2_n),
         .i_controller_1(i_controller_1)
     );
 

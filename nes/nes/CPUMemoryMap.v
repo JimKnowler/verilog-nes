@@ -33,6 +33,7 @@ module CPUMemoryMap(
 
     // connections for controllers
     input i_oe1_n,
+    input i_oe2_n,
     input i_controller_1
 );
 
@@ -102,7 +103,18 @@ begin
 
         if ((i_oe1_n == 0) && (i_rw_cpu == RW_READ))
         begin
+            r_data = 8'h40;
+
+            // controller reports 0 for pressed button, inverted here to make a 1
+            // https://www.nesdev.org/wiki/Controller_port_pinout
             r_data[0] = ~i_controller_1;
+        end
+
+        if ((i_oe2_n == 0) && (i_rw_cpu == RW_READ))
+        begin
+            // controller 2 defaults to inactive
+            r_data = 8'h40;
+            r_data[0] = 0;
         end
     end
 end
