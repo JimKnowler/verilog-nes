@@ -3,9 +3,7 @@ module NESDebuggerMCU(
     input i_reset_n,
 
     // NES 
-    /* verilator lint_off SYNCASYNCNET */
     input i_nes_en,
-    /* verilator lint_on SYNCASYNCNET */
     input i_nes_rw,
     input [15:0] i_nes_address,
     input [7:0] i_nes_data,
