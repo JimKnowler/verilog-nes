@@ -184,7 +184,6 @@ begin
         r_ppumask <= 0;
         r_ppustatus <= 0;
         r_oamaddr <= 0;
-        r_w <= 0;
     end
     else if (i_ce) 
     begin
