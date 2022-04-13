@@ -227,7 +227,7 @@ NES nes(
     // controller
     // o_controller_latch
     // o_controller_clk
-    // i_controller_1
+    .i_controller_1(1),         // 1 = NOT PRESSED
 
     // CPU memory access - RAM
     .o_cs_ram(w_nes_ram_en),
