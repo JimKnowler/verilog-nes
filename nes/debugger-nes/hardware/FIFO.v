@@ -31,7 +31,7 @@ fifo_generator_0 fifo_ip(
   .rst(i_reset_n),
   .wr_clk(i_clk_5mhz),
   .rd_clk(i_clk_25mhz),
-  .din({i_video_x, i_video_red, i_video_green, i_video_blue}),
+  .din({i_video_x, i_video_blue, i_video_green, i_video_red}),
   .wr_en(i_video_visible),
   .rd_en(1),
   .dout(w_video_output),
