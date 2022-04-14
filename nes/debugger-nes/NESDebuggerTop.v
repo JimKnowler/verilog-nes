@@ -468,6 +468,7 @@ VGAOutput vga_output(
 
 wire w_fifo_pixel_valid;
 wire [23:0] w_fifo_pixel_rgb;
+wire [8:0] w_fifo_pixel_x;
 
 FIFO video_fifo(
     .i_clk_5mhz(i_clk_5mhz),
@@ -475,11 +476,13 @@ FIFO video_fifo(
     .i_reset_n(i_reset_n),
     
     .i_video_valid(w_nes_video_visible),
+    .i_video_x(w_nes_video_x),
     .i_video_red(w_nes_video_red),
     .i_video_green(w_nes_video_green),
     .i_video_blue(w_nes_video_blue),
 
     .o_pixel_valid(w_fifo_pixel_valid),
+    .o_pixel_x(w_fifo_pixel_x),
     .o_pixel_rgb(w_fifo_pixel_rgb)
 );
 
@@ -490,6 +493,7 @@ VideoOutput video_output(
 
     // data received from FIFO
     .i_pixel_valid(w_fifo_pixel_valid),
+    .i_pixel_x(w_fifo_pixel_x),
     .i_pixel_rgb(w_fifo_pixel_rgb),
 
     // driving VGA pixel data
@@ -499,12 +503,6 @@ VideoOutput video_output(
     .o_vga_green(w_vga_green),
     .o_vga_blue(w_vga_blue)
 
-    /*
-    // debug
-    output [8:0] o_debug_linebuffer_write_index,
-    output o_debug_linebuffer_front,
-    output o_debug_vga_visible
-    */
 );
 /* verilator lint_on PINMISSING */
 

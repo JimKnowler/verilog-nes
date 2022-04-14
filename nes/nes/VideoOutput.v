@@ -13,8 +13,9 @@ module VideoOutput
     input i_reset_n,
 
     // data received from FIFO
-    input i_pixel_valid,       
+    input i_pixel_valid,
     input [PIXEL_RGB_BITWIDTH-1:0] i_pixel_rgb,
+    input [8:0] i_pixel_x,
 
     // driving VGA pixel data
     output o_vga_reset_n,                       // note: used to reset VGA until first line of first frame is ready
@@ -24,7 +25,6 @@ module VideoOutput
     output [RGB_BITWIDTH-1:0] o_vga_blue,
 
     // debug
-    output [8:0] o_debug_linebuffer_write_index,
     output [1:0] o_debug_linebuffer_read,
     output [1:0] o_debug_linebuffer_write,
     output o_debug_linebuffer_read_count,
@@ -50,11 +50,11 @@ endgenerate
 reg [1:0] r_linebuffer_write;
 reg [1:0] r_linebuffer_read;
 
+reg [1:0] r_linebuffer_write_next;
+assign r_linebuffer_write_next = (r_linebuffer_write + 1) % 3;
+
 // how many times has the current read linebuffer been displayed
 reg r_linebuffer_read_count;
-
-// write index into the write linebuffer
-reg [8:0] r_linebuffer_write_index;
 
 // VGA output
 reg [PIXEL_RGB_BITWIDTH-1:0] r_vga_pixel_rgb;
@@ -87,8 +87,6 @@ begin
 
         r_linebuffer_read_count <= 0;
 
-        r_linebuffer_write_index <= 0;
-
         r_linebuffer0 <= r_linebuffer_default;
         r_linebuffer1 <= r_linebuffer_default;
         r_linebuffer2 <= r_linebuffer_default;
@@ -100,38 +98,38 @@ begin
         // write to the current write linebuffer
         if (i_pixel_valid)
         begin
-            if (r_linebuffer_write_index < NES_VISIBLE_WIDTH) 
+            if (i_pixel_x < NES_VISIBLE_WIDTH) 
             begin
                 case (r_linebuffer_write)
-                0:       r_linebuffer0[r_linebuffer_write_index[7:0]] <= i_pixel_rgb;
-                1:       r_linebuffer1[r_linebuffer_write_index[7:0]] <= i_pixel_rgb;
-                default: r_linebuffer2[r_linebuffer_write_index[7:0]] <= i_pixel_rgb;
+                0:       r_linebuffer0[i_pixel_x[7:0]] <= i_pixel_rgb;
+                1:       r_linebuffer1[i_pixel_x[7:0]] <= i_pixel_rgb;
+                default: r_linebuffer2[i_pixel_x[7:0]] <= i_pixel_rgb;
                 endcase
-            
-                r_linebuffer_write_index <= r_linebuffer_write_index + 1;
             end
-        end
         
-        // during h-sync, prepare to write to the next linebuffer
-        if (r_linebuffer_write_index == NES_VISIBLE_WIDTH)
-        begin
-            // the write buffer is full
+            // on last pixel
+            if (i_pixel_x == NES_VISIBLE_WIDTH-1)
+            begin
+                // the write buffer is full
 
-            // start writing to the next line
-            r_linebuffer_write <= (r_linebuffer_write + 1) % 3;
-            
-            // reset write index for the back buffer
-            r_linebuffer_write_index <= 0;
+                // start writing to the next line
+                r_linebuffer_write <= r_linebuffer_write_next;
 
-            // make sure VGA can start rendering, if it hasn't already
-            r_vga_reset_n <= 1;
+                case (r_linebuffer_write_next)
+                0:       r_linebuffer0 <= r_linebuffer_default;
+                1:       r_linebuffer1 <= r_linebuffer_default;
+                default: r_linebuffer2 <= r_linebuffer_default;
+                endcase
+                
+                // make sure VGA can start rendering, if it hasn't already
+                r_vga_reset_n <= 1;
+            end
         end
 
         // read from the current read linebuffer
         if (r_vga_reset_n == 1)
         begin
             // while rendering
-
             if ((i_vga_x == (VGA_VISIBLE_WIDTH)) && (r_linebuffer_read != r_linebuffer_write))
             begin
                 // finished rendering a line
@@ -159,7 +157,6 @@ assign o_vga_green = r_vga_pixel_rgb[15:8];
 assign o_vga_blue = r_vga_pixel_rgb[23:16];
 assign o_vga_reset_n = r_vga_reset_n;
 
-assign o_debug_linebuffer_write_index = r_linebuffer_write_index;
 assign o_debug_linebuffer_read = r_linebuffer_read;
 assign o_debug_linebuffer_write = r_linebuffer_write;
 assign o_debug_vga_visible = r_vga_visible;

@@ -12,11 +12,13 @@ module FIFO(
     input i_reset_n,
     
     input i_video_valid,
+    input [8:0] i_video_x,
     input [7:0] i_video_red,
     input [7:0] i_video_green,
     input [7:0] i_video_blue,
 
     output o_pixel_valid,
+    output [8:0] o_pixel_x,
     output [23:0] o_pixel_rgb
     /* verilator lint_on UNUSED */
     /* verilator lint_on UNDRIVEN */

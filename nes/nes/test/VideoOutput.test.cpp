@@ -40,6 +40,7 @@ namespace {
             core.i_pixel_valid = 1;
             
             for (int i=0; i<NES_VISIBLE_WIDTH; i++) {
+                core.i_pixel_x = i;
                 core.i_pixel_rgb = pixelGenerator(i);
                 testBench.tick();
             }
@@ -73,6 +74,7 @@ TEST_F(VideoOutput, ShouldReceiveDataFromFIFO) {
     auto& core = testBench.core();
 
     core.i_pixel_valid = 1;
+    core.i_pixel_x = 0;
     core.i_pixel_rgb = 0xabc;
     testBench.tick();
 
@@ -89,34 +91,30 @@ TEST_F(VideoOutput, ShouldWriteToLineBuffer0) {
     // fill line buffer 0
     core.i_vga_x = 0;
     helperSimulateWriteRowNES(testPixelValue1);
-
-    // tick once after NES finishes writing to first linebuffer
-    core.i_pixel_valid = 0;
-    testBench.tick();
     
     TraceBuilder traceBuilder;
     traceBuilder
-        .port(i_clk).signal("-_").repeat(NES_VISIBLE_WIDTH + 1)
+        .port(i_clk).signal("-_").repeat(NES_VISIBLE_WIDTH)
         .port(o_debug_vga_visible)
-                    .signal("0").repeat(NES_VISIBLE_WIDTH)
+                    .signal("0").repeat(NES_VISIBLE_WIDTH-1)
                     .signal("1")
                     .concat().repeatEachStep(2)
         .port(o_debug_linebuffer_read)
-                    .signal({0}).repeat(NES_VISIBLE_WIDTH + 1)
+                    .signal({0}).repeat(NES_VISIBLE_WIDTH)
                     .repeatEachStep(2)
         .port(o_debug_linebuffer_write)
-                    .signal({0}).repeat(NES_VISIBLE_WIDTH)
+                    .signal({0}).repeat(NES_VISIBLE_WIDTH-1)
                     .signal({1})
                     .concat().repeatEachStep(2)
         .port(o_debug_linebuffer_read_count)
-                    .signal("0").repeat(NES_VISIBLE_WIDTH + 1)
+                    .signal("0").repeat(NES_VISIBLE_WIDTH)
                     .repeatEachStep(2)
         .port(o_vga_reset_n)
-                    .signal("0").repeat(NES_VISIBLE_WIDTH)
+                    .signal("0").repeat(NES_VISIBLE_WIDTH-1)
                     .signal("1")
                     .concat().repeatEachStep(2)
         .port(o_vga_red)
-                    .signal({0}).repeat(NES_VISIBLE_WIDTH + 1)
+                    .signal({0}).repeat(NES_VISIBLE_WIDTH)
                     .repeatEachStep(2);
 
     Trace expected = traceBuilder;
@@ -131,11 +129,7 @@ TEST_F(VideoOutput, ShouldWriteToLineBuffer0AndThenReadLineBuffer0Twice) {
     core.i_vga_x = 0;
     helperSimulateWriteRowNES(testPixelValue1);
 
-    // render front buffer
-    core.i_pixel_valid = 0;
-    core.i_pixel_rgb = 0;
-
-    testBench.tick();       // single tick in the horiz sync region
+    testBench.trace.clear();
 
     for (int repeat=0; repeat<2; repeat++) {
         // each NES linebuffer should be rendered to two VGA rows (i.e. doubling pixels vertically)
@@ -144,28 +138,24 @@ TEST_F(VideoOutput, ShouldWriteToLineBuffer0AndThenReadLineBuffer0Twice) {
     
     TraceBuilder traceBuilder;
     traceBuilder
-        .port(i_clk).signal("-_").repeat(NES_VISIBLE_WIDTH + 1 + ((VGA_VISIBLE_WIDTH + 1) * 2))
+        .port(i_clk).signal("-_").repeat(((VGA_VISIBLE_WIDTH + 1) * 2))
         .port(o_debug_vga_visible)
-                    .signal("0").repeat(NES_VISIBLE_WIDTH)
-                    .signal("1").repeat(1 + VGA_VISIBLE_WIDTH)
+                    .signal("1").repeat(VGA_VISIBLE_WIDTH)
                     .signal("0")
                     .signal("1").repeat(VGA_VISIBLE_WIDTH)
                     .signal("0")
                     .concat().repeatEachStep(2)
         .port(o_debug_linebuffer_read)
-                    .signal({0}).repeat(NES_VISIBLE_WIDTH + ((VGA_VISIBLE_WIDTH + 1) * 2))
+                    .signal({0}).repeat(((VGA_VISIBLE_WIDTH + 1) * 2)-1)
                     .signal({1})
                     .concat().repeatEachStep(2)
         .port(o_debug_linebuffer_write)
-                    .signal({0}).repeat(NES_VISIBLE_WIDTH)
-                    .signal({1}).repeat(1 + ((VGA_VISIBLE_WIDTH + 1) * 2))
+                    .signal({1}).repeat(((VGA_VISIBLE_WIDTH + 1) * 2))
                     .concat().repeatEachStep(2)
         .port(o_vga_reset_n)
-                    .signal("0").repeat(NES_VISIBLE_WIDTH)
-                    .signal("1").repeat(1 + ((VGA_VISIBLE_WIDTH + 1) * 2))
+                    .signal("1").repeat(((VGA_VISIBLE_WIDTH + 1) * 2))
                     .concat().repeatEachStep(2)
-        .port(o_vga_red)
-                    .signal({0}).repeat(NES_VISIBLE_WIDTH + 1);
+        .port(o_vga_red);
 
     for (int repeat=0; repeat < 2; repeat++) {
         for (uint32_t i=0; i<NES_VISIBLE_WIDTH; i++) {
@@ -181,21 +171,14 @@ TEST_F(VideoOutput, ShouldWriteToLineBuffer0AndThenReadLineBuffer0Twice) {
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 } 
 
-TEST_F(VideoOutput, ShouldWriteLineBuffer2WhileRenderingLineBuffer1) {
+TEST_F(VideoOutput, ShouldWriteToLineBuffer2WhileRenderingLineBuffer1) {
     auto& core = testBench.core();
 
-    // fill line buffer 0
+    // write to line buffer 0
     core.i_vga_x = 0;
     helperSimulateWriteRowNES(testPixelValue1);
 
-    // end of filling line buffer 0, needs to tick in horiz sync region to swap line buffers
-    core.i_vga_x = VGA_VISIBLE_WIDTH;
-    core.i_pixel_valid = 0;
-    core.i_pixel_rgb = 0;
-
-    testBench.tick();
-
-    // fill line buffer 1 while rendering linebuffer 0 to VGA
+    // write to line buffer 1 while rendering linebuffer 0 to VGA
     ASSERT_EQ(core.o_debug_linebuffer_write, 1);
     ASSERT_EQ(core.o_debug_linebuffer_read, 0);
 
@@ -223,9 +206,6 @@ TEST_F(VideoOutput, ShouldWriteLineBuffer2WhileRenderingLineBuffer1) {
                     .signal("1").repeat(VGA_VISIBLE_WIDTH)
                     .signal("0")
                     .concat().repeatEachStep(2)
-        .port(o_debug_linebuffer_write_index)
-                    .signal({0}).repeat(VGA_VISIBLE_WIDTH + 1)
-                    .concat().repeatEachStep(2)
         .port(o_debug_linebuffer_read)
                     .signal({1}).repeat(VGA_VISIBLE_WIDTH + 1)
                     .concat().repeatEachStep(2)
@@ -250,19 +230,12 @@ TEST_F(VideoOutput, ShouldWriteLineBuffer2WhileRenderingLineBuffer1) {
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 } 
 
-TEST_F(VideoOutput, ShouldWriteLineBuffer2WhileRenderingLineBuffer0) {
+TEST_F(VideoOutput, ShouldWriteToLineBuffer2WhileRenderingLineBuffer0) {
     auto& core = testBench.core();
 
     // fill line buffer 0
     core.i_vga_x = 0;
     helperSimulateWriteRowNES(testPixelValue1);
-
-    // end of filling line buffer 0, needs to tick in horiz sync region to swap line buffers
-    core.i_vga_x = VGA_VISIBLE_WIDTH;
-    core.i_pixel_valid = 0;
-    core.i_pixel_rgb = 0;
-
-    testBench.tick();
 
     // fill line buffer 1 while rendering linebuffer 0 to VGA
     ASSERT_EQ(core.o_debug_linebuffer_write, 1);
@@ -270,13 +243,6 @@ TEST_F(VideoOutput, ShouldWriteLineBuffer2WhileRenderingLineBuffer0) {
 
     core.i_vga_x = 0;
     helperSimulateWriteRowNES(testPixelValue2);
-
-     // end of filling line buffer 1, needs to tick in horiz sync region to swap line buffers
-    core.i_vga_x = VGA_VISIBLE_WIDTH;
-    core.i_pixel_valid = 0;
-    core.i_pixel_rgb = 0;
-
-    testBench.tick();
 
     // RESET trace - so that we just look at the rendering of line buffer 1
     testBench.trace.clear();
@@ -294,12 +260,8 @@ TEST_F(VideoOutput, ShouldWriteLineBuffer2WhileRenderingLineBuffer0) {
                     .signal("1").repeat(VGA_VISIBLE_WIDTH)
                     .signal("0")
                     .concat().repeatEachStep(2)
-        .port(o_debug_linebuffer_write_index)
-                    .signal({0}).repeat(VGA_VISIBLE_WIDTH + 1)
-                    .concat().repeatEachStep(2)
         .port(o_debug_linebuffer_read)
-                    .signal({0}).repeat(VGA_VISIBLE_WIDTH)
-                    .signal({1})                                        // prepare to read the next line buffer
+                    .signal({0}).repeat(VGA_VISIBLE_WIDTH + 1)
                     .concat().repeatEachStep(2)
         .port(o_debug_linebuffer_write)
                     .signal({2}).repeat(VGA_VISIBLE_WIDTH + 1)
