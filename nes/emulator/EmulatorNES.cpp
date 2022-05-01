@@ -36,8 +36,8 @@ namespace emulator {
         bool OnUserCreate() override {
             initSimulation();
 
-            initMario();
-            //initDonkeyKong();
+            //initMario();
+            initDonkeyKong();
             //initDuckHunt();
 
             reset();
@@ -763,8 +763,10 @@ namespace emulator {
         void initDonkeyKong() {
             // PRG - game code
 
+            // load bank 0 -> 0x0000:0xBFFF
             // load bank 0 -> 0xC000:0xFFFF
             auto bank0 = loadBinaryFile("roms/donkeykong/prg_rom_bank_0.6502.bin");
+            sram.write(0x0000, bank0);
             sram.write(0xC000, bank0);
 
             // CHR - pattern table
@@ -775,8 +777,10 @@ namespace emulator {
         void initDuckHunt() {
             // PRG - game code
 
+            // load bank 0 -> 0x0000:0xBFFF
             // load bank 0 -> 0xC000:0xFFFF
             auto bank0 = loadBinaryFile("roms/duckhunt/prg_rom_bank_0.6502.bin");
+            sram.write(0x0000, bank0);
             sram.write(0xC000, bank0);
 
             // CHR - pattern table
