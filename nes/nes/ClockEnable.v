@@ -19,10 +19,16 @@ begin
     else
     begin
         if (i_ce)
+        begin
             if (r_counter == 2)
+            begin
                 r_counter <= 0;
+            end
             else
+            begin
                 r_counter <= r_counter + 1;
+            end
+        end
     end
 end
 

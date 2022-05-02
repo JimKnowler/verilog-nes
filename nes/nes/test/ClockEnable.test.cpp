@@ -88,3 +88,23 @@ TEST_F(ClockEnable, ShouldHandleClockDisableAndEnable) {
 
     EXPECT_THAT(testBench.trace, MatchesTrace(expected));
 }
+
+TEST_F(ClockEnable, ShouldHandleLongPeriodOfClockDisable) {
+    auto& core = testBench.core();
+
+    core.i_ce = 0;
+    testBench.tick(1000);
+    testBench.trace.clear();
+
+    core.i_ce = 1;
+    testBench.tick(3);
+
+    Trace expected = TraceBuilder()
+        .port(i_clk).signal("_-").repeat(3)
+        .port(o_ce_cpu)
+            .signal("____--")
+        .port(o_ce_ppu)
+            .signal("------");
+
+    EXPECT_THAT(testBench.trace, MatchesTrace(expected));
+}
