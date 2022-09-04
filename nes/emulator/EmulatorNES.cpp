@@ -37,8 +37,9 @@ namespace emulator {
             initSimulation();
 
             //initMario();
-            initDonkeyKong();
+            //initDonkeyKong();
             //initDuckHunt();
+            initGalaga();
 
             reset();
 
@@ -743,6 +744,23 @@ namespace emulator {
             // NES controller sends a 0 for each button that is pressed
             controller1 = ~controller1;
         }
+
+        void initGalaga() {
+            // PRG - game code
+
+            // load bank 0 -> 0x8000:0xBFFF
+            auto bank0 = loadBinaryFile("roms/galaga/prg_rom_bank_0.6502.bin");
+            sram.write(0x8000, bank0);
+
+            // load bank 1 -> 0xC000:0xFFFF
+            auto bank1 = loadBinaryFile("roms/galaga/prg_rom_bank_1.6502.bin");
+            sram.write(0xC000, bank1);
+
+            // CHR - pattern table
+            auto chr = loadBinaryFile("roms/galaga/chr_rom_bank_0.bin");
+            vram.write(0x0000, chr);
+        }
+
 
         void initMario() {
             // PRG - game code
