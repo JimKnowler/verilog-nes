@@ -289,11 +289,11 @@ namespace emulator {
             y += kRowHeight;
 
             char buffer[64];
-            sprintf(buffer, "     ticks %d", numTicks);
+            snprintf(buffer, sizeof(buffer), "     ticks %d", numTicks);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
-            sprintf(buffer, "     frame %d", numFrames);
+            snprintf(buffer, sizeof(buffer), "     frame %d", numFrames);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
             y += kRowHeight;
@@ -304,19 +304,19 @@ namespace emulator {
             DrawLine({x, y}, {x + 42 * 8, y}, olc::RED);
             y += kRowHeight;
 
-            sprintf(buffer, "    clk-en %d", core.o_cpu_debug_clk_en);
+            snprintf(buffer, sizeof(buffer), "    clk-en %d", core.o_cpu_debug_clk_en);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
-            sprintf(buffer, "        ir 0x%02x", core.o_cpu_debug_ir);
+            snprintf(buffer, sizeof(buffer), "        ir 0x%02x", core.o_cpu_debug_ir);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
-            sprintf(buffer, "       tcu 0x%02x", core.o_cpu_debug_tcu);
+            snprintf(buffer, sizeof(buffer), "       tcu 0x%02x", core.o_cpu_debug_tcu);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
-            sprintf(buffer, "   address 0x%04x", core.o_cpu_debug_address);
+            snprintf(buffer, sizeof(buffer), "   address 0x%04x", core.o_cpu_debug_address);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;  
             y += kRowHeight;
@@ -327,26 +327,26 @@ namespace emulator {
             DrawLine({x, y}, {x + 42 * 8, y}, olc::RED);
             y += kRowHeight;
 
-            sprintf(buffer, "         x %3d", core.o_video_x);
+            snprintf(buffer, sizeof(buffer), "         x %3d", core.o_video_x);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
-            sprintf(buffer, "         y %3d", core.o_video_y);
+            snprintf(buffer, sizeof(buffer), "         y %3d", core.o_video_y);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
-            sprintf(buffer, "   visible %3d", core.o_video_visible);
+            snprintf(buffer, sizeof(buffer), "   visible %3d", core.o_video_visible);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
-            sprintf(buffer, "    colour ");
+            snprintf(buffer, sizeof(buffer), "    colour ");
             DrawString({x,y}, buffer, olc::BLACK);
             drawRectWithOutline({x + (11*kCharWidth),y}, {4 * kCharWidth, kCharWidth}, olc::Pixel(core.o_video_red, core.o_video_green, core.o_video_blue), olc::BLACK);
-            sprintf(buffer, "[index %02x]", core.o_ppu_debug_colour_index);
+            snprintf(buffer, sizeof(buffer), "[index %02x]", core.o_ppu_debug_colour_index);
             DrawString({x + (16*kCharWidth),y}, buffer, olc::BLACK);
             y += kRowHeight;
 
-            sprintf(buffer, "   palette ");
+            snprintf(buffer, sizeof(buffer), "   palette ");
             DrawString({x,y}, buffer, olc::BLACK);
             int px = x + (11*kCharWidth);
             for (int i=0; i<32; i++) {
@@ -356,35 +356,35 @@ namespace emulator {
             y += kRowHeight;
 
             uint8_t ppuctrl = core.o_ppu_debug_ppuctrl;
-            sprintf(buffer, "   ppuctrl 0x%02x %s", ppuctrl, bitLabel(ppuctrl, "VPHBSINN").c_str());
+            snprintf(buffer, sizeof(buffer), "   ppuctrl 0x%02x %s", ppuctrl, bitLabel(ppuctrl, "VPHBSINN").c_str());
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
             uint8_t ppumask = core.o_ppu_debug_ppumask;
-            sprintf(buffer, "   ppumask 0x%02x %s", ppumask, bitLabel(ppumask, "BGRsbMmG").c_str());
+            snprintf(buffer, sizeof(buffer), "   ppumask 0x%02x %s", ppumask, bitLabel(ppumask, "BGRsbMmG").c_str());
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
             uint8_t ppustatus = core.o_ppu_debug_ppustatus;
-            sprintf(buffer, " ppustatus 0x%02x %s", ppustatus, bitLabel(ppustatus, "VSO.....").c_str());
+            snprintf(buffer, sizeof(buffer), " ppustatus 0x%02x %s", ppustatus, bitLabel(ppustatus, "VSO.....").c_str());
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
             uint16_t vramAddress = core.o_ppu_debug_vram_address;
-            sprintf(buffer, " vram addr 0x%04x", vramAddress);
+            snprintf(buffer, sizeof(buffer), " vram addr 0x%04x", vramAddress);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
             
             uint8_t vramData = core.o_ppu_debug_i_vram_data;
-            sprintf(buffer, " i vram data 0x%02x", vramData);
+            snprintf(buffer, sizeof(buffer), " i vram data 0x%02x", vramData);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
-            sprintf(buffer, "  scroll-x %03d", core.o_ppu_debug_ppuscroll_x);
+            snprintf(buffer, sizeof(buffer), "  scroll-x %03d", core.o_ppu_debug_ppuscroll_x);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
-            sprintf(buffer, "  scroll-y %03d", core.o_ppu_debug_ppuscroll_y);
+            snprintf(buffer, sizeof(buffer), "  scroll-y %03d", core.o_ppu_debug_ppuscroll_y);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;  
 
@@ -394,7 +394,7 @@ namespace emulator {
             uint32_t v_fine_y = (v >> 12) & 7;      // top 3 bits
             uint32_t v_y = ((v_coarse_y) << 3) + v_fine_y;
             uint32_t v_n = (v >> 10) & 0x3;
-            sprintf(buffer, "         v 0x%04x [coarse x: %03u] [y: %03u] [nn: %u]", v, v_coarse_x, v_y, v_n );
+            snprintf(buffer, sizeof(buffer), "         v 0x%04x [coarse x: %03u] [y: %03u] [nn: %u]", v, v_coarse_x, v_y, v_n );
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight; 
 
@@ -404,19 +404,19 @@ namespace emulator {
             uint32_t t_fine_y = (t >> 12) & 7;      // top 3 bits
             uint32_t t_y = ((t_coarse_y) << 3) + t_fine_y;
             uint32_t t_n = (t >> 10) & 0x3;
-            sprintf(buffer, "         t 0x%04x [coarse x: %03u] [y: %03u] [nn: %u]", t, t_coarse_x, t_y, t_n );
+            snprintf(buffer, sizeof(buffer), "         t 0x%04x [coarse x: %03u] [y: %03u] [nn: %u]", t, t_coarse_x, t_y, t_n );
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight; 
 
-            sprintf(buffer, "         x %d", core.o_ppu_debug_x);
+            snprintf(buffer, sizeof(buffer), "         x %d", core.o_ppu_debug_x);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight; 
 
-            sprintf(buffer, "         w %d", core.o_ppu_debug_w);
+            snprintf(buffer, sizeof(buffer), "         w %d", core.o_ppu_debug_w);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
 
-            sprintf(buffer, "RazCounter %d", core.o_ppu_debug_rasterizer_counter);
+            snprintf(buffer, sizeof(buffer), "RazCounter %d", core.o_ppu_debug_rasterizer_counter);
             DrawString({x,y}, buffer, olc::BLACK);
             y += kRowHeight;
         }

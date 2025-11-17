@@ -66,7 +66,7 @@ std::ostream& operator<<(std::ostream& os, const memory::SRAM& sram) {
         } else {
             hasReportedRun = false;
 
-            sprintf(buffer, "%08zx  ", rowIndex * kRowSize);
+            snprintf(buffer, sizeof(buffer), "%08zx  ", rowIndex * kRowSize);
             os << buffer;
 
             const size_t kChunkSize = 8;
@@ -77,7 +77,7 @@ std::ostream& operator<<(std::ostream& os, const memory::SRAM& sram) {
                 size_t chunkEnd = chunkStart + kChunkSize;
 
                 for (uint8_t i=chunkStart; i<chunkEnd; i++) {
-                    sprintf(buffer, "%02x ", row[i]);
+                    snprintf(buffer, sizeof(buffer), "%02x ", row[i]);
                     os << buffer;
                 }
 
@@ -88,7 +88,7 @@ std::ostream& operator<<(std::ostream& os, const memory::SRAM& sram) {
             for (size_t i=0; i<kRowSize; i++) {
                 char c = char(row[i]);
 
-                sprintf(buffer, "%1c", isprint(c) ? c : '.');
+                snprintf(buffer, sizeof(buffer), "%1c", isprint(c) ? c : '.');
                 os << buffer;
             }
 
@@ -99,7 +99,7 @@ std::ostream& operator<<(std::ostream& os, const memory::SRAM& sram) {
     }
 
     if (hasReportedRun) {
-        sprintf(buffer, "%08zx\n", sram.size());
+        snprintf(buffer, sizeof(buffer), "%08zx\n", sram.size());
         os << buffer;
     }
 

@@ -358,7 +358,7 @@ namespace emulator {
             Disassembler::DisassembledOpcode disassembledOpcode = disassembledOpcodes[0];
             
             char buffer[64];
-            sprintf(buffer, "%s %s", disassembledOpcode.labelOpcode.c_str(), disassembledOpcode.labelOperands.c_str());
+            snprintf(buffer, sizeof(buffer), "%s %s", disassembledOpcode.labelOpcode.c_str(), disassembledOpcode.labelOperands.c_str());
 
             for (size_t i=strlen(buffer); i<32; i++) {
                 buffer[i] = ' ';
