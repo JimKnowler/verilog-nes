@@ -1,5 +1,5 @@
-/bazel-*
 .DS_Store
 .vscode
 
 /roms/**
+/build
