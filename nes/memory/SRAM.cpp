@@ -1,5 +1,7 @@
 #include "SRAM.hpp"
 
+#include <cassert>
+
 namespace memory {
     SRAM::SRAM(size_t size) {
         memory = std::vector<uint8_t>(size);

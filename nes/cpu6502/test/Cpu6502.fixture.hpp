@@ -6,7 +6,7 @@ using namespace testing;
 #include "gtestverilog/gtestverilog.h"
 using namespace gtestverilog;
 
-#include "nes/Cpu6502TestBench.h"
+#include "Cpu6502TestBench.h"
 using namespace cpu6502testbench;
 
 #include "nes/memory/SRAM.hpp"

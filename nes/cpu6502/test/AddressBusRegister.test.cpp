@@ -4,7 +4,7 @@ using namespace testing;
 #include "gtestverilog/gtestverilog.h"
 using namespace gtestverilog;
 
-#include "nes/AddressBusRegisterTestBench.h"
+#include "AddressBusRegisterTestBench.h"
 using namespace addressbusregistertestbench;
 
 namespace {
