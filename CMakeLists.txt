@@ -26,13 +26,16 @@ FetchContent_MakeAvailable(googletest-verilog)
 
 file(GLOB_RECURSE CPU6502_ASSEMBLER_SRC_FILES CONFIGURE_DEPENDES "nes/cpu6502/assembler/*.cpp")
 file(GLOB_RECURSE CPU6502_TEST_SRC_FILES CONFIGURE_DEPENDES "nes/cpu6502/test/*.cpp")
+file(GLOB_RECURSE CPU6502_MEMORY_SRC_FILES CONFIGURE_DEPENDES "nes/memory/*.cpp")
 
 message(status "CPU6502_ASSEMBLER_SRC_FILES = ${CPU6502_ASSEMBLER_SRC_FILES}")
 message(status "CPU6502_TEST_SRC_FILES = ${CPU6502_TEST_SRC_FILES}")
+message(status "CPU6502_MEMORY_SRC_FILES = ${CPU6502_MEMORY_SRC_FILES}")
 
 add_executable(cpu6502_test
     ${CPU6502_ASSEMBLER_SRC_FILES}
     ${CPU6502_TEST_SRC_FILES}
+    ${CPU6502_MEMORY_SRC_FILES}
 )
 
 target_include_directories(cpu6502_test PRIVATE
@@ -47,5 +50,18 @@ target_include_directories(cpu6502_test PRIVATE
 target_link_libraries(cpu6502_test
     gtest
     gmock
-    googletest-verilog
+    gtestverilog
 )
+
+googletest_verilog_testbench(cpu6502_test SOURCE nes/cpu6502/Cpu6502.v INCLUDE_DIRS nes/cpu6502)
+googletest_verilog_testbench(cpu6502_test SOURCE nes/cpu6502/AddressBusRegister.v INCLUDE_DIRS nes/cpu6502)
+googletest_verilog_testbench(cpu6502_test SOURCE nes/cpu6502/ALU.v INCLUDE_DIRS nes/cpu6502)
+googletest_verilog_testbench(cpu6502_test SOURCE nes/cpu6502/DL.v INCLUDE_DIRS nes/cpu6502)
+googletest_verilog_testbench(cpu6502_test SOURCE nes/cpu6502/DOR.v INCLUDE_DIRS nes/cpu6502)
+googletest_verilog_testbench(cpu6502_test SOURCE nes/cpu6502/IR.v INCLUDE_DIRS nes/cpu6502)
+googletest_verilog_testbench(cpu6502_test SOURCE nes/cpu6502/PCH.v INCLUDE_DIRS nes/cpu6502)
+googletest_verilog_testbench(cpu6502_test SOURCE nes/cpu6502/PCL.v INCLUDE_DIRS nes/cpu6502)
+googletest_verilog_testbench(cpu6502_test SOURCE nes/cpu6502/ProcessorStatus.v INCLUDE_DIRS nes/cpu6502)
+googletest_verilog_testbench(cpu6502_test SOURCE nes/cpu6502/Register.v INCLUDE_DIRS nes/cpu6502)
+googletest_verilog_testbench(cpu6502_test SOURCE nes/cpu6502/Routing.v INCLUDE_DIRS nes/cpu6502)
+googletest_verilog_testbench(cpu6502_test SOURCE nes/cpu6502/TCU.v INCLUDE_DIRS nes/cpu6502)
