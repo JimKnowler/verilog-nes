@@ -9,12 +9,6 @@
 #include <vector>
 #include <cassert>
 
-// required for linking with Verilator
-double sc_time_stamp()
-{ 
-    return 0; 
-}
-
 using namespace nestestbench;
 using namespace memory;
 
