@@ -6,7 +6,7 @@ using namespace testing;
 #include "gtestverilog/gtestverilog.h"
 using namespace gtestverilog;
 
-#include "nes/NESTestBench.h"
+#include "NESTestBench.h"
 using namespace nestestbench;
 
 namespace {

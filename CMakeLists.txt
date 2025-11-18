@@ -14,26 +14,26 @@ set(CMAKE_CXX_STANDARD 20)
 include(FetchContent)
 FetchContent_Declare(
     googletest-verilog
-    URL https://github.com/JimKnowler/googletest-verilog/archive/refs/tags/v0.2-rc6.tar.gz
+    URL https://github.com/JimKnowler/googletest-verilog/archive/refs/tags/v0.2-rc7.tar.gz
 )
 
 FetchContent_MakeAvailable(googletest-verilog)
 
 #
-# 6502 
+# 6502 Test
 #
 
-file(GLOB_RECURSE CPU6502_ASSEMBLER_SRC_FILES CONFIGURE_DEPENDES "nes/cpu6502/assembler/*.cpp")
-file(GLOB_RECURSE CPU6502_TEST_SRC_FILES CONFIGURE_DEPENDES "nes/cpu6502/test/*.cpp")
-file(GLOB_RECURSE NES_MEMORY_SRC_FILES CONFIGURE_DEPENDES "nes/memory/*.cpp")
+file(GLOB_RECURSE CPU6502_ASSEMBLER_SRC_FILES CONFIGURE_DEPENDS "nes/cpu6502/assembler/*.cpp")
+file(GLOB_RECURSE CPU6502_TEST_SRC_FILES CONFIGURE_DEPENDS "nes/cpu6502/test/*.cpp")
+file(GLOB_RECURSE NES_MEMORY_SRC_FILES CONFIGURE_DEPENDS "nes/memory/*.cpp")
 
 message(status "CPU6502_ASSEMBLER_SRC_FILES = ${CPU6502_ASSEMBLER_SRC_FILES}")
 message(status "CPU6502_TEST_SRC_FILES = ${CPU6502_TEST_SRC_FILES}")
 message(status "NES_MEMORY_SRC_FILES = ${NES_MEMORY_SRC_FILES}")
 
 add_executable(cpu6502_test
-    ${CPU6502_ASSEMBLER_SRC_FILES}
     ${CPU6502_TEST_SRC_FILES}
+    ${CPU6502_ASSEMBLER_SRC_FILES}
     ${NES_MEMORY_SRC_FILES}
 )
 
@@ -59,6 +59,39 @@ googletest_verilog_testbench(cpu6502_test SOURCE nes/cpu6502/ProcessorStatus.v I
 googletest_verilog_testbench(cpu6502_test SOURCE nes/cpu6502/Register.v INCLUDE_DIRS nes/cpu6502)
 googletest_verilog_testbench(cpu6502_test SOURCE nes/cpu6502/Routing.v INCLUDE_DIRS nes/cpu6502)
 googletest_verilog_testbench(cpu6502_test SOURCE nes/cpu6502/TCU.v INCLUDE_DIRS nes/cpu6502)
+
+
+#
+# NES Test
+#
+
+file(GLOB_RECURSE NES_TEST_SRC_FILES CONFIGURE_DEPENDS "nes/nes/test/*.cpp")
+
+message(status "CPU6502_ASSEMBLER_SRC_FILES = ${CPU6502_ASSEMBLER_SRC_FILES}")
+message(status "NES_TEST_SRC_FILES = ${NES_TEST_SRC_FILES}")
+
+add_executable(nes_test
+    ${NES_TEST_SRC_FILES}
+    ${CPU6502_ASSEMBLER_SRC_FILES}
+    ${NES_MEMORY_SRC_FILES}
+)
+
+target_include_directories(nes_test PRIVATE
+    .
+)
+
+target_link_libraries(nes_test
+    gtest
+    gmock
+    gtestverilog
+)
+
+googletest_verilog_testbench(nes_test SOURCE nes/nes/ClockEnable.v INCLUDE_DIRS nes/nes nes/cpu6502 nes/ppu)
+googletest_verilog_testbench(nes_test SOURCE nes/nes/NES.v INCLUDE_DIRS nes/nes nes/cpu6502 nes/ppu)
+googletest_verilog_testbench(nes_test SOURCE nes/nes/VideoOutput.v INCLUDE_DIRS nes/nes nes/cpu6502 nes/ppu)
+googletest_verilog_testbench(nes_test SOURCE nes/nes/CPUMemoryMap.v INCLUDE_DIRS nes/nes nes/cpu6502 nes/ppu)
+googletest_verilog_testbench(nes_test SOURCE nes/nes/PPUMemoryMap.v INCLUDE_DIRS nes/nes nes/cpu6502 nes/ppu)
+googletest_verilog_testbench(nes_test SOURCE nes/nes/Cpu2A03.v INCLUDE_DIRS nes/nes nes/cpu6502 nes/ppu)
 
 #
 # NES Emulator

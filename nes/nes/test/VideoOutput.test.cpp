@@ -6,7 +6,7 @@ using namespace testing;
 #include "gtestverilog/gtestverilog.h"
 using namespace gtestverilog;
 
-#include "nes/VideoOutputTestBench.h"
+#include "VideoOutputTestBench.h"
 using namespace videooutputtestbench;
 
 namespace {

@@ -4,7 +4,7 @@ using namespace testing;
 #include "gtestverilog/gtestverilog.h"
 using namespace gtestverilog;
 
-#include "nes/ClockEnableTestBench.h"
+#include "ClockEnableTestBench.h"
 using namespace clockenabletestbench;
 
 namespace {
