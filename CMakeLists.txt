@@ -208,4 +208,27 @@ target_link_libraries(emulator_cpu
     "-framework GLUT"
 )
 
-googletest_verilog_testbench(emulator_cpu SOURCE nes/cpu6502/Cpu6502.v INCLUDE_DIRS nes/cpu6502 nes/nes nes/ppu)
+googletest_verilog_testbench(emulator_cpu SOURCE nes/cpu6502/Cpu6502.v INCLUDE_DIRS nes/cpu6502)
+
+
+#
+# VGA Emulator
+#
+
+add_executable(vga_emulator
+    nes/emulator/EmulatorVGA.cpp
+    ${NES_MEMORY_SRC_FILES}
+    ${CPU6502_ASSEMBLER_SRC_FILES}
+)
+
+target_include_directories(vga_emulator PRIVATE
+    .
+)
+
+target_link_libraries(vga_emulator
+    gtestverilog
+    "-framework OpenGL"
+    "-framework GLUT"
+)
+
+googletest_verilog_testbench(vga_emulator SOURCE nes/ppu/vga/VGAExample.v INCLUDE_DIRS nes/ppu/vga)
