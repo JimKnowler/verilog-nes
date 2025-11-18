@@ -14,7 +14,7 @@ set(CMAKE_CXX_STANDARD 20)
 include(FetchContent)
 FetchContent_Declare(
     googletest-verilog
-    URL https://github.com/JimKnowler/googletest-verilog/archive/refs/tags/v0.2-rc5.tar.gz
+    URL https://github.com/JimKnowler/googletest-verilog/archive/refs/tags/v0.2-rc6.tar.gz
 )
 
 FetchContent_MakeAvailable(googletest-verilog)
