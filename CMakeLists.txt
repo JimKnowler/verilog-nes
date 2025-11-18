@@ -113,3 +113,75 @@ target_link_libraries(nes_emulator
 )
 
 googletest_verilog_testbench(nes_emulator SOURCE nes/nes/NES.v INCLUDE_DIRS nes/cpu6502 nes/nes nes/ppu)
+
+
+#
+# PPU Test
+#
+
+file(GLOB_RECURSE PPU_TEST_SRC_FILES CONFIGURE_DEPENDS "nes/ppu/test/*.cpp")
+
+message(status "PPU_TEST_SRC_FILES = ${PPU_TEST_SRC_FILES}")
+
+add_executable(ppu_test
+    ${PPU_TEST_SRC_FILES}
+    ${CPU6502_ASSEMBLER_SRC_FILES}
+    ${NES_MEMORY_SRC_FILES}
+)
+
+target_include_directories(ppu_test PRIVATE
+    .
+)
+
+target_link_libraries(ppu_test
+    gtest
+    gmock
+    gtestverilog
+)
+
+googletest_verilog_testbench(ppu_test SOURCE nes/ppu/vga/VGAExample.v INCLUDE_DIRS nes/nes nes/cpu6502 nes/ppu nes/ppu/vga)
+googletest_verilog_testbench(ppu_test SOURCE nes/ppu/vga/VGAGenerator.v INCLUDE_DIRS nes/nes nes/cpu6502 nes/ppu nes/ppu/vga)
+googletest_verilog_testbench(ppu_test SOURCE nes/ppu/vga/VGAOutput.v INCLUDE_DIRS nes/nes nes/cpu6502 nes/ppu nes/ppu/vga)
+googletest_verilog_testbench(ppu_test SOURCE nes/ppu/PPUAttributeAddress.v INCLUDE_DIRS nes/nes nes/cpu6502 nes/ppu nes/ppu/vga)
+googletest_verilog_testbench(ppu_test SOURCE nes/ppu/PPU.v INCLUDE_DIRS nes/nes nes/cpu6502 nes/ppu nes/ppu/vga)
+googletest_verilog_testbench(ppu_test SOURCE nes/ppu/PaletteLookupRGB.v INCLUDE_DIRS nes/nes nes/cpu6502 nes/ppu nes/ppu/vga)
+googletest_verilog_testbench(ppu_test SOURCE nes/ppu/PPUIncrementX.v INCLUDE_DIRS nes/nes nes/cpu6502 nes/ppu nes/ppu/vga)
+googletest_verilog_testbench(ppu_test SOURCE nes/ppu/PPUPatternTableAddress.v INCLUDE_DIRS nes/nes nes/cpu6502 nes/ppu nes/ppu/vga)
+googletest_verilog_testbench(ppu_test SOURCE nes/ppu/PPUChipEnable.v INCLUDE_DIRS nes/nes nes/cpu6502 nes/ppu nes/ppu/vga)
+googletest_verilog_testbench(ppu_test SOURCE nes/ppu/Shift8.v INCLUDE_DIRS nes/nes nes/cpu6502 nes/ppu nes/ppu/vga)
+googletest_verilog_testbench(ppu_test SOURCE nes/ppu/Shift16.v INCLUDE_DIRS nes/nes nes/cpu6502 nes/ppu nes/ppu/vga)
+googletest_verilog_testbench(ppu_test SOURCE nes/ppu/PPUTileAddress.v INCLUDE_DIRS nes/nes nes/cpu6502 nes/ppu nes/ppu/vga)
+googletest_verilog_testbench(ppu_test SOURCE nes/ppu/PPUIncrementY.v INCLUDE_DIRS nes/nes nes/cpu6502 nes/ppu nes/ppu/vga)
+
+# VGAGenerator3x2
+#verilator_cc_library(
+#    name = "VGAGenerator3x2",
+#    mtop = "VGAGenerator",
+#    srcs = ["ppu/vga/VGAGenerator.v"],
+#    vopts = [
+#        "-Wall",
+#        "-GWIDTH=11'd6",                # note: specifying bit-width of constants
+#        "-GHEIGHT=11'd3",
+#        "-GWIDTH_VISIBLE=11'd3",
+#        "-GHEIGHT_VISIBLE=11'd2"
+#    ]
+#)
+
+
+# VGAOutput3x2
+# verilator_cc_library(
+#    name = "VGAOutput3x2",
+#    mtop = "VGAOutput",
+#    srcs = ["ppu/vga/VGAOutput.v"],
+#    vopts = [
+#        "-Wall",
+#        "-GWIDTH=11'd7",                # note: specifying bit-width of constants
+#        "-GHEIGHT=11'd5",
+#        "-GWIDTH_VISIBLE=11'd3",
+#        "-GHEIGHT_VISIBLE=11'd2",
+#        "-GFRONT_PORCH_X=11'd1",
+#        "-GBACK_PORCH_X=11'd1",
+#        "-GFRONT_PORCH_Y=11'd1",
+#        "-GBACK_PORCH_Y=11'd1",
+#    ]
+#)
