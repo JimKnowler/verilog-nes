@@ -129,7 +129,9 @@ module NES(
     wire [7:0] w_debug_pcl;
     wire [7:0] w_debug_pch;
     wire [7:0] w_debug_add;
+    /* verilator lint_off UNOPTFLAT */
     wire [7:0] w_debug_dl;
+    /* verilator lint_on UNOPTFLAT */
     wire [7:0] w_debug_ac;
     wire [7:0] w_debug_x;
     wire [7:0] w_debug_y;

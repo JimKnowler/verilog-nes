@@ -1,6 +1,8 @@
 #include "nes/cpu6502/assembler/Disassembler.hpp"
 #include "nes/cpu6502/assembler/Opcodes.hpp"
 
+#include <cassert>
+
 namespace cpu6502 { namespace assembler {
     namespace {
         const std::map<uint32_t, uint16_t> kAddressingModeByteSizeLookup {
@@ -39,7 +41,7 @@ namespace cpu6502 { namespace assembler {
             
             if (opcodes.find(disassembledOpcode.opcode) == opcodes.end()) {
                 char buffer[16];
-                sprintf(buffer, "0x%02X", disassembledOpcode.opcode);
+                snprintf(buffer, sizeof(buffer), "0x%02X", disassembledOpcode.opcode);
                 disassembledOpcode.labelOpcode = std::string(buffer) + " ????";
                 disassembledOpcode.byteSize = 1;
                 disassembledOpcode.addressingMode = kUnknown;
@@ -157,7 +159,7 @@ namespace cpu6502 { namespace assembler {
         uint16_t address = (info.sram.read(info.pc + 2) << 8) | info.sram.read(info.pc + 1);
         
         char buffer[16];
-        sprintf(buffer, "$0x%04X", address);
+        snprintf(buffer, sizeof(buffer), "$0x%04X", address);
         outOpcode.labelOperands = buffer;
 
         return true;
@@ -167,7 +169,7 @@ namespace cpu6502 { namespace assembler {
         uint16_t address = (info.sram.read(info.pc + 2) << 8) | info.sram.read(info.pc + 1);
         
         char buffer[16];
-        sprintf(buffer, "($0x%04X,x)", address);
+        snprintf(buffer, sizeof(buffer), "($0x%04X,x)", address);
         outOpcode.labelOperands = buffer;
 
         return true;
@@ -177,7 +179,7 @@ namespace cpu6502 { namespace assembler {
         uint16_t address = (info.sram.read(info.pc + 2) << 8) | info.sram.read(info.pc + 1);
         
         char buffer[16];
-        sprintf(buffer, "$0x%04X,x", address);
+        snprintf(buffer, sizeof(buffer), "$0x%04X,x", address);
         outOpcode.labelOperands = buffer;
 
         return true;
@@ -187,7 +189,7 @@ namespace cpu6502 { namespace assembler {
         uint16_t address = (info.sram.read(info.pc + 2) << 8) | info.sram.read(info.pc + 1);
         
         char buffer[16];
-        sprintf(buffer, "$0x%4X,y", address);
+        snprintf(buffer, sizeof(buffer), "$0x%4X,y", address);
         outOpcode.labelOperands = buffer;
 
         return true;
@@ -197,7 +199,7 @@ namespace cpu6502 { namespace assembler {
         uint16_t address = (info.sram.read(info.pc + 2) << 8) | info.sram.read(info.pc + 1);
         
         char buffer[16];
-        sprintf(buffer, "($0x%04X)", address);
+        snprintf(buffer, sizeof(buffer), "($0x%04X)", address);
         outOpcode.labelOperands = buffer;
 
         return true;
@@ -213,7 +215,7 @@ namespace cpu6502 { namespace assembler {
         uint8_t data = info.sram.read(info.pc + 1);
         
         char buffer[16];
-        sprintf(buffer, "#$0x%02X", data);
+        snprintf(buffer, sizeof(buffer), "#$0x%02X", data);
         outOpcode.labelOperands = buffer;
 
         return true;
@@ -230,7 +232,7 @@ namespace cpu6502 { namespace assembler {
         uint16_t address = info.pc + 2 + *(reinterpret_cast<int8_t*>(&data));
         
         char buffer[16];
-        sprintf(buffer, "$0x%04X", address);
+        snprintf(buffer, sizeof(buffer), "$0x%04X", address);
         outOpcode.labelOperands = buffer;
 
         return true;
@@ -244,7 +246,7 @@ namespace cpu6502 { namespace assembler {
         uint8_t address = info.sram.read(info.pc + 1);
         
         char buffer[16];
-        sprintf(buffer, "$0x%02X", address);
+        snprintf(buffer, sizeof(buffer), "$0x%02X", address);
         outOpcode.labelOperands = buffer;
 
         return true;
@@ -254,7 +256,7 @@ namespace cpu6502 { namespace assembler {
         uint8_t address = info.sram.read(info.pc + 1);
         
         char buffer[16];
-        sprintf(buffer, "($0x%02X,x)", address);
+        snprintf(buffer, sizeof(buffer), "($0x%02X,x)", address);
         outOpcode.labelOperands = buffer;
 
         return true;
@@ -264,7 +266,7 @@ namespace cpu6502 { namespace assembler {
         uint8_t address = info.sram.read(info.pc + 1);
         
         char buffer[16];
-        sprintf(buffer, "$0x%02X,x", address);
+        snprintf(buffer, sizeof(buffer), "$0x%02X,x", address);
         outOpcode.labelOperands = buffer;
 
         return true;
@@ -274,7 +276,7 @@ namespace cpu6502 { namespace assembler {
         uint8_t address = info.sram.read(info.pc + 1);
         
         char buffer[16];
-        sprintf(buffer, "$0x%02X,y", address);
+        snprintf(buffer, sizeof(buffer), "$0x%02X,y", address);
         outOpcode.labelOperands = buffer;
 
         return true;
@@ -284,7 +286,7 @@ namespace cpu6502 { namespace assembler {
         uint8_t address = info.sram.read(info.pc + 1);
         
         char buffer[16];
-        sprintf(buffer, "($0x%02X),y", address);
+        snprintf(buffer, sizeof(buffer), "($0x%02X),y", address);
         outOpcode.labelOperands = buffer;
 
         return true;
@@ -295,7 +297,7 @@ namespace cpu6502 { namespace assembler {
         uint8_t addressHigh = info.sram.read(info.pc + 2);
         
         char buffer[16];
-        sprintf(buffer, "($0x%02X%02X)", addressHigh, addressLow);
+        snprintf(buffer, sizeof(buffer), "($0x%02X%02X)", addressHigh, addressLow);
         outOpcode.labelOperands = buffer;
 
         return true;

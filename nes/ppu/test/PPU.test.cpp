@@ -6,7 +6,7 @@ using namespace testing;
 #include "gtestverilog/gtestverilog.h"
 using namespace gtestverilog;
 
-#include "nes/PPUTestBench.h"
+#include "PPUTestBench.h"
 using namespace pputestbench;
 
 #include "nes/memory/SRAM.hpp"

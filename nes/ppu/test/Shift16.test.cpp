@@ -4,7 +4,7 @@ using namespace testing;
 #include "gtestverilog/gtestverilog.h"
 using namespace gtestverilog;
 
-#include "nes/Shift16TestBench.h"
+#include "Shift16TestBench.h"
 using namespace shift16testbench;
 
 namespace {

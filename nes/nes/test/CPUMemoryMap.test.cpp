@@ -6,7 +6,7 @@ using namespace testing;
 #include "gtestverilog/gtestverilog.h"
 using namespace gtestverilog;
 
-#include "nes/CPUMemoryMapTestBench.h"
+#include "CPUMemoryMapTestBench.h"
 using namespace cpumemorymaptestbench;
 
 const int RW_READ = 1;

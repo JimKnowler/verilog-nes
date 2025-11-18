@@ -4,7 +4,7 @@ using namespace testing;
 #include "gtestverilog/gtestverilog.h"
 using namespace gtestverilog;
 
-#include "nes/DORTestBench.h"
+#include "DORTestBench.h"
 using namespace dortestbench;
 
 namespace {

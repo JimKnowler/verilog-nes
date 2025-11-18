@@ -4,7 +4,7 @@ using namespace testing;
 #include "gtestverilog/gtestverilog.h"
 using namespace gtestverilog;
 
-#include "nes/PPUAttributeAddressTestBench.h"
+#include "PPUAttributeAddressTestBench.h"
 using namespace ppuattributeaddresstestbench;
 
 namespace {

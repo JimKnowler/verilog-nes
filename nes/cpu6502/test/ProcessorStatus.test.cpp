@@ -4,7 +4,7 @@ using namespace testing;
 #include "gtestverilog/gtestverilog.h"
 using namespace gtestverilog;
 
-#include "nes/ProcessorStatusTestBench.h"
+#include "ProcessorStatusTestBench.h"
 using namespace processorstatustestbench;
 
 #include "nes/cpu6502/ProcessorStatusFlags.hpp"

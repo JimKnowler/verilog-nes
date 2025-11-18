@@ -4,7 +4,7 @@ using namespace testing;
 #include "gtestverilog/gtestverilog.h"
 using namespace gtestverilog;
 
-#include "nes/VGAOutput3x2TestBench.h"
+#include "VGAOutput3x2TestBench.h"
 using namespace vgaoutput3x2testbench;
 
 namespace {

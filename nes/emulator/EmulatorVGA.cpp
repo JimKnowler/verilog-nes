@@ -3,7 +3,7 @@
 #define OLC_PGE_APPLICATION
 #include "olcPixelGameEngine.h"
 
-#include "nes/VGAExampleTestBench.h"
+#include "VGAExampleTestBench.h"
 
 #include <vector>
 #include <cassert>

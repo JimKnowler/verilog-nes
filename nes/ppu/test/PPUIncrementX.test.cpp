@@ -4,7 +4,7 @@ using namespace testing;
 #include "gtestverilog/gtestverilog.h"
 using namespace gtestverilog;
 
-#include "nes/PPUIncrementXTestBench.h"
+#include "PPUIncrementXTestBench.h"
 using namespace ppuincrementxtestbench;
 
 namespace {

@@ -4,7 +4,7 @@ using namespace testing;
 #include "gtestverilog/gtestverilog.h"
 using namespace gtestverilog;
 
-#include "nes/PaletteLookupRGBTestBench.h"
+#include "PaletteLookupRGBTestBench.h"
 using namespace palettelookuprgbtestbench;
 
 namespace {
