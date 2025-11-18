@@ -8,10 +8,9 @@ project(verilog-nes
 set(CMAKE_CXX_STANDARD 20)
 
 #
-# GoogleTest Library
+# googletest-verilog
 #
 
-# download google test
 include(FetchContent)
 FetchContent_Declare(
     googletest-verilog
@@ -39,12 +38,7 @@ add_executable(cpu6502_test
 )
 
 target_include_directories(cpu6502_test PRIVATE
-    ${googletest_verilog_SOURCE_DIR}/include
-)
-
-target_include_directories(cpu6502_test PRIVATE
-    . 
-    ${googletest-verilog_SOURCE_DIR}/include
+    .
 )
 
 target_link_libraries(cpu6502_test
@@ -65,3 +59,4 @@ googletest_verilog_testbench(cpu6502_test SOURCE nes/cpu6502/ProcessorStatus.v I
 googletest_verilog_testbench(cpu6502_test SOURCE nes/cpu6502/Register.v INCLUDE_DIRS nes/cpu6502)
 googletest_verilog_testbench(cpu6502_test SOURCE nes/cpu6502/Routing.v INCLUDE_DIRS nes/cpu6502)
 googletest_verilog_testbench(cpu6502_test SOURCE nes/cpu6502/TCU.v INCLUDE_DIRS nes/cpu6502)
+
