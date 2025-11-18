@@ -3,11 +3,17 @@
 #define OLC_PGE_APPLICATION
 #include "olcPixelGameEngine.h"
 
-#include "nes/NESTestBench.h"
+#include "NESTestBench.h"
 #include "nes/memory/SRAM.hpp"
 
 #include <vector>
 #include <cassert>
+
+// required for linking with Verilator
+double sc_time_stamp()
+{ 
+    return 0; 
+}
 
 using namespace nestestbench;
 using namespace memory;
@@ -37,9 +43,9 @@ namespace emulator {
             initSimulation();
 
             //initMario();
-            //initDonkeyKong();
+            initDonkeyKong();
             //initDuckHunt();
-            initGalaga();
+            //initGalaga();
 
             reset();
 
@@ -134,7 +140,7 @@ namespace emulator {
 
                     // simulate NES at ~1fps and watch video output 
                     // rendering line by line
-                    const int kNumTicksPerFrame = 2000;
+                    const int kNumTicksPerFrame = 4000;
                     
                     for (int i=0; i<kNumTicksPerFrame; i++) {
                         simulateTick();
@@ -807,6 +813,7 @@ namespace emulator {
         }
 
         std::vector<uint8_t> loadBinaryFile(const char* filename) {
+            printf("loading [%s]\n", filename);
             std::ifstream is;
             is.open (filename, std::ios::binary );
             assert(is.is_open());
