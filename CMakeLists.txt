@@ -25,16 +25,16 @@ FetchContent_MakeAvailable(googletest-verilog)
 
 file(GLOB_RECURSE CPU6502_ASSEMBLER_SRC_FILES CONFIGURE_DEPENDES "nes/cpu6502/assembler/*.cpp")
 file(GLOB_RECURSE CPU6502_TEST_SRC_FILES CONFIGURE_DEPENDES "nes/cpu6502/test/*.cpp")
-file(GLOB_RECURSE CPU6502_MEMORY_SRC_FILES CONFIGURE_DEPENDES "nes/memory/*.cpp")
+file(GLOB_RECURSE NES_MEMORY_SRC_FILES CONFIGURE_DEPENDES "nes/memory/*.cpp")
 
 message(status "CPU6502_ASSEMBLER_SRC_FILES = ${CPU6502_ASSEMBLER_SRC_FILES}")
 message(status "CPU6502_TEST_SRC_FILES = ${CPU6502_TEST_SRC_FILES}")
-message(status "CPU6502_MEMORY_SRC_FILES = ${CPU6502_MEMORY_SRC_FILES}")
+message(status "NES_MEMORY_SRC_FILES = ${NES_MEMORY_SRC_FILES}")
 
 add_executable(cpu6502_test
     ${CPU6502_ASSEMBLER_SRC_FILES}
     ${CPU6502_TEST_SRC_FILES}
-    ${CPU6502_MEMORY_SRC_FILES}
+    ${NES_MEMORY_SRC_FILES}
 )
 
 target_include_directories(cpu6502_test PRIVATE
@@ -60,3 +60,23 @@ googletest_verilog_testbench(cpu6502_test SOURCE nes/cpu6502/Register.v INCLUDE_
 googletest_verilog_testbench(cpu6502_test SOURCE nes/cpu6502/Routing.v INCLUDE_DIRS nes/cpu6502)
 googletest_verilog_testbench(cpu6502_test SOURCE nes/cpu6502/TCU.v INCLUDE_DIRS nes/cpu6502)
 
+#
+# NES Emulator
+#
+
+add_executable(nes_emulator
+    nes/emulator/EmulatorNES.cpp
+    ${NES_MEMORY_SRC_FILES}
+)
+
+target_include_directories(nes_emulator PRIVATE
+    .
+)
+
+target_link_libraries(nes_emulator
+    gtestverilog
+    "-framework OpenGL"
+    "-framework GLUT"
+)
+
+googletest_verilog_testbench(nes_emulator SOURCE nes/nes/NES.v INCLUDE_DIRS nes/cpu6502 nes/nes nes/ppu)
