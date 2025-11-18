@@ -6,7 +6,7 @@
 #include "nes/cpu6502/assembler/Assembler.hpp"
 #include "nes/cpu6502/assembler/Disassembler.hpp"
 #include "nes/memory/SRAM.hpp"
-#include "nes/Cpu6502TestBench.h"
+#include "Cpu6502TestBench.h"
 #include "nes/emulator/RendererCPU.hpp"
 
 #include <vector>
@@ -122,6 +122,7 @@ namespace emulator {
         }
 
         std::vector<uint8_t> loadBinaryFile(const char* filename) {
+            printf("loadBinaryFile [%s]\n", filename);
             std::ifstream is;
             is.open (filename, std::ios::binary );
             assert(is.is_open());

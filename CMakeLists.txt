@@ -185,3 +185,27 @@ googletest_verilog_testbench(ppu_test SOURCE nes/ppu/PPUIncrementY.v INCLUDE_DIR
 #        "-GBACK_PORCH_Y=11'd1",
 #    ]
 #)
+
+
+#
+# CPU Emulator
+#
+
+add_executable(emulator_cpu
+    nes/emulator/EmulatorCPU.cpp
+    nes/emulator/RendererCPU.cpp
+    ${NES_MEMORY_SRC_FILES}
+    ${CPU6502_ASSEMBLER_SRC_FILES}
+)
+
+target_include_directories(emulator_cpu PRIVATE
+    .
+)
+
+target_link_libraries(emulator_cpu
+    gtestverilog
+    "-framework OpenGL"
+    "-framework GLUT"
+)
+
+googletest_verilog_testbench(emulator_cpu SOURCE nes/cpu6502/Cpu6502.v INCLUDE_DIRS nes/cpu6502 nes/nes nes/ppu)

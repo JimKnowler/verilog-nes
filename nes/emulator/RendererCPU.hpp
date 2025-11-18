@@ -2,7 +2,7 @@
 
 #include "olcPixelGameEngine.h"
 
-#include "nes/Cpu6502TestBench.h"
+#include "Cpu6502TestBench.h"
 #include "nes/cpu6502/assembler/Disassembler.hpp"
 
 namespace emulator {
